@@ -1,30 +1,64 @@
-const { query } = require("../config/db");
+const { query, masterQuery } = require("../config/db");
 const { createNotification } = require("./notification.controller");
 
 // ─────────────────────────────────────────────────────────────────────────────
 // EMP: Get my assignments with completed + pending
 // Only APPROVED progress rows count toward completed
+// ─────────────────────────────────────────────────────────────────────────────
+// EMP: Get my assignments with completed + pending
 // GET /api/utilization/my-assignments?userId=
 // ─────────────────────────────────────────────────────────────────────────────
 const getMyAssignments = async (req, res, next) => {
   try {
     let { userId } = req.query;
+    let empId = null;
 
+    // ✅ If userId not provided, get from token using emp_id
     if (!userId || userId === "null" || userId === "undefined") {
-      const empId = req.user?.emp_id;
+      empId = req.user?.emp_id;
       if (empId) {
-        const rows = await query("SELECT id FROM users WHERE emp_id = ?", [empId]);
-        if (rows && rows.length > 0) {
-          userId = rows[0].id;
-          console.log(`ℹ️ Resolved userId for getMyAssignments from token: ${userId}`);
+        console.log(`ℹ️ Using emp_id from token: ${empId}`);
+      }
+    } else {
+      // Check if userId is an emp_id (string like "AS00717")
+      if (typeof userId === 'string' && !/^\d+$/.test(userId)) {
+        empId = userId;
+        console.log(`ℹ️ Using userId as emp_id: ${empId}`);
+      } else {
+        // userId might be u_id from master.emp, get emp_id from it
+        const empResult = await masterQuery(
+          `SELECT emp_id FROM emp WHERE u_id = ? AND flag = 'Active'`,
+          [userId]
+        );
+        if (empResult && empResult.length > 0) {
+          empId = empResult[0].emp_id;
+          console.log(`ℹ️ Resolved emp_id from u_id ${userId}: ${empId}`);
+        } else {
+          // Try as users.id (backward compatibility)
+          const userResult = await query(
+            `SELECT emp_id FROM users WHERE id = ?`,
+            [userId]
+          );
+          if (userResult && userResult.length > 0) {
+            empId = userResult[0].emp_id;
+            console.log(`ℹ️ Resolved emp_id from users.id ${userId}: ${empId}`);
+          }
         }
       }
     }
 
-    if (!userId || userId === "null" || userId === "undefined") {
-      return res.status(400).json({ message: "userId required" });
+    // If still no emp_id, try from token
+    if (!empId) {
+      empId = req.user?.emp_id;
     }
 
+    if (!empId) {
+      return res.status(400).json({ 
+        message: "Employee not found. Please login again." 
+      });
+    }
+
+    // ✅ Query using emp_id from assignments table
     const sql = `
       SELECT
         a.id                                                          AS assignment_id,
@@ -40,20 +74,21 @@ const getMyAssignments = async (req, res, next) => {
           - COALESCE(SUM(CASE WHEN ap.status = 'APPROVED' THEN ap.units_completed ELSE 0 END), 0),
           0
         )                                                             AS units_pending,
-        -- pending-approval units (logged but not yet reviewed)
         COALESCE(SUM(CASE WHEN ap.status = 'PENDING' THEN ap.units_completed ELSE 0 END), 0)
                                                                       AS units_awaiting
       FROM assignments a
       LEFT JOIN projects p              ON a.project_id = p.id
       LEFT JOIN assignment_progress ap  ON a.id         = ap.assignment_id
-      WHERE a.user_id = ?
+      WHERE a.emp_id = ?                -- ✅ Filter by emp_id instead of user_id
       GROUP BY a.id, a.project_id, p.project_name, a.role, a.task_name, a.units_assigned
       ORDER BY p.project_name, a.role
     `;
 
-    const rows = await query(sql, [userId]);
+    const rows = await query(sql, [empId]);
+    console.log(`✅ Found ${rows.length} assignments for emp_id: ${empId}`);
     return res.status(200).json(rows);
   } catch (err) {
+    console.error('❌ getMyAssignments error:', err);
     return next(err);
   }
 };
@@ -64,6 +99,10 @@ const getMyAssignments = async (req, res, next) => {
 // POST /api/utilization/log-progress
 // Body: { assignment_id, user_id, date, units_completed, remarks }
 // ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// EMP: Log progress on an assignment
+// POST /api/utilization/log-progress
+// ─────────────────────────────────────────────────────────────────────────────
 const logProgress = async (req, res, next) => {
   try {
     let { 
@@ -72,19 +111,70 @@ const logProgress = async (req, res, next) => {
       project_id, role, task_name
     } = req.body;
 
-    if (!user_id || user_id === "null" || user_id === "undefined") {
-      const empId = req.user?.emp_id;
-      if (empId) {
-        const rows = await query("SELECT id FROM users WHERE emp_id = ?", [empId]);
-        if (rows && rows.length > 0) {
-          user_id = rows[0].id;
-          console.log(`ℹ️ Resolved user_id for logProgress from token: ${user_id}`);
+    let finalEmpId = null;
+    let finalUserId = null;
+
+    // ✅ Get emp_id from request or token
+    if (user_id && user_id !== "null" && user_id !== "undefined") {
+      // Check if user_id is an emp_id (string like "AS00717")
+      if (typeof user_id === 'string' && !/^\d+$/.test(user_id)) {
+        finalEmpId = user_id;
+        // Get u_id from master.emp
+        const empResult = await masterQuery(
+          `SELECT u_id FROM emp WHERE emp_id = ? AND flag = 'Active'`,
+          [finalEmpId]
+        );
+        finalUserId = empResult.length > 0 ? empResult[0].u_id : null;
+      } else {
+        // Try as u_id from master.emp
+        const empResult = await masterQuery(
+          `SELECT u_id, emp_id FROM emp WHERE u_id = ? AND flag = 'Active'`,
+          [user_id]
+        );
+        if (empResult.length > 0) {
+          finalEmpId = empResult[0].emp_id;
+          finalUserId = empResult[0].u_id;
+        } else {
+          // Try as users.id (backward compatibility)
+          const userResult = await query(
+            `SELECT emp_id FROM users WHERE id = ?`,
+            [user_id]
+          );
+          if (userResult.length > 0) {
+            finalEmpId = userResult[0].emp_id;
+            const empInfo = await masterQuery(
+              `SELECT u_id FROM emp WHERE emp_id = ? AND flag = 'Active'`,
+              [finalEmpId]
+            );
+            finalUserId = empInfo.length > 0 ? empInfo[0].u_id : null;
+          }
         }
       }
     }
 
-    if (!assignment_id || !user_id || !date) {
-      return res.status(400).json({ message: "assignment_id, user_id and date are required" });
+    // If still not found, try from token
+    if (!finalEmpId) {
+      const empId = req.user?.emp_id;
+      if (empId) {
+        const empResult = await masterQuery(
+          `SELECT u_id, emp_id FROM emp WHERE emp_id = ? AND flag = 'Active'`,
+          [empId]
+        );
+        if (empResult && empResult.length > 0) {
+          finalEmpId = empResult[0].emp_id;
+          finalUserId = empResult[0].u_id;
+        }
+      }
+    }
+
+    if (!finalEmpId) {
+      return res.status(400).json({ 
+        message: "Employee not found. Please ensure you're logged in." 
+      });
+    }
+
+    if (!assignment_id || !date) {
+      return res.status(400).json({ message: "assignment_id and date are required" });
     }
 
     if (!todays_tasks || !todays_tasks.trim()) {
@@ -95,7 +185,23 @@ const logProgress = async (req, res, next) => {
       return res.status(400).json({ message: "Total Time Needed is required" });
     }
 
-    // Guard: don't allow logging more than what's pending (APPROVED only)
+    // ✅ Verify the assignment belongs to this employee
+    const assignmentCheck = await query(
+      `SELECT emp_id FROM assignments WHERE id = ?`,
+      [assignment_id]
+    );
+
+    if (assignmentCheck.length === 0) {
+      return res.status(404).json({ message: "Assignment not found" });
+    }
+
+    if (assignmentCheck[0].emp_id !== finalEmpId) {
+      return res.status(403).json({ 
+        message: "You are not authorized to log progress for this assignment" 
+      });
+    }
+
+    // Guard: don't allow logging more than what's pending
     const pendingRows = await query(
       `SELECT
          a.units_assigned,
@@ -131,26 +237,26 @@ const logProgress = async (req, res, next) => {
       return res.status(400).json({ message: "Units cannot be negative." });
     }
 
-    // Insert with PENDING status
+    // ✅ Insert with emp_id
     const result = await query(
       `INSERT INTO assignment_progress (
-         assignment_id, user_id, date, units_completed, 
+         assignment_id, user_id, emp_id, date, units_completed, 
          todays_tasks, total_time_needed, yesterdays_tasks, risks, 
          project_id, role, task_name, status
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING')`,
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING')`,
       [
-        assignment_id, user_id, date, units_completed || 0, 
+        assignment_id, finalUserId, finalEmpId, date, units_completed || 0, 
         todays_tasks || null, total_time_needed || null, yesterdays_tasks || null, risks || null,
         project_id || null, role || null, task_name || null
       ]
     );
 
-    // Fetch assignment context for notifications
+    // Fetch assignment context for notification
     const ctxRows = await query(
-      `SELECT a.role, a.task_name, p.project_name, u.name AS emp_name
+      `SELECT a.role, a.task_name, p.project_name, e.emp_name AS emp_name
        FROM assignments a
        LEFT JOIN projects p ON a.project_id = p.id
-       LEFT JOIN users u    ON a.user_id    = u.id
+       LEFT JOIN master.emp e ON a.emp_id = e.emp_id
        WHERE a.id = ?`,
       [assignment_id]
     );
@@ -163,7 +269,7 @@ const logProgress = async (req, res, next) => {
         user_id: admin.id,
         type:    'progress_pending',
         title:   `Progress update awaiting approval`,
-        message: `${ctx.emp_name} logged ${units_completed} unit(s) of "${ctx.task_name}" (${ctx.role}) on "${ctx.project_name}". Awaiting your approval.`,
+        message: `${ctx.emp_name || 'Employee'} logged ${units_completed} unit(s) of "${ctx.task_name}" (${ctx.role}) on "${ctx.project_name}". Awaiting your approval.`,
       });
     }
 
@@ -173,6 +279,7 @@ const logProgress = async (req, res, next) => {
       message: "Progress logged and sent for approval",
     });
   } catch (err) {
+    console.error('❌ logProgress error:', err);
     return next(err);
   }
 };
@@ -183,6 +290,7 @@ const logProgress = async (req, res, next) => {
 // ─────────────────────────────────────────────────────────────────────────────
 const getPendingApprovals = async (req, res, next) => {
   try {
+    // ✅ Join with master.emp for employee name
     const rows = await query(
       `SELECT
          ap.id                 AS progress_id,
@@ -192,8 +300,8 @@ const getPendingApprovals = async (req, res, next) => {
          ap.remarks,
          ap.status,
          ap.rejection_reason,
-         u.id                  AS user_id,
-         u.name                AS user_name,
+         e.u_id                AS user_id,
+         e.emp_name            AS user_name,
          a.role,
          a.task_name,
          a.units_assigned,
@@ -201,7 +309,7 @@ const getPendingApprovals = async (req, res, next) => {
          p.project_name
        FROM assignment_progress ap
        LEFT JOIN assignments a ON ap.assignment_id = a.id
-       LEFT JOIN users u       ON ap.user_id       = u.id
+       LEFT JOIN master.emp e ON ap.emp_id = e.emp_id
        LEFT JOIN projects p    ON a.project_id     = p.id
        WHERE ap.status = 'PENDING'
        ORDER BY ap.date ASC`
@@ -220,12 +328,12 @@ const approveProgress = async (req, res, next) => {
   try {
     const { progressId } = req.params;
 
-    // Fetch context before updating (for notification)
+    // ✅ Fetch context with employee name from master.emp
     const rows = await query(
-      `SELECT ap.*, u.name AS emp_name, a.task_name, a.role, p.project_name
+      `SELECT ap.*, e.emp_name AS emp_name, a.task_name, a.role, p.project_name
        FROM assignment_progress ap
        LEFT JOIN assignments a ON ap.assignment_id = a.id
-       LEFT JOIN users u       ON ap.user_id       = u.id
+       LEFT JOIN master.emp e ON ap.emp_id = e.emp_id
        LEFT JOIN projects p    ON a.project_id     = p.id
        WHERE ap.id = ?`,
       [progressId]
@@ -260,18 +368,18 @@ const approveProgress = async (req, res, next) => {
 // ─────────────────────────────────────────────────────────────────────────────
 // ADMIN: Reject a progress log
 // PUT /api/utilization/reject/:progressId
-// Body: { reason }
 // ─────────────────────────────────────────────────────────────────────────────
 const rejectProgress = async (req, res, next) => {
   try {
     const { progressId } = req.params;
     const { reason }     = req.body;
 
+    // ✅ Fetch context with employee name from master.emp
     const rows = await query(
-      `SELECT ap.*, u.name AS emp_name, a.task_name, a.role, p.project_name
+      `SELECT ap.*, e.emp_name AS emp_name, a.task_name, a.role, p.project_name
        FROM assignment_progress ap
        LEFT JOIN assignments a ON ap.assignment_id = a.id
-       LEFT JOIN users u       ON ap.user_id       = u.id
+       LEFT JOIN master.emp e ON ap.emp_id = e.emp_id
        LEFT JOIN projects p    ON a.project_id     = p.id
        WHERE ap.id = ?`,
       [progressId]
@@ -304,59 +412,98 @@ const rejectProgress = async (req, res, next) => {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ADMIN: Overall user utilization (APPROVED only)
+// ADMIN: Overall user utilization (APPROVED only) - Using master.emp only
+// GET /api/utilization/overall
 // ─────────────────────────────────────────────────────────────────────────────
 const getOverallUtilization = async (req, res, next) => {
   try {
-    const sql = `
+    // ─── Get all active employees from master.emp ────────────────
+    const employees = await masterQuery(
+      `SELECT u_id, emp_id, emp_name FROM emp WHERE flag = 'Active'`
+    );
+
+    if (employees.length === 0) {
+      return res.status(200).json([]);
+    }
+
+    // ─── Get u_ids for the assignment query ──────────────────────
+    const uIds = employees.map(e => e.u_id);
+    const uIdPlaceholders = uIds.map(() => '?').join(',');
+
+    // ─── Get assignment data for these employees ──────────────────
+    const assignmentData = await query(`
       SELECT
-        u.id                                              AS user_id,
-        u.name                                            AS user_name,
-        u.role                                            AS user_role,
-        u.daily_capacity,
-        COALESCE(SUM(a.units_assigned), 0)                AS total_assigned,
-        COALESCE(SUM(ap_totals.units_completed), 0)       AS total_completed,
-        COALESCE(SUM(a.units_assigned), 0)
-          - COALESCE(SUM(ap_totals.units_completed), 0)   AS total_pending,
-        CASE
-          WHEN COALESCE(SUM(a.units_assigned), 0) = 0 THEN 0
-          ELSE ROUND(
-            (COALESCE(SUM(ap_totals.units_completed), 0) /
-             COALESCE(SUM(a.units_assigned), 0)) * 100, 1
-          )
-        END                                               AS utilization_pct
-      FROM users u
-      LEFT JOIN assignments a ON u.id = a.user_id
+        a.user_id,
+        COALESCE(SUM(a.units_assigned), 0) AS total_assigned,
+        COALESCE(SUM(ap_totals.units_completed), 0) AS total_completed
+      FROM assignments a
       LEFT JOIN (
         SELECT assignment_id, SUM(units_completed) AS units_completed
         FROM assignment_progress
         WHERE status = 'APPROVED'
         GROUP BY assignment_id
       ) ap_totals ON a.id = ap_totals.assignment_id
-      WHERE u.role != 'ADMIN'
-      GROUP BY u.id, u.name, u.role, u.daily_capacity
-      ORDER BY utilization_pct DESC
-    `;
-    const rows = await query(sql);
-    return res.status(200).json(rows);
+      WHERE a.user_id IN (${uIdPlaceholders})
+      GROUP BY a.user_id
+    `, uIds);
+
+    // ─── Create a map for quick lookup ────────────────────────────
+    const assignmentMap = {};
+    assignmentData.forEach(row => {
+      assignmentMap[row.user_id] = {
+        total_assigned: parseFloat(row.total_assigned) || 0,
+        total_completed: parseFloat(row.total_completed) || 0
+      };
+    });
+
+    // ─── Combine employee data with assignment data ──────────────
+    const result = employees.map(emp => {
+      const data = assignmentMap[emp.u_id] || { total_assigned: 0, total_completed: 0 };
+      const totalAssigned = data.total_assigned;
+      const totalCompleted = data.total_completed;
+      const totalPending = totalAssigned - totalCompleted;
+      const utilizationPct = totalAssigned > 0 
+        ? Math.round((totalCompleted / totalAssigned) * 100 * 10) / 10
+        : 0;
+
+      return {
+        user_id: emp.u_id,
+        user_name: emp.emp_name,
+        user_role: 'EMP', // Default role since it comes from RBAC
+        daily_capacity: 8, // Default capacity
+        total_assigned: totalAssigned,
+        total_completed: totalCompleted,
+        total_pending: totalPending,
+        utilization_pct: utilizationPct
+      };
+    });
+
+    // ─── Sort by utilization percentage descending ──────────────
+    result.sort((a, b) => b.utilization_pct - a.utilization_pct);
+
+    return res.status(200).json(result);
+    
   } catch (err) {
+    console.error('❌ getOverallUtilization error:', err);
     return next(err);
   }
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ADMIN: Project-wise utilization (APPROVED only)
+// ADMIN: Project-wise utilization (APPROVED only) - Using master.emp only
+// GET /api/utilization/by-project
 // ─────────────────────────────────────────────────────────────────────────────
 const getProjectUtilization = async (req, res, next) => {
   try {
     const { projectId } = req.query;
 
+    // ─── Base query using master.emp ──────────────────────────────
     let sql = `
       SELECT
         p.id                                              AS project_id,
         p.project_name,
-        u.id                                              AS user_id,
-        u.name                                            AS user_name,
+        e.u_id                                            AS user_id,
+        e.emp_name                                        AS user_name,
         a.role,
         a.task_name,
         a.units_assigned,
@@ -370,31 +517,35 @@ const getProjectUtilization = async (req, res, next) => {
         END                                               AS completion_pct
       FROM assignments a
       LEFT JOIN projects p ON a.project_id = p.id
-      LEFT JOIN users u    ON a.user_id    = u.id
+      LEFT JOIN master.emp e ON a.emp_id = e.emp_id
       LEFT JOIN (
         SELECT assignment_id, SUM(units_completed) AS units_completed
         FROM assignment_progress
         WHERE status = 'APPROVED'
         GROUP BY assignment_id
       ) ap_totals ON a.id = ap_totals.assignment_id
+      WHERE e.emp_id IS NOT NULL
     `;
 
     const params = [];
     if (projectId) {
-      sql += ` WHERE a.project_id = ?`;
+      sql += ` AND a.project_id = ?`;
       params.push(projectId);
     }
-    sql += ` ORDER BY p.project_name, u.name, a.role`;
+    sql += ` ORDER BY p.project_name, e.emp_name, a.role`;
 
     const rows = await query(sql, params);
     return res.status(200).json(rows);
+    
   } catch (err) {
+    console.error('❌ getProjectUtilization error:', err);
     return next(err);
   }
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ADMIN: Project health cards (APPROVED only)
+// GET /api/utilization/project-health
 // ─────────────────────────────────────────────────────────────────────────────
 const getProjectHealth = async (req, res, next) => {
   try {

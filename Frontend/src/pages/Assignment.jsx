@@ -222,13 +222,13 @@ const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onClose })
           <div style={{ flex: 2, minWidth: 140 }}>
             <label style={M.label}>Employee</label>
             <select value={selUser} onChange={e => { setSelUser(e.target.value); setError(""); }} style={M.select}>
-              <option value="">Select employee…</option>
-              {users.map(emp => (
-                <option key={emp.employee_id || emp.id} value={emp.employee_id || emp.id}>
-                  {emp.emp_name || emp.name}
-                </option>
-              ))}
-            </select>
+  <option value="">Select employee…</option>
+  {users.map(emp => (
+    <option key={emp.employee_id || emp.id} value={emp.employee_id || emp.id}>
+      {emp.emp_name || emp.name}
+    </option>
+  ))}
+</select>
           </div>
           <div style={{ flex: 1, minWidth: 70 }}>
             <label style={M.label}>Units</label>
@@ -362,7 +362,7 @@ const AssignmentScreen = () => {
     (state) => state.auth.serviceDeliveryEmployees
   );
   const [projects,     setProjects]     = useState([]);
-  const [users,        setUsers]        = useState([]);
+  // const [users,        setUsers]        = useState([]);
   const [catalog,      setCatalog]      = useState({});
   const [selProject,   setSelProject]   = useState("");
   // CHANGED: loadDraft values are now objects { planned_units, estimated_days, estimated_hours }
@@ -378,22 +378,20 @@ const AssignmentScreen = () => {
   // ── Inline assign modal state ──────────────────────────────────────────────
   const [assignModal, setAssignModal] = useState(null);
 
-  // ── Initial fetch: projects, users, catalog ────────────────────────────────
-  useEffect(() => {
-    const fetchBase = async () => {
-      try {
-        const [pRes, uRes, cRes] = await Promise.all([
-          axios.get(`${BASE_URL}/api/projects`,            { headers: getHeaders() }),
-          axios.get(`${BASE_URL}/api/users`,               { headers: getHeaders() }),
-          axios.get(`${BASE_URL}/api/assignments/catalog`, { headers: getHeaders() }),
-        ]);
-        setProjects(pRes.data || []);
-        setUsers(uRes.data || []);
-        setCatalog(cRes.data.grouped || {});
-      } catch (err) { console.error(err); }
-    };
-    fetchBase();
-  }, []);
+  // ── Initial fetch: projects, catalog ────────────────────────────────
+useEffect(() => {
+  const fetchBase = async () => {
+    try {
+      const [pRes, cRes] = await Promise.all([
+        axios.get(`${BASE_URL}/api/projects`,            { headers: getHeaders() }),
+        axios.get(`${BASE_URL}/api/assignments/catalog`, { headers: getHeaders() }),
+      ]);
+      setProjects(pRes.data || []);
+      setCatalog(cRes.data.grouped || {});
+    } catch (err) { console.error(err); }
+  };
+  fetchBase();
+}, []);
 
   // ── Per-project fetch: loads, assignments, summary + NEW effort-estimates ───
   const fetchProjectData = useCallback(async (pid) => {
@@ -811,7 +809,7 @@ console.log("Redux employees:", serviceDeliveryEmployees);
 {assignModal && (
   <AssignModal
     modal={assignModal}
-    users={users}  // ← USE THIS INSTEAD (from user table)
+    users={serviceDeliveryEmployees} // ← USE THIS INSTEAD (from user table)
     assignments={assignments}
     onAssign={handleAddAssignment}
     onDelete={handleDelete}

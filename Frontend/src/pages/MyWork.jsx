@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-
+import { useSelector } from "react-redux"; 
 // const BASE_URL = process.env.REACT_APP_API_BASE_URL;
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const getHeaders = () => ({
@@ -27,7 +27,9 @@ const Ring = ({ pct, size = 54 }) => {
 };
 
 const MyWork = () => {
-  const userId = localStorage.getItem("UserID");
+  // ✅ Get user from Redux store
+  const user = useSelector((state) => state.auth.user);
+  const userId = user?.emp_id || localStorage.getItem("emp_id"); 
   const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
 

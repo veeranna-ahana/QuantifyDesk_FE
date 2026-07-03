@@ -307,7 +307,7 @@ const getProjectLevelRecon = async (req, res, next) => {
             ? `WHERE ${systemWhere.join(' AND ')}` 
             : 'WHERE 1=1';
         
-        // ─── Get System Projects with subqueries ──────────────────
+        // ─── Get System Projects (without timesheet subqueries) ──
         const systemProjects = await query(`
             SELECT 
                 p.id as project_id,
@@ -315,8 +315,6 @@ const getProjectLevelRecon = async (req, res, next) => {
                 p.project_name,
                 p.client_name,
                 COALESCE((SELECT SUM(total_hrs) FROM effort_estimates WHERE project_id = p.id), 0) as estimated_hours,
-                COALESCE((SELECT SUM(hours) FROM timesheet_entries te WHERE te.project_id = p.id ${dateWhereClause}), 0) as actual_hours,
-                COALESCE((SELECT COUNT(DISTINCT te.emp_id) FROM timesheet_entries te WHERE te.project_id = p.id ${dateWhereClause}), 0) as employee_count,
                 1 as in_system,
                 CASE WHEN EXISTS (SELECT 1 FROM effort_estimates WHERE project_id = p.id) THEN 1 ELSE 0 END as has_estimate
             FROM projects p
@@ -324,8 +322,65 @@ const getProjectLevelRecon = async (req, res, next) => {
             GROUP BY p.id
         `, systemParams);
         
+        // ─── Get timesheet data separately with date filters ──────
+        let timesheetSubquery = `
+            SELECT 
+                te.project_id,
+                COALESCE(SUM(te.hours), 0) as actual_hours,
+                COUNT(DISTINCT te.emp_id) as employee_count
+            FROM timesheet_entries te
+            WHERE te.project_id IS NOT NULL
+        `;
+        
+        let timesheetSubqueryParams = [];
+        
+        if (month) {
+            timesheetSubquery += ` AND MONTH(te.entry_date) = ?`;
+            timesheetSubqueryParams.push(parseInt(month));
+        }
+        if (year) {
+            timesheetSubquery += ` AND YEAR(te.entry_date) = ?`;
+            timesheetSubqueryParams.push(parseInt(year));
+        }
+        
+        // Apply clientName filter to timesheet data if provided
+        if (clientName) {
+            timesheetSubquery += ` AND te.original_client_name LIKE ?`;
+            timesheetSubqueryParams.push(`%${clientName}%`);
+        }
+        if (projectCode) {
+            timesheetSubquery += ` AND (te.original_project_code LIKE ? OR te.project_id IN (SELECT id FROM projects WHERE project_code LIKE ?))`;
+            timesheetSubqueryParams.push(`%${projectCode}%`, `%${projectCode}%`);
+        }
+        if (projectName) {
+            timesheetSubquery += ` AND (te.original_project_name LIKE ? OR te.project_id IN (SELECT id FROM projects WHERE project_name LIKE ?))`;
+            timesheetSubqueryParams.push(`%${projectName}%`, `%${projectName}%`);
+        }
+        
+        timesheetSubquery += ` GROUP BY te.project_id`;
+        
+        const timesheetData = await query(timesheetSubquery, timesheetSubqueryParams);
+        
+        // Create a map of project_id to timesheet data
+        const timesheetMap = {};
+        timesheetData.forEach(row => {
+            timesheetMap[row.project_id] = {
+                actual_hours: parseFloat(row.actual_hours || 0),
+                employee_count: parseInt(row.employee_count || 0)
+            };
+        });
+        
+        // ─── Merge timesheet data with system projects ──────────────
+        let filteredSystemProjects = systemProjects.map(p => {
+            const timesheet = timesheetMap[p.project_id] || { actual_hours: 0, employee_count: 0 };
+            return {
+                ...p,
+                actual_hours: timesheet.actual_hours,
+                employee_count: timesheet.employee_count
+            };
+        });
+        
         // ─── Apply employee filter for system projects ──────────
-        let filteredSystemProjects = systemProjects;
         if (employeeName) {
             const empProjectIds = await query(`
                 SELECT DISTINCT te.project_id 
@@ -337,12 +392,12 @@ const getProjectLevelRecon = async (req, res, next) => {
             
             const empProjectIdSet = new Set(empProjectIds.map(r => r.project_id));
             
-            filteredSystemProjects = systemProjects.filter(p => {
+            filteredSystemProjects = filteredSystemProjects.filter(p => {
                 return empProjectIdSet.has(p.project_id);
             });
         }
         
-        // ─── Get Timesheet Projects ──────────────────────────────
+        // ─── Get Timesheet Projects (projects not in system) ──────
         let timesheetWhere = [];
         let timesheetParams = [];
         let employeeJoin = '';
@@ -390,7 +445,8 @@ const getProjectLevelRecon = async (req, res, next) => {
                 COUNT(DISTINCT te.emp_id) as employee_count,
                 0 as in_system,
                 0 as has_estimate,
-                NULL as project_id
+                NULL as project_id,
+                0 as estimated_hours
             FROM timesheet_entries te
             ${employeeJoin}
             WHERE te.project_id IS NULL
