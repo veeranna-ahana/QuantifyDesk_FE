@@ -2,8 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import './DailyUpdatesReport.css';
 import { useSelector } from "react-redux";
 
-
-// Point this at wherever your Express API is mounted.
 const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
 const STATUS_STYLES = {
@@ -14,12 +12,6 @@ const STATUS_STYLES = {
   'not started': { bg: '#e5e7eb', fg: '#4b5563' },
 };
 
-const RISK_STYLES = {
-  low: { bg: '#d8f3dc', fg: '#1b6b34' },
-  medium: { bg: '#fde9c8', fg: '#92600a' },
-  high: { bg: '#fbd5d5', fg: '#b91c1c' },
-};
-
 function StatusBadge({ value }) {
   if (!value) return <span className="dur-badge dur-badge--muted">—</span>;
   const style = STATUS_STYLES[value.toLowerCase()] || { bg: '#e5e7eb', fg: '#4b5563' };
@@ -27,24 +19,6 @@ function StatusBadge({ value }) {
     <span className="dur-badge" style={{ background: style.bg, color: style.fg }}>
       {value}
     </span>
-  );
-}
-
-function RiskCell({ level, description }) {
-  if (!level && !description) return <span className="dur-cell-muted">—</span>;
-  const style = level ? RISK_STYLES[level.toLowerCase()] : null;
-  return (
-    <div className="dur-risk">
-      {level && (
-        <span
-          className="dur-badge dur-badge--sm"
-          style={style ? { background: style.bg, color: style.fg } : undefined}
-        >
-          {level}
-        </span>
-      )}
-      {description && <p className="dur-risk-desc">{description}</p>}
-    </div>
   );
 }
 
@@ -59,7 +33,12 @@ function formatDateLabel(dateStr) {
 }
 
 export default function DailyUpdatesReport() {
-  const [meta, setMeta] = useState({ dates: [], employees: [], projects: [] });
+  // Get Service Delivery employees from Redux (from login)
+  const serviceDeliveryEmployees = useSelector(
+    (state) => state.auth.serviceDeliveryEmployees
+  );
+
+  const [meta, setMeta] = useState({ dates: [], projects: [] });
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedProject, setSelectedProject] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState('');
@@ -68,50 +47,41 @@ export default function DailyUpdatesReport() {
   const [loadingRows, setLoadingRows] = useState(false);
   const [error, setError] = useState('');
 
-  // Load filter options once, default to the most recent date available.
+  console.log('📋 Redux Service Delivery Employees:', serviceDeliveryEmployees);
+
+  // Load filter options (dates and projects only)
   useEffect(() => {
     async function loadMeta() {
       try {
-        const res = await fetch(`${API_BASE}/api/daily-updates/meta`);
+        const token = localStorage.getItem('token');
+        const res = await fetch(`${API_BASE}/api/daily-updates/meta`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
         if (!res.ok) throw new Error('Failed to load filters');
         const data = await res.json();
-        // setMeta(data);
-        // if (data.dates?.length) {
-        //   setSelectedDate(data.dates[0].slice(0, 10));
-        // }
-        // const today = new Date().toISOString().split('T')[0];
-
-        // setMeta({
-        //   ...data,
-        //   dates: data.dates.includes(today)
-        //     ? data.dates
-        //     : [today, ...data.dates],
-        // });
-
-        // setSelectedDate(today);
-
-        const today = new Date();
-
-        const dates = [];
-        const startDate = new Date("2025-01-01"); // or your project start date
-
-        for (
-          let d = new Date(startDate);
-          d <= today;
-          d.setDate(d.getDate() + 1)
-        ) {
-          dates.push(d.toISOString().split("T")[0]);
+        
+        if (!data.success) {
+          throw new Error(data.error || 'Failed to load filters');
         }
 
-        dates.sort((a, b) => new Date(b) - new Date(a));
-
         setMeta({
-          ...data,
-          dates,
+          dates: data.dates || [],
+          projects: data.projects || []
         });
 
-        setSelectedDate(today.toISOString().split("T")[0]);
+        // Set today's date as default if available
+        const today = new Date().toISOString().split('T')[0];
+        if (data.dates && data.dates.includes(today)) {
+          setSelectedDate(today);
+        } else if (data.dates && data.dates.length > 0) {
+          setSelectedDate(data.dates[0]);
+        }
+
       } catch (err) {
+        console.error('❌ Error loading meta:', err);
         setError(err.message);
       } finally {
         setLoadingMeta(false);
@@ -120,21 +90,38 @@ export default function DailyUpdatesReport() {
     loadMeta();
   }, []);
 
-  // Fetch rows whenever the date or filters change.
+  // Fetch rows whenever the date or filters change
   useEffect(() => {
     if (!selectedDate) return;
+    
     async function loadRows() {
       setLoadingRows(true);
       setError('');
       try {
+        const token = localStorage.getItem('token');
         const params = new URLSearchParams({ date: selectedDate });
         if (selectedProject) params.set('project_id', selectedProject);
         if (selectedEmployee) params.set('user_id', selectedEmployee);
-        const res = await fetch(`${API_BASE}/api/daily-updates/report?${params.toString()}`);
+        
+        const res = await fetch(
+          `${API_BASE}/api/daily-updates/report?${params.toString()}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          }
+        );
+        
         if (!res.ok) throw new Error('Failed to load daily updates');
         const data = await res.json();
-        setRows(data);
+        
+        if (!data.success) {
+          throw new Error(data.error || 'Failed to load daily updates');
+        }
+        
+        setRows(data.data || []);
       } catch (err) {
+        console.error('❌ Error loading rows:', err);
         setError(err.message);
         setRows([]);
       } finally {
@@ -144,23 +131,29 @@ export default function DailyUpdatesReport() {
     loadRows();
   }, [selectedDate, selectedProject, selectedEmployee]);
 
-  // const totalHours = useMemo(
-  //   () => rows.reduce((sum, r) => sum + (Number(r.hours_spent) || 0), 0),
-  //   [rows]
-  // );
-
   const totalHours = useMemo(
     () => rows.reduce((sum, r) => sum + (Number(r.total_time_needed) || 0), 0),
     [rows]
   );
 
-  const dateLabel = formatDateLabel(selectedDate);
+  // Transform Redux employees for dropdown
+  const employeeOptions = useMemo(() => {
+    console.log('🔄 Transforming employees for dropdown:', serviceDeliveryEmployees);
+    
+    if (!serviceDeliveryEmployees || serviceDeliveryEmployees.length === 0) {
+      console.warn('⚠️ No Service Delivery employees in Redux');
+      return [];
+    }
 
-const serviceDeliveryEmployees = useSelector(
-  (state) => state.auth.serviceDeliveryEmployees
-);
+    return serviceDeliveryEmployees.map(emp => ({
+      id: emp.employee_id || emp.u_id || emp.id,
+      name: emp.emp_name || emp.name,
+      emp_id: emp.employee_id,
+      u_id: emp.u_id
+    }));
+  }, [serviceDeliveryEmployees]);
 
-console.log("Redux employees:", serviceDeliveryEmployees);
+  console.log('📋 Employee dropdown options:', employeeOptions);
 
   return (
     <div className="dur-page">
@@ -187,7 +180,10 @@ console.log("Redux employees:", serviceDeliveryEmployees);
 
           <label className="dur-filter">
             <span>Project</span>
-            <select value={selectedProject} onChange={(e) => setSelectedProject(e.target.value)}>
+            <select 
+              value={selectedProject} 
+              onChange={(e) => setSelectedProject(e.target.value)}
+            >
               <option value="">All projects</option>
               {meta.projects.map((p) => (
                 <option key={p.id} value={p.id}>
@@ -199,29 +195,26 @@ console.log("Redux employees:", serviceDeliveryEmployees);
 
           <label className="dur-filter">
             <span>Employee</span>
-            {/* <select value={selectedEmployee} onChange={(e) => setSelectedEmployee(e.target.value)}>
+            <select 
+              value={selectedEmployee} 
+              onChange={(e) => setSelectedEmployee(e.target.value)}
+              disabled={employeeOptions.length === 0}
+            >
               <option value="">All employees</option>
-              {meta.employees.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.name}
+              {employeeOptions.map((emp) => (
+                <option
+                  key={emp.id || emp.emp_id}
+                  value={emp.id || emp.emp_id}
+                >
+                  {emp.name} ({emp.emp_id})
                 </option>
               ))}
-            </select> */}
-            <select
-  value={selectedEmployee}
-  onChange={(e) => setSelectedEmployee(e.target.value)}
->
-  <option value="">All employees</option>
-
-  {serviceDeliveryEmployees.map((emp) => (
-    <option
-      key={emp.employee_id}
-      value={emp.employee_id}
-    >
-      {emp.emp_name}
-    </option>
-  ))}
-</select>
+            </select>
+            {employeeOptions.length === 0 && !loadingMeta && (
+              <span style={{ color: '#dc3545', fontSize: '12px', marginLeft: '10px' }}>
+                No Service Delivery employees found
+              </span>
+            )}
           </label>
         </div>
       </div>
@@ -229,7 +222,6 @@ console.log("Redux employees:", serviceDeliveryEmployees);
       <div className="dur-table-wrap">
         <table className="dur-table">
           <thead>
-           
             <tr>
               <th className="dur-col-slno sticky-slno">SLNO</th>
               <th className="sticky-emp">Employee Name</th>
@@ -238,7 +230,6 @@ console.log("Redux employees:", serviceDeliveryEmployees);
               <th>Done Yesterday</th>
               <th>Today's Plan</th>
               <th>Risks</th>
-              <th>Dependencies</th>
               <th>Total Time Needed</th>
               <th>Availability</th>
               <th>Utilization (%)</th>
@@ -247,7 +238,7 @@ console.log("Redux employees:", serviceDeliveryEmployees);
           <tbody>
             {loadingRows && (
               <tr>
-                <td colSpan={11} className="dur-state-row">
+                <td colSpan={10} className="dur-state-row">
                   Loading updates…
                 </td>
               </tr>
@@ -255,7 +246,7 @@ console.log("Redux employees:", serviceDeliveryEmployees);
 
             {!loadingRows && error && (
               <tr>
-                <td colSpan={11} className="dur-state-row dur-state-row--error">
+                <td colSpan={10} className="dur-state-row dur-state-row--error">
                   {error}
                 </td>
               </tr>
@@ -263,64 +254,54 @@ console.log("Redux employees:", serviceDeliveryEmployees);
 
             {!loadingRows && !error && rows.length === 0 && (
               <tr>
-                <td colSpan={11} className="dur-state-row">
+                <td colSpan={10} className="dur-state-row">
                   No updates logged for this date. Try a different date or filter.
                 </td>
               </tr>
             )}
 
-            {!loadingRows &&
-              !error &&
-              rows.map((row, idx) => {
-                const totalTimeNeeded = Number(row.total_time_needed) || 0;
-                const availability = 8 - totalTimeNeeded;
-                const utilization = ((totalTimeNeeded / 8) * 100).toFixed(1);
+            {!loadingRows && !error && rows.map((row, idx) => {
+              const totalTimeNeeded = Number(row.total_time_needed) || 0;
+              const availability = 8 - totalTimeNeeded;
+              const utilization = ((totalTimeNeeded / 8) * 100).toFixed(1);
 
-                return (
-                  <tr key={row.id}>
-                    <td className="dur-col-slno sticky-slno">{idx + 1}</td>
-                    <td className=" dur-text-cell dur-text-wrap sticky-emp">{row.employee_name || '—'}</td>
-                    <td className="dur-text-cell dur-text-wrap sticky-project">{row.project_name || '—'}</td>
-
-                    <td className="dur-text-cell sticky-status">
-                      <StatusBadge value={row.working_status} />
-                    </td>
-
-
-
-                    <td className="dur-text-cell dur-text-wrap">
-                      {row.done_yesterday || '—'}
-                    </td>
-
-                    <td className="dur-text-cell dur-text-wrap">
-                      {row.todays_tasks || '—'}
-                    </td>
-
-                    <td className="dur-text-cell dur-text-wrap">
-                      {row.risks || '—'}
-                    </td>
-
-                    <td className="dur-text-cell dur-text-wrap">
-                      {row.dependencies || '—'}
-                    </td>
-                    <td className="dur-col-hours">
-                      {totalTimeNeeded} hrs
-                    </td>
-
-                    <td className="dur-col-hours">
-                      {availability > 0
-                        ? `${availability} hrs`
-                        : availability === 0
-                          ? '0 hrs'
-                          : `${availability} hrs`}
-                    </td>
-
-                    <td className="dur-col-hours">
-                      {utilization}%
-                    </td>
-                  </tr>
-                );
-              })}
+              return (
+                <tr key={row.id}>
+                  <td className="dur-col-slno sticky-slno">{idx + 1}</td>
+                  <td className="dur-text-cell dur-text-wrap sticky-emp">
+                    {row.employee_name || '—'}
+                  </td>
+                  <td className="dur-text-cell dur-text-wrap sticky-project">
+                    {row.project_name || '—'}
+                  </td>
+                  <td className="dur-text-cell sticky-status">
+                    <StatusBadge value={row.working_status} />
+                  </td>
+                  <td className="dur-text-cell dur-text-wrap">
+                    {row.done_yesterday || '—'}
+                  </td>
+                  <td className="dur-text-cell dur-text-wrap">
+                    {row.todays_tasks || '—'}
+                  </td>
+                  <td className="dur-text-cell dur-text-wrap">
+                    {row.risks || '—'}
+                  </td>
+                  <td className="dur-col-hours">
+                    {totalTimeNeeded} hrs
+                  </td>
+                  <td className="dur-col-hours">
+                    {availability > 0
+                      ? `${availability} hrs`
+                      : availability === 0
+                        ? '0 hrs'
+                        : `${availability} hrs`}
+                  </td>
+                  <td className="dur-col-hours">
+                    {utilization}%
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

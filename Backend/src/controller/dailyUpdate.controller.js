@@ -1,4 +1,5 @@
-const { query } = require("../config/db");
+const { query, masterQuery } = require('../config/db');
+
 
 //POST/api/daily-updates
 const addDailyUpdate = async (req, res, next) => {
@@ -210,22 +211,24 @@ const deleteDailyUpdate = async (req, res, next) => {
   }
 };
 
-// GET /api/daily-updates/meta — fetch distinct dates, employee list and project list for filters
+
+
+// GET /api/daily-updates/meta
 async function getMeta(req, res) {
   try {
-    const dates = await query(`
-      SELECT DISTINCT date
-      FROM assignment_progress
-      WHERE date IS NOT NULL
-      ORDER BY date DESC
-    `);
+    console.log('🚀 getMeta called');
+    
+    // Generate all dates from Jan 1, 2025 to today
+    const today = new Date();
+    const startDate = new Date("2025-01-01");
+    const dates = [];
+    
+    for (let d = new Date(startDate); d <= today; d.setDate(d.getDate() + 1)) {
+      dates.push(d.toISOString().split("T")[0]);
+    }
+    dates.sort((a, b) => new Date(b) - new Date(a));
 
-    const employees = await query(`
-      SELECT id, name
-      FROM users
-      ORDER BY name
-    `);
-
+    // Get projects
     const projects = await query(`
       SELECT id, project_name
       FROM projects
@@ -233,20 +236,22 @@ async function getMeta(req, res) {
     `);
 
     res.status(200).json({
-      dates: dates.map(d => d.date),
-      employees,
-      projects
+      success: true,
+      dates: dates,
+      projects: projects
     });
 
   } catch (err) {
-    console.error("getMeta error:", err);
+    console.error('❌ getMeta error:', err);
     res.status(500).json({
-      error: "Failed to load filter options"
+      success: false,
+      error: "Failed to load filter options",
+      details: err.message
     });
   }
 }
 
-// GET /api/daily-updates/report?date=&project_id=&user_id= — fetch updates for given date with optional filters
+// GET /api/daily-updates/report
 async function getDailyUpdates(req, res) {
   const { date, project_id, user_id } = req.query;
 
@@ -264,7 +269,8 @@ async function getDailyUpdates(req, res) {
   }
 
   if (user_id) {
-    conditions.push("ap.user_id = ?");
+    // ✅ Filter using emp_id - NO users table
+    conditions.push("ap.emp_id = ?");
     params.push(user_id);
   }
 
@@ -272,12 +278,17 @@ async function getDailyUpdates(req, res) {
     ? `WHERE ${conditions.join(" AND ")}`
     : "";
 
+  // ✅ Only join with master.emp - NO users table
   const sql = `
     SELECT
       ap.id,
       ap.date,
-      ap.user_id,
-      u.name AS employee_name,
+      ap.emp_id,
+      e.emp_name AS employee_name,
+      e.emp_email AS employee_email,
+      e.emp_id,
+      e.u_id,
+      e.flag AS employee_status,
 
       ap.project_id,
       p.project_name,
@@ -294,32 +305,42 @@ async function getDailyUpdates(req, res) {
       ap.todays_tasks,
 
       ap.risks,
-
       ap.remarks
 
     FROM assignment_progress ap
 
-    LEFT JOIN users u
-      ON u.id = ap.user_id
+    -- ✅ Only join with master.emp
+    LEFT JOIN master.emp e
+      ON e.emp_id = ap.emp_id
 
     LEFT JOIN projects p
       ON p.id = ap.project_id
 
     ${whereClause}
 
-    ORDER BY u.name, p.project_name, ap.task_name
+    ORDER BY e.emp_name, p.project_name, ap.task_name
   `;
 
   try {
+    console.log('📊 Fetching daily updates');
     const rows = await query(sql, params);
-    res.status(200).json(rows);
+    console.log(`✅ Found ${rows.length} updates`);
+    
+    res.status(200).json({
+      success: true,
+      data: rows
+    });
   } catch (err) {
-    console.error("getDailyUpdates error:", err);
+    console.error('❌ getDailyUpdates error:', err);
     res.status(500).json({
-      error: "Failed to load daily updates"
+      success: false,
+      error: "Failed to load daily updates",
+      details: err.message
     });
   }
 }
+
+
 module.exports = {
   addDailyUpdate,
   getDailyUpdatesByUserId,

@@ -1,4 +1,3 @@
-// store/slices/authSlice.js
 import { createSlice } from "@reduxjs/toolkit";
 import Cookies from "js-cookie";
 
@@ -11,10 +10,18 @@ const getInitialUser = () => {
   }
 };
 
+const getInitialEmployees = () => {
+  try {
+    const stored = localStorage.getItem("serviceDeliveryEmployees");
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+};
+
 const initialState = {
   user: getInitialUser(),
-    serviceDeliveryEmployees: [],
-
+  serviceDeliveryEmployees: getInitialEmployees(),
 };
 
 const authSlice = createSlice({
@@ -23,19 +30,14 @@ const authSlice = createSlice({
   reducers: {
     loginUser: (state, action) => {
       const data = action.payload;
-
-      // console.log("data",data);
-      console.log("data",data.serviceDeliveryEmployees);
       const serviceDeliveryEmployees = data.serviceDeliveryEmployees || [];
-      
 
-      // Handle both array and object result formats
       const userResult = Array.isArray(data.result) ? data.result[0] : data.result;
 
       const user = {
         userid: data.userid,
-        id: data.id || userResult?.id,
-        emp_id: userResult?.emp_id,
+        // id: data.id || userResult?.id, // ❌ Remove users.id
+        emp_id: userResult?.emp_id,        // ✅ Use emp_id from master.emp
         emp_email: userResult?.emp_email,
         emp_name: userResult?.emp_name,
         emp_dept: userResult?.emp_dept,
@@ -45,41 +47,33 @@ const authSlice = createSlice({
         role_id: userResult?.role_id,
         association_id: userResult?.association_id,
         status: userResult?.status,
+        u_id: userResult?.u_id,  // ✅ Store u_id from master.emp
       };
 
-      console.log(" Storing user in Redux/Cookie:", {
-        emp_name: user.emp_name,
-        role: user.role,
-        emp_id: user.emp_id,
-        id: user.id,
-      });
-
-      // Store accessToken in localStorage for axios interceptor
       if (data.accessToken) {
         localStorage.setItem("token", data.accessToken);
-        console.log("🔐 Token stored in localStorage");
       }
 
-      if (user.id) {
-        localStorage.setItem("UserID", user.id);
-        console.log("🔐 UserID stored in localStorage:", user.id);
+      // Store emp_id instead of user id
+      if (user.emp_id) {
+        localStorage.setItem("emp_id", user.emp_id);
       }
 
-      // persist user in cookie
+      // Store employees
+      if (serviceDeliveryEmployees.length > 0) {
+        localStorage.setItem(
+          "serviceDeliveryEmployees",
+          JSON.stringify(serviceDeliveryEmployees)
+        );
+      }
+
       Cookies.set("user", JSON.stringify(user), {
         expires: 7,
         path: "/",
       });
 
       state.user = user;
-      console.log(
-  "Employees from payload:",
-  data.serviceDeliveryEmployees.length,
-  data.serviceDeliveryEmployees
-);
-     state.serviceDeliveryEmployees = serviceDeliveryEmployees;
-
-
+      state.serviceDeliveryEmployees = serviceDeliveryEmployees;
     },
 
     logoutUser: (state) => {
@@ -88,6 +82,7 @@ const authSlice = createSlice({
       localStorage.removeItem("email");
       localStorage.removeItem("emp_id");
       localStorage.removeItem("UserID");
+      localStorage.removeItem("serviceDeliveryEmployees");
 
       state.user = null;
       state.serviceDeliveryEmployees = [];

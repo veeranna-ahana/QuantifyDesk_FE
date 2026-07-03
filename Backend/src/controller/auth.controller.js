@@ -1,7 +1,7 @@
-const jwt    = require('jsonwebtoken');
+const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
-const https  = require('https');
-const { query } = require('../config/db');
+const https = require('https');
+const { query, masterQuery } = require('../config/db');
 const { pool } = require("../../helpers/dbConfig/connect");
 const { infoLog, errorLog } = require("../../middleware/logger");
 const axios = require('axios');
@@ -233,46 +233,15 @@ allDepartmentEmployees.push({
       departmentData
     );
 
-    // Fetch local user id from Quantify.users table, or auto-create if missing
-    let localUserId = null;
+    // ✅ Using emp_id from master.emp - No users table dependency
     const empIdForLookup = loginResult.result[0]?.emp_id || user.emp_id;
-    if (empIdForLookup) {
-      try {
-        const [localUserRows] = await pool.promise().query(
-          "SELECT id FROM users WHERE emp_id = ?",
-          [empIdForLookup]
-        );
-        if (localUserRows && localUserRows.length > 0) {
-          localUserId = localUserRows[0].id;
-        } else {
-          // Auto-create local user
-          const roleForUser = loginResult.result[0]?.role || "EMP";
-          const normalizedRole = roleForUser === "Admin" ? "ADMIN" : (roleForUser === "Manager" ? "MANAGER" : "EMP");
-          
-          console.log(`👤 Auto-provisioning local user for emp_id: ${empIdForLookup}`);
-          const [insertResult] = await pool.promise().query(
-            `INSERT INTO users (emp_id, name, email, role, daily_capacity) 
-             VALUES (?, ?, ?, ?, ?)`,
-            [
-              empIdForLookup,
-              user.emp_name || loginResult.result[0]?.emp_name || "Employee",
-              user.emp_email || loginResult.result[0]?.emp_email || "",
-              normalizedRole,
-              8
-            ]
-          );
-          localUserId = insertResult.insertId;
-        }
-      } catch (dbErr) {
-        console.error("❌ Error finding or creating local user during login:", dbErr.message);
-      }
-    }
+    // localUserId is no longer needed - removed users table dependency
 
     // Generate tokens
     const tokenPayload = {
       emp_id: empIdForLookup,
       userid: loginResult.userid,
-      id: localUserId,
+      // id: localUserId, // ❌ Removed - no users table dependency
       role_id: loginResult.result[0]?.role_id || 0,
     };
 
@@ -284,17 +253,17 @@ allDepartmentEmployees.push({
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    console.log("✅ Login successful for:", user.emp_email, "| Local User ID:", localUserId);
+    console.log("✅ Login successful for:", user.emp_email, "| Emp ID:", empIdForLookup);
     
     return res.status(200).json({
       status: "success",
       success: true,
       message: "Login successful",
       userid: loginResult.userid,
-      id: localUserId,
+      // id: localUserId, // ❌ Removed - no users table dependency
       accessToken,
       result: loginResult.result,
       source: loginResult.source,
@@ -373,7 +342,7 @@ const processUserLoginWithRBAC = (userRecord, rbacData, departmentData) => {
         emp_id,
         emp_name: userRecord.emp_name,
         emp_email: userRecord.emp_email,
-        role: normalizedRole,  // Use normalized role name
+        role: normalizedRole,
         designation: role.role_name,
         role_id: role.role_id,
         association_id: role.association_id,

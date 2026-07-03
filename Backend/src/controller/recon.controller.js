@@ -1,7 +1,7 @@
-const { query } = require("../config/db");
+const { query, masterQuery } = require("../config/db");
 
 // ──────────────────────────────────────────────────────────────
-// 1. GET FILTER OPTIONS (UPDATED - Includes timesheet clients)
+// 1. GET FILTER OPTIONS (UPDATED - Uses master.emp)
 // ──────────────────────────────────────────────────────────────
 const getReconFilters = async (req, res, next) => {
     try {
@@ -33,11 +33,13 @@ const getReconFilters = async (req, res, next) => {
             WHERE project_code IS NOT NULL
         `);
         
-        // ─── Get employees ─────────────────────────────────────────
-        const employees = await query(`
-            SELECT id, emp_id, name 
-            FROM users 
-            WHERE role = 'EMP' AND emp_id IS NOT NULL
+        // ─── Get employees from master.emp ─────────────────────────
+        const employees = await masterQuery(`
+            SELECT u_id as id, emp_id, emp_name as name 
+            FROM emp 
+            WHERE flag = 'Active' 
+            AND emp_id IS NOT NULL
+            ORDER BY emp_name
         `);
         
         // ─── Get departments ───────────────────────────────────────
@@ -45,12 +47,11 @@ const getReconFilters = async (req, res, next) => {
             SELECT DISTINCT 'Application Development and Automation' as dept
         `);
         
-        // ─── Get managers ──────────────────────────────────────────
+        // ─── Get managers from projects ──────────────────────────
         const managers = await query(`
-            SELECT DISTINCT u.name as manager_name
-            FROM users u
-            JOIN projects p ON p.project_manager = u.name
-            WHERE p.project_manager IS NOT NULL
+            SELECT DISTINCT project_manager as manager_name
+            FROM projects
+            WHERE project_manager IS NOT NULL AND project_manager != ''
         `);
         
         res.status(200).json({
@@ -74,8 +75,9 @@ const getReconFilters = async (req, res, next) => {
         res.status(500).json({ message: err.message });
     }
 };
+
 // ──────────────────────────────────────────────────────────────
-// 2. GET DASHBOARD SUMMARY (FIXED - SAME LOGIC AS PROJECT LEVEL)
+// 2. GET DASHBOARD SUMMARY (UPDATED - Uses master.emp)
 // ──────────────────────────────────────────────────────────────
 const getReconDashboard = async (req, res, next) => {
     try {
@@ -170,7 +172,7 @@ const getReconDashboard = async (req, res, next) => {
         let projectsWithTimesheets = 0;
         let projectsWithoutTimesheets = 0;
         
-        // ─── ✅ Calculate total actual hours from timesheet_entries directly ──
+        // ─── Calculate total actual hours from timesheet_entries directly ──
         const totalActualResult = await query(`
             SELECT COALESCE(SUM(hours), 0) as total_hours
             FROM timesheet_entries
@@ -200,14 +202,13 @@ const getReconDashboard = async (req, res, next) => {
             }
         });
         
-        // ─── ✅ Calculate over/under utilized (SAME LOGIC AS PROJECT LEVEL) ──
+        // ─── Calculate over/under utilized ──────────────────────────
         let overutilized = 0;
         let underutilized = 0;
         
         const projectWithEstimates = allProjects.filter(p => p.has_estimate && p.estimated_hours > 0);
         
         for (const p of projectWithEstimates) {
-            // Get actual hours using both project_id and original_project_code
             const actualResult = await query(`
                 SELECT COALESCE(SUM(hours), 0) as actual_hours
                 FROM timesheet_entries
@@ -218,9 +219,6 @@ const getReconDashboard = async (req, res, next) => {
             const actualHrs = parseFloat(actualResult[0]?.actual_hours || 0);
             const variancePct = ((p.estimated_hours - actualHrs) / p.estimated_hours) * 100;
             
-            // ✅ SAME LOGIC AS PROJECT LEVEL API
-            // If variancePct < 0 → Over Utilized (Actual > Estimated)
-            // If variancePct > 0 → Under Utilized (Estimated > Actual)
             if (variancePct < 0) {
                 overutilized++;
             } else if (variancePct > 0) {
@@ -228,11 +226,12 @@ const getReconDashboard = async (req, res, next) => {
             }
         }
         
-        // ─── Get total employees ──────────────────────────────────
-        const employeesResult = await query(
-            `SELECT COUNT(DISTINCT user_id) as count FROM timesheet_entries WHERE user_id IS NOT NULL`, 
-            []
-        );
+        // ─── Get total employees from master.emp via timesheet_entries ──
+        const employeesResult = await query(`
+            SELECT COUNT(DISTINCT te.emp_id) as count 
+            FROM timesheet_entries te
+            WHERE te.emp_id IS NOT NULL
+        `);
         const totalEmployees = parseInt(employeesResult[0]?.count || 0);
         
         res.status(200).json({
@@ -254,8 +253,9 @@ const getReconDashboard = async (req, res, next) => {
         res.status(500).json({ message: err.message });
     }
 };
+
 // ──────────────────────────────────────────────────────────────
-// 3. GET PROJECT LEVEL RECONCILIATION (COMPLETE FIX)
+// 3. GET PROJECT LEVEL RECONCILIATION (UPDATED - Uses master.emp)
 // ──────────────────────────────────────────────────────────────
 const getProjectLevelRecon = async (req, res, next) => {
     try {
@@ -316,7 +316,7 @@ const getProjectLevelRecon = async (req, res, next) => {
                 p.client_name,
                 COALESCE((SELECT SUM(total_hrs) FROM effort_estimates WHERE project_id = p.id), 0) as estimated_hours,
                 COALESCE((SELECT SUM(hours) FROM timesheet_entries te WHERE te.project_id = p.id ${dateWhereClause}), 0) as actual_hours,
-                COALESCE((SELECT COUNT(DISTINCT te.user_id) FROM timesheet_entries te WHERE te.project_id = p.id ${dateWhereClause}), 0) as employee_count,
+                COALESCE((SELECT COUNT(DISTINCT te.emp_id) FROM timesheet_entries te WHERE te.project_id = p.id ${dateWhereClause}), 0) as employee_count,
                 1 as in_system,
                 CASE WHEN EXISTS (SELECT 1 FROM effort_estimates WHERE project_id = p.id) THEN 1 ELSE 0 END as has_estimate
             FROM projects p
@@ -330,8 +330,8 @@ const getProjectLevelRecon = async (req, res, next) => {
             const empProjectIds = await query(`
                 SELECT DISTINCT te.project_id 
                 FROM timesheet_entries te
-                LEFT JOIN users u ON te.user_id = u.id
-                WHERE u.name LIKE ?
+                LEFT JOIN master.emp e ON te.emp_id = e.emp_id
+                WHERE e.emp_name LIKE ?
                 AND te.project_id IS NOT NULL
             `, [`%${employeeName}%`]);
             
@@ -368,8 +368,8 @@ const getProjectLevelRecon = async (req, res, next) => {
             timesheetParams.push(parseInt(year));
         }
         if (employeeName) {
-            employeeJoin = 'LEFT JOIN users u ON te.user_id = u.id';
-            timesheetWhere.push('u.name LIKE ?');
+            employeeJoin = 'LEFT JOIN master.emp e ON te.emp_id = e.emp_id';
+            timesheetWhere.push('e.emp_name LIKE ?');
             timesheetParams.push(`%${employeeName}%`);
         }
         if (department) {
@@ -381,14 +381,13 @@ const getProjectLevelRecon = async (req, res, next) => {
             ? `AND ${timesheetWhere.join(' AND ')}` 
             : '';
         
-        // ✅ Fix: Remove ee.id from SELECT and use proper grouping
         let timesheetQuery = `
             SELECT 
                 te.original_project_code as project_code,
                 MAX(te.original_project_name) as project_name,
                 MAX(te.original_client_name) as client_name,
                 COALESCE(SUM(te.hours), 0) as actual_hours,
-                COUNT(DISTINCT te.user_id) as employee_count,
+                COUNT(DISTINCT te.emp_id) as employee_count,
                 0 as in_system,
                 0 as has_estimate,
                 NULL as project_id
@@ -404,17 +403,14 @@ const getProjectLevelRecon = async (req, res, next) => {
         // ─── Combine results using Map to deduplicate ──────────────
         const projectMap = new Map();
         
-        // Add system projects first
         filteredSystemProjects.forEach(p => {
             const key = p.project_code;
             projectMap.set(key, p);
         });
         
-        // Add/merge timesheet projects
         timesheetProjects.forEach(p => {
             const key = p.project_code;
             if (projectMap.has(key)) {
-                // Merge: update actual_hours and employee_count if timesheet has data
                 const existing = projectMap.get(key);
                 if (p.actual_hours > 0) {
                     existing.actual_hours = p.actual_hours;
@@ -422,7 +418,6 @@ const getProjectLevelRecon = async (req, res, next) => {
                 }
                 projectMap.set(key, existing);
             } else {
-                // Only add if project doesn't exist in system
                 if (!p.in_system) {
                     projectMap.set(key, p);
                 }
@@ -439,28 +434,26 @@ const getProjectLevelRecon = async (req, res, next) => {
         }
         
         const result = allProjects.map(p => {
-            // ─── Status logic ─────────────────────────────────────────────
-const estimated = parseFloat(p.estimated_hours || 0);
-const actual = parseFloat(p.actual_hours || 0);
-const variance = estimated - actual;
-const variancePct = estimated > 0 ? (variance / estimated) * 100 : 0;
+            const estimated = parseFloat(p.estimated_hours || 0);
+            const actual = parseFloat(p.actual_hours || 0);
+            const variance = estimated - actual;
+            const variancePct = estimated > 0 ? (variance / estimated) * 100 : 0;
 
-let status = 'On Track';
+            let status = 'On Track';
 
-if (!p.in_system) {
-    status = 'Project Not Found';
-} else if (estimated === 0) {
-    status = 'No Estimate';
-} else if (variancePct < 0) {
-    // ✅ Negative variance means actual > estimated → OVER-UTILIZED
-    status = 'Over Utilized';
-} else if (variancePct > 20) {
-    status = 'Under Utilized';
-} else if (variancePct > 0) {
-    status = 'Under Utilized';
-} else {
-    status = 'On Track';
-}
+            if (!p.in_system) {
+                status = 'Project Not Found';
+            } else if (estimated === 0) {
+                status = 'No Estimate';
+            } else if (variancePct < 0) {
+                status = 'Over Utilized';
+            } else if (variancePct > 20) {
+                status = 'Under Utilized';
+            } else if (variancePct > 0) {
+                status = 'Under Utilized';
+            } else {
+                status = 'On Track';
+            }
             
             return {
                 project_id: p.project_id,
@@ -480,7 +473,6 @@ if (!p.in_system) {
             };
         });
         
-        // Sort with null checks
         result.sort((a, b) => {
             const aCode = a?.project_code || '';
             const bCode = b?.project_code || '';
@@ -496,8 +488,9 @@ if (!p.in_system) {
         res.status(500).json({ message: err.message });
     }
 };
+
 // ──────────────────────────────────────────────────────────────
-// 4. GET EMPLOYEE LEVEL RECONCILIATION (COMPLETE FIX)
+// 4. GET EMPLOYEE LEVEL RECONCILIATION (UPDATED - Uses master.emp)
 // ──────────────────────────────────────────────────────────────
 const getEmployeeLevelRecon = async (req, res, next) => {
     try {
@@ -528,7 +521,7 @@ const getEmployeeLevelRecon = async (req, res, next) => {
             params.push(`%${projectName}%`, `%${projectName}%`);
         }
         if (employeeName) {
-            whereConditions.push('u.name LIKE ?');
+            whereConditions.push('e.emp_name LIKE ?');
             params.push(`%${employeeName}%`);
         }
         if (department) {
@@ -544,7 +537,7 @@ const getEmployeeLevelRecon = async (req, res, next) => {
             ? `WHERE ${whereConditions.join(' AND ')}` 
             : '';
         
-        // ─── Query 1: Get ALL assignments ──────────────────────────────
+        // ─── Query 1: Get ALL assignments using emp_id ──────────────
         let assignWhere = [];
         let assignParams = [];
         
@@ -575,9 +568,8 @@ const getEmployeeLevelRecon = async (req, res, next) => {
         
         const assignmentsData = await query(`
             SELECT 
-                a.user_id,
-                u.emp_id as employee_code,
-                u.name as employee_name,
+                a.emp_id,
+                e.emp_name as employee_name,
                 a.project_id,
                 p.project_code,
                 p.project_name,
@@ -587,13 +579,13 @@ const getEmployeeLevelRecon = async (req, res, next) => {
                 SUM(a.estimated_hours) as assigned_hours,
                 GROUP_CONCAT(DISTINCT a.role) as roles
             FROM assignments a
-            LEFT JOIN users u ON a.user_id = u.id
+            LEFT JOIN master.emp e ON a.emp_id = e.emp_id
             LEFT JOIN projects p ON a.project_id = p.id
             WHERE 1=1 ${assignWhereClause}
-            GROUP BY a.user_id, a.project_id, u.emp_id, u.name, p.project_code, p.project_name, p.client_name
+            GROUP BY a.emp_id, a.project_id, e.emp_name, p.project_code, p.project_name, p.client_name
         `, assignParams);
         
-        // ─── Query 2: Get ALL timesheet hours (including project_id = NULL) ──────────────
+        // ─── Query 2: Get ALL timesheet hours using emp_id ──────────
         let timesheetWhere = [];
         let timesheetParams = [];
         
@@ -606,7 +598,7 @@ const getEmployeeLevelRecon = async (req, res, next) => {
             timesheetParams.push(parseInt(year));
         }
         if (employeeName) {
-            timesheetWhere.push('u.name LIKE ?');
+            timesheetWhere.push('e.emp_name LIKE ?');
             timesheetParams.push(`%${employeeName}%`);
         }
         if (projectCode) {
@@ -632,9 +624,8 @@ const getEmployeeLevelRecon = async (req, res, next) => {
         
         const timesheetData = await query(`
             SELECT 
-                te.user_id,
-                u.emp_id as employee_code,
-                u.name as employee_name,
+                te.emp_id,
+                e.emp_name as employee_name,
                 COALESCE(te.project_id, p.id) as project_id,
                 COALESCE(p.project_code, te.original_project_code) as project_code,
                 COALESCE(p.project_name, te.original_project_name) as project_name,
@@ -642,10 +633,10 @@ const getEmployeeLevelRecon = async (req, res, next) => {
                 COALESCE(SUM(te.hours), 0) as actual_hours,
                 CASE WHEN p.id IS NOT NULL OR te.project_id IS NOT NULL THEN 1 ELSE 0 END as project_exists
             FROM timesheet_entries te
-            LEFT JOIN users u ON te.user_id = u.id
+            LEFT JOIN master.emp e ON te.emp_id = e.emp_id
             LEFT JOIN projects p ON p.project_code = te.original_project_code
             WHERE 1=1 ${timesheetWhereClause}
-            GROUP BY te.user_id, u.emp_id, u.name, te.project_id, p.id, p.project_code, p.project_name, 
+            GROUP BY te.emp_id, e.emp_name, te.project_id, p.id, p.project_code, p.project_name, 
                      p.client_name, te.original_project_code, te.original_project_name, te.original_client_name
         `, timesheetParams);
         
@@ -654,10 +645,9 @@ const getEmployeeLevelRecon = async (req, res, next) => {
         
         // Add assignments data first
         assignmentsData.forEach(a => {
-            const key = `${a.user_id}_${a.project_id}`;
+            const key = `${a.emp_id}_${a.project_id}`;
             employeeMap.set(key, {
-                user_id: a.user_id,
-                employee_code: a.employee_code || '—',
+                emp_id: a.emp_id,
                 employee_name: a.employee_name || 'Unknown',
                 project_id: a.project_id,
                 project_code: a.project_code || '—',
@@ -674,10 +664,9 @@ const getEmployeeLevelRecon = async (req, res, next) => {
         
         // Add timesheet data (merge with assignments or create new entry)
         timesheetData.forEach(t => {
-            const key = `${t.user_id}_${t.project_id || t.project_code}`;
+            const key = `${t.emp_id}_${t.project_id || t.project_code}`;
             
             if (employeeMap.has(key)) {
-                // Update existing assignment with actual hours
                 const existing = employeeMap.get(key);
                 existing.actual_hours = parseFloat(t.actual_hours || 0);
                 existing.project_id = t.project_id || existing.project_id;
@@ -687,10 +676,8 @@ const getEmployeeLevelRecon = async (req, res, next) => {
                 existing.project_exists = t.project_exists === 1;
                 employeeMap.set(key, existing);
             } else {
-                // Create new entry for timesheet-only employee
                 employeeMap.set(key, {
-                    user_id: t.user_id,
-                    employee_code: t.employee_code || '—',
+                    emp_id: t.emp_id,
                     employee_name: t.employee_name || 'Unknown',
                     project_id: t.project_id,
                     project_code: t.project_code || '—',
@@ -740,23 +727,22 @@ const getEmployeeLevelRecon = async (req, res, next) => {
                 utilizationDisplay = 'N/A';
             }
             
-            // ─── Corrected employee status logic ──────────────────────────
-let status = 'On Track';
-if (estimatedHours > 0) {
-    if (variancePct < 0) {
-        status = 'Over Utilized';     // ✅ Actual > Estimated
-    } else if (variancePct > 20) {
-        status = 'Under Utilized';
-    } else if (variancePct > 0) {
-        status = 'Under Utilized';
-    }
-} else if (!e.project_exists) {
-    status = 'Project Not Found';
-} else if (estimatedHours === 0 && actual === 0) {
-    status = 'No Activity';
-} else if (estimatedHours === 0 && actual > 0) {
-    status = 'No Estimate';
-}
+            let status = 'On Track';
+            if (estimatedHours > 0) {
+                if (variancePct < 0) {
+                    status = 'Over Utilized';
+                } else if (variancePct > 20) {
+                    status = 'Under Utilized';
+                } else if (variancePct > 0) {
+                    status = 'Under Utilized';
+                }
+            } else if (!e.project_exists) {
+                status = 'Project Not Found';
+            } else if (estimatedHours === 0 && actual === 0) {
+                status = 'No Activity';
+            } else if (estimatedHours === 0 && actual > 0) {
+                status = 'No Estimate';
+            }
             
             let roleDisplay = 'Not Assigned';
             if (e.roles && e.roles !== 'Not Assigned') {
@@ -765,7 +751,7 @@ if (estimatedHours > 0) {
             }
             
             return {
-                employee_code: e.employee_code,
+                employee_code: e.emp_id || '—',
                 employee_name: e.employee_name,
                 reporting_manager: '—',
                 project_id: e.project_id,
@@ -801,19 +787,17 @@ if (estimatedHours > 0) {
 };
 
 // ──────────────────────────────────────────────────────────────
-// 5. GET PROJECT DETAIL (DIRECT APPROACH)
+// 5. GET PROJECT DETAIL (UPDATED - Uses master.emp)
 // ──────────────────────────────────────────────────────────────
 const getProjectDetail = async (req, res, next) => {
     try {
         const { projectId } = req.params;
         const { month, year } = req.query;
         
-        // ─── Handle null/undefined projectId ──────────────────────
         if (!projectId || projectId === 'null' || projectId === 'undefined') {
             return res.status(400).json({ message: "Invalid project identifier" });
         }
         
-        // ─── Check if it's a numeric ID or a project code ──────────
         const isNumeric = /^\d+$/.test(projectId);
         
         let projectIdNum = null;
@@ -828,16 +812,18 @@ const getProjectDetail = async (req, res, next) => {
         
         if (projectExists.length > 0) {
             projectIdNum = projectExists[0].id;
-            // Get the actual project code from database
             const projectInfo = await query(`SELECT project_code FROM projects WHERE id = ?`, [projectIdNum]);
             if (projectInfo.length > 0) {
                 projectCode = projectInfo[0].project_code;
             }
         }
         
-        // ─── If project not found in system ──────────────────────────
+        let projectData = [];
+        let roleData = [];
+        let employeeData = [];
+        
         if (!projectIdNum) {
-            // Get project data from timesheet_entries
+            // Project not found in system - get from timesheet_entries
             projectData = await query(`
                 SELECT 
                     NULL as project_id,
@@ -846,18 +832,17 @@ const getProjectDetail = async (req, res, next) => {
                     NULL as client_name,
                     0 as estimated_hours,
                     COALESCE(SUM(te.hours), 0) as actual_hours,
-                    COUNT(DISTINCT te.user_id) as employee_count,
+                    COUNT(DISTINCT te.emp_id) as employee_count,
                     0 as in_system
                 FROM timesheet_entries te
                 WHERE te.original_project_code = ?
                 GROUP BY te.original_project_code
             `, [projectCode]);
             
-            // Get employee data
             employeeData = await query(`
                 SELECT 
-                    u.emp_id as employee_code,
-                    u.name as employee_name,
+                    te.emp_id as employee_code,
+                    e.emp_name as employee_name,
                     NULL as role,
                     0 as assigned_hours,
                     0 as assigned_days,
@@ -869,9 +854,9 @@ const getProjectDetail = async (req, res, next) => {
                     0 as variance_pct,
                     0 as utilization_pct
                 FROM timesheet_entries te
-                LEFT JOIN users u ON te.user_id = u.id
+                LEFT JOIN master.emp e ON te.emp_id = e.emp_id
                 WHERE te.original_project_code = ?
-                GROUP BY u.id, u.emp_id, u.name
+                GROUP BY te.emp_id, e.emp_name
                 ORDER BY actual_hours DESC
             `, [projectCode]);
             
@@ -892,7 +877,7 @@ const getProjectDetail = async (req, res, next) => {
                         WHERE te.project_id = p.id OR te.original_project_code = p.project_code
                     ), 0) as actual_hours,
                     COALESCE((
-                        SELECT COUNT(DISTINCT te.user_id) 
+                        SELECT COUNT(DISTINCT te.emp_id) 
                         FROM timesheet_entries te 
                         WHERE te.project_id = p.id OR te.original_project_code = p.project_code
                     ), 0) as employee_count,
@@ -939,45 +924,41 @@ const getProjectDetail = async (req, res, next) => {
                 ORDER BY ee.role
             `, [projectIdNum]);
             
-            // ─── ✅ GET ALL EMPLOYEES DIRECTLY FROM TIMESHEET ──────
-            // This is the simplest and most reliable approach
+            // ─── GET ALL EMPLOYEES FROM TIMESHEET using emp_id ──────
             const allTimesheetEmployees = await query(`
                 SELECT 
-                    te.user_id,
-                    u.emp_id as employee_code,
-                    u.name as employee_name,
+                    te.emp_id,
+                    e.emp_name as employee_name,
                     COALESCE(SUM(te.hours), 0) as actual_hours
                 FROM timesheet_entries te
-                LEFT JOIN users u ON te.user_id = u.id
+                LEFT JOIN master.emp e ON te.emp_id = e.emp_id
                 WHERE te.project_id = ? OR te.original_project_code = ?
-                GROUP BY te.user_id, u.emp_id, u.name
+                GROUP BY te.emp_id, e.emp_name
                 ORDER BY actual_hours DESC
             `, [projectIdNum, projectCode]);
             
-            // ─── GET ALL ASSIGNMENTS FOR THIS PROJECT ──────────────
+            // ─── GET ALL ASSIGNMENTS FOR THIS PROJECT using emp_id ──
             const allAssignments = await query(`
                 SELECT 
-                    a.user_id,
-                    u.emp_id as employee_code,
-                    u.name as employee_name,
+                    a.emp_id,
+                    e.emp_name as employee_name,
                     a.role,
                     SUM(a.units_assigned) as assigned_units,
                     SUM(a.estimated_days) as assigned_days,
                     SUM(a.estimated_hours) as assigned_hours
                 FROM assignments a
-                LEFT JOIN users u ON a.user_id = u.id
+                LEFT JOIN master.emp e ON a.emp_id = e.emp_id
                 WHERE a.project_id = ?
-                GROUP BY a.user_id, u.emp_id, u.name, a.role
+                GROUP BY a.emp_id, e.emp_name, a.role
             `, [projectIdNum]);
             
             // ─── Combine both using Map ──────────────────────────────
             const employeeMap = new Map();
             
-            // First, add all timesheet employees
             allTimesheetEmployees.forEach(e => {
-                const key = e.user_id;
+                const key = e.emp_id;
                 employeeMap.set(key, {
-                    employee_code: e.employee_code || '—',
+                    employee_code: e.emp_id || '—',
                     employee_name: e.employee_name || 'Unknown',
                     actual_hours: parseFloat(e.actual_hours || 0),
                     assigned_units: 0,
@@ -987,9 +968,8 @@ const getProjectDetail = async (req, res, next) => {
                 });
             });
             
-            // Then, add/update with assignments data
             allAssignments.forEach(a => {
-                const key = a.user_id;
+                const key = a.emp_id;
                 if (employeeMap.has(key)) {
                     const existing = employeeMap.get(key);
                     existing.assigned_units += parseFloat(a.assigned_units || 0);
@@ -1000,9 +980,8 @@ const getProjectDetail = async (req, res, next) => {
                     }
                     employeeMap.set(key, existing);
                 } else {
-                    // This employee has assignment but no timesheet
                     employeeMap.set(key, {
-                        employee_code: a.employee_code || '—',
+                        employee_code: a.emp_id || '—',
                         employee_name: a.employee_name || 'Unknown',
                         actual_hours: 0,
                         assigned_units: parseFloat(a.assigned_units || 0),
@@ -1013,7 +992,6 @@ const getProjectDetail = async (req, res, next) => {
                 }
             });
             
-            // ─── Build employee summary ──────────────────────────────────
             employeeData = Array.from(employeeMap.values()).map(emp => {
                 const assignedUnits = emp.assigned_units;
                 const assignedDays = emp.assigned_days;
@@ -1033,7 +1011,6 @@ const getProjectDetail = async (req, res, next) => {
                 let roleDisplay = 'Not Assigned';
                 if (emp.roles && emp.roles !== 'Not Assigned') {
                     const roleList = emp.roles.split(', ');
-                    // Remove duplicates
                     const uniqueRoles = [...new Set(roleList)];
                     roleDisplay = uniqueRoles.join(', ');
                 }
@@ -1055,7 +1032,6 @@ const getProjectDetail = async (req, res, next) => {
                 };
             });
             
-            // Sort by employee name
             employeeData.sort((a, b) => a.employee_name.localeCompare(b.employee_name));
         }
         
