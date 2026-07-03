@@ -59,13 +59,13 @@ const KPI = ({ label, value, color }) => (
 );
 
 // ── NEW: Effort chip shown in role bar header ─────────────────────────────────
-const EffortChip = ({ label, value, color }) => (
+const EffortChip = ({ label, value, color, valColor }) => (
   <div style={{
     display: "flex", flexDirection: "column", alignItems: "center",
     background: "rgba(255,255,255,0.28)", borderRadius: 5,
     padding: "2px 8px", minWidth: 52,
   }}>
-    <span style={{ fontSize: 12, fontWeight: 800, color }}>{value ?? "—"}</span>
+    <span style={{ fontSize: 12, fontWeight: 800, color: valColor || color }}>{value ?? "—"}</span>
     <span style={{ fontSize: 9, color, opacity: 0.75, textTransform: "uppercase", letterSpacing: "0.3px" }}>{label}</span>
   </div>
 );
@@ -78,6 +78,26 @@ const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onClose })
   const [hours, setHours] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  const handleDaysChange = (val) => {
+    setDays(val);
+    if (val === "" || isNaN(Number(val))) {
+      setHours("");
+    } else {
+      setHours(String(Number(val) * 8));
+    }
+    setError("");
+  };
+
+  const handleHoursChange = (val) => {
+    setHours(val);
+    if (val === "" || isNaN(Number(val))) {
+      setDays("");
+    } else {
+      setDays(String(Number(val) / 8));
+    }
+    setError("");
+  };
 
   // Assignments already on this role+task
   const existing = assignments.filter(
@@ -230,7 +250,7 @@ const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onClose })
               step="0.5"
               placeholder="0"
               value={days}
-              onChange={e => { setDays(e.target.value); setError(""); }}
+              onChange={e => handleDaysChange(e.target.value)}
               style={{ ...M.input, borderColor: daysExceeded ? "#e74c3c" : "#ddd" }}
             />
           </div>
@@ -242,7 +262,7 @@ const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onClose })
               step="0.5"
               placeholder="0"
               value={hours}
-              onChange={e => { setHours(e.target.value); setError(""); }}
+              onChange={e => handleHoursChange(e.target.value)}
               style={{ ...M.input, borderColor: hoursExceeded ? "#e74c3c" : "#ddd" }}
             />
           </div>
@@ -414,12 +434,15 @@ const AssignmentScreen = () => {
     const key = `${role}||${taskName}`;
     setLoadDraft(prev => {
       const currentEntry = prev[key] || {};
+      const numericVal = val === "" || isNaN(Number(val)) ? "" : Number(val);
       const nextEntry = {
         ...currentEntry,
-        [field]: val === "" ? "" : Number(val),
+        [field]: numericVal,
       };
       if (field === "estimated_days") {
-        nextEntry.estimated_hours = val === "" ? "" : Number(val) * 8;
+        nextEntry.estimated_hours = numericVal === "" ? "" : numericVal * 8;
+      } else if (field === "estimated_hours") {
+        nextEntry.estimated_days = numericVal === "" ? "" : numericVal / 8;
       }
       return {
         ...prev,
@@ -619,6 +642,10 @@ console.log("Redux employees:", serviceDeliveryEmployees);
               const rolePlanned  = tasks.reduce((s, t) => s + (Number(loadDraft[`${role}||${t.task_name}`]?.planned_units) || 0), 0);
               const roleAssigned = tasks.reduce((s, t) => s + Number(summaryByKey[`${role}||${t.task_name}`]?.total_assigned || 0), 0);
 
+              const roleAllocatedHrs = tasks.reduce((s, t) => s + (Number(loadDraft[`${role}||${t.task_name}`]?.estimated_hours) || 0), 0);
+              const remainingBalanceHrs = effortData ? (Number(effortData.total_hrs) || 0) - roleAllocatedHrs : 0;
+              const remainingBalanceUnits = effortData ? (Number(effortData.units) || 0) - rolePlanned : 0;
+
               return (
                 <div key={role} style={{ marginBottom: 16 }}>
 
@@ -639,6 +666,21 @@ console.log("Redux employees:", serviceDeliveryEmployees);
                         <EffortChip label="Hrs"       value={effortData.effort_hrs}  color={rs.text} />
                         <EffortChip label="Buf Days"  value={effortData.buffer_days} color={rs.text} />
                         <EffortChip label="Total Hrs" value={effortData.total_hrs}   color={rs.text} />
+                        <EffortChip label={effortData.unit_label || "Units"} value={effortData.units} color={rs.text} />
+                        
+                        <span style={{ fontSize: 10, color: rs.text, opacity: 0.6, marginLeft: 8, marginRight: 2 }}>Balance:</span>
+                        <EffortChip 
+                          label="Bal Hrs" 
+                          value={remainingBalanceHrs} 
+                          color={rs.text} 
+                          valColor={remainingBalanceHrs < 0 ? "#e74c3c" : "#27ae60"} 
+                        />
+                        <EffortChip 
+                          label="Bal Units" 
+                          value={remainingBalanceUnits} 
+                          color={rs.text} 
+                          valColor={remainingBalanceUnits < 0 ? "#e74c3c" : "#27ae60"} 
+                        />
                       </div>
                     ) : (
                       <span style={{ fontSize: 10, color: rs.text, opacity: 0.45, fontStyle: "italic" }}>
