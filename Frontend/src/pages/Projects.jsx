@@ -349,9 +349,8 @@ const EditProjectModal = ({ project, onClose, onUpdated }) => {
 };
 
 // ── Effort Estimate Modal ─────────────────────────────────────────────────────
-// const EffortEstimateModal = ({ onClose }) => {
-const EffortEstimateModal = ({ projects, onClose, onSaved }) => {
-  const [selectedProject, setSelectedProject] = useState('');
+const EffortEstimateModal = ({ projects, onClose, onSaved, initialProjectId }) => {
+  const [selectedProject, setSelectedProject] = useState(initialProjectId || '');
   const [saving, setSaving] = useState(false);
   // rows: { role, days, hrs, bufferDays, bufferHrs, totalHrs, units, unitLabel }
   const [rows, setRows] = useState(
@@ -366,6 +365,80 @@ const EffortEstimateModal = ({ projects, onClose, onSaved }) => {
       units: '',
     }))
   );
+
+  useEffect(() => {
+    if (!selectedProject) {
+      setRows(
+        EFFORT_ROLES.map(r => ({
+          role: r.role,
+          unitLabel: r.unitLabel,
+          days: '',
+          hrs: '',
+          bufferDays: '',
+          bufferHrs: '',
+          totalHrs: '',
+          units: '',
+        }))
+      );
+      return;
+    }
+
+    const fetchExistingEffort = async () => {
+      try {
+        const res = await axios.get(
+          `${BASE_URL}/api/projects/${selectedProject}/effort`,
+          { headers: getHeaders() }
+        );
+        const fetchedRows = res.data?.rows || [];
+
+        if (fetchedRows.length > 0) {
+          const merged = EFFORT_ROLES.map(r => {
+            const existing = fetchedRows.find(fr => fr.role === r.role);
+            if (existing) {
+              return {
+                role: r.role,
+                unitLabel: r.unitLabel,
+                days: existing.effort_days !== null && existing.effort_days !== undefined ? String(existing.effort_days) : '',
+                hrs: existing.effort_hrs !== null && existing.effort_hrs !== undefined ? String(existing.effort_hrs) : '',
+                bufferDays: existing.buffer_days !== null && existing.buffer_days !== undefined ? String(existing.buffer_days) : '',
+                bufferHrs: existing.buffer_hrs !== null && existing.buffer_hrs !== undefined ? String(existing.buffer_hrs) : '',
+                totalHrs: existing.total_hrs !== null && existing.total_hrs !== undefined ? String(existing.total_hrs) : '',
+                units: existing.units !== null && existing.units !== undefined ? String(existing.units) : '',
+              };
+            }
+            return {
+              role: r.role,
+              unitLabel: r.unitLabel,
+              days: '',
+              hrs: '',
+              bufferDays: '',
+              bufferHrs: '',
+              totalHrs: '',
+              units: '',
+            };
+          });
+          setRows(merged);
+        } else {
+          setRows(
+            EFFORT_ROLES.map(r => ({
+              role: r.role,
+              unitLabel: r.unitLabel,
+              days: '',
+              hrs: '',
+              bufferDays: '',
+              bufferHrs: '',
+              totalHrs: '',
+              units: '',
+            }))
+          );
+        }
+      } catch (err) {
+        console.error("Error fetching existing effort estimates:", err);
+      }
+    };
+
+    fetchExistingEffort();
+  }, [selectedProject]);
 
   const handleChange = (idx, field, val) => {
     setRows(prev => {
@@ -610,6 +683,7 @@ const Projects = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEffortModal, setShowEffortModal] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
+  const [initialEffortProjectId, setInitialEffortProjectId] = useState('');
 
   const fetchProjects = async () => {
     try {
@@ -662,7 +736,7 @@ const Projects = () => {
           <div style={P.underline} />
         </div>
         <div style={P.btnGroup}>
-          <button onClick={() => setShowEffortModal(true)} style={P.effortBtn}>
+          <button onClick={() => { setInitialEffortProjectId(''); setShowEffortModal(true); }} style={P.effortBtn}>
             📊 Effort Estimate
           </button>
           <button onClick={() => setShowCreateModal(true)} style={P.createBtn}>
@@ -730,12 +804,23 @@ const Projects = () => {
                       {`${p.total_effort_hours ?? 0} Hrs`}
                     </td>
                     <td style={P.td}>
-                      <button
-                        onClick={() => setEditingProject(p)}
-                        style={P.editBtn}
-                      >
-                        ✏️ Edit
-                      </button>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                          onClick={() => setEditingProject(p)}
+                          style={P.editBtn}
+                        >
+                          ✏️ Edit
+                        </button>
+                        <button
+                          onClick={() => {
+                            setInitialEffortProjectId(p.id);
+                            setShowEffortModal(true);
+                          }}
+                          style={{ ...P.editBtn, background: '#1e272e', boxShadow: '0 1px 4px rgba(0,0,0,0.15)' }}
+                        >
+                          📊 Effort
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -762,7 +847,11 @@ const Projects = () => {
       {showEffortModal && (
         <EffortEstimateModal
           projects={projects}
-          onClose={() => setShowEffortModal(false)}
+          initialProjectId={initialEffortProjectId}
+          onClose={() => {
+            setShowEffortModal(false);
+            setInitialEffortProjectId('');
+          }}
           onSaved={fetchProjects}
         />
       )}

@@ -208,103 +208,109 @@ const bulkUpsertTaskLoads = async (req, res, next) => {
 const getProjectSummary = async (req, res, next) => {
   try {
     const { projectId } = req.params;
-   const rows = await query(
-  `SELECT
-      ptl.role,
-      ptl.task_name,
-      ptl.planned_units,
+    const [rows, effortEst] = await Promise.all([
+      query(
+        `SELECT
+            ptl.role,
+            ptl.task_name,
+            ptl.planned_units,
+      
+            ee.effort_days,
+            ee.effort_hrs,
+      
+            rtc.unit_type,
+      
+            COALESCE(SUM(a.units_assigned), 0) AS total_assigned,
+      
+            COALESCE(SUM(ap_t.units_completed), 0) AS total_completed,
+      
+            GREATEST(
+              ptl.planned_units -
+              COALESCE(SUM(a.units_assigned), 0),
+              0
+            ) AS unassigned,
+      
+            GREATEST(
+              COALESCE(SUM(a.units_assigned), 0) -
+              COALESCE(SUM(ap_t.units_completed), 0),
+              0
+            ) AS pending
+      
+         FROM project_task_loads ptl
+      
+         LEFT JOIN effort_estimates ee
+           ON ee.project_id = ptl.project_id
+          AND ee.role = ptl.role
+      
+         LEFT JOIN role_task_catalog rtc
+           ON ptl.role = rtc.role
+          AND ptl.task_name = rtc.task_name
+      
+         LEFT JOIN assignments a
+           ON a.project_id = ptl.project_id
+          AND a.role = ptl.role
+          AND a.task_name = ptl.task_name
+      
+         LEFT JOIN (
+            SELECT
+              assignment_id,
+              SUM(units_completed) AS units_completed
+            FROM assignment_progress
+            GROUP BY assignment_id
+         ) ap_t
+           ON ap_t.assignment_id = a.id
+      
+         WHERE ptl.project_id = ?
+      
+         GROUP BY
+            ptl.role,
+            ptl.task_name,
+            ptl.planned_units,
+            ee.effort_days,
+            ee.effort_hrs,
+            rtc.unit_type
+      
+         ORDER BY
+            ptl.role,
+            ptl.task_name`,
+        [projectId]
+      ),
+      query(
+        `SELECT COALESCE(SUM(effort_days), 0) AS total_days, COALESCE(SUM(effort_hrs), 0) AS total_hours
+         FROM effort_estimates
+         WHERE project_id = ?`,
+        [projectId]
+      )
+    ]);
 
-      ee.effort_days,
-      ee.effort_hrs,
+    const totalEffortDays = Number(effortEst[0]?.total_days || 0);
+    const totalEffortHours = Number(effortEst[0]?.total_hours || 0);
 
-      rtc.unit_type,
-
-      COALESCE(SUM(a.units_assigned), 0) AS total_assigned,
-
-      COALESCE(SUM(ap_t.units_completed), 0) AS total_completed,
-
-      GREATEST(
-        ptl.planned_units -
-        COALESCE(SUM(a.units_assigned), 0),
+    const totals = {
+      total_planned: rows.reduce(
+        (s, r) => s + Number(r.planned_units),
         0
-      ) AS unassigned,
-
-      GREATEST(
-        COALESCE(SUM(a.units_assigned), 0) -
-        COALESCE(SUM(ap_t.units_completed), 0),
+      ),
+    
+      total_effort_days: totalEffortDays,
+    
+      total_effort_hours: totalEffortHours,
+    
+      total_assigned: rows.reduce(
+        (s, r) => s + Number(r.total_assigned),
         0
-      ) AS pending
-
-   FROM project_task_loads ptl
-
-   LEFT JOIN effort_estimates ee
-     ON ee.project_id = ptl.project_id
-    AND ee.role = ptl.role
-
-   LEFT JOIN role_task_catalog rtc
-     ON ptl.role = rtc.role
-    AND ptl.task_name = rtc.task_name
-
-   LEFT JOIN assignments a
-     ON a.project_id = ptl.project_id
-    AND a.role = ptl.role
-    AND a.task_name = ptl.task_name
-
-   LEFT JOIN (
-      SELECT
-        assignment_id,
-        SUM(units_completed) AS units_completed
-      FROM assignment_progress
-      GROUP BY assignment_id
-   ) ap_t
-     ON ap_t.assignment_id = a.id
-
-   WHERE ptl.project_id = ?
-
-   GROUP BY
-      ptl.role,
-      ptl.task_name,
-      ptl.planned_units,
-      ee.effort_days,
-      ee.effort_hrs,
-      rtc.unit_type
-
-   ORDER BY
-      ptl.role,
-      ptl.task_name`,
-  [projectId]
-);
-  const totals = {
-  total_planned: rows.reduce(
-    (s, r) => s + Number(r.planned_units),
-    0
-  ),
-
-  total_effort_days: rows.reduce(
-    (s, r) => s + Number(r.effort_days || 0),
-    0
-  ),
-
-  total_effort_hours: rows.reduce(
-    (s, r) => s + Number(r.effort_hrs || 0),
-    0
-  ),
-
-  total_assigned: rows.reduce(
-    (s, r) => s + Number(r.total_assigned),
-    0
-  ),
-
-  total_completed: rows.reduce(
-    (s, r) => s + Number(r.total_completed),
-    0
-  ),
-
-  total_pending: rows.reduce(
-    (s, r) => s + Number(r.pending),
-    0
-  )
-};
+      ),
+    
+      total_completed: rows.reduce(
+        (s, r) => s + Number(r.total_completed),
+        0
+      ),
+    
+      total_pending: rows.reduce(
+        (s, r) => s + Number(r.pending),
+        0
+      )
+    };
     return res.status(200).json({ rows, totals });
   } catch (err) { return next(err); }
 };
