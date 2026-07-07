@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import axios from "axios";
+import { useSelector } from "react-redux";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer,
   RadialBarChart, RadialBar, Cell, PieChart, Pie
@@ -23,7 +24,13 @@ const CHART_COLORS = [
 ];
 
 const UtilizationDashboard = () => {
-
+ // ✅ Get Service Delivery employees from Redux
+  const serviceDeliveryEmployees = useSelector(
+    (state) => state.auth.serviceDeliveryEmployees
+  );
+   // 🔍 DEBUG: Check what's in Redux
+  console.log("🔍 serviceDeliveryEmployees from Redux:", serviceDeliveryEmployees);
+  console.log("🔍 serviceDeliveryEmployees length:", serviceDeliveryEmployees?.length);
   
   const [overall, setOverall]       = useState([]);
   const [projectData, setProject]   = useState([]);
@@ -77,14 +84,42 @@ const totalPages = Math.ceil(tableData.length / rowsPerPage);
     fetchTable();
   }, [selProject]);
 
-  // ── CHANGED: strip titles so names are short, used for horizontal chart
-  const overallChartData = overall.map((u) => ({
-    name:      u.user_name.replace(/^(Mr\.|Ms\.|Mrs\.)\s*/i, ""),
-    Assigned:  Number(u.total_assigned),
-    Completed: Number(u.total_completed),
-    Pending:   Number(u.total_pending),
-    pct:       Number(u.utilization_pct),
-  }));
+    // ── ✅ Get Service Delivery employee names from Redux ──────────
+  const serviceDeliveryNames = serviceDeliveryEmployees.map(emp => emp.emp_name);
+  
+  console.log("🔍 serviceDeliveryNames:", serviceDeliveryNames);
+  console.log("🔍 overall data from API:", overall);
+  
+   // ── ✅ Filter overall data by name match ──────────────────────
+  const filteredOverall = overall.filter(user => {
+    return serviceDeliveryNames.includes(user.user_name);
+  });
+  
+  console.log("🔍 filteredOverall length:", filteredOverall.length);
+  console.log("🔍 filteredOverall data:", filteredOverall);
+
+   // ── ✅ Filter table data by name match ─────────────────────────
+  const filteredTableData = tableData.filter(row => {
+    return serviceDeliveryNames.includes(row.user_name);
+  });
+  
+  console.log("🔍 filteredTableData length:", filteredTableData.length);
+  // ── Create chart data with all Service Delivery employees ──
+  const overallChartData = serviceDeliveryNames.map((name) => {
+    // Find the user data from API
+    const userData = filteredOverall.find(u => u.user_name === name);
+    
+    return {
+      name: name.replace(/^(Mr\.|Ms\.|Mrs\.)\s*/i, ""),
+      Assigned: userData ? Number(userData.total_assigned) : 0,
+      Completed: userData ? Number(userData.total_completed) : 0,
+      Pending: userData ? Number(userData.total_pending) : 0,
+      pct: userData ? Number(userData.utilization_pct) : 0,
+    };
+  });
+  
+  console.log("🔍 overallChartData (all 7 employees):", overallChartData);
+  console.log("🔍 overallChartData length:", overallChartData.length);
 
   const projectChartData = health.map((p) => ({
     name:      p.project_name,
@@ -118,7 +153,7 @@ const totalPages = Math.ceil(tableData.length / rowsPerPage);
 
       {/* ── KPI Strip — UNCHANGED ─────────────────────────────────────── */}
       <div style={S.kpiRow}>
-        <KPI label="Total Employees"    value={overall.length}    color="#3498db" />
+         <KPI label="Total Employees"    value={serviceDeliveryEmployees.length}    color="#3498db" />
         <KPI label="Total effort"         value={totalLoad}         color="#9b59b6" />
         <KPI label="Total Assigned"     value={totalAssigned}     color="#f39c12" />
         <KPI label="Total Completed"    value={totalCompleted}    color="#2ecc71" />
