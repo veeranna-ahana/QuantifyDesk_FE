@@ -127,7 +127,7 @@ const ROLE_LINKS = {
     { to: "/dailyreport", label: "Daily Report", icon: "dailyUpdate" },
     { to: "/projects", label: "Projects", icon: "projects" },
     { to: "/assignments", label: "Assignments", icon: "assignments" },
-    { to: "/approvals", label: "Approvals", icon: "approvals" },
+    // { to: "/approvals", label: "Approvals", icon: "approvals" },
   ],
   Employee: [
     { to: "/quantificationnew", label: "Utilization", icon: "utilization" },

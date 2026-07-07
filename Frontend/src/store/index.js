@@ -7,12 +7,12 @@ import themeReducer from "./slices/themeSlice";
 import authReducer from "./slices/authSlice";
 import employeeReducer from "./slices/employeeSlice";
 import selectedFMSReducer from './slices/selectedFMSSlice';
-import tasksReducer from './slices/tasksSlice'; // Add this
+import tasksReducer from './slices/tasksSlice';
 
 const persistConfig = {
   key: 'root',
   storage,
-  whitelist: ['selectedFMS', 'tasks'], // Add tasks to whitelist
+  whitelist: ['selectedFMS', 'tasks', 'auth'], // ✅ Add 'auth' to whitelist
 };
 
 const rootReducer = combineReducers({
@@ -20,7 +20,7 @@ const rootReducer = combineReducers({
   auth: authReducer,
   employees: employeeReducer,
   selectedFMS: selectedFMSReducer,
-  tasks: tasksReducer, // Add this
+  tasks: tasksReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

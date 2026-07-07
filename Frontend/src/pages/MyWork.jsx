@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-
+import { useSelector } from "react-redux"; 
 // const BASE_URL = process.env.REACT_APP_API_BASE_URL;
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const getHeaders = () => ({
@@ -27,7 +27,9 @@ const Ring = ({ pct, size = 54 }) => {
 };
 
 const MyWork = () => {
-  const userId = localStorage.getItem("UserID");
+  // ✅ Get user from Redux store
+  const user = useSelector((state) => state.auth.user);
+  const userId = user?.emp_id || localStorage.getItem("emp_id"); 
   const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -195,8 +197,8 @@ const MyWork = () => {
                   <th style={S.th}>Role</th>
                   <th style={S.th}>Task</th>
                   <th style={S.th}>Assigned</th>
-                  <th style={S.th}>Approved</th>
-                  <th style={S.th}>Awaiting</th>
+                  {/* <th style={S.th}>Approved</th> */}
+                  {/* <th style={S.th}>Awaiting</th> */}
                   <th style={S.th}>Pending</th>
                   <th style={S.th}>Progress</th>
                   <th style={S.th}>Action</th>
@@ -218,17 +220,17 @@ const MyWork = () => {
                       <td style={{ ...S.td, textAlign: "center", fontWeight: "700" }}>
                         {a.units_assigned}
                       </td>
-                      <td style={{ ...S.td, textAlign: "center", color: "#2ecc71", fontWeight: "700" }}>
+                      {/* <td style={{ ...S.td, textAlign: "center", color: "#2ecc71", fontWeight: "700" }}>
                         {a.units_completed}
-                      </td>
+                      </td> */}
                       {/* Awaiting approval — orange */}
-                      <td style={{ ...S.td, textAlign: "center" }}>
+                      {/* <td style={{ ...S.td, textAlign: "center" }}>
                         {awaiting > 0 ? (
                           <span style={S.awaitingBadge}>⏳ {awaiting}</span>
                         ) : (
                           <span style={{ color: "#ccc" }}>—</span>
                         )}
-                      </td>
+                      </td> */}
                       <td style={{ ...S.td, textAlign: "center", color: effectivePend > 0 ? "#e74c3c" : "#2ecc71", fontWeight: "700" }}>
                         {effectivePend}
                       </td>

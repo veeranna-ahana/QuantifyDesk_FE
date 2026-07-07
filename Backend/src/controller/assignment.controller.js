@@ -1,4 +1,4 @@
-const { query } = require("../config/db");
+const { query, masterQuery } = require("../config/db");
 const { createNotification } = require("./notification.controller");
 
 // GET /api/assignments/catalog
@@ -315,7 +315,7 @@ const getProjectSummary = async (req, res, next) => {
   } catch (err) { return next(err); }
 };
 
-// GET /api/assignments?projectId=
+// GET /api/assignments?projectId= (UPDATED: Uses master.emp)
 const getAssignmentsByProject = async (req, res, next) => {
   try {
     const { projectId } = req.query;
@@ -332,7 +332,8 @@ const getAssignmentsByProject = async (req, res, next) => {
           a.project_id,
           p.project_name,
           a.user_id,
-          u.name AS user_name,
+          a.emp_id,
+          e.emp_name AS user_name,  -- ✅ From master.emp
           a.role,
           a.task_name,
           a.units_assigned,
@@ -347,8 +348,8 @@ const getAssignmentsByProject = async (req, res, next) => {
 
        FROM assignments a
 
-       LEFT JOIN users u
-         ON a.user_id = u.id
+       LEFT JOIN master.emp e      -- ✅ Replaced users table
+         ON a.emp_id = e.emp_id
 
        LEFT JOIN projects p
          ON a.project_id = p.id
@@ -359,7 +360,7 @@ const getAssignmentsByProject = async (req, res, next) => {
 
        WHERE a.project_id = ?
 
-       ORDER BY a.role, u.name`,
+       ORDER BY a.role, e.emp_name`,
       [projectId]
     );
 
@@ -374,7 +375,8 @@ const addAssignment = async (req, res, next) => {
   try {
     const { 
       project_id, 
-      user_id, 
+      user_id,
+      emp_id,
       role, 
       task_name, 
       units_assigned,
@@ -383,15 +385,70 @@ const addAssignment = async (req, res, next) => {
     } = req.body;
     
     // ─── Validation ──────────────────────────────────────────────
-    if (!project_id || !user_id || !role || !task_name) {
+    if (!project_id || !role || !task_name) {
       return res.status(400).json({ 
-        message: "project_id, user_id, role, task_name required" 
+        message: "project_id, role, task_name required" 
       });
     }
 
+    if (!user_id && !emp_id) {
+      return res.status(400).json({
+        message: "Either user_id or emp_id is required"
+      });
+    }
+
+    // ─── Get employee details ──────────────────────────────────
+    let finalEmpId = emp_id;
+    let finalUserId = user_id;
+
+    if (user_id && !emp_id) {
+      // Check if user_id is emp_id
+      const empResult = await masterQuery(
+        `SELECT u_id, emp_id FROM emp WHERE emp_id = ? AND flag = 'Active'`,
+        [user_id]
+      );
+      
+      if (empResult.length > 0) {
+        finalEmpId = empResult[0].emp_id;
+        finalUserId = empResult[0].u_id;
+      } else {
+        // Backward compatibility: check users table
+        const userResult = await query(
+          `SELECT emp_id FROM users WHERE id = ?`,
+          [user_id]
+        );
+        if (userResult.length > 0) {
+          finalEmpId = userResult[0].emp_id;
+          const empInfo = await masterQuery(
+            `SELECT u_id FROM emp WHERE emp_id = ? AND flag = 'Active'`,
+            [finalEmpId]
+          );
+          finalUserId = empInfo.length > 0 ? empInfo[0].u_id : null;
+        } else {
+          return res.status(400).json({
+            message: "User not found in system"
+          });
+        }
+      }
+    } else if (emp_id && !user_id) {
+      const empResult = await masterQuery(
+        `SELECT u_id, emp_id FROM emp WHERE emp_id = ? AND flag = 'Active'`,
+        [emp_id]
+      );
+      if (empResult.length > 0) {
+        finalEmpId = empResult[0].emp_id;
+        finalUserId = empResult[0].u_id;
+      } else {
+        return res.status(400).json({
+          message: "Employee not found in master.emp"
+        });
+      }
+    }
+
+    // ─── ✅ REMOVED duplicate check ────────────────────────────
+    // Allow multiple assignments for same employee with different roles/tasks
+
     // ─── VALIDATION: Check if assignment exceeds task limits ────
-    
-    // 1. Get task load for this role + task
     const taskLoad = await query(
       `SELECT 
          planned_units, 
@@ -412,7 +469,7 @@ const addAssignment = async (req, res, next) => {
     const plannedDays = Number(taskLoad[0].estimated_days) || 0;
     const plannedHours = Number(taskLoad[0].estimated_hours) || 0;
 
-    // 2. Get currently assigned totals for this task
+    // Get currently assigned totals for this task (across all employees)
     const assignedTotals = await query(
       `SELECT 
          SUM(units_assigned) as total_units,
@@ -431,11 +488,11 @@ const addAssignment = async (req, res, next) => {
     const newDays = Number(estimated_days || 0);
     const newHours = Number(estimated_hours || 0);
 
-    // 3. Check if any limit would be exceeded
+    // Check if any limit would be exceeded
     const errors = [];
     let wouldExceed = false;
 
-    if (plannedUnits > 0 && (currentUnits + newUnits) > plannedUnits) {
+    if ((currentUnits + newUnits) > plannedUnits) {
       errors.push({
         field: 'units',
         message: `Cannot assign ${newUnits} units. Total would exceed planned units (${plannedUnits}). Remaining: ${plannedUnits - currentUnits}`,
@@ -447,7 +504,7 @@ const addAssignment = async (req, res, next) => {
       wouldExceed = true;
     }
 
-    if (plannedDays > 0 && (currentDays + newDays) > plannedDays) {
+    if ((currentDays + newDays) > plannedDays) {
       errors.push({
         field: 'days',
         message: `Cannot assign ${newDays} days. Total would exceed planned days (${plannedDays}). Remaining: ${plannedDays - currentDays}`,
@@ -459,7 +516,7 @@ const addAssignment = async (req, res, next) => {
       wouldExceed = true;
     }
 
-    if (plannedHours > 0 && (currentHours + newHours) > plannedHours) {
+    if ((currentHours + newHours) > plannedHours) {
       errors.push({
         field: 'hours',
         message: `Cannot assign ${newHours} hours. Total would exceed planned hours (${plannedHours}). Remaining: ${plannedHours - currentHours}`,
@@ -479,19 +536,26 @@ const addAssignment = async (req, res, next) => {
       });
     }
 
+    // ─── Get employee name for notification ──────────────────────
+    const empInfo = await masterQuery(
+      `SELECT emp_name FROM emp WHERE emp_id = ?`,
+      [finalEmpId]
+    );
+    const employeeName = empInfo.length > 0 ? empInfo[0].emp_name : 'Employee';
+
     // ─── Insert assignment ──────────────────────────────────────
     const result = await query(
       `INSERT INTO assignments 
-       (project_id, user_id, role, task_name, units_assigned, estimated_days, estimated_hours) 
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [project_id, user_id, role, task_name, newUnits, newDays, newHours]
+       (project_id, user_id, emp_id, role, task_name, units_assigned, estimated_days, estimated_hours) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [project_id, finalUserId, finalEmpId, role, task_name, newUnits, newDays, newHours]
     );
 
     // ─── Fetch the created assignment ──────────────────────────
     const rows = await query(
       `SELECT
           a.*,
-          u.name AS user_name,
+          e.emp_name AS user_name,
           p.project_name,
           ee.effort_days,
           ee.effort_hrs,
@@ -501,7 +565,7 @@ const addAssignment = async (req, res, next) => {
           ee.units,
           ee.unit_label
        FROM assignments a
-       LEFT JOIN users u ON a.user_id = u.id
+       LEFT JOIN master.emp e ON a.emp_id = e.emp_id
        LEFT JOIN projects p ON a.project_id = p.id
        LEFT JOIN effort_estimates ee ON ee.project_id = a.project_id AND ee.role = a.role
        WHERE a.id = ?`,
@@ -511,12 +575,17 @@ const addAssignment = async (req, res, next) => {
     const assignment = rows[0];
 
     // ─── Create Notification ────────────────────────────────────
-    await createNotification({
-      user_id,
-      type: 'assignment_created',
-      title: `New assignment on ${assignment.project_name}`,
-      message: `You have been assigned ${newUnits} unit(s) of "${task_name}" (${role}) on "${assignment.project_name}". (${newDays} days, ${newHours} hours)`,
-    });
+    try {
+      await createNotification({
+        user_id: finalUserId,
+        type: 'assignment_created',
+        title: `New assignment on ${assignment.project_name}`,
+        message: `You (${employeeName}) have been assigned ${newUnits} unit(s) of "${task_name}" (${role}) on "${assignment.project_name}". (${newDays} days, ${newHours} hours)`,
+      });
+    } catch (notifErr) {
+      console.warn('⚠️ Notification creation failed:', notifErr.message);
+      // Don't fail the assignment if notification fails
+    }
 
     // ─── Return response ────────────────────────────────────────
     return res.status(201).json({
@@ -531,18 +600,54 @@ const addAssignment = async (req, res, next) => {
     });
 
   } catch (err) { 
+    console.error('❌ addAssignment error:', err);
     return next(err); 
   }
 };
 
-// PUT /api/assignments/:id
+// PUT /api/assignments/:id (UPDATED: Uses emp_id)
 const updateAssignment = async (req, res, next) => {
   try {
-    const { role, task_name, units_assigned } = req.body;
+    const { role, task_name, units_assigned, emp_id, user_id } = req.body;
+    
+    // Build update query dynamically
+    let updateFields = [];
+    let updateValues = [];
+    
+    if (role) {
+      updateFields.push('role = ?');
+      updateValues.push(role);
+    }
+    if (task_name) {
+      updateFields.push('task_name = ?');
+      updateValues.push(task_name);
+    }
+    if (units_assigned !== undefined) {
+      updateFields.push('units_assigned = ?');
+      updateValues.push(units_assigned);
+    }
+    if (emp_id) {
+      updateFields.push('emp_id = ?');
+      updateValues.push(emp_id);
+    }
+    if (user_id) {
+      updateFields.push('user_id = ?');
+      updateValues.push(user_id);
+    }
+    
+    if (updateFields.length === 0) {
+      return res.status(400).json({
+        message: "No fields to update"
+      });
+    }
+    
+    updateValues.push(req.params.id);
+    
     await query(
-      `UPDATE assignments SET role=?, task_name=?, units_assigned=? WHERE id=?`,
-      [role, task_name, units_assigned, req.params.id]
+      `UPDATE assignments SET ${updateFields.join(', ')} WHERE id = ?`,
+      updateValues
     );
+    
     res.json({ message: "Updated" });
   } catch (err) { next(err); }
 };

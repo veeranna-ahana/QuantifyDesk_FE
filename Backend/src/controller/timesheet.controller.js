@@ -3,7 +3,7 @@
 // ============================================
 
 const xlsx = require('xlsx');
-const { query } = require("../config/db");
+const { query, masterQuery } = require("../config/db");
 
 function generateBatchCode() {
     const date = new Date();
@@ -62,26 +62,31 @@ const uploadTimesheet = async (req, res, next) => {
             return res.status(400).json({ message: "Excel file is empty or invalid format" });
         }
 
-        // ─── 3. Get User ID (SSO Compatible) ─────────────────────────
+        // ─── 3. Get Employee ID from Token (master.emp) ──────────────
         const batchCode = generateBatchCode();
-        let userId = null;
+        let empId = null;
+        let uId = null; // Keep for backward compatibility with user_id
         
         const tokenEmpId = req.user?.emp_id;
         const tokenUserId = req.user?.id || req.user?.userid;
         
         console.log('🔍 Token data:', { tokenEmpId, tokenUserId });
         
-        // Method 1: Find by emp_id from token
+        // Method 1: Use emp_id from token (master.emp)
         if (tokenEmpId) {
-            const userResult = await query(`SELECT id FROM users WHERE emp_id = ?`, [tokenEmpId]);
-            if (userResult.length > 0) {
-                userId = userResult[0].id;
-                console.log('✅ Found user by emp_id:', userId);
+            const empResult = await masterQuery(
+                `SELECT u_id, emp_id, emp_name FROM emp WHERE emp_id = ? AND flag = 'Active'`,
+                [tokenEmpId]
+            );
+            if (empResult.length > 0) {
+                empId = tokenEmpId;
+                uId = empResult[0].u_id;
+                console.log('✅ Found employee in master.emp:', empId);
             }
         }
         
         // Method 2: Extract numeric ID from userid (e.g., "10998_ASC00089" → 10998)
-        if (!userId && tokenUserId) {
+        if (!empId && tokenUserId) {
             let numericId = tokenUserId;
             if (typeof numericId === 'string' && numericId.includes('_')) {
                 numericId = parseInt(numericId.split('_')[0]);
@@ -90,58 +95,55 @@ const uploadTimesheet = async (req, res, next) => {
             }
             
             if (!isNaN(numericId)) {
-                const userResult = await query(`SELECT id FROM users WHERE id = ?`, [numericId]);
-                if (userResult.length > 0) {
-                    userId = userResult[0].id;
-                    console.log('✅ Found user by numeric ID:', userId);
+                const empResult = await masterQuery(
+                    `SELECT u_id, emp_id, emp_name FROM emp WHERE u_id = ? AND flag = 'Active'`,
+                    [numericId]
+                );
+                if (empResult.length > 0) {
+                    empId = empResult[0].emp_id;
+                    uId = empResult[0].u_id;
+                    console.log('✅ Found employee by u_id:', empId);
                 }
             }
         }
         
-        // Method 3: Fallback - use admin user for SSO
-        if (!userId) {
-            console.warn('⚠️ SSO user not found in local DB, using fallback user');
-            const fallbackUser = await query(`SELECT id FROM users WHERE role = 'ADMIN' LIMIT 1`);
-            if (fallbackUser.length > 0) {
-                userId = fallbackUser[0].id;
-                console.log('✅ Using fallback admin user:', userId);
+        // Method 3: Fallback - use admin user
+        if (!empId) {
+            console.warn('⚠️ SSO user not found in master.emp, using fallback admin');
+            const fallbackEmp = await masterQuery(
+                `SELECT u_id, emp_id, emp_name FROM emp WHERE flag = 'Active' LIMIT 1`
+            );
+            if (fallbackEmp.length > 0) {
+                empId = fallbackEmp[0].emp_id;
+                uId = fallbackEmp[0].u_id;
+                console.log('✅ Using fallback admin employee:', empId);
             } else {
-                // Create default admin if none exists
-                const insertResult = await query(
-                    `INSERT INTO users (emp_id, name, email, role, daily_capacity) 
-                     VALUES (?, ?, ?, ?, ?)`,
-                    ['SSO_ADMIN', 'SSO Admin', 'sso_admin@workquantify.com', 'ADMIN', 8]
-                );
-                userId = insertResult.insertId;
-                console.log('✅ Created new admin user for SSO:', userId);
+                return res.status(401).json({ 
+                    message: 'User not found. Please login again.',
+                    debug: { tokenEmpId, tokenUserId }
+                });
             }
         }
         
-        if (!userId) {
-            return res.status(401).json({ 
-                message: 'User not authenticated. Please login again.',
-                debug: { tokenEmpId, tokenUserId }
-            });
-        }
+        console.log('✅ Final empId:', empId);
+        console.log('✅ Final uId:', uId);
 
-        console.log('✅ Final userId:', userId);
-
-        // ─── 4. Create Batch ───────────────────────────────────────────
+        // ─── 4. Create Batch (using emp_id) ──────────────────────────
         const batchResult = await query(
             `INSERT INTO timesheet_batches 
-             (batch_code, uploaded_by, file_name, total_records, status) 
-             VALUES (?, ?, ?, ?, 'draft')`,
-            [batchCode, userId, req.file.originalname, data.length]
+             (batch_code, uploaded_by, emp_id, file_name, total_records, status) 
+             VALUES (?, ?, ?, ?, ?, 'draft')`,
+            [batchCode, uId, empId, req.file.originalname, data.length]
         );
         
         const batchId = batchResult.insertId;
 
-        // ─── 5. Get Existing Users & Projects ────────────────────────
+        // ─── 5. Get Existing Projects & Employees ────────────────────
         const projects = await query(`SELECT id, project_code FROM projects WHERE project_code IS NOT NULL`);
-        const users = await query(`SELECT id, emp_id FROM users WHERE emp_id IS NOT NULL`);
+        const employees = await masterQuery(`SELECT u_id, emp_id, emp_name FROM emp WHERE flag = 'Active'`);
         
         const projectMap = new Map(projects.map(p => [p.project_code, p.id]));
-        const userMap = new Map(users.map(u => [u.emp_id, u.id]));
+        const userMap = new Map(employees.map(e => [e.emp_id, e.u_id]));
 
         // ─── 6. Process Each Row ──────────────────────────────────────
         let totalEntries = 0;
@@ -156,7 +158,6 @@ const uploadTimesheet = async (req, res, next) => {
             const employeeCode = String(row['Employee Code'] || '').trim();
             const projectCode = String(row['Project Code'] || '').trim();
             const projectName = String(row['Project Name'] || '').trim();
-            // ✅ NEW: Get client name from Excel
             const clientName = String(row['Client Name'] || '').trim();
             
             const fromDate = parseDate(row['From Date']);
@@ -227,14 +228,14 @@ const uploadTimesheet = async (req, res, next) => {
                     if (!employeeId) reconStatus = 'missing_employee';
                     else if (!projectId) reconStatus = 'missing_project';
                     
-                    // ✅ UPDATED INSERT with original_client_name
+                    // ✅ UPDATED INSERT with emp_id
                     await query(
                         `INSERT INTO timesheet_entries 
-                         (batch_id, user_id, original_emp_code, project_id, original_project_code, original_project_name, original_client_name,
+                         (batch_id, user_id, emp_id, original_emp_code, project_id, original_project_code, original_project_name, original_client_name,
                           entry_date, hours, description, day_of_week, employee_found, project_found, reconciliation_status) 
-                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                         [
-                            batchId, employeeId, employeeCode, projectId, projectCode, projectName, clientName,
+                            batchId, employeeId, employeeCode, employeeCode, projectId, projectCode, projectName, clientName,
                             formattedDate, hours, description, day,
                             employeeId ? 1 : 0, projectId ? 1 : 0, reconStatus
                         ]
@@ -283,7 +284,7 @@ const uploadTimesheet = async (req, res, next) => {
                 employee_not_found: {
                     count: employeeNotFoundCount,
                     employees: Array.from(missingEmployees),
-                    message: "These employees need to be added to the system"
+                    message: "These employees need to be added to master.emp"
                 },
                 project_not_found: {
                     count: projectNotFoundCount,
@@ -314,18 +315,22 @@ const uploadTimesheet = async (req, res, next) => {
         });
     }
 };
+
 // ============================================
-// GET ALL BATCHES
+// GET ALL BATCHES (UPDATED: Uses master.emp)
 // ============================================
 const getBatches = async (req, res, next) => {
     try {
         const batches = await query(`
-            SELECT tb.*, u.name as uploaded_by_name,
-                   COUNT(te.id) as total_entries,
-                   MIN(te.entry_date) as earliest_date,
-                   MAX(te.entry_date) as latest_date
+            SELECT 
+                tb.*,
+                e.emp_name as uploaded_by_name,
+                e.emp_id as uploaded_by_emp_id,
+                COUNT(te.id) as total_entries,
+                MIN(te.entry_date) as earliest_date,
+                MAX(te.entry_date) as latest_date
             FROM timesheet_batches tb
-            LEFT JOIN users u ON tb.uploaded_by = u.id
+            LEFT JOIN master.emp e ON e.emp_id = tb.emp_id
             LEFT JOIN timesheet_entries te ON te.batch_id = tb.id
             GROUP BY tb.id
             ORDER BY tb.created_at DESC
@@ -336,21 +341,25 @@ const getBatches = async (req, res, next) => {
             data: batches
         });
     } catch (err) {
+        console.error('❌ getBatches error:', err);
         next(err);
     }
 };
 
 // ============================================
-// GET BATCH DETAILS
+// GET BATCH DETAILS (UPDATED: Uses master.emp)
 // ============================================
 const getBatchDetails = async (req, res, next) => {
     try {
         const batchId = req.params.id;
         
         const batch = await query(`
-            SELECT tb.*, u.name as uploaded_by_name 
+            SELECT 
+                tb.*,
+                e.emp_name as uploaded_by_name,
+                e.emp_id as uploaded_by_emp_id
             FROM timesheet_batches tb
-            LEFT JOIN users u ON tb.uploaded_by = u.id
+            LEFT JOIN master.emp e ON e.emp_id = tb.emp_id
             WHERE tb.id = ?
         `, [batchId]);
         
@@ -358,17 +367,18 @@ const getBatchDetails = async (req, res, next) => {
             return res.status(404).json({ message: "Batch not found" });
         }
         
-        // ✅ Updated to include original_project_name
+        // ✅ Updated to join with master.emp
         const entries = await query(`
             SELECT 
-                te.*, 
-                u.name as employee_name, 
-                u.emp_id, 
+                te.*,
+                e.emp_name as employee_name,
+                e.emp_id,
+                te.original_emp_code,
                 p.project_name, 
                 p.project_code,
-                te.original_project_name  -- ✅ Now available
+                te.original_project_name
             FROM timesheet_entries te
-            LEFT JOIN users u ON te.user_id = u.id
+            LEFT JOIN master.emp e ON e.emp_id = te.emp_id
             LEFT JOIN projects p ON te.project_id = p.id
             WHERE te.batch_id = ?
             ORDER BY te.entry_date, te.user_id
@@ -377,7 +387,7 @@ const getBatchDetails = async (req, res, next) => {
         const summary = {
             total_entries: entries.length,
             total_hours: entries.reduce((sum, e) => sum + parseFloat(e.hours || 0), 0),
-            unique_employees: new Set(entries.map(e => e.user_id || e.original_emp_code)).size,
+            unique_employees: new Set(entries.map(e => e.emp_id || e.original_emp_code)).size,
             unique_projects: new Set(entries.map(e => e.project_id || e.original_project_code)).size,
             missing_employees: entries.filter(e => e.employee_found === 0).length,
             missing_projects: entries.filter(e => e.project_found === 0).length
@@ -390,12 +400,14 @@ const getBatchDetails = async (req, res, next) => {
             entries: entries
         });
     } catch (err) {
+        console.error('❌ getBatchDetails error:', err);
         next(err);
     }
 };
 
-
-
+// ============================================
+// GET PROJECT RECONCILIATION (UPDATED: Uses master.emp)
+// ============================================
 const getProjectReconciliation = async (req, res, next) => {
     try {
         const { projectId } = req.params;
@@ -444,14 +456,14 @@ const getProjectReconciliation = async (req, res, next) => {
             [projectId]
         );
         
-        // 4. Get all timesheet entries for this project
+        // 4. Get all timesheet entries for this project (Updated with master.emp)
         const timesheets = await query(
             `SELECT 
                 te.*,
-                u.name as employee_name,
-                u.emp_id
+                e.emp_name as employee_name,
+                e.emp_id
             FROM timesheet_entries te
-            LEFT JOIN users u ON te.user_id = u.id
+            LEFT JOIN master.emp e ON te.emp_id = e.emp_id
             WHERE te.project_id = ? OR te.original_project_code = ?
             ORDER BY te.entry_date`,
             [projectId, projectCode]
@@ -466,7 +478,7 @@ const getProjectReconciliation = async (req, res, next) => {
             
             // Employee breakdown
             for (const entry of timesheets) {
-                const key = entry.user_id || entry.original_emp_code;
+                const key = entry.emp_id || entry.original_emp_code;
                 if (!employeeMap[key]) {
                     employeeMap[key] = {
                         user_id: entry.user_id,
@@ -551,11 +563,10 @@ const getProjectReconciliation = async (req, res, next) => {
                         estimated_hrs: parseFloat(e.total_hrs || 0),
                         estimated_days: parseFloat(e.total_days|| 0),
                         effort_hrs: parseFloat(e.effort_hrs || 0),
-                        effort_days:parseFloat(e.effort_days || 0),
+                        effort_days: parseFloat(e.effort_days || 0),
                         buffer_hrs: parseFloat(e.buffer_hrs || 0),
-                        buffer_days:parseFloat(e.buffer_days || 0),
+                        buffer_days: parseFloat(e.buffer_days || 0),
                         units: e.units,
-                        // unit_label: e.unit_label
                     }))
                 },
                 timesheet_summary: {
@@ -576,9 +587,8 @@ const getProjectReconciliation = async (req, res, next) => {
                     variance_percentage: parseFloat(variancePercentage.toFixed(2)),
                     status: status,
                     message: statusMessage,
-                    
                 },
-                // employee_breakdown: employeeBreakdown
+                employee_breakdown: employeeBreakdown
             }
         });
         
@@ -587,25 +597,44 @@ const getProjectReconciliation = async (req, res, next) => {
         next(err);
     }
 };
+
+// ============================================
+// GET EMPLOYEE RECONCILIATION (UPDATED: Uses master.emp)
+// ============================================
 const getEmployeeReconciliation = async (req, res, next) => {
     try {
         const { userId } = req.params;
         const { projectId } = req.query;
         
-        // 1. Get employee info
-        const employee = await query(
-            `SELECT id, emp_id, name, email FROM users WHERE id = ?`,
-            [userId]
-        );
+        // 1. Get employee info from master.emp
+        let empId = userId;
+        let employee = null;
+        
+        // Check if userId is emp_id or u_id
+        if (userId && !isNaN(userId)) {
+            // It's a numeric u_id
+            employee = await masterQuery(
+                `SELECT u_id, emp_id, emp_name, emp_email FROM emp WHERE u_id = ? AND flag = 'Active'`,
+                [userId]
+            );
+        } else if (userId) {
+            // It's an emp_id string
+            employee = await masterQuery(
+                `SELECT u_id, emp_id, emp_name, emp_email FROM emp WHERE emp_id = ? AND flag = 'Active'`,
+                [userId]
+            );
+        }
         
         const employeeExists = employee.length > 0;
+        const employeeData = employeeExists ? employee[0] : null;
+        const employeeEmpId = employeeExists ? employeeData.emp_id : null;
         
-        // 2. Get all assignments for this employee (with roles)
+        // 2. Get all assignments for this employee (using emp_id)
         const assignments = await query(
             `SELECT project_id, role, units_assigned 
              FROM assignments 
-             WHERE user_id = ?`,
-            [userId]
+             WHERE emp_id = ?`,
+            [employeeEmpId]
         );
         
         const assignmentMap = {};
@@ -616,23 +645,23 @@ const getEmployeeReconciliation = async (req, res, next) => {
             };
         });
         
-        // 3. Get all timesheet entries for this employee
+        // 3. Get all timesheet entries for this employee (using emp_id)
         let timesheetQuery = `
             SELECT 
                 te.*,
-                u.name as employee_name,
-                u.emp_id,
+                e.emp_name as employee_name,
+                e.emp_id,
                 p.project_name,
                 p.project_code,
                 te.original_project_code,
                 te.original_emp_code,
                 p.id as project_id
             FROM timesheet_entries te
-            LEFT JOIN users u ON te.user_id = u.id
+            LEFT JOIN master.emp e ON te.emp_id = e.emp_id
             LEFT JOIN projects p ON te.project_id = p.id
-            WHERE te.user_id = ? OR te.original_emp_code = ?
+            WHERE te.emp_id = ?
         `;
-        const params = [userId, employeeExists ? employee[0].emp_id : null];
+        const params = [employeeEmpId];
         
         if (projectId) {
             timesheetQuery += ` AND (te.project_id = ? OR te.original_project_code = (SELECT project_code FROM projects WHERE id = ?))`;
@@ -649,9 +678,9 @@ const getEmployeeReconciliation = async (req, res, next) => {
                 data: {
                     employee_info: {
                         exists: employeeExists,
-                        id: employeeExists ? employee[0].id : null,
-                        emp_id: employeeExists ? employee[0].emp_id : 'Unknown',
-                        name: employeeExists ? employee[0].name : 'Employee Not Found'
+                        u_id: employeeExists ? employeeData.u_id : null,
+                        emp_id: employeeExists ? employeeData.emp_id : 'Unknown',
+                        emp_name: employeeExists ? employeeData.emp_name : 'Employee Not Found'
                     },
                     message: 'No timesheet entries found for this employee',
                     projects: []
@@ -665,15 +694,11 @@ const getEmployeeReconciliation = async (req, res, next) => {
         for (const entry of timesheets) {
             const key = entry.project_id || entry.original_project_code;
             if (!projectGroups[key]) {
-                // Get project details
                 const projectExists = !!entry.project_id;
-                
-                // Get employee's role for this project from assignments
                 const assignment = assignments.find(a => a.project_id === entry.project_id);
                 const employeeRole = assignment ? assignment.role : null;
                 const assignedUnits = assignment ? assignment.units_assigned : 0;
                 
-                // Get effort estimate for this employee's role
                 let effort = [];
                 if (entry.project_id && employeeRole) {
                     effort = await query(
@@ -707,14 +732,12 @@ const getEmployeeReconciliation = async (req, res, next) => {
             const estimatedHrs = p.estimated_hrs;
             const estimatedDays = p.estimated_days;
             
-            // Calculate reconciliation
             const utilizedHrs = Math.min(p.actual_hrs, estimatedHrs);
             const utilizedDays = Math.min(actualDays, estimatedDays);
             const remainingHrs = Math.max(0, estimatedHrs - p.actual_hrs);
             const remainingDays = Math.max(0, estimatedDays - actualDays);
             const utilizationPercentage = estimatedHrs > 0 ? (p.actual_hrs / estimatedHrs) * 100 : 0;
             
-            // Status messages
             let status = 'missing';
             let statusMessage = '';
             
@@ -775,7 +798,6 @@ const getEmployeeReconciliation = async (req, res, next) => {
             };
         });
         
-        // Summary
         const totalEstimated = projects.reduce((sum, p) => sum + p.effort_estimate.estimated_hrs, 0);
         const totalActual = projects.reduce((sum, p) => sum + p.timesheet.actual_hrs, 0);
         
@@ -784,9 +806,9 @@ const getEmployeeReconciliation = async (req, res, next) => {
             data: {
                 employee_info: {
                     exists: employeeExists,
-                    id: employeeExists ? employee[0].id : null,
-                    emp_id: employeeExists ? employee[0].emp_id : timesheets[0]?.original_emp_code || 'Unknown',
-                    name: employeeExists ? employee[0].name : 'Employee Not Found'
+                    u_id: employeeExists ? employeeData.u_id : null,
+                    emp_id: employeeExists ? employeeData.emp_id : 'Unknown',
+                    emp_name: employeeExists ? employeeData.emp_name : 'Employee Not Found'
                 },
                 summary: {
                     total_projects: projects.length,
@@ -804,6 +826,9 @@ const getEmployeeReconciliation = async (req, res, next) => {
     }
 };
 
+// ============================================
+// GET BATCH RECONCILIATION (UPDATED: Uses master.emp)
+// ============================================
 const getBatchReconciliation = async (req, res, next) => {
     try {
         const { batchId } = req.params;
@@ -818,16 +843,16 @@ const getBatchReconciliation = async (req, res, next) => {
             return res.status(404).json({ message: "Batch not found" });
         }
         
-        // 2. Get all entries for this batch
+        // 2. Get all entries for this batch (Updated with master.emp)
         const entries = await query(`
             SELECT 
                 te.*,
-                u.name as employee_name,
-                u.emp_id,
+                e.emp_name as employee_name,
+                e.emp_id,
                 p.project_name,
                 p.project_code
             FROM timesheet_entries te
-            LEFT JOIN users u ON te.user_id = u.id
+            LEFT JOIN master.emp e ON te.emp_id = e.emp_id
             LEFT JOIN projects p ON te.project_id = p.id
             WHERE te.batch_id = ?
             ORDER BY te.user_id, te.project_id, te.entry_date
@@ -855,7 +880,7 @@ const getBatchReconciliation = async (req, res, next) => {
         
         for (const entry of entries) {
             const projectKey = entry.project_id || entry.original_project_code;
-            const employeeKey = entry.user_id || entry.original_emp_code;
+            const employeeKey = entry.emp_id || entry.original_emp_code;
             
             // Project grouping
             if (!projectEntries[projectKey]) {
@@ -870,7 +895,7 @@ const getBatchReconciliation = async (req, res, next) => {
                 };
             }
             projectEntries[projectKey].actual_hrs += parseFloat(entry.hours || 0);
-            if (entry.user_id) projectEntries[projectKey].employees.add(entry.user_id);
+            if (entry.emp_id) projectEntries[projectKey].employees.add(entry.emp_id);
             projectEntries[projectKey].entries.push(entry);
             
             // Employee grouping
@@ -879,7 +904,7 @@ const getBatchReconciliation = async (req, res, next) => {
                     user_id: entry.user_id,
                     emp_id: entry.emp_id || entry.original_emp_code,
                     employee_name: entry.employee_name || 'Employee Not Found',
-                    employee_exists: !!entry.user_id,
+                    employee_exists: !!entry.emp_id,
                     projects: {},
                     actual_hrs: 0
                 };
@@ -954,25 +979,25 @@ const getBatchReconciliation = async (req, res, next) => {
             });
         }
         
-        // 5. Get employee assignments (roles per project)
-        const userIds = Object.values(employeeEntries)
-            .filter(e => e.user_id)
-            .map(e => e.user_id);
+        // 5. Get employee assignments (roles per project) using emp_id
+        const empIds = Object.values(employeeEntries)
+            .filter(e => e.emp_id)
+            .map(e => e.emp_id);
         
         let assignmentMap = {};
-        if (userIds.length > 0 && projectIds.length > 0) {
-            const userPlaceholders = userIds.map(() => '?').join(',');
+        if (empIds.length > 0 && projectIds.length > 0) {
+            const empPlaceholders = empIds.map(() => '?').join(',');
             const projectPlaceholders = projectIds.map(() => '?').join(',');
             
             const assignments = await query(`
-                SELECT user_id, project_id, role
+                SELECT emp_id, project_id, role
                 FROM assignments
-                WHERE user_id IN (${userPlaceholders}) 
+                WHERE emp_id IN (${empPlaceholders}) 
                 AND project_id IN (${projectPlaceholders})
-            `, [...userIds, ...projectIds]);
+            `, [...empIds, ...projectIds]);
             
             assignments.forEach(a => {
-                const key = `${a.user_id}_${a.project_id}`;
+                const key = `${a.emp_id}_${a.project_id}`;
                 assignmentMap[key] = a.role;
             });
         }
@@ -1049,7 +1074,7 @@ const getBatchReconciliation = async (req, res, next) => {
             // Build project details with role and estimate
             const projectDetails = projects.map(p => {
                 // Get employee's role for this project from assignments
-                const assignmentKey = `${e.user_id}_${p.project_id}`;
+                const assignmentKey = `${e.emp_id}_${p.project_id}`;
                 const role = assignmentMap[assignmentKey] || null;
                 
                 // Get role-wise estimates for this project
@@ -1087,10 +1112,6 @@ const getBatchReconciliation = async (req, res, next) => {
                 };
             });
             
-            // Calculate overall status
-            let status = 'matched';
-            let statusMessage = `${totalActualHrs.toFixed(1)} hrs logged across ${projects.length} project(s)`;
-            
             return {
                 emp_id: e.emp_id,
                 employee_name: e.employee_name,
@@ -1099,8 +1120,8 @@ const getBatchReconciliation = async (req, res, next) => {
                 total_actual_hrs: totalActualHrs,
                 total_actual_days: totalActualDays,
                 projects: projectDetails,
-                status: status,
-                status_message: statusMessage
+                status: 'matched',
+                status_message: `${totalActualHrs.toFixed(1)} hrs logged across ${projects.length} project(s)`
             };
         });
         

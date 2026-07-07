@@ -1,37 +1,40 @@
 import React, { useEffect, useState, useCallback } from "react";
+import toast from "react-hot-toast";
 import axios from "axios";
 import { useSelector } from "react-redux";
 
 
 //const BASE_URL  = process.env.REACT_APP_API_BASE_URL;
-const BASE_URL  = import.meta.env.VITE_API_BASE_URL;
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const getHeaders = () => ({ Authorization: `Bearer ${localStorage.getItem("token") || ""}` });
 
 const ROLE_ORDER = [
   "BA",
   "Solution Architect",
-  "UI",
+  "UI/UX",
   "FE Dev",
   "BE Dev",
   "Tester",
   "Deployment",
-  "Warranty & Support"
+  "Warranty & Support",
+  "Project Manager"
 ];
 
 // ── Role colour map ───────────────────────────────────────────────────────────
 const ROLE_COLORS = {
-  "BA":             { bg: "#f0e6ff", border: "#8e44ad", text: "#6c3483" },
-  "Solution Architect":             { bg: "#f0e6ff", border: "#8e44ad", text: "#6c3483" },
-  "UI":             { bg: "#e8f4fd", border: "#2980b9", text: "#1a5276" },
-  "FE Dev":         { bg: "#fff3e0", border: "#f39c12", text: "#9a6000" },
-  "BE Dev":         { bg: "#fdecea", border: "#e74c3c", text: "#a93226" },
+  "BA": { bg: "#f0e6ff", border: "#8e44ad", text: "#6c3483" },
+  "Solution Architect": { bg: "#f0e6ff", border: "#8e44ad", text: "#6c3483" },
+  "UI/UX": { bg: "#e8f4fd", border: "#2980b9", text: "#1a5276" },
+  "FE Dev": { bg: "#fff3e0", border: "#f39c12", text: "#9a6000" },
+  "BE Dev": { bg: "#fdecea", border: "#e74c3c", text: "#a93226" },
   // "Mobile/IOS Dev": { bg: "#e0f7fa", border: "#00acc1", text: "#006064" },
-  "Tester":         { bg: "#f3e5f5", border: "#8e24aa", text: "#6a1b9a" },
-  "Deployment":         { bg: "#f3e5f5", border: "#8e24aa", text: "#6a1b9a" },
-  "Warranty & Support":         { bg: "#f3e5f5", border: "#8e24aa", text: "#6a1b9a" },
+  "Tester": { bg: "#f3e5f5", border: "#8e24aa", text: "#6a1b9a" },
+  "Deployment": { bg: "#f3e5f5", border: "#8e24aa", text: "#6a1b9a" },
+  "Warranty & Support": { bg: "#f3e5f5", border: "#8e24aa", text: "#6a1b9a" },
+  "Project Manager": { bg: "#eafaf1", border: "#2ecc71", text: "#196f3d" },
 };
 const roleStyle = (role) => ROLE_COLORS[role] || { bg: "#f5f5f5", border: "#999", text: "#333" };
-const pct       = (a, b)  => (b > 0 ? Math.round((a / b) * 100) : 0);
+const pct = (a, b) => (b > 0 ? Math.round((a / b) * 100) : 0);
 
 // ── Small helpers ─────────────────────────────────────────────────────────────
 const badge = (bg) => ({
@@ -41,10 +44,10 @@ const badge = (bg) => ({
 
 const StatusBadge = ({ assigned, planned }) => {
   const p = pct(assigned, planned);
-  if (planned === 0)  return <span style={badge("#aaa")}>No Load</span>;
-  if (p === 0)        return <span style={badge("#e74c3c")}>Unassigned</span>;
-  if (p < 100)        return <span style={badge("#f39c12")}>{p}% Assigned</span>;
-  return               <span style={badge("#27ae60")}>Fully Assigned</span>;
+  if (planned === 0) return <span style={badge("#aaa")}>No Load</span>;
+  if (p === 0) return <span style={badge("#e74c3c")}>Unassigned</span>;
+  if (p < 100) return <span style={badge("#f39c12")}>{p}% Assigned</span>;
+  return <span style={badge("#27ae60")}>Fully Assigned</span>;
 };
 
 const KPI = ({ label, value, color }) => (
@@ -77,7 +80,6 @@ const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onClose })
   const [days, setDays] = useState("");
   const [hours, setHours] = useState("");
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
 
   const handleDaysChange = (val) => {
     setDays(val);
@@ -86,7 +88,6 @@ const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onClose })
     } else {
       setHours(String(Number(val) * 8));
     }
-    setError("");
   };
 
   const handleHoursChange = (val) => {
@@ -96,7 +97,6 @@ const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onClose })
     } else {
       setDays(String(Number(val) / 8));
     }
-    setError("");
   };
 
   // Assignments already on this role+task
@@ -119,8 +119,8 @@ const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onClose })
   const hoursExceeded = hours && Number(hours) > remainingHours;
 
   const handleSubmit = async () => {
-    if (!selUser) return setError("Please select an employee.");
-    if (!units || Number(units) <= 0) return setError("Enter units > 0.");
+    if (!selUser) return toast.error("Please select an employee.");
+    if (!units || Number(units) <= 0) return toast.error("Enter units > 0.");
 
     const requestedUnits = Number(units);
     const requestedDays = days ? Number(days) : 0;
@@ -128,20 +128,19 @@ const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onClose })
 
     // Validate against remaining limits
     if (requestedUnits > remainingUnits) {
-      setError(`Cannot assign ${requestedUnits} units. Only ${remainingUnits} units remaining.`);
+      toast.error(`Cannot assign ${requestedUnits} units. Only ${remainingUnits} units remaining.`);
       return;
     }
     if (requestedDays > remainingDays) {
-      setError(`Cannot assign ${requestedDays} days. Only ${remainingDays} days remaining.`);
+      toast.error(`Cannot assign ${requestedDays} days. Only ${remainingDays} days remaining.`);
       return;
     }
     if (requestedHours > remainingHours) {
-      setError(`Cannot assign ${requestedHours} hours. Only ${remainingHours} hours remaining.`);
+      toast.error(`Cannot assign ${requestedHours} hours. Only ${remainingHours} hours remaining.`);
       return;
     }
 
     setSaving(true);
-    setError("");
     try {
       await onAssign({
         user_id: selUser,
@@ -155,14 +154,15 @@ const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onClose })
       setUnits("");
       setDays("");
       setHours("");
+      toast.success("Employee assigned successfully!");
     } catch (e) {
       const errMsg = e?.response?.data?.message || "Failed to assign.";
-      setError(errMsg);
+      toast.error(errMsg);
     } finally {
       setSaving(false);
     }
   };
-  
+
 
   return (
     <div style={M.overlay} onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
@@ -287,8 +287,6 @@ const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onClose })
           </div>
         )}
 
-        {error && <p style={M.error}>{error}</p>}
-
         {/* ── Already assigned ── */}
         <div style={{ marginTop: 18 }}>
           <div style={M.existingTitle}>
@@ -361,34 +359,32 @@ const AssignmentScreen = () => {
   const serviceDeliveryEmployees = useSelector(
     (state) => state.auth.serviceDeliveryEmployees
   );
-  const [projects,     setProjects]     = useState([]);
-  const [users,        setUsers]        = useState([]);
-  const [catalog,      setCatalog]      = useState({});
-  const [selProject,   setSelProject]   = useState("");
+  const [projects, setProjects] = useState([]);
+  // const [users,        setUsers]        = useState([]);
+  const [catalog, setCatalog] = useState({});
+  const [selProject, setSelProject] = useState("");
   // CHANGED: loadDraft values are now objects { planned_units, estimated_days, estimated_hours }
-  const [loadDraft,    setLoadDraft]    = useState({});
-  const [totalLoad,    setTotalLoad]    = useState(0);
-  const [savingLoad,   setSavingLoad]   = useState(false);
-  const [loadSaved,    setLoadSaved]    = useState(false);
-  const [assignments,  setAssignments]  = useState([]);
-  const [summary,      setSummary]      = useState({ rows: [], totals: {} });
+  const [loadDraft, setLoadDraft] = useState({});
+  const [totalLoad, setTotalLoad] = useState(0);
+  const [savingLoad, setSavingLoad] = useState(false);
+  const [loadSaved, setLoadSaved] = useState(false);
+  const [assignments, setAssignments] = useState([]);
+  const [summary, setSummary] = useState({ rows: [], totals: {} });
   // NEW: effort estimates keyed by role
   const [effortByRole, setEffortByRole] = useState({});
 
   // ── Inline assign modal state ──────────────────────────────────────────────
   const [assignModal, setAssignModal] = useState(null);
 
-  // ── Initial fetch: projects, users, catalog ────────────────────────────────
+  // ── Initial fetch: projects, catalog ────────────────────────────────
   useEffect(() => {
     const fetchBase = async () => {
       try {
-        const [pRes, uRes, cRes] = await Promise.all([
-          axios.get(`${BASE_URL}/api/projects`,            { headers: getHeaders() }),
-          axios.get(`${BASE_URL}/api/users`,               { headers: getHeaders() }),
+        const [pRes, cRes] = await Promise.all([
+          axios.get(`${BASE_URL}/api/projects`, { headers: getHeaders() }),
           axios.get(`${BASE_URL}/api/assignments/catalog`, { headers: getHeaders() }),
         ]);
         setProjects(pRes.data || []);
-        setUsers(uRes.data || []);
         setCatalog(cRes.data.grouped || {});
       } catch (err) { console.error(err); }
     };
@@ -402,8 +398,8 @@ const AssignmentScreen = () => {
       // NEW: added effort-estimates call
       const [lRes, aRes, sRes, eRes] = await Promise.all([
         axios.get(`${BASE_URL}/api/assignments/task-loads/${pid}`, { headers: getHeaders() }),
-        axios.get(`${BASE_URL}/api/assignments?projectId=${pid}`,  { headers: getHeaders() }),
-        axios.get(`${BASE_URL}/api/assignments/summary/${pid}`,    { headers: getHeaders() }),
+        axios.get(`${BASE_URL}/api/assignments?projectId=${pid}`, { headers: getHeaders() }),
+        axios.get(`${BASE_URL}/api/assignments/summary/${pid}`, { headers: getHeaders() }),
         axios.get(`${BASE_URL}/api/assignments/effort-estimates/${pid}`, { headers: getHeaders() }), // NEW
       ]);
       const loads = lRes.data.loads || [];
@@ -413,8 +409,8 @@ const AssignmentScreen = () => {
       const draft = {};
       loads.forEach(l => {
         draft[`${l.role}||${l.task_name}`] = {
-          planned_units:   l.planned_units,
-          estimated_days:  l.estimated_days  || "",
+          planned_units: l.planned_units,
+          estimated_days: l.estimated_days || "",
           estimated_hours: l.estimated_hours || "",
         };
       });
@@ -451,9 +447,55 @@ const AssignmentScreen = () => {
     });
   };
 
+  // Returns error message string, or null if valid
+  const validateLoads = (roleToValidate = null) => {
+    const rolesToCheck = roleToValidate ? [roleToValidate] : Object.keys(catalog);
+
+    for (const role of rolesToCheck) {
+      const tasks = catalog[role] || [];
+      let rolePlannedUnits = 0;
+      let rolePlannedHours = 0;
+
+      tasks.forEach(t => {
+        const entry = loadDraft[`${role}||${t.task_name}`];
+        if (entry) {
+          rolePlannedUnits += Number(entry.planned_units) || 0;
+          rolePlannedHours += Number(entry.estimated_hours) || 0;
+        }
+      });
+
+      // Only validate roles that have any values entered
+      if (rolePlannedUnits <= 0 && rolePlannedHours <= 0) continue;
+
+      const effortData = effortByRole[role];
+      if (!effortData) {
+        return `No effort estimate defined for role "${role}". Please set it in the Effort Estimate first.`;
+      }
+
+      const maxUnits = Number(effortData.units) || 0;
+      const maxHours = Number(effortData.total_hrs) || 0;
+
+      if (maxUnits > 0 && rolePlannedUnits > maxUnits) {
+        return `Role "${role}": planned units (${rolePlannedUnits}) exceeds the estimated units (${maxUnits}).`;
+      }
+
+      if (maxHours > 0 && rolePlannedHours > maxHours) {
+        return `Role "${role}": estimated hours (${rolePlannedHours} hrs) exceeds the estimated hours limit (${maxHours} hrs).`;
+      }
+    }
+    return null; // all good
+  };
+
   // ── Save all loads — CHANGED: now sends estimated_days + estimated_hours ──
   const handleSaveLoads = async () => {
     if (!selProject) return;
+
+    const validationError = validateLoads();
+    if (validationError) {
+      toast.error(validationError);
+      return;
+    }
+
     setSavingLoad(true);
     try {
       const loads = [];
@@ -461,15 +503,15 @@ const AssignmentScreen = () => {
         tasks.forEach(t => {
           const entry = loadDraft[`${role}||${t.task_name}`];
           if (entry) {
-            const pu = Number(entry.planned_units)   || 0;
-            const ed = Number(entry.estimated_days)  || 0;
+            const pu = Number(entry.planned_units) || 0;
+            const ed = Number(entry.estimated_days) || 0;
             const eh = Number(entry.estimated_hours) || 0;
             if (pu > 0 || ed > 0 || eh > 0) {
               loads.push({
                 role,
-                task_name:       t.task_name,
-                planned_units:   pu,
-                estimated_days:  ed,
+                task_name: t.task_name,
+                planned_units: pu,
+                estimated_days: ed,
                 estimated_hours: eh,
               });
             }
@@ -483,85 +525,96 @@ const AssignmentScreen = () => {
       );
       setTotalLoad(res.data.total_load || 0);
       setLoadSaved(true);
+      toast.success("Loads saved successfully!");
       setTimeout(() => setLoadSaved(false), 2500);
       fetchProjectData(selProject);
-    } catch (err) { alert("Failed to save loads."); }
-    finally { setSavingLoad(false); }
+    } catch (err) {
+      toast.error("Failed to save loads. Please try again.");
+    } finally {
+      setSavingLoad(false);
+    }
   };
 
   // ── Open the assign modal ─────────────────────────────────────────────────────
-const openAssignModal = async (role, task) => {
-  const key = `${role}||${task.task_name}`;
-  const entry = loadDraft[key] || {};
-  
-  const plannedUnits = Number(entry.planned_units) || 0;
-  const estimatedDays = Number(entry.estimated_days) || 0;
-  const estimatedHours = Number(entry.estimated_hours) || 0;
+  const openAssignModal = async (role, task) => {
+    const key = `${role}||${task.task_name}`;
+    const entry = loadDraft[key] || {};
 
-  // ─── Step 1: Save task load first ────────────────────────────
-  if (plannedUnits > 0 || estimatedDays > 0 || estimatedHours > 0) {
+    const plannedUnits = Number(entry.planned_units) || 0;
+    const estimatedDays = Number(entry.estimated_days) || 0;
+    const estimatedHours = Number(entry.estimated_hours) || 0;
+
+    // Validate before saving task load
+    const validationError = validateLoads(role);
+    if (validationError) {
+      toast.error(validationError);
+      return;
+    }
+
+    // ─── Step 1: Save task load first ────────────────────────────
+    if (plannedUnits > 0 || estimatedDays > 0 || estimatedHours > 0) {
+      try {
+        await axios.post(
+          `${BASE_URL}/api/assignments/task-loads/bulk`,
+          {
+            project_id: selProject,
+            loads: [{
+              role,
+              task_name: task.task_name,
+              planned_units: plannedUnits,
+              estimated_days: estimatedDays,
+              estimated_hours: estimatedHours,
+            }]
+          },
+          { headers: getHeaders() }
+        );
+        // Refresh data after saving
+        await fetchProjectData(selProject);
+      } catch (err) {
+        toast.error("Failed to save task load. Please try again.");
+        return;
+      }
+    }
+
+    // ─── Step 2: Open the assign modal ────────────────────────────
+    setAssignModal({
+      role,
+      task_name: task.task_name,
+      unit_type: task.unit_type,
+      planned_units: plannedUnits,
+      estimated_days: estimatedDays,
+      estimated_hours: estimatedHours,
+    });
+  };
+
+  // ── Add assignment (called from modal) ────────────────────────────────────────
+  const handleAddAssignment = async ({
+    user_id,
+    role,
+    task_name,
+    units_assigned,
+    estimated_days,
+    estimated_hours
+  }) => {
     try {
       await axios.post(
-        `${BASE_URL}/api/assignments/task-loads/bulk`,
+        `${BASE_URL}/api/assignments`,
         {
           project_id: selProject,
-          loads: [{
-            role,
-            task_name: task.task_name,
-            planned_units: plannedUnits,
-            estimated_days: estimatedDays,
-            estimated_hours: estimatedHours,
-          }]
+          user_id,
+          role,
+          task_name,
+          units_assigned,
+          estimated_days: estimated_days || 0,
+          estimated_hours: estimated_hours || 0,
         },
         { headers: getHeaders() }
       );
-      // Refresh data after saving
       await fetchProjectData(selProject);
     } catch (err) {
-      alert("Failed to save task load. Please try again.");
-      return;
+      throw err;
     }
-  }
-
-  // ─── Step 2: Open the assign modal ────────────────────────────
-  setAssignModal({
-    role,
-    task_name: task.task_name,
-    unit_type: task.unit_type,
-    planned_units: plannedUnits,
-    estimated_days: estimatedDays,
-    estimated_hours: estimatedHours,
-  });
-};
-
-// ── Add assignment (called from modal) ────────────────────────────────────────
-const handleAddAssignment = async ({ 
-  user_id, 
-  role, 
-  task_name, 
-  units_assigned,
-  estimated_days,
-  estimated_hours 
-}) => {
-  try {
-    await axios.post(
-      `${BASE_URL}/api/assignments`,
-      {
-        project_id: selProject,
-        user_id,
-        role,
-        task_name,
-        units_assigned,
-        estimated_days: estimated_days || 0,
-        estimated_hours: estimated_hours || 0,
-      },
-      { headers: getHeaders() }
-    );
-    await fetchProjectData(selProject);
-  } catch (err) {
-    throw err;
-  }
-};
+  };
 
   // ── Delete assignment (called from modal) — UNCHANGED ────────────────────
   const handleDelete = async (id) => {
@@ -573,11 +626,11 @@ const handleAddAssignment = async ({
   // ── Derived ───────────────────────────────────────────────────────────────
   const summaryByKey = {};
   (summary.rows || []).forEach(r => { summaryByKey[`${r.role}||${r.task_name}`] = r; });
-  const { total_planned = 0,   total_effort_days = 0,total_effort_hours = 0,total_assigned = 0, total_completed = 0 } = summary.totals || {};
+  const { total_planned = 0, total_effort_days = 0, total_effort_hours = 0, total_assigned = 0, total_completed = 0 } = summary.totals || {};
 
 
 
-console.log("Redux employees:", serviceDeliveryEmployees);
+  console.log("Redux employees:", serviceDeliveryEmployees);
   return (
     <div style={S.page}>
       <h2 style={S.pageTitle}>Task Allocation</h2>
@@ -596,12 +649,12 @@ console.log("Redux employees:", serviceDeliveryEmployees);
           </div>
           {selProject && (
             <div style={S.kpiStrip}>
-              <KPI label="Total Effort" value={total_planned}  color="#9b59b6" />
-              <KPI label="Total Days" value={total_effort_days}  color="#9b59b6" />
-              <KPI label="Total Hours" value={total_effort_hours}  color="#9b59b6" />
-              <KPI label="Assigned"     value={total_assigned}  color="#3498db" />
-              <KPI label="Completed"    value={total_completed} color="#27ae60" />
-              <KPI label="Pending"      value={Math.max(total_assigned - total_completed, 0)} color="#e74c3c" />
+              <KPI label="Total Effort" value={total_planned} color="#9b59b6" />
+              <KPI label="Total Days" value={total_effort_days} color="#9b59b6" />
+              <KPI label="Total Hours" value={total_effort_hours} color="#9b59b6" />
+              <KPI label="Assigned" value={total_assigned} color="#3498db" />
+              <KPI label="Completed" value={total_completed} color="#27ae60" />
+              <KPI label="Pending" value={Math.max(total_assigned - total_completed, 0)} color="#e74c3c" />
             </div>
           )}
         </div>
@@ -636,10 +689,10 @@ console.log("Redux employees:", serviceDeliveryEmployees);
               return indexA - indexB;
             })
             .map(([role, tasks]) => {
-              const rs           = roleStyle(role);
-              const effortData   = effortByRole[role] || null; // NEW
+              const rs = roleStyle(role);
+              const effortData = effortByRole[role] || null; // NEW
               // CHANGED: read planned_units from entry object
-              const rolePlanned  = tasks.reduce((s, t) => s + (Number(loadDraft[`${role}||${t.task_name}`]?.planned_units) || 0), 0);
+              const rolePlanned = tasks.reduce((s, t) => s + (Number(loadDraft[`${role}||${t.task_name}`]?.planned_units) || 0), 0);
               const roleAssigned = tasks.reduce((s, t) => s + Number(summaryByKey[`${role}||${t.task_name}`]?.total_assigned || 0), 0);
 
               const roleAllocatedHrs = tasks.reduce((s, t) => s + (Number(loadDraft[`${role}||${t.task_name}`]?.estimated_hours) || 0), 0);
@@ -662,24 +715,24 @@ console.log("Redux employees:", serviceDeliveryEmployees);
                     {effortData ? (
                       <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
                         <span style={{ fontSize: 10, color: rs.text, opacity: 0.6, marginRight: 2 }}>Estimated:</span>
-                        <EffortChip label="Days"      value={effortData.effort_days} color={rs.text} />
-                        <EffortChip label="Hrs"       value={effortData.effort_hrs}  color={rs.text} />
-                        <EffortChip label="Buf Days"  value={effortData.buffer_days} color={rs.text} />
-                        <EffortChip label="Total Hrs" value={effortData.total_hrs}   color={rs.text} />
+                        <EffortChip label="Days" value={effortData.effort_days} color={rs.text} />
+                        <EffortChip label="Hrs" value={effortData.effort_hrs} color={rs.text} />
+                        <EffortChip label="Buf Days" value={effortData.buffer_days} color={rs.text} />
+                        <EffortChip label="Total Hrs" value={effortData.total_hrs} color={rs.text} />
                         <EffortChip label={effortData.unit_label || "Units"} value={effortData.units} color={rs.text} />
-                        
+
                         <span style={{ fontSize: 10, color: rs.text, opacity: 0.6, marginLeft: 8, marginRight: 2 }}>Balance:</span>
-                        <EffortChip 
-                          label="Bal Hrs" 
-                          value={remainingBalanceHrs} 
-                          color={rs.text} 
-                          valColor={remainingBalanceHrs < 0 ? "#e74c3c" : "#27ae60"} 
+                        <EffortChip
+                          label="Bal Hrs"
+                          value={remainingBalanceHrs}
+                          color={rs.text}
+                          valColor={remainingBalanceHrs < 0 ? "#e74c3c" : "#27ae60"}
                         />
-                        <EffortChip 
-                          label="Bal Units" 
-                          value={remainingBalanceUnits} 
-                          color={rs.text} 
-                          valColor={remainingBalanceUnits < 0 ? "#e74c3c" : "#27ae60"} 
+                        <EffortChip
+                          label="Bal Units"
+                          value={remainingBalanceUnits}
+                          color={rs.text}
+                          valColor={remainingBalanceUnits < 0 ? "#e74c3c" : "#27ae60"}
                         />
                       </div>
                     ) : (
@@ -696,8 +749,8 @@ console.log("Redux employees:", serviceDeliveryEmployees);
                         <th style={S.th}>Task</th>
                         <th style={{ ...S.th, width: 120 }}>Planned Units</th>
                         {/* NEW columns */}
-                        <th style={{ ...S.th, width: 105}}>Est. Days</th>
-                        <th style={{ ...S.th, width: 105}}>Est. Hours</th>
+                        <th style={{ ...S.th, width: 105 }}>Est. Days</th>
+                        <th style={{ ...S.th, width: 105 }}>Est. Hours</th>
                         <th style={S.th}>Unit Type</th>
                         <th style={{ ...S.th, width: 90 }}>Assigned</th>
                         <th style={{ ...S.th, width: 90 }}>Completed</th>
@@ -707,11 +760,11 @@ console.log("Redux employees:", serviceDeliveryEmployees);
                     </thead>
                     <tbody>
                       {tasks.map((t, i) => {
-                        const key       = `${role}||${t.task_name}`;
-                        const entry     = loadDraft[key] || {}; // CHANGED: now an object
-                        const planned   = Number(entry.planned_units) || 0;
-                        const sumRow    = summaryByKey[key];
-                        const assigned  = sumRow ? Number(sumRow.total_assigned)  : 0;
+                        const key = `${role}||${t.task_name}`;
+                        const entry = loadDraft[key] || {}; // CHANGED: now an object
+                        const planned = Number(entry.planned_units) || 0;
+                        const sumRow = summaryByKey[key];
+                        const assigned = sumRow ? Number(sumRow.total_assigned) : 0;
                         const completed = sumRow ? Number(sumRow.total_completed) : 0;
 
                         // How many people are already assigned to this row
@@ -808,16 +861,18 @@ console.log("Redux employees:", serviceDeliveryEmployees);
       )} */}
 
       {/* ── Inline Assign Modal ── */}
-{assignModal && (
-  <AssignModal
-    modal={assignModal}
-    users={users}  // ← USE THIS INSTEAD (from user table)
-    assignments={assignments}
-    onAssign={handleAddAssignment}
-    onDelete={handleDelete}
-    onClose={() => setAssignModal(null)}
-  />
-)}
+      {assignModal && (
+        <AssignModal
+          modal={assignModal}
+          users={serviceDeliveryEmployees} // ← USE THIS INSTEAD (from user table)
+          assignments={assignments}
+          onAssign={handleAddAssignment}
+          onDelete={handleDelete}
+          onClose={() => setAssignModal(null)}
+        />
+      )}
+
+
     </div>
   );
 };
@@ -826,23 +881,23 @@ console.log("Redux employees:", serviceDeliveryEmployees);
 // Styles — ALL ORIGINAL, unchanged
 // ─────────────────────────────────────────────────────────────────────────────
 const S = {
-  page:          { padding: "20px", maxWidth: "1200px", margin: "0 auto", fontFamily: "sans-serif" },
-  pageTitle:     { fontSize: "22px", fontWeight: "800", color: "#1e272e", marginBottom: "20px",textAlign: "left" },
-  card:          { background: "#fff", borderRadius: 10, boxShadow: "0 2px 10px rgba(0,0,0,0.07)", padding: "20px", marginBottom: 20 },
-  sectionHead:   { display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12, marginBottom: 16 },
-  sectionTitle:  { fontSize: 15, fontWeight: 700, color: "#1e272e", marginBottom: 4 },
-  sectionSub:    { fontSize: 12, color: "#999" },
-  row:           { display: "flex", gap: 14, flexWrap: "wrap", alignItems: "flex-start" },
-  label:         { display: "block", fontSize: 12, fontWeight: 600, color: "#666", marginBottom: 5 },
-  select:        { width: "100%", padding: "8px 10px", border: "1px solid #ddd", borderRadius: 5, fontSize: 14, background: "white", boxSizing: "border-box", cursor: "pointer" },
-  unitInput:     { width: "100%", padding: "5px 8px", border: "1px solid #ddd", borderRadius: 4, fontSize: 13, boxSizing: "border-box", textAlign: "center" },
-  primaryBtn:    { padding: "8px 20px", background: "#27ae60", color: "white", border: "none", borderRadius: 5, fontSize: 13, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" },
-  roleBar:       { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 14px", borderRadius: "6px 6px 0 0", background: "#9ea4a0",},
-  table:         { width: "100%", borderCollapse: "collapse", fontSize: 13, border: "1px solid #eee" },
-  th:            { padding: "8px 12px", background: "#f8f9fa", fontWeight: 600, color: "#555", textAlign: "center", borderBottom: "1px solid #dee2e6", fontSize: 12 },
-  td:            { padding: "8px 12px", borderBottom: "1px solid #f5f5f5", color: "#333" },
-  kpiStrip:      { display: "flex", gap: 10, flexWrap: "wrap" },
-  totalBadge:    { background: "#f0f0f0", borderRadius: 6, padding: "6px 14px", fontSize: 13, color: "#555" },
+  page: { padding: "20px", maxWidth: "1200px", margin: "0 auto", fontFamily: "sans-serif" },
+  pageTitle: { fontSize: "22px", fontWeight: "800", color: "#1e272e", marginBottom: "20px", textAlign: "left" },
+  card: { background: "#fff", borderRadius: 10, boxShadow: "0 2px 10px rgba(0,0,0,0.07)", padding: "20px", marginBottom: 20 },
+  sectionHead: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12, marginBottom: 16 },
+  sectionTitle: { fontSize: 15, fontWeight: 700, color: "#1e272e", marginBottom: 4 },
+  sectionSub: { fontSize: 12, color: "#999" },
+  row: { display: "flex", gap: 14, flexWrap: "wrap", alignItems: "flex-start" },
+  label: { display: "block", fontSize: 12, fontWeight: 600, color: "#666", marginBottom: 5 },
+  select: { width: "100%", padding: "8px 10px", border: "1px solid #ddd", borderRadius: 5, fontSize: 14, background: "white", boxSizing: "border-box", cursor: "pointer" },
+  unitInput: { width: "100%", padding: "5px 8px", border: "1px solid #ddd", borderRadius: 4, fontSize: 13, boxSizing: "border-box", textAlign: "center" },
+  primaryBtn: { padding: "8px 20px", background: "#27ae60", color: "white", border: "none", borderRadius: 5, fontSize: 13, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" },
+  roleBar: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 14px", borderRadius: "6px 6px 0 0", background: "#9ea4a0", },
+  table: { width: "100%", borderCollapse: "collapse", fontSize: 13, border: "1px solid #eee" },
+  th: { padding: "8px 12px", background: "#f8f9fa", fontWeight: 600, color: "#555", textAlign: "center", borderBottom: "1px solid #dee2e6", fontSize: 12 },
+  td: { padding: "8px 12px", borderBottom: "1px solid #f5f5f5", color: "#333" },
+  kpiStrip: { display: "flex", gap: 10, flexWrap: "wrap" },
+  totalBadge: { background: "#f0f0f0", borderRadius: 6, padding: "6px 14px", fontSize: 13, color: "#555" },
   assignRowBtn: {
     display: "inline-flex", alignItems: "center", gap: 5,
     padding: "4px 12px", background: "#3498db", color: "white",
@@ -875,8 +930,8 @@ const M = {
     display: "flex", justifyContent: "space-between",
     alignItems: "flex-start", marginBottom: 16,
   },
-  title:  { fontSize: 18, fontWeight: 800, color: "#1e272e", marginBottom: 4 },
-  sub:    { fontSize: 13, color: "#555", display: "flex", alignItems: "center", flexWrap: "wrap", gap: 4 },
+  title: { fontSize: 18, fontWeight: 800, color: "#1e272e", marginBottom: 4 },
+  sub: { fontSize: 13, color: "#555", display: "flex", alignItems: "center", flexWrap: "wrap", gap: 4 },
   closeBtn: {
     background: "none", border: "none", fontSize: 18,
     cursor: "pointer", color: "#999", padding: "0 4px",
@@ -887,14 +942,14 @@ const M = {
     background: "#f8f9fa", borderRadius: 8, padding: "12px 16px",
     flexWrap: "wrap",
   },
-  chip:      { flex: 1, textAlign: "center", minWidth: 55 },
+  chip: { flex: 1, textAlign: "center", minWidth: 55 },
   chipLabel: { display: "block", fontSize: 11, color: "#aaa", marginBottom: 2 },
-  chipVal:   { fontSize: 20, fontWeight: 800 },
+  chipVal: { fontSize: 20, fontWeight: 800 },
   formRow: {
     display: "flex", gap: 10, alignItems: "flex-end",
     flexWrap: "wrap", marginBottom: 8,
   },
-  label:  { display: "block", fontSize: 12, fontWeight: 600, color: "#666", marginBottom: 4 },
+  label: { display: "block", fontSize: 12, fontWeight: 600, color: "#666", marginBottom: 4 },
   select: {
     width: "100%", padding: "8px 10px", border: "1px solid #ddd",
     borderRadius: 5, fontSize: 14, background: "white",
@@ -912,8 +967,8 @@ const M = {
   error: { color: "#e74c3c", fontSize: 12, margin: "4px 0 0" },
   existingTitle: { fontSize: 13, fontWeight: 700, color: "#555", marginBottom: 8 },
   table: { width: "100%", borderCollapse: "collapse", fontSize: 13 },
-  th:    { padding: "7px 10px", background: "#f8f9fa", fontWeight: 600, color: "#666", textAlign: "left", borderBottom: "1px solid #eee", fontSize: 12 },
-  td:    { padding: "8px 10px", borderBottom: "1px solid #f5f5f5" },
+  th: { padding: "7px 10px", background: "#f8f9fa", fontWeight: 600, color: "#666", textAlign: "left", borderBottom: "1px solid #eee", fontSize: 12 },
+  td: { padding: "8px 10px", borderBottom: "1px solid #f5f5f5" },
   avatar: {
     width: 28, height: 28, borderRadius: "50%",
     background: "#3498db", color: "white",
@@ -929,6 +984,23 @@ const M = {
     border: "none", borderRadius: 6, fontSize: 13, fontWeight: 700,
     cursor: "pointer",
   },
+  toast: {
+    position: "fixed",
+    top: 24,
+    right: 24,
+    zIndex: 99999,
+    color: "white",
+    padding: "12px 22px",
+    borderRadius: "10px",
+    fontWeight: 700,
+    fontSize: "14px",
+    boxShadow: "0 6px 24px rgba(0,0,0,0.28)",
+    pointerEvents: "none",
+    minWidth: 240,
+    maxWidth: 400,
+    wordBreak: "break-word",
+    animation: "fadeInSlide 0.25s ease"
+  }
 };
 
 export default AssignmentScreen;

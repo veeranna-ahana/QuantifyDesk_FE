@@ -102,16 +102,20 @@ const ReconciliationUpload = ({ onUploadSuccess }) => {
             }
             const project = projectMap.get(projectCode);
             project.total_hours += parseFloat(entry.hours || 0);
-            if (entry.user_id) {
-                project.employee_count.add(entry.user_id);
+            
+            // ✅ Updated: Use emp_id from master.emp instead of user_id
+            const empId = entry.emp_id || entry.original_emp_code;
+            if (empId) {
+                project.employee_count.add(empId);
                 project.employee_details.push({
-                    emp_id: entry.emp_id || entry.original_emp_code,
-                    name: entry.employee_name || 'Unknown',
+                    emp_id: empId,
+                    name: entry.employee_name || 'Unknown', // Now from master.emp
                     hours: parseFloat(entry.hours || 0)
                 });
             }
             project.entry_count += 1;
         });
+        
         const data = Array.from(projectMap.values()).map(p => {
             const empMap = new Map();
             p.employee_details.forEach(emp => {
@@ -125,6 +129,7 @@ const ReconciliationUpload = ({ onUploadSuccess }) => {
             p.employee_count = p.employee_details.length;
             return p;
         });
+        
         data.sort((a, b) => {
             if (a.project_exists === b.project_exists) return a.project_code.localeCompare(b.project_code);
             return a.project_exists ? 1 : -1;
@@ -284,8 +289,19 @@ const ReconciliationUpload = ({ onUploadSuccess }) => {
             return <div style={{ color: '#9ca3af', padding: '8px 16px' }}>No employee details available</div>;
         }
         const employeeColumns = [
-            { title: 'Employee Code', dataIndex: 'emp_id', key: 'emp_id', width: 150 },
-            { title: 'Employee Name', dataIndex: 'name', key: 'name' },
+            { 
+                title: 'Employee Code', 
+                dataIndex: 'emp_id', 
+                key: 'emp_id', 
+                width: 150,
+                render: (text) => <Text code>{text || 'N/A'}</Text>
+            },
+            { 
+                title: 'Employee Name', 
+                dataIndex: 'name', 
+                key: 'name',
+                render: (text) => <Text>{text || 'Unknown'}</Text>
+            },
             {
                 title: 'Hours',
                 dataIndex: 'hours',
@@ -361,7 +377,6 @@ const ReconciliationUpload = ({ onUploadSuccess }) => {
                             ) : (
                                 <>
                                     <p style={{ fontWeight: 500, color: '#374151', margin: 0 }}>Drop your Excel file here</p>
-                                    {/* <p style={{ color: '#9ca3af', fontSize: 12, margin: '4px 0 0' }}>or click to browse — .xls, .xlsx supported</p> */}
                                 </>
                             )}
                         </Dragger>
