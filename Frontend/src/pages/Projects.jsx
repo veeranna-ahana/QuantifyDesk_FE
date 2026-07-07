@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 import axios from 'axios';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -437,7 +438,10 @@ const EffortEstimateModal = ({ projects, onClose, onSaved, initialProjectId }) =
       }
     };
 
-    fetchExistingEffort();
+    const runFetch = async () => {
+      await fetchExistingEffort();
+    };
+    runFetch();
   }, [selectedProject]);
 
   const handleChange = (idx, field, val) => {
@@ -478,9 +482,24 @@ const EffortEstimateModal = ({ projects, onClose, onSaved, initialProjectId }) =
   const handleSubmit = async () => {
 
     if (!selectedProject) {
-      alert("Please select a project");
+      toast.error("Please select a project");
       return;
     }
+
+    // Check if any role has effort (days or bufferDays) defined, but units is missing or <= 0
+    const activeRolesMissingUnits = rows.filter(r => {
+      const days = parseFloat(r.days) || 0;
+      const bufferDays = parseFloat(r.bufferDays) || 0;
+      const hasEffort = days > 0 || bufferDays > 0;
+      const hasUnits = r.units && parseFloat(r.units) > 0;
+      return hasEffort && !hasUnits;
+    });
+
+    if (activeRolesMissingUnits.length > 0) {
+      toast.error(`Units are mandatory for roles with effort. Please specify units for: ${activeRolesMissingUnits.map(r => r.role).join(', ')}`);
+      return;
+    }
+
 
     try {
 
@@ -511,7 +530,7 @@ const EffortEstimateModal = ({ projects, onClose, onSaved, initialProjectId }) =
           headers: getHeaders(),
         }
       );
-      alert("Effort estimate saved successfully");
+      toast.success("Effort estimate saved successfully!");
 
       onSaved?.();
 
@@ -521,7 +540,7 @@ const EffortEstimateModal = ({ projects, onClose, onSaved, initialProjectId }) =
 
       console.error(err);
 
-      alert(
+      toast.error(
         err?.response?.data?.message ||
         "Failed to save estimate"
       );
@@ -684,6 +703,7 @@ const Projects = () => {
   const [showEffortModal, setShowEffortModal] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
   const [initialEffortProjectId, setInitialEffortProjectId] = useState('');
+
 
   const fetchProjects = async () => {
     try {
@@ -957,6 +977,22 @@ const O = {
     padding: '8px 18px', background: '#1e272e', color: '#fff',
     border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer',
   },
+  toast: {
+    position: 'fixed',
+    top: 24,
+    right: 24,
+    zIndex: 99999,
+    color: 'white',
+    padding: '12px 22px',
+    borderRadius: '10px',
+    fontWeight: 700,
+    fontSize: '14px',
+    boxShadow: '0 6px 24px rgba(0,0,0,0.28)',
+    pointerEvents: 'none',
+    minWidth: 240,
+    maxWidth: 400,
+    wordBreak: 'break-word'
+  }
 };
 
 // Effort table

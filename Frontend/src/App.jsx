@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Cookies from 'js-cookie';
+import { Toaster } from 'react-hot-toast';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 // import ProtectedRoute from './component/ProtectedRoute';
@@ -22,6 +23,23 @@ function App() {
 
   return (
     <BrowserRouter>
+      {/* Global toast container — renders above all modals */}
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 3500,
+          style: {
+            borderRadius: '10px',
+            fontWeight: 700,
+            fontSize: '14px',
+            minWidth: '280px',
+            maxWidth: '420px',
+            boxShadow: '0 6px 24px rgba(0,0,0,0.18)',
+          },
+          success: { style: { background: '#27ae60', color: '#fff' } },
+          error:   { style: { background: '#e74c3c', color: '#fff' } },
+        }}
+      />
       <Routes>
         {/* Login Route */}
         <Route path="/quantification" element={<Login />} />

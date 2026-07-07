@@ -435,7 +435,7 @@ const addAssignment = async (req, res, next) => {
     const errors = [];
     let wouldExceed = false;
 
-    if (plannedUnits > 0 && (currentUnits + newUnits) > plannedUnits) {
+    if ((currentUnits + newUnits) > plannedUnits) {
       errors.push({
         field: 'units',
         message: `Cannot assign ${newUnits} units. Total would exceed planned units (${plannedUnits}). Remaining: ${plannedUnits - currentUnits}`,
@@ -447,7 +447,7 @@ const addAssignment = async (req, res, next) => {
       wouldExceed = true;
     }
 
-    if (plannedDays > 0 && (currentDays + newDays) > plannedDays) {
+    if ((currentDays + newDays) > plannedDays) {
       errors.push({
         field: 'days',
         message: `Cannot assign ${newDays} days. Total would exceed planned days (${plannedDays}). Remaining: ${plannedDays - currentDays}`,
@@ -459,7 +459,7 @@ const addAssignment = async (req, res, next) => {
       wouldExceed = true;
     }
 
-    if (plannedHours > 0 && (currentHours + newHours) > plannedHours) {
+    if ((currentHours + newHours) > plannedHours) {
       errors.push({
         field: 'hours',
         message: `Cannot assign ${newHours} hours. Total would exceed planned hours (${plannedHours}). Remaining: ${plannedHours - currentHours}`,
