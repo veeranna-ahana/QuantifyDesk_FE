@@ -197,8 +197,8 @@ const MyWork = () => {
                   <th style={S.th}>Role</th>
                   <th style={S.th}>Task</th>
                   <th style={S.th}>Assigned</th>
-                  <th style={S.th}>Approved</th>
-                  <th style={S.th}>Awaiting</th>
+                  {/* <th style={S.th}>Approved</th> */}
+                  {/* <th style={S.th}>Awaiting</th> */}
                   <th style={S.th}>Pending</th>
                   <th style={S.th}>Progress</th>
                   <th style={S.th}>Action</th>
@@ -220,17 +220,17 @@ const MyWork = () => {
                       <td style={{ ...S.td, textAlign: "center", fontWeight: "700" }}>
                         {a.units_assigned}
                       </td>
-                      <td style={{ ...S.td, textAlign: "center", color: "#2ecc71", fontWeight: "700" }}>
+                      {/* <td style={{ ...S.td, textAlign: "center", color: "#2ecc71", fontWeight: "700" }}>
                         {a.units_completed}
-                      </td>
+                      </td> */}
                       {/* Awaiting approval — orange */}
-                      <td style={{ ...S.td, textAlign: "center" }}>
+                      {/* <td style={{ ...S.td, textAlign: "center" }}>
                         {awaiting > 0 ? (
                           <span style={S.awaitingBadge}>⏳ {awaiting}</span>
                         ) : (
                           <span style={{ color: "#ccc" }}>—</span>
                         )}
-                      </td>
+                      </td> */}
                       <td style={{ ...S.td, textAlign: "center", color: effectivePend > 0 ? "#e74c3c" : "#2ecc71", fontWeight: "700" }}>
                         {effectivePend}
                       </td>

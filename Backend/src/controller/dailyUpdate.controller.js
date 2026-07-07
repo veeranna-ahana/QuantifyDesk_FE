@@ -278,7 +278,7 @@ async function getDailyUpdates(req, res) {
     ? `WHERE ${conditions.join(" AND ")}`
     : "";
 
-  // ✅ Only join with master.emp - NO users table
+  // ✅ Query with previous day's plan
   const sql = `
     SELECT
       ap.id,
@@ -305,7 +305,18 @@ async function getDailyUpdates(req, res) {
       ap.todays_tasks,
 
       ap.risks,
-      ap.remarks
+      ap.remarks,
+
+      -- ✅ Get previous day's todays_tasks as previousDayPlan
+      (
+        SELECT todays_tasks 
+        FROM assignment_progress ap_prev
+        WHERE ap_prev.emp_id = ap.emp_id
+          AND ap_prev.project_id = ap.project_id
+          AND ap_prev.task_name = ap.task_name
+          AND ap_prev.date = DATE_SUB(ap.date, INTERVAL 1 DAY)
+        LIMIT 1
+      ) AS previousDayPlan
 
     FROM assignment_progress ap
 

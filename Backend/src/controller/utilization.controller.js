@@ -116,17 +116,14 @@ const logProgress = async (req, res, next) => {
 
     // ✅ Get emp_id from request or token
     if (user_id && user_id !== "null" && user_id !== "undefined") {
-      // Check if user_id is an emp_id (string like "AS00717")
       if (typeof user_id === 'string' && !/^\d+$/.test(user_id)) {
         finalEmpId = user_id;
-        // Get u_id from master.emp
         const empResult = await masterQuery(
           `SELECT u_id FROM emp WHERE emp_id = ? AND flag = 'Active'`,
           [finalEmpId]
         );
         finalUserId = empResult.length > 0 ? empResult[0].u_id : null;
       } else {
-        // Try as u_id from master.emp
         const empResult = await masterQuery(
           `SELECT u_id, emp_id FROM emp WHERE u_id = ? AND flag = 'Active'`,
           [user_id]
@@ -135,7 +132,6 @@ const logProgress = async (req, res, next) => {
           finalEmpId = empResult[0].emp_id;
           finalUserId = empResult[0].u_id;
         } else {
-          // Try as users.id (backward compatibility)
           const userResult = await query(
             `SELECT emp_id FROM users WHERE id = ?`,
             [user_id]
@@ -152,7 +148,6 @@ const logProgress = async (req, res, next) => {
       }
     }
 
-    // If still not found, try from token
     if (!finalEmpId) {
       const empId = req.user?.emp_id;
       if (empId) {
@@ -187,7 +182,7 @@ const logProgress = async (req, res, next) => {
 
     // ✅ Verify the assignment belongs to this employee
     const assignmentCheck = await query(
-      `SELECT emp_id FROM assignments WHERE id = ?`,
+      `SELECT emp_id, units_assigned FROM assignments WHERE id = ?`,
       [assignment_id]
     );
 
@@ -201,49 +196,33 @@ const logProgress = async (req, res, next) => {
       });
     }
 
-    // Guard: don't allow logging more than what's pending
-    const pendingRows = await query(
-      `SELECT
-         a.units_assigned,
-         COALESCE(SUM(CASE WHEN ap.status = 'APPROVED' THEN ap.units_completed ELSE 0 END), 0) AS already_done,
-         COALESCE(SUM(CASE WHEN ap.status = 'PENDING'  THEN ap.units_completed ELSE 0 END), 0) AS awaiting
-       FROM assignments a
-       LEFT JOIN assignment_progress ap ON a.id = ap.assignment_id
-       WHERE a.id = ?
-       GROUP BY a.units_assigned`,
+    const totalAssigned = assignmentCheck[0].units_assigned;
+
+    // ✅ Get total completed so far (including this new entry)
+    const completedSoFar = await query(
+      `SELECT COALESCE(SUM(units_completed), 0) AS total_completed
+       FROM assignment_progress
+       WHERE assignment_id = ?`,
       [assignment_id]
     );
 
-    if (pendingRows.length === 0) {
-      return res.status(404).json({ message: "Assignment not found" });
+    const currentCompleted = parseFloat(completedSoFar[0]?.total_completed || 0);
+    const newUnits = parseFloat(units_completed || 0);
+
+    // ✅ Check if logging would exceed assigned units
+    if (newUnits > 0 && (currentCompleted + newUnits) > totalAssigned) {
+      return res.status(400).json({
+        message: `Cannot log ${newUnits} units. Only ${totalAssigned - currentCompleted} units remaining.`
+      });
     }
 
-    const { units_assigned, already_done, awaiting } = pendingRows[0];
-    const effective_pending = units_assigned - already_done - awaiting;
-
-    if (units_completed && Number(units_completed) > 0) {
-      if (effective_pending <= 0) {
-        return res.status(400).json({
-          message: `No pending units available. You have ${awaiting} unit(s) awaiting approval.`
-        });
-      }
-
-      if (Number(units_completed) > effective_pending) {
-        return res.status(400).json({
-          message: `Cannot log ${units_completed} units. Only ${effective_pending} units available to log.`
-        });
-      }
-    } else if (units_completed && Number(units_completed) < 0) {
-      return res.status(400).json({ message: "Units cannot be negative." });
-    }
-
-    // ✅ Insert with emp_id
+    // ✅ Insert with AUTO-APPROVED status
     const result = await query(
       `INSERT INTO assignment_progress (
          assignment_id, user_id, emp_id, date, units_completed, 
          todays_tasks, total_time_needed, yesterdays_tasks, risks, 
          project_id, role, task_name, status
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING')`,
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'APPROVED')`,  // ✅ Changed to APPROVED
       [
         assignment_id, finalUserId, finalEmpId, date, units_completed || 0, 
         todays_tasks || null, total_time_needed || null, yesterdays_tasks || null, risks || null,
@@ -251,7 +230,7 @@ const logProgress = async (req, res, next) => {
       ]
     );
 
-    // Fetch assignment context for notification
+    // ✅ Fetch assignment context for notification
     const ctxRows = await query(
       `SELECT a.role, a.task_name, p.project_name, e.emp_name AS emp_name
        FROM assignments a
@@ -262,28 +241,25 @@ const logProgress = async (req, res, next) => {
     );
     const ctx = ctxRows[0];
 
-    // Notify ALL admins
-    const admins = await query(`SELECT id FROM users WHERE role = 'ADMIN'`);
-    for (const admin of admins) {
-      await createNotification({
-        user_id: admin.id,
-        type:    'progress_pending',
-        title:   `Progress update awaiting approval`,
-        message: `${ctx.emp_name || 'Employee'} logged ${units_completed} unit(s) of "${ctx.task_name}" (${ctx.role}) on "${ctx.project_name}". Awaiting your approval.`,
-      });
-    }
+    // ✅ Optional: Send notification to employee (not manager)
+    await createNotification({
+      user_id: finalUserId,
+      type: 'progress_approved',
+      title: `Progress logged successfully ✓`,
+      message: `You have logged ${units_completed || 0} unit(s) of "${ctx.task_name}" (${ctx.role}) on "${ctx.project_name}".`,
+    });
 
     return res.status(201).json({
-      id:      result.insertId,
-      status:  'PENDING',
-      message: "Progress logged and sent for approval",
+      id: result.insertId,
+      status: 'APPROVED',
+      message: "Progress logged successfully!",
+      remaining_units: totalAssigned - (currentCompleted + newUnits)
     });
   } catch (err) {
     console.error('❌ logProgress error:', err);
     return next(err);
   }
 };
-
 // ─────────────────────────────────────────────────────────────────────────────
 // ADMIN: Get all pending approval items
 // GET /api/utilization/pending-approvals

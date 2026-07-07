@@ -226,7 +226,8 @@ export default function DailyUpdatesReport() {
               <th className="dur-col-slno sticky-slno">SLNO</th>
               <th className="sticky-emp">Employee Name</th>
               <th className="sticky-project">Project</th>
-              <th className="sticky-status">Working Status</th>
+              <th className="sticky-status">Task Name</th>
+              <th>Previous Day plan</th>
               <th>Done Yesterday</th>
               <th>Today's Plan</th>
               <th>Risks</th>
@@ -275,7 +276,10 @@ export default function DailyUpdatesReport() {
                     {row.project_name || '—'}
                   </td>
                   <td className="dur-text-cell sticky-status">
-                    <StatusBadge value={row.working_status} />
+                    {row.task_name} 
+                  </td>
+                  <td className="dur-text-cell dur-text-wrap">
+                    {row.previousDayPlan || '—'}
                   </td>
                   <td className="dur-text-cell dur-text-wrap">
                     {row.done_yesterday || '—'}
