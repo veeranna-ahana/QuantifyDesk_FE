@@ -1,6 +1,51 @@
 const { query, masterQuery } = require("../config/db");
 const { createNotification } = require("./notification.controller");
 
+const resolveLocalUserId = async (empId, empName, empEmail) => {
+  // 1. Try to match by emp_id in local users
+  if (empId) {
+    const rows = await query("SELECT id FROM users WHERE emp_id = ?", [empId]);
+    if (rows.length > 0) return rows[0].id;
+  }
+
+  // 2. Try to match by email
+  if (empEmail) {
+    const rows = await query("SELECT id FROM users WHERE email = ?", [empEmail]);
+    if (rows.length > 0) {
+      // Self-heal: update emp_id
+      if (empId) {
+        await query("UPDATE users SET emp_id = ? WHERE id = ?", [empId, rows[0].id]);
+      }
+      return rows[0].id;
+    }
+  }
+
+  // 3. Try to match by cleaning name (ignore salutations, spaces, punctuation)
+  if (empName) {
+    const clean = (n) => {
+      if (!n) return "";
+      return n
+        .replace(/^(Mr\.|Ms\.|Mrs\.|Dr\.)\s+/i, "")
+        .replace(/[^a-zA-Z0-9]/g, "")
+        .toLowerCase();
+    };
+    const targetCleaned = clean(empName);
+    
+    const allUsers = await query("SELECT id, name, email FROM users");
+    for (const u of allUsers) {
+      if (clean(u.name) === targetCleaned) {
+        // Self-heal: update emp_id
+        if (empId) {
+          await query("UPDATE users SET emp_id = ? WHERE id = ?", [empId, u.id]);
+        }
+        return u.id;
+      }
+    }
+  }
+
+  return null;
+};
+
 // ─────────────────────────────────────────────────────────────────────────────
 // EMP: Get my assignments with completed + pending
 // Only APPROVED progress rows count toward completed
@@ -108,7 +153,7 @@ const logProgress = async (req, res, next) => {
     let { 
       assignment_id, user_id, date, units_completed, 
       todays_tasks, total_time_needed, yesterdays_tasks, risks,
-      project_id, role, task_name
+      project_id, role, task_name, remarks, availability
     } = req.body;
 
     let finalEmpId = null;
@@ -119,30 +164,39 @@ const logProgress = async (req, res, next) => {
       if (typeof user_id === 'string' && !/^\d+$/.test(user_id)) {
         finalEmpId = user_id;
         const empResult = await masterQuery(
-          `SELECT u_id FROM emp WHERE emp_id = ? AND flag = 'Active'`,
+          `SELECT u_id, emp_id, emp_name, emp_email FROM emp WHERE emp_id = ? AND flag = 'Active'`,
           [finalEmpId]
         );
-        finalUserId = empResult.length > 0 ? empResult[0].u_id : null;
+        if (empResult.length > 0) {
+          finalUserId = await resolveLocalUserId(finalEmpId, empResult[0].emp_name, empResult[0].emp_email);
+        }
       } else {
         const empResult = await masterQuery(
-          `SELECT u_id, emp_id FROM emp WHERE u_id = ? AND flag = 'Active'`,
+          `SELECT u_id, emp_id, emp_name, emp_email FROM emp WHERE u_id = ? AND flag = 'Active'`,
           [user_id]
         );
         if (empResult.length > 0) {
           finalEmpId = empResult[0].emp_id;
-          finalUserId = empResult[0].u_id;
+          finalUserId = await resolveLocalUserId(finalEmpId, empResult[0].emp_name, empResult[0].emp_email);
         } else {
           const userResult = await query(
-            `SELECT emp_id FROM users WHERE id = ?`,
+            `SELECT emp_id, name, email FROM users WHERE id = ?`,
             [user_id]
           );
           if (userResult.length > 0) {
             finalEmpId = userResult[0].emp_id;
-            const empInfo = await masterQuery(
-              `SELECT u_id FROM emp WHERE emp_id = ? AND flag = 'Active'`,
-              [finalEmpId]
-            );
-            finalUserId = empInfo.length > 0 ? empInfo[0].u_id : null;
+            finalUserId = user_id;
+            
+            if (finalEmpId) {
+              const empInfo = await masterQuery(
+                `SELECT emp_name, emp_email FROM emp WHERE emp_id = ? AND flag = 'Active'`,
+                [finalEmpId]
+              );
+              if (empInfo.length > 0) {
+                // Self-heal
+                await query("UPDATE users SET emp_id = ? WHERE id = ?", [finalEmpId, finalUserId]);
+              }
+            }
           }
         }
       }
@@ -152,12 +206,12 @@ const logProgress = async (req, res, next) => {
       const empId = req.user?.emp_id;
       if (empId) {
         const empResult = await masterQuery(
-          `SELECT u_id, emp_id FROM emp WHERE emp_id = ? AND flag = 'Active'`,
+          `SELECT u_id, emp_id, emp_name, emp_email FROM emp WHERE emp_id = ? AND flag = 'Active'`,
           [empId]
         );
         if (empResult && empResult.length > 0) {
           finalEmpId = empResult[0].emp_id;
-          finalUserId = empResult[0].u_id;
+          finalUserId = await resolveLocalUserId(finalEmpId, empResult[0].emp_name, empResult[0].emp_email);
         }
       }
     }
@@ -168,8 +222,14 @@ const logProgress = async (req, res, next) => {
       });
     }
 
-    if (!assignment_id || !date) {
-      return res.status(400).json({ message: "assignment_id and date are required" });
+    if (!finalUserId) {
+      return res.status(400).json({
+        message: "User account not found in main database. Please contact an admin."
+      });
+    }
+
+    if (!date) {
+      return res.status(400).json({ message: "date is required" });
     }
 
     if (!todays_tasks || !todays_tasks.trim()) {
@@ -180,40 +240,53 @@ const logProgress = async (req, res, next) => {
       return res.status(400).json({ message: "Total Time Needed is required" });
     }
 
-    // ✅ Verify the assignment belongs to this employee
-    const assignmentCheck = await query(
-      `SELECT emp_id, units_assigned FROM assignments WHERE id = ?`,
-      [assignment_id]
-    );
+    if (assignment_id) {
+      // ✅ Verify the assignment belongs to this employee
+      const assignmentCheck = await query(
+        `SELECT emp_id, units_assigned FROM assignments WHERE id = ?`,
+        [assignment_id]
+      );
 
-    if (assignmentCheck.length === 0) {
-      return res.status(404).json({ message: "Assignment not found" });
-    }
+      if (assignmentCheck.length === 0) {
+        return res.status(404).json({ message: "Assignment not found" });
+      }
 
-    if (assignmentCheck[0].emp_id !== finalEmpId) {
-      return res.status(403).json({ 
-        message: "You are not authorized to log progress for this assignment" 
-      });
-    }
+      if (assignmentCheck[0].emp_id !== finalEmpId) {
+        return res.status(403).json({ 
+          message: "You are not authorized to log progress for this assignment" 
+        });
+      }
 
-    const totalAssigned = assignmentCheck[0].units_assigned;
+      const totalAssigned = assignmentCheck[0].units_assigned;
 
-    // ✅ Get total completed so far (including this new entry)
-    const completedSoFar = await query(
-      `SELECT COALESCE(SUM(units_completed), 0) AS total_completed
-       FROM assignment_progress
-       WHERE assignment_id = ?`,
-      [assignment_id]
-    );
+      // ✅ Get total completed so far (including this new entry)
+      const completedSoFar = await query(
+        `SELECT COALESCE(SUM(units_completed), 0) AS total_completed
+         FROM assignment_progress
+         WHERE assignment_id = ?`,
+        [assignment_id]
+      );
 
-    const currentCompleted = parseFloat(completedSoFar[0]?.total_completed || 0);
-    const newUnits = parseFloat(units_completed || 0);
+      const currentCompleted = parseFloat(completedSoFar[0]?.total_completed || 0);
+      const newUnits = parseFloat(units_completed || 0);
 
-    // ✅ Check if logging would exceed assigned units
-    if (newUnits > 0 && (currentCompleted + newUnits) > totalAssigned) {
-      return res.status(400).json({
-        message: `Cannot log ${newUnits} units. Only ${totalAssigned - currentCompleted} units remaining.`
-      });
+      // ✅ Check if logging would exceed assigned units
+      if (newUnits > 0 && (currentCompleted + newUnits) > totalAssigned) {
+        return res.status(400).json({
+          message: `Cannot log ${newUnits} units. Only ${totalAssigned - currentCompleted} units remaining.`
+        });
+      }
+    } else {
+      // For manual task, project_id, role and task_name are required
+      if (!project_id) {
+        return res.status(400).json({ message: "Project is required for manual tasks" });
+      }
+      if (!role) {
+        return res.status(400).json({ message: "Role is required for manual tasks" });
+      }
+      if (!task_name || !task_name.trim()) {
+        return res.status(400).json({ message: "Task Name/Title is required for manual tasks" });
+      }
     }
 
     // ✅ Insert with AUTO-APPROVED status
@@ -221,39 +294,57 @@ const logProgress = async (req, res, next) => {
       `INSERT INTO assignment_progress (
          assignment_id, user_id, emp_id, date, units_completed, 
          todays_tasks, total_time_needed, yesterdays_tasks, risks, 
-         project_id, role, task_name, status
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'APPROVED')`,  // ✅ Changed to APPROVED
+         project_id, role, task_name, remarks, status, availability
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'APPROVED', ?)`,
       [
-        assignment_id, finalUserId, finalEmpId, date, units_completed || 0, 
+        assignment_id || null, finalUserId, finalEmpId, date, units_completed || 0, 
         todays_tasks || null, total_time_needed || null, yesterdays_tasks || null, risks || null,
-        project_id || null, role || null, task_name || null
+        project_id || null, role || null, task_name || null, remarks || null, availability || null
       ]
     );
 
-    // ✅ Fetch assignment context for notification
-    const ctxRows = await query(
-      `SELECT a.role, a.task_name, p.project_name, e.emp_name AS emp_name
-       FROM assignments a
-       LEFT JOIN projects p ON a.project_id = p.id
-       LEFT JOIN master.emp e ON a.emp_id = e.emp_id
-       WHERE a.id = ?`,
-      [assignment_id]
-    );
-    const ctx = ctxRows[0];
-
-    // ✅ Optional: Send notification to employee (not manager)
-    await createNotification({
-      user_id: finalUserId,
-      type: 'progress_approved',
-      title: `Progress logged successfully ✓`,
-      message: `You have logged ${units_completed || 0} unit(s) of "${ctx.task_name}" (${ctx.role}) on "${ctx.project_name}".`,
-    });
+    // ✅ Fetch context for notification
+    if (assignment_id) {
+      const ctxRows = await query(
+        `SELECT a.role, a.task_name, p.project_name, e.emp_name AS emp_name
+         FROM assignments a
+         LEFT JOIN projects p ON a.project_id = p.id
+         LEFT JOIN master.emp e ON a.emp_id = e.emp_id
+         WHERE a.id = ?`,
+        [assignment_id]
+      );
+      if (ctxRows.length > 0) {
+        const ctx = ctxRows[0];
+        try {
+          await createNotification({
+            user_id: finalUserId,
+            type: 'progress_approved',
+            title: `Progress logged successfully ✓`,
+            message: `You have logged ${units_completed || 0} unit(s) of "${ctx.task_name}" (${ctx.role}) on "${ctx.project_name}".`,
+          });
+        } catch (nErr) {
+          console.warn('⚠️ Notification failed:', nErr.message);
+        }
+      }
+    } else {
+      const projRow = await query("SELECT project_name FROM projects WHERE id = ?", [project_id]);
+      const projectName = projRow.length > 0 ? projRow[0].project_name : "Unknown Project";
+      try {
+        await createNotification({
+          user_id: finalUserId,
+          type: 'progress_approved',
+          title: `Manual task added successfully ✓`,
+          message: `You have added a manual task "${task_name}" for "${projectName}".`,
+        });
+      } catch (nErr) {
+        console.warn('⚠️ Notification failed:', nErr.message);
+      }
+    }
 
     return res.status(201).json({
       id: result.insertId,
       status: 'APPROVED',
-      message: "Progress logged successfully!",
-      remaining_units: totalAssigned - (currentCompleted + newUnits)
+      message: "Progress logged successfully!"
     });
   } catch (err) {
     console.error('❌ logProgress error:', err);

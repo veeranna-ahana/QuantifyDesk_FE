@@ -1,11 +1,60 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { useSelector } from "react-redux"; 
-// const BASE_URL = process.env.REACT_APP_API_BASE_URL;
+import { useSelector } from "react-redux";
+
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const getHeaders = () => ({
   Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
 });
+
+// Role-to-task mapping for manual tasks
+const roleTaskMapping = {
+  BA: [
+    "BA-BRD",
+    "BA-TDD",
+    "BA-Requirements Sign Off"
+  ],
+  UI: [
+    "UI Design / Figma",
+    "UI Review",
+    "UI Signoff"
+  ],
+  TL: [
+    "TL-Code Review",
+    "TL-Unit Testing",
+    "TL-Assign Task",
+    "TL-Peer Code Merge"
+  ],
+  "FE Dev": [
+    "FEDev-UI Implementation",
+    "FEDev-API Design",
+    "FEDev-API Implementation",
+    "FEDev-API Integration"
+  ],
+  "BE Dev": [
+    "BEDev-DB Design",
+    "BEDev-API Implementation",
+    "BEDev-API Testing",
+    "BEDev-UI Testing",
+    "BEDev-Documentation",
+    "BEDev-Design Review",
+    "BEDev-Code Review",
+    "BEDev-Release Notes (Each Build)"
+  ],
+  "Mobile/IOS Dev": [
+    "Mobile API Integration"
+  ],
+  Tester: [
+    "UAT Testing",
+    "Test Cases Documentation Preparation",
+    "Integration Testing",
+    "Fault Tracker",
+    "Traceability Matrix",
+    "Aging Report",
+    "QA Sign Off",
+    "User Manual Preparation"
+  ]
+};
 
 // ── Mini progress ring ────────────────────────────────────────────────────────
 const Ring = ({ pct, size = 54 }) => {
@@ -29,7 +78,7 @@ const Ring = ({ pct, size = 54 }) => {
 const MyWork = () => {
   // ✅ Get user from Redux store
   const user = useSelector((state) => state.auth.user);
-  const userId = user?.emp_id || localStorage.getItem("emp_id"); 
+  const userId = user?.emp_id || localStorage.getItem("emp_id");
   const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -44,6 +93,23 @@ const MyWork = () => {
   const [logError, setLogError] = useState("");
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState(null);
+
+  // Manual Task State
+  const [manualModalOpen, setManualModalOpen] = useState(false);
+  const [projects, setProjects] = useState([]);
+  const [manualProjectId, setManualProjectId] = useState("");
+  const [manualRole, setManualRole] = useState("");
+  const [manualTaskName, setManualTaskName] = useState("");
+  const [isCustomTask, setIsCustomTask] = useState(false);
+  const [manualDescription, setManualDescription] = useState("");
+  const [manualDate, setManualDate] = useState(today());
+  const [manualDoneYesterday, setManualDoneYesterday] = useState("");
+  const [manualTodaysPlan, setManualTodaysPlan] = useState("");
+  const [manualRisks, setManualRisks] = useState("");
+  const [manualTotalTimeNeeded, setManualTotalTimeNeeded] = useState("");
+  const [manualAvailability, setManualAvailability] = useState("");
+  const [manualError, setManualError] = useState("");
+  const [manualSaving, setManualSaving] = useState(false);
 
   const showToast = (msg, type = "success") => {
     setToast({ msg, type });
@@ -69,7 +135,32 @@ const MyWork = () => {
     }
   };
 
-  useEffect(() => { fetchAssignments(); }, []);
+  const fetchProjects = async () => {
+    try {
+      const res = await axios.get(
+        `${BASE_URL}/api/projects`,
+        { headers: getHeaders() }
+      );
+      setProjects(res.data || []);
+    } catch (err) {
+      console.error("Failed to fetch projects:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchAssignments();
+    fetchProjects();
+  }, []);
+
+  // Automatically calculate availability
+  useEffect(() => {
+    const hours = parseFloat(manualTotalTimeNeeded);
+    if (!isNaN(hours)) {
+      setManualAvailability(String(Math.max(8 - hours, 0)));
+    } else {
+      setManualAvailability("");
+    }
+  }, [manualTotalTimeNeeded]);
 
   const openLog = (a) => {
     setLogModal(a);
@@ -127,6 +218,59 @@ const MyWork = () => {
     }
   };
 
+  const submitManualTask = async () => {
+    if (!manualProjectId) { setManualError("Project is required."); return; }
+    if (!manualRole) { setManualError("Role is required."); return; }
+    if (!manualTaskName || !manualTaskName.trim()) { setManualError("Task name/title is required."); return; }
+    if (!manualDate) { setManualError("Date is required."); return; }
+    if (!manualTodaysPlan || !manualTodaysPlan.trim()) { setManualError("Today's Tasks are required."); return; }
+    if (!manualTotalTimeNeeded || !manualTotalTimeNeeded.trim()) { setManualError("Total Time Needed is required."); return; }
+
+    setManualSaving(true);
+    setManualError("");
+    try {
+      await axios.post(
+        `${BASE_URL}/api/utilization/log-progress`,
+        {
+          assignment_id: null,
+          user_id: userId,
+          date: manualDate,
+          project_id: parseInt(manualProjectId, 10),
+          role: manualRole,
+          task_name: manualTaskName,
+          remarks: manualDescription,
+          yesterdays_tasks: manualDoneYesterday,
+          todays_tasks: manualTodaysPlan,
+          risks: manualRisks,
+          total_time_needed: manualTotalTimeNeeded,
+          availability: manualAvailability,
+          units_completed: 0
+        },
+        { headers: getHeaders() }
+      );
+      setManualModalOpen(false);
+      showToast("Manual task logged successfully!");
+      // Reset
+      setManualProjectId("");
+      setManualRole("");
+      setManualTaskName("");
+      setIsCustomTask(false);
+      setManualDescription("");
+      setManualDoneYesterday("");
+      setManualTodaysPlan("");
+      setManualRisks("");
+      setManualTotalTimeNeeded("");
+      setManualAvailability("");
+      fetchAssignments();
+    } catch (err) {
+      const errMsg = err.response?.data?.message || "Failed to create manual task";
+      setManualError(errMsg);
+      showToast(errMsg, "error");
+    } finally {
+      setManualSaving(false);
+    }
+  };
+
   // Group by project
   const byProject = assignments.reduce((acc, a) => {
     const key = a.project_name || "Unknown";
@@ -150,7 +294,12 @@ const MyWork = () => {
         </div>
       )}
 
-      <h2 style={S.pageTitle}>My Work</h2>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+        <h2 style={S.pageTitle}>My Work</h2>
+        <button onClick={() => setManualModalOpen(true)} style={S.addManualTaskBtn}>
+          + Create Task
+        </button>
+      </div>
 
       {/* ── Summary strip ── */}
       {!loading && assignments.length > 0 && (
@@ -172,6 +321,9 @@ const MyWork = () => {
         <div style={S.emptyState}>
           <p style={{ fontSize: "18px", color: "#bbb" }}>No assignments yet.</p>
           <p style={{ fontSize: "13px", color: "#ccc" }}>Your manager will assign tasks soon.</p>
+          <button onClick={() => setManualModalOpen(true)} style={S.addManualTaskBtnLarge}>
+            + Create a Manual Task
+          </button>
         </div>
       )}
 
@@ -197,8 +349,6 @@ const MyWork = () => {
                   <th style={S.th}>Role</th>
                   <th style={S.th}>Task</th>
                   <th style={S.th}>Assigned</th>
-                  {/* <th style={S.th}>Approved</th> */}
-                  {/* <th style={S.th}>Awaiting</th> */}
                   <th style={S.th}>Pending</th>
                   <th style={S.th}>Progress</th>
                   <th style={S.th}>Action</th>
@@ -209,7 +359,6 @@ const MyWork = () => {
                   const completedPct = a.units_assigned > 0
                     ? Math.round((a.units_completed / a.units_assigned) * 100) : 0;
                   const awaiting = Number(a.units_awaiting || 0);
-                  // effective pending = units not yet logged OR awaiting approval
                   const effectivePend = Math.max(a.units_pending - awaiting, 0);
                   const fullyDone = Number(a.units_pending) === 0 && awaiting === 0;
 
@@ -220,17 +369,6 @@ const MyWork = () => {
                       <td style={{ ...S.td, textAlign: "center", fontWeight: "700" }}>
                         {a.units_assigned}
                       </td>
-                      {/* <td style={{ ...S.td, textAlign: "center", color: "#2ecc71", fontWeight: "700" }}>
-                        {a.units_completed}
-                      </td> */}
-                      {/* Awaiting approval — orange */}
-                      {/* <td style={{ ...S.td, textAlign: "center" }}>
-                        {awaiting > 0 ? (
-                          <span style={S.awaitingBadge}>⏳ {awaiting}</span>
-                        ) : (
-                          <span style={{ color: "#ccc" }}>—</span>
-                        )}
-                      </td> */}
                       <td style={{ ...S.td, textAlign: "center", color: effectivePend > 0 ? "#e74c3c" : "#2ecc71", fontWeight: "700" }}>
                         {effectivePend}
                       </td>
@@ -286,13 +424,13 @@ const MyWork = () => {
             </div>
 
             <div style={S.modalField}>
-              <label style={S.label}>Date <span style={{color: "#e74c3c"}}>*</span></label>
+              <label style={S.label}>Date <span style={{ color: "#e74c3c" }}>*</span></label>
               <input type="date" value={logDate}
                 onChange={e => setLogDate(e.target.value)} style={S.input} />
             </div>
 
             <div style={S.modalField}>
-              <label style={S.label}>Today's Tasks <span style={{color: "#e74c3c"}}>*</span></label>
+              <label style={S.label}>Today's Tasks <span style={{ color: "#e74c3c" }}>*</span></label>
               <textarea value={todaysTasks}
                 onChange={e => { setTodaysTasks(e.target.value); setLogError(""); }}
                 style={S.textarea} placeholder="What did you work on today?" />
@@ -300,7 +438,7 @@ const MyWork = () => {
 
             <div style={S.formGrid}>
               <div style={S.modalField}>
-                <label style={S.label}>Total Time Needed <span style={{color: "#e74c3c"}}>*</span></label>
+                <label style={S.label}>Total Time Needed <span style={{ color: "#e74c3c" }}>*</span></label>
                 <input type="text" value={totalTimeNeeded}
                   onChange={e => { setTotalTimeNeeded(e.target.value); setLogError(""); }}
                   style={S.input} placeholder="e.g., 4h 30m" />
@@ -335,6 +473,113 @@ const MyWork = () => {
               <button onClick={() => setLogModal(null)} style={S.cancelBtn}>Cancel</button>
               <button onClick={submitLog} style={S.saveBtn} disabled={saving}>
                 {saving ? "Submitting…" : "Submit"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Add Manual Task Modal ── */}
+      {manualModalOpen && (
+        <div style={S.overlay}>
+          <div style={S.modal}>
+            <h3 style={S.modalTitle}>Create Manual Task</h3>
+            <p style={S.modalSub}>Add a new task manually and log progress directly.</p>
+
+            <div style={S.modalField}>
+              <label style={S.label}>Project <span style={{ color: "#e74c3c" }}>*</span></label>
+              <select value={manualProjectId} onChange={e => setManualProjectId(e.target.value)} style={S.input}>
+                <option value="">-- Select Project --</option>
+                {projects.map(p => (
+                  <option key={p.id} value={p.id}>{p.project_name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div style={S.formGrid}>
+              <div style={S.modalField}>
+                <label style={S.label}>Role <span style={{ color: "#e74c3c" }}>*</span></label>
+                <select value={manualRole} onChange={e => {
+                  setManualRole(e.target.value);
+                  setManualTaskName("");
+                  setIsCustomTask(false);
+                }} style={S.input}>
+                  <option value="">-- Select Role --</option>
+                  {Object.keys(roleTaskMapping).map(r => (
+                    <option key={r} value={r}>{r}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={S.modalField}>
+                <label style={S.label}>Task Name <span style={{ color: "#e74c3c" }}>*</span></label>
+                {isCustomTask ? (
+                  <div style={{ display: "flex", gap: "6px" }}>
+                    <input type="text" value={manualTaskName} onChange={e => setManualTaskName(e.target.value)} style={S.input} placeholder="Enter task name" />
+                    <button onClick={() => { setIsCustomTask(false); setManualTaskName(""); }} style={{ ...S.cancelBtn, padding: "4px 8px", fontSize: "12px" }}>Select Standard</button>
+                  </div>
+                ) : (
+                  <select value={manualTaskName} onChange={e => {
+                    if (e.target.value === "CUSTOM") {
+                      setIsCustomTask(true);
+                      setManualTaskName("");
+                    } else {
+                      setManualTaskName(e.target.value);
+                    }
+                  }} style={S.input} disabled={!manualRole}>
+                    <option value="">-- Select Task --</option>
+                    {manualRole && roleTaskMapping[manualRole]?.map(t => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                    {manualRole && <option value="CUSTOM">-- Custom Task --</option>}
+                  </select>
+                )}
+              </div>
+            </div>
+
+            <div style={S.modalField}>
+              <label style={S.label}>Description / Remarks</label>
+              <textarea value={manualDescription} onChange={e => setManualDescription(e.target.value)} style={S.textarea} placeholder="Describe the task details" />
+            </div>
+
+            <div style={S.modalField}>
+              <label style={S.label}>Date <span style={{ color: "#e74c3c" }}>*</span></label>
+              <input type="date" value={manualDate} onChange={e => setManualDate(e.target.value)} style={S.input} />
+            </div>
+
+            <div style={S.modalField}>
+              <label style={S.label}>Done Yesterday (Optional)</label>
+              <textarea value={manualDoneYesterday} onChange={e => setManualDoneYesterday(e.target.value)} style={S.textarea} placeholder="What did you do yesterday?" />
+            </div>
+
+            <div style={S.modalField}>
+              <label style={S.label}>Today's Tasks / Plan <span style={{ color: "#e74c3c" }}>*</span></label>
+              <textarea value={manualTodaysPlan} onChange={e => setManualTodaysPlan(e.target.value)} style={S.textarea} placeholder="What is your plan for this task today?" />
+            </div>
+
+            <div style={S.modalField}>
+              <label style={S.label}>Risks / Blockers (Optional)</label>
+              <textarea value={manualRisks} onChange={e => setManualRisks(e.target.value)} style={S.textarea} placeholder="Any blockers or risks?" />
+            </div>
+
+            <div style={S.formGrid}>
+              <div style={S.modalField}>
+                <label style={S.label}>Total Time Needed (hours) <span style={{ color: "#e74c3c" }}>*</span></label>
+                <input type="number" step="0.5" min="0" value={manualTotalTimeNeeded} onChange={e => setManualTotalTimeNeeded(e.target.value)} style={S.input} placeholder="e.g. 4" />
+              </div>
+
+              <div style={S.modalField}>
+                <label style={S.label}>Availability (hours)</label>
+                <input type="number" step="0.5" min="0" value={manualAvailability} onChange={e => setManualAvailability(e.target.value)} style={S.input} placeholder="e.g. 4" />
+              </div>
+            </div>
+
+            {manualError && <p style={S.error}>{manualError}</p>}
+
+            <div style={S.modalActions}>
+              <button onClick={() => setManualModalOpen(false)} style={S.cancelBtn}>Cancel</button>
+              <button onClick={submitManualTask} style={S.saveBtn} disabled={manualSaving}>
+                {manualSaving ? "Saving…" : "Save Task"}
               </button>
             </div>
           </div>
@@ -387,7 +632,7 @@ const StatChip = ({ label, value, color }) => (
 // ── Styles ────────────────────────────────────────────────────────────────────
 const S = {
   page: { padding: "20px", maxWidth: "1100px", margin: "0 auto", fontFamily: "sans-serif" },
-  pageTitle: { fontSize: "22px", fontWeight: "800", color: "#1e272e", marginBottom: "20px", textAlign: "left" },
+  pageTitle: { fontSize: "22px", fontWeight: "800", color: "#1e272e", margin: 0, textAlign: "left" },
   toast: { position: "fixed", top: 20, right: 20, zIndex: 9999, color: "white", padding: "12px 20px", borderRadius: "8px", fontWeight: 700, fontSize: "14px", boxShadow: "0 4px 16px rgba(0,0,0,0.2)" },
   summaryStrip: { display: "flex", gap: "16px", marginBottom: "24px", alignItems: "center", flexWrap: "wrap" },
   overallRing: { display: "flex", flexDirection: "column", alignItems: "center", marginLeft: "auto" },
@@ -404,6 +649,32 @@ const S = {
   awaitingBadge: { display: "inline-block", padding: "2px 8px", borderRadius: "10px", background: "#fff3cd", color: "#856404", fontSize: "11px", fontWeight: "700" },
   logBtn: { padding: "5px 12px", background: "#e74c3c", color: "white", border: "none", borderRadius: "4px", fontSize: "12px", cursor: "pointer", fontWeight: "600" },
   emptyState: { textAlign: "center", padding: "60px 20px", background: "white", borderRadius: "10px" },
+  addManualTaskBtn: {
+    padding: "8px 16px",
+    background: "#2ecc71",
+    color: "white",
+    border: "none",
+    borderRadius: "6px",
+    fontSize: "14px",
+    cursor: "pointer",
+    fontWeight: "700",
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
+    transition: "background 0.2s"
+  },
+  addManualTaskBtnLarge: {
+    marginTop: "16px",
+    padding: "12px 24px",
+    background: "#2ecc71",
+    color: "white",
+    border: "none",
+    borderRadius: "8px",
+    fontSize: "15px",
+    cursor: "pointer",
+    fontWeight: "700",
+    transition: "background 0.2s"
+  },
   // Modal
   overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "20px", boxSizing: "border-box" },
   modal: { background: "white", borderRadius: "12px", padding: "28px", width: "100%", maxWidth: "600px", maxHeight: "90vh", overflowY: "auto", boxShadow: "0 20px 60px rgba(0,0,0,0.3)", boxSizing: "border-box" },

@@ -263,7 +263,10 @@ export default function DailyUpdatesReport() {
 
             {!loadingRows && !error && rows.map((row, idx) => {
               const totalTimeNeeded = Number(row.total_time_needed) || 0;
-              const availability = 8 - totalTimeNeeded;
+              const hasStoredAvailability = row.availability !== null && row.availability !== undefined && row.availability !== '';
+              const availabilityText = hasStoredAvailability
+                ? (String(row.availability).toLowerCase().includes("hr") ? row.availability : `${row.availability} hrs`)
+                : `${8 - totalTimeNeeded} hrs`;
               const utilization = ((totalTimeNeeded / 8) * 100).toFixed(1);
 
               return (
@@ -294,11 +297,7 @@ export default function DailyUpdatesReport() {
                     {totalTimeNeeded} hrs
                   </td>
                   <td className="dur-col-hours">
-                    {availability > 0
-                      ? `${availability} hrs`
-                      : availability === 0
-                        ? '0 hrs'
-                        : `${availability} hrs`}
+                    {availabilityText}
                   </td>
                   <td className="dur-col-hours">
                     {utilization}%

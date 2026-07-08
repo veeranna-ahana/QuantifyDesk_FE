@@ -306,6 +306,7 @@ async function getDailyUpdates(req, res) {
 
       ap.risks,
       ap.remarks,
+      ap.availability,
 
       -- ✅ Get previous day's todays_tasks as previousDayPlan
       (

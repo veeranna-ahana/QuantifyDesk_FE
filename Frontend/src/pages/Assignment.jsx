@@ -542,6 +542,11 @@ const AssignmentScreen = () => {
 
     const plannedUnits = Number(entry.planned_units) || 0;
     const estimatedDays = Number(entry.estimated_days) || 0;
+
+    if (plannedUnits <= 0 || estimatedDays <= 0) {
+      toast.error("Please enter both Planned Units and Est. Days before assigning the task.");
+      return;
+    }
     const estimatedHours = Number(entry.estimated_hours) || 0;
 
     // Validate before saving task load
@@ -763,6 +768,7 @@ const AssignmentScreen = () => {
                         const key = `${role}||${t.task_name}`;
                         const entry = loadDraft[key] || {}; // CHANGED: now an object
                         const planned = Number(entry.planned_units) || 0;
+                        const estimatedDays = Number(entry.estimated_days) || 0;
                         const sumRow = summaryByKey[key];
                         const assigned = sumRow ? Number(sumRow.total_assigned) : 0;
                         const completed = sumRow ? Number(sumRow.total_completed) : 0;
@@ -820,8 +826,12 @@ const AssignmentScreen = () => {
                             <td style={S.td}>
                               <button
                                 onClick={() => openAssignModal(role, t)}
-                                style={S.assignRowBtn}
-                                title={`Assign employees to ${t.task_name}`}
+                                style={{
+                                  ...S.assignRowBtn,
+                                  background: (planned <= 0 || estimatedDays <= 0) ? "#bdc3c7" : "#3498db",
+                                  cursor: (planned <= 0 || estimatedDays <= 0) ? "not-allowed" : "pointer"
+                                }}
+                                title={(planned <= 0 || estimatedDays <= 0) ? "Please enter both Planned Units and Est. Days first" : `Assign employees to ${t.task_name}`}
                               >
                                 👤 Assign
                                 {assigneeCount > 0 && (

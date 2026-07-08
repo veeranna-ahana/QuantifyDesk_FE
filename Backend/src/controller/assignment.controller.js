@@ -1,6 +1,51 @@
 const { query, masterQuery } = require("../config/db");
 const { createNotification } = require("./notification.controller");
 
+const resolveLocalUserId = async (empId, empName, empEmail) => {
+  // 1. Try to match by emp_id in local users
+  if (empId) {
+    const rows = await query("SELECT id FROM users WHERE emp_id = ?", [empId]);
+    if (rows.length > 0) return rows[0].id;
+  }
+
+  // 2. Try to match by email
+  if (empEmail) {
+    const rows = await query("SELECT id FROM users WHERE email = ?", [empEmail]);
+    if (rows.length > 0) {
+      // Self-heal: update emp_id
+      if (empId) {
+        await query("UPDATE users SET emp_id = ? WHERE id = ?", [empId, rows[0].id]);
+      }
+      return rows[0].id;
+    }
+  }
+
+  // 3. Try to match by cleaning name (ignore salutations, spaces, punctuation)
+  if (empName) {
+    const clean = (n) => {
+      if (!n) return "";
+      return n
+        .replace(/^(Mr\.|Ms\.|Mrs\.|Dr\.)\s+/i, "")
+        .replace(/[^a-zA-Z0-9]/g, "")
+        .toLowerCase();
+    };
+    const targetCleaned = clean(empName);
+    
+    const allUsers = await query("SELECT id, name, email FROM users");
+    for (const u of allUsers) {
+      if (clean(u.name) === targetCleaned) {
+        // Self-heal: update emp_id
+        if (empId) {
+          await query("UPDATE users SET emp_id = ? WHERE id = ?", [empId, u.id]);
+        }
+        return u.id;
+      }
+    }
+  }
+
+  return null;
+};
+
 // GET /api/assignments/catalog
 const getCatalog = async (req, res, next) => {
   try {
@@ -399,31 +444,40 @@ const addAssignment = async (req, res, next) => {
 
     // ─── Get employee details ──────────────────────────────────
     let finalEmpId = emp_id;
-    let finalUserId = user_id;
+    let finalUserId = null;
 
     if (user_id && !emp_id) {
-      // Check if user_id is emp_id
+      // user_id can be emp_id or local users.id
       const empResult = await masterQuery(
-        `SELECT u_id, emp_id FROM emp WHERE emp_id = ? AND flag = 'Active'`,
+        `SELECT u_id, emp_id, emp_name, emp_email FROM emp WHERE emp_id = ? AND flag = 'Active'`,
         [user_id]
       );
       
       if (empResult.length > 0) {
         finalEmpId = empResult[0].emp_id;
-        finalUserId = empResult[0].u_id;
+        finalUserId = await resolveLocalUserId(finalEmpId, empResult[0].emp_name, empResult[0].emp_email);
       } else {
-        // Backward compatibility: check users table
+        // Try local users table (maybe user_id is a local users.id)
         const userResult = await query(
-          `SELECT emp_id FROM users WHERE id = ?`,
+          `SELECT emp_id, name, email FROM users WHERE id = ?`,
           [user_id]
         );
         if (userResult.length > 0) {
           finalEmpId = userResult[0].emp_id;
-          const empInfo = await masterQuery(
-            `SELECT u_id FROM emp WHERE emp_id = ? AND flag = 'Active'`,
-            [finalEmpId]
-          );
-          finalUserId = empInfo.length > 0 ? empInfo[0].u_id : null;
+          finalUserId = user_id;
+          
+          // If local user has no emp_id, let's try to resolve it from master.emp by name/email
+          if (!finalEmpId) {
+            const empInfo = await masterQuery(
+              `SELECT emp_id FROM emp WHERE emp_name = ? OR emp_email = ? AND flag = 'Active'`,
+              [userResult[0].name, userResult[0].email]
+            );
+            if (empInfo.length > 0) {
+              finalEmpId = empInfo[0].emp_id;
+              // Self-heal: update users table
+              await query("UPDATE users SET emp_id = ? WHERE id = ?", [finalEmpId, finalUserId]);
+            }
+          }
         } else {
           return res.status(400).json({
             message: "User not found in system"
@@ -432,17 +486,23 @@ const addAssignment = async (req, res, next) => {
       }
     } else if (emp_id && !user_id) {
       const empResult = await masterQuery(
-        `SELECT u_id, emp_id FROM emp WHERE emp_id = ? AND flag = 'Active'`,
+        `SELECT u_id, emp_id, emp_name, emp_email FROM emp WHERE emp_id = ? AND flag = 'Active'`,
         [emp_id]
       );
       if (empResult.length > 0) {
         finalEmpId = empResult[0].emp_id;
-        finalUserId = empResult[0].u_id;
+        finalUserId = await resolveLocalUserId(finalEmpId, empResult[0].emp_name, empResult[0].emp_email);
       } else {
         return res.status(400).json({
           message: "Employee not found in master.emp"
         });
       }
+    }
+
+    if (!finalUserId) {
+      return res.status(400).json({
+        message: "User account not found in main database. Please contact an admin."
+      });
     }
 
     // ─── ✅ REMOVED duplicate check ────────────────────────────
