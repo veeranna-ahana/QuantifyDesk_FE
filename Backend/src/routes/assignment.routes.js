@@ -13,6 +13,7 @@ const {
   addAssignment,
   updateAssignment,
   deleteAssignment,
+  getEmployeeAssignments
 } = require('../controller/assignment.controller');
 
 // Catalog — both roles need it
@@ -31,6 +32,7 @@ router.get ('/summary/:projectId',        authMiddleware, getProjectSummary);
 
 // Assignments CRUD
 router.get   ('/',    authMiddleware, getAssignmentsByProject);
+router.get('/employee-assignments', getEmployeeAssignments);
 router.post  ('/',    authMiddleware, addAssignment);
 router.put   ('/:id', authMiddleware, updateAssignment);
 router.delete('/:id', authMiddleware, deleteAssignment);

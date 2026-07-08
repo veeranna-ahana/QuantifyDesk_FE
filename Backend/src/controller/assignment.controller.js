@@ -415,6 +415,167 @@ const getAssignmentsByProject = async (req, res, next) => {
     return next(err);
   }
 };
+// GET /api/assignment/employee-assignment
+
+async function getEmployeeAssignments(req, res) {
+  try {
+    const { emp_id } = req.query;
+
+    if (!emp_id) {
+      return res.status(400).json({
+        success: false,
+        message: "emp_id is required"
+      });
+    }
+
+    // ✅ Get employee details from master.emp
+    const employee = await masterQuery(
+      `SELECT u_id, emp_id, emp_name, emp_email, flag as status 
+       FROM emp WHERE emp_id = ? AND flag = 'Active'`,
+      [emp_id]
+    );
+
+    if (employee.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Employee not found"
+      });
+    }
+
+    // ✅ Get ALL assigned tasks (including not started)
+    const assignments = await query(
+      `SELECT 
+         a.id as assignment_id,
+         a.project_id,
+         p.project_name,
+         a.role,
+         a.task_name,
+         a.units_assigned,
+         a.estimated_hours,
+         a.estimated_days,
+         COALESCE(SUM(ap.units_completed), 0) AS units_completed,
+         GREATEST(a.units_assigned - COALESCE(SUM(ap.units_completed), 0), 0) AS units_pending
+       FROM assignments a
+       LEFT JOIN projects p ON a.project_id = p.id
+       LEFT JOIN assignment_progress ap ON a.id = ap.assignment_id
+       WHERE a.emp_id = ?
+       GROUP BY a.id, a.project_id, p.project_name, a.role, a.task_name, a.units_assigned, a.estimated_hours, a.estimated_days
+       HAVING units_pending > 0  -- ✅ Show all tasks that are not fully completed
+       ORDER BY p.project_name, a.role, a.task_name`,
+      [emp_id]
+    );
+
+    // If no tasks, return empty
+    if (assignments.length === 0) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          employee: employee[0],
+          summary: {
+            total_tasks: 0,
+            total_assigned_hours: 0,
+            total_completed_hours: 0,
+            total_pending_hours: 0
+          },
+          tasks: []
+        }
+      });
+    }
+
+    // ✅ Process tasks and categorize them
+    const projectsMap = {};
+    let totalAssignedHours = 0;
+    let totalCompletedHours = 0;
+    let totalPendingHours = 0;
+    let totalNotStarted = 0;
+    let totalInProgress = 0;
+
+    assignments.forEach(assignment => {
+      const projectId = assignment.project_id;
+      if (!projectsMap[projectId]) {
+        projectsMap[projectId] = {
+          project_id: projectId,
+          project_name: assignment.project_name || 'Unknown Project',
+          total_assigned_hours: 0,
+          total_completed_hours: 0,
+          total_pending_hours: 0,
+          tasks: []
+        };
+      }
+      
+      const assignedHours = assignment.estimated_hours || (assignment.estimated_days * 8) || 0;
+      const completionRatio = assignment.units_assigned > 0 
+        ? assignment.units_completed / assignment.units_assigned 
+        : 0;
+      const completedHours = assignedHours * completionRatio;
+      const pendingHours = assignedHours - completedHours;
+      
+      // ✅ Determine task status
+      let taskStatus = 'not_started';
+      if (assignment.units_completed > 0 && assignment.units_pending > 0) {
+        taskStatus = 'in_progress';
+        totalInProgress++;
+      } else if (assignment.units_completed === 0 && assignment.units_pending > 0) {
+        taskStatus = 'not_started';
+        totalNotStarted++;
+      }
+      
+      projectsMap[projectId].total_assigned_hours += assignedHours;
+      projectsMap[projectId].total_completed_hours += completedHours;
+      projectsMap[projectId].total_pending_hours += pendingHours;
+      
+      totalAssignedHours += assignedHours;
+      totalCompletedHours += completedHours;
+      totalPendingHours += pendingHours;
+      
+      projectsMap[projectId].tasks.push({
+        task_id: assignment.assignment_id,
+        task_name: assignment.task_name,
+        role: assignment.role,
+        status: taskStatus,
+        units_assigned: assignment.units_assigned,
+        units_completed: Math.round(assignment.units_completed * 10) / 10,
+        units_pending: Math.round(assignment.units_pending * 10) / 10,
+        estimated_hours: Math.round(assignedHours * 10) / 10,
+        completed_hours: Math.round(completedHours * 10) / 10,
+        pending_hours: Math.round(pendingHours * 10) / 10,
+        completion_percentage: assignment.units_assigned > 0 
+          ? Math.round((assignment.units_completed / assignment.units_assigned) * 100) 
+          : 0
+      });
+    });
+
+    // Convert to array
+    const tasks = Object.values(projectsMap);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        employee: employee[0],
+        summary: {
+          total_tasks: assignments.length,
+          total_not_started: totalNotStarted,
+          total_in_progress: totalInProgress,
+          total_assigned_hours: Math.round(totalAssignedHours * 10) / 10,
+          total_completed_hours: Math.round(totalCompletedHours * 10) / 10,
+          total_pending_hours: Math.round(totalPendingHours * 10) / 10,
+          overall_completion_percentage: totalAssignedHours > 0 
+            ? Math.round((totalCompletedHours / totalAssignedHours) * 100) 
+            : 0
+        },
+        tasks: tasks
+      }
+    });
+
+  } catch (err) {
+    console.error('❌ getEmployeeAssignments error:', err);
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch employee assignments",
+      details: err.message
+    });
+  }
+}
 // POST /api/assignments
 const addAssignment = async (req, res, next) => {
   try {
@@ -731,4 +892,5 @@ module.exports = {
   addAssignment,
   updateAssignment,
   deleteAssignment,
+  getEmployeeAssignments
 };
