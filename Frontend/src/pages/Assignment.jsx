@@ -80,6 +80,35 @@ const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onClose })
   const [days, setDays] = useState("");
   const [hours, setHours] = useState("");
   const [saving, setSaving] = useState(false);
+  const [workload, setWorkload] = useState(null);
+  const [loadingWorkload, setLoadingWorkload] = useState(false);
+
+  useEffect(() => {
+    if (!selUser) {
+      setWorkload(null);
+      return;
+    }
+    const fetchWorkload = async () => {
+      setLoadingWorkload(true);
+      try {
+        const res = await axios.get(
+          `${BASE_URL}/api/assignments/employee-assignments?emp_id=${selUser}`,
+          { headers: getHeaders() }
+        );
+        if (res.data?.success) {
+          setWorkload(res.data.data);
+        } else {
+          setWorkload(null);
+        }
+      } catch (err) {
+        console.error("Error fetching employee workload:", err);
+        setWorkload(null);
+      } finally {
+        setLoadingWorkload(false);
+      }
+    };
+    fetchWorkload();
+  }, [selUser]);
 
   const handleDaysChange = (val) => {
     setDays(val);
@@ -221,7 +250,7 @@ const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onClose })
         <div style={M.formRow}>
           <div style={{ flex: 2, minWidth: 140 }}>
             <label style={M.label}>Employee</label>
-            <select value={selUser} onChange={e => { setSelUser(e.target.value); setError(""); }} style={M.select}>
+            <select value={selUser} onChange={e => setSelUser(e.target.value)} style={M.select}>
               <option value="">Select employee…</option>
               {users.map(emp => (
                 <option key={emp.employee_id || emp.id} value={emp.employee_id || emp.id}>
@@ -238,7 +267,7 @@ const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onClose })
               max={remainingUnits || undefined}
               placeholder={remainingUnits > 0 ? `Max ${remainingUnits}` : "0"}
               value={units}
-              onChange={e => { setUnits(e.target.value); setError(""); }}
+              onChange={e => setUnits(e.target.value)}
               style={{ ...M.input, borderColor: unitsExceeded ? "#e74c3c" : "#ddd" }}
             />
           </div>
@@ -284,6 +313,100 @@ const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onClose })
         {(unitsExceeded || daysExceeded || hoursExceeded) && (
           <div style={{ ...M.error, marginTop: 4 }}>
             ⚠️ Values exceed remaining limits. Please adjust.
+          </div>
+        )}
+
+        {/* ── Employee's Current Workload ── */}
+        {selUser && (
+          <div style={{ marginTop: 20, borderTop: "1px solid #eee", paddingTop: 16 }}>
+            <h4 style={{ fontSize: 13, fontWeight: 700, color: "#2c3e50", marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>
+              💼 Current Workload
+            </h4>
+            {loadingWorkload ? (
+              <div style={{ fontSize: 13, color: "#95a5a6", fontStyle: "italic", padding: "8px 0" }}>
+                Loading current workload...
+              </div>
+            ) : workload && workload.tasks && workload.tasks.length > 0 ? (
+              <div style={{ maxHeight: 200, overflowY: "auto", border: "1px solid #eef2f3", borderRadius: 6, padding: 8, background: "#fafbfc" }}>
+                {workload.tasks.map((proj) => (
+                  <div key={proj.project_id} style={{ marginBottom: 12 }}>
+                    <div style={{ fontWeight: 700, fontSize: 12, color: "#34495e", borderBottom: "1px dashed #ddd", paddingBottom: 4, marginBottom: 6 }}>
+                      📁 {proj.project_name}
+                    </div>
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
+                      <thead>
+                        <tr style={{ background: "#f1f2f6" }}>
+                          <th style={{ padding: "4px 8px", textAlign: "left", color: "#7f8c8d" }}>Task Name</th>
+                          <th style={{ padding: "4px 8px", textAlign: "left", color: "#7f8c8d" }}>Role</th>
+                          <th style={{ padding: "4px 8px", textAlign: "right", color: "#7f8c8d" }}>Assigned Hrs</th>
+                          <th style={{ padding: "4px 8px", textAlign: "center", color: "#7f8c8d" }}>Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {proj.tasks.map((task) => {
+                          let statusBg = "#e2e8f0";
+                          let statusColor = "#4a5568";
+                          let statusText = "Not Started";
+                          if (task.status === "in_progress") {
+                            statusBg = "#dbeafe";
+                            statusColor = "#1e40af";
+                            statusText = "In Progress";
+                          } else if (task.status === "completed") {
+                            statusBg = "#dcfce7";
+                            statusColor = "#166534";
+                            statusText = "Completed";
+                          }
+                          return (
+                            <tr key={task.task_id} style={{ borderBottom: "1px solid #f1f2f6" }}>
+                              <td style={{ padding: "6px 8px", color: "#2c3e50", fontWeight: 500 }}>{task.task_name}</td>
+                              <td style={{ padding: "6px 8px", color: "#7f8c8d" }}>
+                                <span style={{
+                                  padding: "2px 6px",
+                                  borderRadius: 4,
+                                  fontSize: 10,
+                                  background: roleStyle(task.role).bg,
+                                  color: roleStyle(task.role).text,
+                                  border: `1px solid ${roleStyle(task.role).border}`,
+                                  fontWeight: 600
+                                }}>{task.role}</span>
+                              </td>
+                              <td style={{ padding: "6px 8px", textAlign: "right", color: "#2c3e50", fontWeight: 700 }}>
+                                {task.estimated_hours}
+                              </td>
+                              <td style={{ padding: "6px 8px", textAlign: "center" }}>
+                                <span style={{
+                                  padding: "2px 6px",
+                                  borderRadius: 10,
+                                  fontSize: 9,
+                                  fontWeight: 700,
+                                  background: statusBg,
+                                  color: statusColor,
+                                  whiteSpace: "nowrap"
+                                }}>
+                                  {statusText}
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{
+                padding: "16px",
+                background: "#f9f9f9",
+                border: "1px dashed #e0e0e0",
+                borderRadius: 8,
+                textAlign: "center",
+                color: "#7f8c8d",
+                fontSize: 13
+              }}>
+                No active project assignments found.
+              </div>
+            )}
           </div>
         )}
 
@@ -542,6 +665,11 @@ const AssignmentScreen = () => {
 
     const plannedUnits = Number(entry.planned_units) || 0;
     const estimatedDays = Number(entry.estimated_days) || 0;
+
+    if (plannedUnits <= 0 || estimatedDays <= 0) {
+      toast.error("Please enter both Planned Units and Est. Days before assigning the task.");
+      return;
+    }
     const estimatedHours = Number(entry.estimated_hours) || 0;
 
     // Validate before saving task load
@@ -763,6 +891,7 @@ const AssignmentScreen = () => {
                         const key = `${role}||${t.task_name}`;
                         const entry = loadDraft[key] || {}; // CHANGED: now an object
                         const planned = Number(entry.planned_units) || 0;
+                        const estimatedDays = Number(entry.estimated_days) || 0;
                         const sumRow = summaryByKey[key];
                         const assigned = sumRow ? Number(sumRow.total_assigned) : 0;
                         const completed = sumRow ? Number(sumRow.total_completed) : 0;
@@ -820,8 +949,12 @@ const AssignmentScreen = () => {
                             <td style={S.td}>
                               <button
                                 onClick={() => openAssignModal(role, t)}
-                                style={S.assignRowBtn}
-                                title={`Assign employees to ${t.task_name}`}
+                                style={{
+                                  ...S.assignRowBtn,
+                                  background: (planned <= 0 || estimatedDays <= 0) ? "#bdc3c7" : "#3498db",
+                                  cursor: (planned <= 0 || estimatedDays <= 0) ? "not-allowed" : "pointer"
+                                }}
+                                title={(planned <= 0 || estimatedDays <= 0) ? "Please enter both Planned Units and Est. Days first" : `Assign employees to ${t.task_name}`}
                               >
                                 👤 Assign
                                 {assigneeCount > 0 && (
