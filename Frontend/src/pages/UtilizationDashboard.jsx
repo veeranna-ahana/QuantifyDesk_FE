@@ -232,7 +232,23 @@ const UtilizationDashboard = () => {
           <button
             disabled={currentPage === 1}
             onClick={() => setCurrentPage(prev => prev - 1)}
-            style={S.pageBtn}
+            style={{
+              ...S.pageBtn,
+              opacity: currentPage === 1 ? 0.5 : 1,
+              cursor: currentPage === 1 ? "not-allowed" : "pointer"
+            }}
+            onMouseOver={(e) => {
+              if (currentPage !== 1) {
+                e.currentTarget.style.background = "#f5f6f7";
+                e.currentTarget.style.borderColor = "#ccc";
+              }
+            }}
+            onMouseOut={(e) => {
+              if (currentPage !== 1) {
+                e.currentTarget.style.background = "#ffffff";
+                e.currentTarget.style.borderColor = "#ddd";
+              }
+            }}
           >
             Previous
           </button>
@@ -244,7 +260,23 @@ const UtilizationDashboard = () => {
           <button
             disabled={currentPage === totalPages}
             onClick={() => setCurrentPage(prev => prev + 1)}
-            style={S.pageBtn}
+            style={{
+              ...S.pageBtn,
+              opacity: currentPage === totalPages ? 0.5 : 1,
+              cursor: currentPage === totalPages ? "not-allowed" : "pointer"
+            }}
+            onMouseOver={(e) => {
+              if (currentPage !== totalPages) {
+                e.currentTarget.style.background = "#f5f6f7";
+                e.currentTarget.style.borderColor = "#ccc";
+              }
+            }}
+            onMouseOut={(e) => {
+              if (currentPage !== totalPages) {
+                e.currentTarget.style.background = "#ffffff";
+                e.currentTarget.style.borderColor = "#ddd";
+              }
+            }}
           >
             Next
           </button>
@@ -449,6 +481,17 @@ const S = {
   refreshBtn: { display: "flex", alignItems: "center", gap: "5px", padding: "7px 14px", background: "white", border: "1px solid #ddd", borderRadius: "8px", fontSize: "13px", fontWeight: "700", color: "#555", cursor: "pointer", boxShadow: "0 1px 4px rgba(0,0,0,0.07)" },
   projectGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "14px", marginBottom: "8px" },
   projCard: { background: "white", borderRadius: "10px", padding: "16px", boxShadow: "0 2px 10px rgba(0,0,0,0.07)" },
+  pageBtn: {
+    padding: "6px 12px",
+    background: "#ffffff",
+    border: "1px solid #ddd",
+    borderRadius: "6px",
+    fontSize: "13px",
+    fontWeight: "600",
+    color: "#333",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+    transition: "all 0.2s ease",
+  },
 };
 
 export default UtilizationDashboard;
