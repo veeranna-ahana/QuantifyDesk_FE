@@ -515,34 +515,60 @@ const AssignmentScreen = () => {
   }, []);
 
   // ── Per-project fetch: loads, assignments, summary + NEW effort-estimates ───
-  const fetchProjectData = useCallback(async (pid) => {
-    if (!pid) return;
-    try {
-      // NEW: added effort-estimates call
-      const [lRes, aRes, sRes, eRes] = await Promise.all([
-        axios.get(`${BASE_URL}/api/assignments/task-loads/${pid}`, { headers: getHeaders() }),
-        axios.get(`${BASE_URL}/api/assignments?projectId=${pid}`, { headers: getHeaders() }),
-        axios.get(`${BASE_URL}/api/assignments/summary/${pid}`, { headers: getHeaders() }),
-        axios.get(`${BASE_URL}/api/assignments/effort-estimates/${pid}`, { headers: getHeaders() }), // NEW
-      ]);
-      const loads = lRes.data.loads || [];
-      setTotalLoad(lRes.data.total_load || 0);
+const fetchProjectData = useCallback(async (pid) => {
+  if (!pid) return;
+  try {
+    const [lRes, aRes, sRes, eRes] = await Promise.all([
+      axios.get(`${BASE_URL}/api/assignments/task-loads/${pid}`, { headers: getHeaders() }),
+      axios.get(`${BASE_URL}/api/assignments?projectId=${pid}`, { headers: getHeaders() }),
+      axios.get(`${BASE_URL}/api/assignments/summary/${pid}`, { headers: getHeaders() }),
+      axios.get(`${BASE_URL}/api/assignments/effort-estimates/${pid}`, { headers: getHeaders() }),
+    ]);
+    const loads = lRes.data.loads || [];
+    setTotalLoad(lRes.data.total_load || 0);
 
-      // CHANGED: draft now stores object per key instead of plain number
-      const draft = {};
-      loads.forEach(l => {
-        draft[`${l.role}||${l.task_name}`] = {
-          planned_units: l.planned_units,
-          estimated_days: l.estimated_days || "",
-          estimated_hours: l.estimated_hours || "",
-        };
+    // Get effort data
+    const effortByRoleData = eRes.data?.byRole || {};
+    setEffortByRole(effortByRoleData);
+    
+    // 🔥 FIX: ONLY show roles that exist in effort estimates
+    const effortRoles = Object.keys(effortByRoleData);
+    
+    setCatalog(prevCatalog => {
+      const filteredCatalog = {};
+      // Only include roles that exist in effort estimates
+      effortRoles.forEach(role => {
+        if (prevCatalog[role]) {
+          // Use existing catalog tasks if available
+          filteredCatalog[role] = prevCatalog[role];
+        } else {
+          // Create default task for roles without catalog entry
+          filteredCatalog[role] = [
+            {
+              id: `default_${role}`,
+              task_name: `${role} Tasks`,
+              unit_type: "Tasks"
+            }
+          ];
+        }
       });
-      setLoadDraft(draft);
-      setAssignments(aRes.data || []);
-      setSummary(sRes.data || { rows: [], totals: {} });
-      setEffortByRole(eRes.data?.byRole || {}); // NEW
-    } catch (err) { console.error(err); }
-  }, []);
+      return filteredCatalog;
+    });
+
+    // CHANGED: draft now stores object per key instead of plain number
+    const draft = {};
+    loads.forEach(l => {
+      draft[`${l.role}||${l.task_name}`] = {
+        planned_units: l.planned_units,
+        estimated_days: l.estimated_days || "",
+        estimated_hours: l.estimated_hours || "",
+      };
+    });
+    setLoadDraft(draft);
+    setAssignments(aRes.data || []);
+    setSummary(sRes.data || { rows: [], totals: {} });
+  } catch (err) { console.error(err); }
+}, []);
 
   useEffect(() => {
     if (selProject) fetchProjectData(selProject);
