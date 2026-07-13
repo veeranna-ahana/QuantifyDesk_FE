@@ -33,9 +33,11 @@ const CreateProjectModal = ({ onClose, onCreated }) => {
     projectCode: '',
     subCategory: '',
     customer: '',
+    teamLead: '',
     startDate: '',
     endDate: '',
     projectType: 'one time project - otp',
+    status: 'Not started',
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -60,9 +62,10 @@ const CreateProjectModal = ({ onClose, onCreated }) => {
           o2dId: form.o2dId.trim(),
           projectCode: form.projectCode.trim(),
           subCategory: form.subCategory.trim(),
+          teamLead: form.teamLead.trim() || null,
           startDate: form.startDate || null,
           endDate: form.endDate || null,
-          status: 'new',
+          status: form.status,
           projectType: form.projectType,
         },
         { headers: getHeaders() }
@@ -84,6 +87,7 @@ const CreateProjectModal = ({ onClose, onCreated }) => {
     { key: 'projectCode', label: 'Project Code', required: false, placeholder: 'e.g. PRJ-001' },
     { key: 'subCategory', label: 'Sub Category', required: false, placeholder: 'e.g. Web App / Mobile' },
     { key: 'customer', label: 'Customer', required: true, placeholder: 'Client or company name' },
+    { key: 'teamLead', label: 'Team Lead Name', required: false, placeholder: 'e.g. John Smith' },
   ];
 
   return (
@@ -150,7 +154,7 @@ const CreateProjectModal = ({ onClose, onCreated }) => {
           </div>
 
           {/* Project Type */}
-          <div style={{ gridColumn: '1 / -1' }}>
+          <div>
             <label style={O.label}>Project Type <span style={{ color: '#e74c3c', marginLeft: 3 }}>*</span></label>
             <select
               value={form.projectType}
@@ -160,6 +164,21 @@ const CreateProjectModal = ({ onClose, onCreated }) => {
               <option value="one time project - otp">one time project - otp</option>
               <option value="managed service">managed service</option>
               <option value="Staff Augmentation">Staff Augmentation</option>
+            </select>
+          </div>
+
+          {/* Status */}
+          <div>
+            <label style={O.label}>Status <span style={{ color: '#e74c3c', marginLeft: 3 }}>*</span></label>
+            <select
+              value={form.status}
+              onChange={e => handleChange('status', e.target.value)}
+              style={O.input}
+            >
+              <option value="Not started">Not Started</option>
+              <option value="In progress">In Progress</option>
+              <option value="Completed">Completed</option>
+              <option value="Abandoned">Abandoned</option>
             </select>
           </div>
         </div>
@@ -188,10 +207,11 @@ const EditProjectModal = ({ project, onClose, onUpdated }) => {
     projectCode: project.project_code || '',
     subCategory: project.sub_category || '',
     customer: project.client_name || '',
+    teamLead: project.team_lead || '',
     startDate: project.start_date ? project.start_date.split('T')[0] : '',
     endDate: project.end_date ? project.end_date.split('T')[0] : '',
     projectType: project.project_type || 'one time project - otp',
-    status: project.status || 'new',
+    status: project.status || 'Not started',
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -216,6 +236,7 @@ const EditProjectModal = ({ project, onClose, onUpdated }) => {
           o2dId: form.o2dId.trim(),
           projectCode: form.projectCode.trim(),
           subCategory: form.subCategory.trim(),
+          teamLead: form.teamLead.trim() || null,
           startDate: form.startDate || null,
           endDate: form.endDate || null,
           status: form.status,
@@ -240,6 +261,7 @@ const EditProjectModal = ({ project, onClose, onUpdated }) => {
     { key: 'projectCode', label: 'Project Code', required: false, placeholder: 'e.g. PRJ-001' },
     { key: 'subCategory', label: 'Sub Category', required: false, placeholder: 'e.g. Web App / Mobile' },
     { key: 'customer', label: 'Customer', required: true, placeholder: 'Client or company name' },
+    { key: 'teamLead', label: 'Team Lead Name', required: false, placeholder: 'e.g. John Smith' },
   ];
 
   return (
@@ -327,10 +349,10 @@ const EditProjectModal = ({ project, onClose, onUpdated }) => {
               onChange={e => handleChange('status', e.target.value)}
               style={O.input}
             >
-              <option value="new">new</option>
-              <option value="inprproess">inprproess</option>
-              <option value="onhold">onhold</option>
-              <option value="completed">completed</option>
+              <option value="Not started">Not Started</option>
+              <option value="In progress">In Progress</option>
+              <option value="Completed">Completed</option>
+              <option value="Abandoned">Abandoned</option>
             </select>
           </div>
         </div>
@@ -721,29 +743,35 @@ const Projects = () => {
   useEffect(() => { fetchProjects(); }, []);
 
   const statusColor = (s = '') => {
+    const key = (s || '').toLowerCase();
     const m = {
-      new: '#2ecc71',
+      'not started': '#f39c12',
+      'in progress': '#3498db',
+      'completed': '#2ecc71',
+      'abandoned': '#e74c3c',
+      // legacy values
+      new: '#f39c12',
       inprproess: '#3498db',
-      onhold: '#f39c12',
-      completed: '#95a5a6',
-      ACTIVE: '#2ecc71',
+      onhold: '#95a5a6',
       active: '#2ecc71',
-      COMPLETED: '#95a5a6',
-      'ON-HOLD': '#f39c12'
     };
-    return m[s] || '#95a5a6';
+    return m[key] || '#95a5a6';
   };
 
   const formatStatus = (s = '') => {
+    const key = (s || '').toLowerCase();
     const labels = {
-      new: 'New',
+      'not started': 'Not Started',
+      'in progress': 'In Progress',
+      'completed': 'Completed',
+      'abandoned': 'Abandoned',
+      // legacy
+      new: 'Not Started',
       inprproess: 'In Progress',
       onhold: 'On Hold',
-      completed: 'Completed',
-      ACTIVE: 'Active',
       active: 'Active',
     };
-    return labels[s] || s;
+    return labels[key] || s;
   };
 
   return (
@@ -782,6 +810,7 @@ const Projects = () => {
                     'NBD ID',
                     'O2D ID',
                     'Project Name',
+                    'Team Lead',
                     'Type',
                     'Start Date',
                     'End Date',
@@ -804,6 +833,7 @@ const Projects = () => {
                     <td style={{ ...P.td, fontWeight: 600, color: '#1e272e' }}>
                       {p.project_name || p.name}
                     </td>
+                    <td style={{ ...P.td, color: '#2c3e50', fontWeight: 500 }}>{p.team_lead || '—'}</td>
                     <td style={P.td}>{p.project_type || '—'}</td>
                     <td style={P.td}>{p.start_date ? fmtDate(p.start_date) : '—'}</td>
                     <td style={P.td}>{p.end_date ? fmtDate(p.end_date) : '—'}</td>
