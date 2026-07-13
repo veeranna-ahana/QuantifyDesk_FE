@@ -2,69 +2,220 @@ import React, { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import { useSelector } from "react-redux";
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer,
-  RadialBarChart, RadialBar, Cell, PieChart, Pie
+  PieChart, Pie, Cell, Tooltip, ResponsiveContainer
 } from "recharts";
 
-console.log(localStorage.getItem("token"));
-
-
-//const BASE_URL  = process.env.REACT_APP_API_BASE_URL;
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const getHeaders = () => ({
   Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
 });
 
 const PCT_COLOR = (pct) =>
-  pct >= 80 ? "#2ecc71" : pct >= 40 ? "#f39c12" : "#e74c3c";
+  pct >= 80 ? "#00b894" : pct >= 40 ? "#f39c12" : "#e74c3c";
 
-const CHART_COLORS = [
-  "#e74c3c", "#3498db", "#2ecc71", "#f39c12", "#9b59b6",
-  "#1abc9c", "#e67e22", "#e91e63", "#00bcd4", "#8bc34a"
-];
+// ── Donut chart center label ──────────────────────────────────────────────────
+const DonutLabel = ({ cx, cy, total }) => (
+  <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle">
+    <tspan x={cx} dy="-6" fontSize="22" fontWeight="700" fill="#2d3436">{total}</tspan>
+    <tspan x={cx} dy="20" fontSize="11" fill="#999">Units</tspan>
+  </text>
+);
 
+// ── KPI Card (matches Figma: icon box + label + value) ──────────────────────
+const KpiCard = ({ icon, label, value, accent, sub }) => (
+  <div className="bg-white rounded-xl shadow-sm flex-1 min-w-[130px] overflow-hidden"
+    style={{ border: "1px solid #f0f0f0", borderLeft: `3px solid ${accent}` }}>
+    <div className="px-4 py-4">
+      <div className="flex items-center gap-2.5 mb-3">
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 text-base"
+          style={{ background: `${accent}18` }}>
+          <span>{icon}</span>
+        </div>
+        <span className="text-[10px] font-bold tracking-widest text-gray-400 uppercase leading-tight">{label}</span>
+      </div>
+      <div className="text-[22px] font-extrabold leading-none"
+        style={{ color: sub ? accent : "#1e272e" }}>
+        {value}
+      </div>
+    </div>
+  </div>
+);
+
+
+// ── Role Pill ─────────────────────────────────────────────────────────────────
+const roleMap = {
+  Lead: { bg: "#EEE8FF", text: "#7C3AED" },
+  Dev:  { bg: "#E0F2FE", text: "#0369A1" },
+  QA:   { bg: "#FEF9C3", text: "#A16207" },
+  Analyst: { bg: "#E0FDF4", text: "#065F46" },
+  BA:   { bg: "#FAE8FF", text: "#86198F" },
+  Tester: { bg: "#FFF7ED", text: "#C2410C" },
+  TL:   { bg: "#EFF6FF", text: "#1D4ED8" },
+};
+const RolePill = ({ role }) => {
+  const s = roleMap[role] || { bg: "#F3F4F6", text: "#374151" };
+  return (
+    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold"
+      style={{ background: s.bg, color: s.text }}>
+      {role}
+    </span>
+  );
+};
+
+// ── Utilization bar ───────────────────────────────────────────────────────────
+const UtilBar = ({ pct }) => {
+  const color = pct >= 80 ? "#6C5CE7" : pct >= 40 ? "#6C5CE7" : "#6C5CE7";
+  const bg = "#E8E6FF";
+  return (
+    <div className="flex items-center gap-2">
+      <div className="flex-1 h-1.5 rounded-full" style={{ background: bg }}>
+        <div className="h-full rounded-full transition-all duration-500"
+          style={{ width: `${Math.min(pct, 100)}%`, background: color }} />
+      </div>
+      <span className="text-[11px] font-semibold text-gray-500 w-8">{pct}%</span>
+    </div>
+  );
+};
+
+// ── Status dot ────────────────────────────────────────────────────────────────
+const StatusDot = ({ pct }) => {
+  const color = pct >= 80 ? "#00b894" : pct >= 40 ? "#f39c12" : "#e74c3c";
+  return <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ background: color }} />;
+};
+
+// ── Progress mini bar (assignment table) ──────────────────────────────────────
+const ProgressBar = ({ pct }) => {
+  const color = pct >= 100 ? "#00b894" : pct >= 50 ? "#f39c12" : "#6C5CE7";
+  const label = pct >= 100 ? "100% Completed" : `${pct}% Utilization`;
+  return (
+    <div>
+      <div className="w-28 h-1.5 rounded-full bg-gray-100 mb-1">
+        <div className="h-full rounded-full" style={{ width: `${Math.min(pct, 100)}%`, background: color }} />
+      </div>
+      <span className="text-[10px]" style={{ color }}>{label}</span>
+    </div>
+  );
+};
+
+// ── Status badge (health card) ────────────────────────────────────────────────
+const StatusBadge = ({ status }) => {
+  const map = {
+    active: { bg: "#D1FAE5", text: "#065F46", label: "ACTIVE" },
+    completed: { bg: "#DBEAFE", text: "#1E40AF", label: "COMPLETED" },
+    "on-hold": { bg: "#FEF3C7", text: "#92400E", label: "ON HOLD" },
+    new: { bg: "#F3F4F6", text: "#374151", label: "NEW" },
+  };
+  const s = map[(status || "").toLowerCase()] || map.new;
+  return (
+    <span className="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase"
+      style={{ background: s.bg, color: s.text }}>
+      {s.label}
+    </span>
+  );
+};
+
+// ── Date formatter ────────────────────────────────────────────────────────────
+const fmt = (d) => {
+  if (!d) return "";
+  const dt = new Date(d);
+  return `${String(dt.getDate()).padStart(2, "0")}-${String(dt.getMonth() + 1).padStart(2, "0")}-${dt.getFullYear()}`;
+};
+
+// ── Metric chip (health card) ─────────────────────────────────────────────────
+const MetricChip = ({ label, value, color }) => (
+  <div className="text-center">
+    <div className="text-[13px] font-bold" style={{ color }}>{value}</div>
+    <div className="text-[10px] text-gray-400">{label}</div>
+  </div>
+);
+
+// ── Health Card ───────────────────────────────────────────────────────────────
+const HealthCard = ({ p }) => {
+  const pct = Number(p.completion_pct);
+  const col = PCT_COLOR(pct);
+  const load = Number(p.total_load);
+  const unassigned = Number(load - p.total_assigned);
+  const isZero = pct === 0;
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex flex-col gap-3">
+      {/* top row */}
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <div className="text-[13px] font-bold text-gray-800 leading-tight">{p.project_name}</div>
+          <div className="text-[10px] text-gray-400 mt-0.5 uppercase tracking-wide">
+            CODE: {p.project_code || "—"}
+          </div>
+        </div>
+        <div className="text-right shrink-0">
+          <div className="text-xl font-extrabold" style={{ color: isZero ? "#e74c3c" : col }}>{pct}%</div>
+          <div className="text-[9px] text-gray-400 uppercase tracking-wide">COMPLETE</div>
+        </div>
+      </div>
+
+      {/* progress bar */}
+      <div className="h-1 rounded-full bg-gray-100">
+        <div className="h-full rounded-full transition-all"
+          style={{ width: `${Math.min(pct, 100)}%`, background: isZero ? "#e74c3c" : col }} />
+      </div>
+
+      {/* metrics */}
+      <div className="flex justify-between">
+        <MetricChip label="Effort" value={load} color="#9b59b6" />
+        <MetricChip label="Asgn" value={p.total_assigned} color="#3498db" />
+        <MetricChip label="Done" value={p.total_completed} color="#00b894" />
+        <MetricChip label="Pend" value={p.total_pending} color="#e74c3c" />
+        <MetricChip label="Unassg" value={unassigned} color="#e74c3c" />
+      </div>
+
+      {/* footer */}
+      <div className="flex items-center justify-between pt-2 border-t border-gray-50">
+        <StatusBadge status={p.status} />
+        {p.start_date && (
+          <span className="text-[10px] text-gray-400">
+            {fmt(p.start_date)} → {fmt(p.end_date)}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ── DONUT LEGEND ──────────────────────────────────────────────────────────────
+const DONUT_COLORS = ["#f39c12", "#6C5CE7", "#00b894"];
+const DONUT_LABELS = ["UI UX Design", "Development", "Testing"];
+
+// ── MAIN COMPONENT ────────────────────────────────────────────────────────────
 const UtilizationDashboard = () => {
-  // ✅ Get Service Delivery employees from Redux
   const serviceDeliveryEmployees = useSelector(
     (state) => state.auth.serviceDeliveryEmployees
   );
-  // 🔍 DEBUG: Check what's in Redux
-  console.log("🔍 serviceDeliveryEmployees from Redux:", serviceDeliveryEmployees);
-  console.log("🔍 serviceDeliveryEmployees length:", serviceDeliveryEmployees?.length);
 
-  const [overall, setOverall] = useState([]);
-  const [projectData, setProject] = useState([]);
-  const [health, setHealth] = useState([]);
+  const [overall, setOverall]   = useState([]);
+  const [health, setHealth]     = useState([]);
   const [projects, setProjects] = useState([]);
   const [selProject, setSelProject] = useState("");
-  const [tableData, setTableData] = useState([]);
-  const [loading, setLoading] = useState(true);
-  //pagination for the table
+  const [tableData, setTableData]   = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [search, setSearch]         = useState("");
+
+  // pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const rowsPerPage = 10;
-
-  const indexOfLast = currentPage * rowsPerPage;
-  const indexOfFirst = indexOfLast - rowsPerPage;
-  const currentRows = tableData.slice(indexOfFirst, indexOfLast);
-
-  const totalPages = Math.ceil(tableData.length / rowsPerPage);
+  const rowsPerPage = 6;
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
       const [oRes, hRes, pRes] = await Promise.all([
-        axios.get(`${BASE_URL}/api/utilization/overall`, { headers: getHeaders() }),
-        axios.get(`${BASE_URL}/api/utilization/project-health`, { headers: getHeaders() }),
-        axios.get(`${BASE_URL}/api/projects`, { headers: getHeaders() }),
+        axios.get(`${BASE_URL}/api/utilization/overall`,       { headers: getHeaders() }),
+        axios.get(`${BASE_URL}/api/utilization/project-health`,{ headers: getHeaders() }),
+        axios.get(`${BASE_URL}/api/projects`,                  { headers: getHeaders() }),
       ]);
-      setOverall(oRes.data || []);
-      setHealth(hRes.data || []);
+      setOverall(oRes.data  || []);
+      setHealth(hRes.data   || []);
       setProjects(pRes.data || []);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+    } catch (err) { console.error(err); }
+    finally { setLoading(false); }
   }, []);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
@@ -77,421 +228,269 @@ const UtilizationDashboard = () => {
           : `${BASE_URL}/api/utilization/by-project`;
         const res = await axios.get(url, { headers: getHeaders() });
         setTableData(res.data || []);
-      } catch (err) {
-        console.error(err);
-      }
+        setCurrentPage(1);
+      } catch (err) { console.error(err); }
     };
     fetchTable();
   }, [selProject]);
 
-  // ── ✅ Get Service Delivery employee names from Redux ──────────
-  const serviceDeliveryNames = serviceDeliveryEmployees.map(emp => emp.emp_name);
+  // ── derived ─────────────────────────────────────────────────────────────────
+  const serviceDeliveryNames = serviceDeliveryEmployees.map(e => e.emp_name);
+  const filteredOverall = overall.filter(u => serviceDeliveryNames.includes(u.user_name));
 
-  console.log("🔍 serviceDeliveryNames:", serviceDeliveryNames);
-  console.log("🔍 overall data from API:", overall);
+  const totalLoad      = health.reduce((s, p) => s + Number(p.total_load),      0);
+  const totalAssigned  = health.reduce((s, p) => s + Number(p.total_assigned),  0);
+  const totalCompleted = health.reduce((s, p) => s + Number(p.total_completed), 0);
 
-  // ── ✅ Filter overall data by name match ──────────────────────
-  const filteredOverall = overall.filter(user => {
-    return serviceDeliveryNames.includes(user.user_name);
-  });
+  const pieData = [
+    { name: "UI UX Design", value: Math.round(totalAssigned * 0.10) },
+    { name: "Development",  value: Math.round(totalAssigned * 0.70) },
+    { name: "Testing",      value: Math.round(totalAssigned * 0.20) },
+  ];
+  const donutTotal = totalAssigned || 0;
 
-  console.log("🔍 filteredOverall length:", filteredOverall.length);
-  console.log("🔍 filteredOverall data:", filteredOverall);
+  const overallPct = totalAssigned > 0
+    ? Math.round((totalCompleted / totalAssigned) * 100) : 0;
 
-  // ── ✅ Filter table data by name match ─────────────────────────
-  const filteredTableData = tableData.filter(row => {
-    return serviceDeliveryNames.includes(row.user_name);
-  });
-
-  console.log("🔍 filteredTableData length:", filteredTableData.length);
-  // ── Create chart data with all Service Delivery employees ──
-  const overallChartData = serviceDeliveryNames.map((name) => {
-    // Find the user data from API
-    const userData = filteredOverall.find(u => u.user_name === name);
-
-    return {
-      name: name.replace(/^(Mr\.|Ms\.|Mrs\.)\s*/i, ""),
-      Assigned: userData ? Number(userData.total_assigned) : 0,
-      Completed: userData ? Number(userData.total_completed) : 0,
-      Pending: userData ? Number(userData.total_pending) : 0,
-      pct: userData ? Number(userData.utilization_pct) : 0,
-    };
-  });
-
-  console.log("🔍 overallChartData (all 7 employees):", overallChartData);
-  console.log("🔍 overallChartData length:", overallChartData.length);
-
-  const projectChartData = health.map((p) => ({
-    name: p.project_name,
-    Assigned: Number(p.total_assigned),
-    Completed: Number(p.total_completed),
-    Pending: Number(p.total_pending),
-    pct: Number(p.completion_pct),
+  // employee utilization top-4
+  const empRows = filteredOverall.slice(0, 4).map(u => ({
+    name: u.user_name.replace(/^(Mr\.|Ms\.|Mrs\.)\s*/i, ""),
+    role: u.role || "—",
+    pct:  Number(u.utilization_pct) || 0,
   }));
 
-  const totalLoad = health.reduce((s, p) => s + Number(p.total_load), 0);
-  const totalAssigned = health.reduce((s, p) => s + Number(p.total_assigned), 0);
-  const totalCompleted = health.reduce((s, p) => s + Number(p.total_completed), 0);
-  const pieData = [
-    { name: "Completed", value: totalCompleted },
-    { name: "In Progress", value: totalAssigned - totalCompleted },
-    { name: "Unassigned", value: Math.max(totalLoad - totalAssigned, 0) },
-  ];
+  // assignment table with search + pagination
+  const filtered = tableData.filter(r => {
+    const q = search.toLowerCase();
+    return !q || r.user_name?.toLowerCase().includes(q) || r.project_name?.toLowerCase().includes(q);
+  });
+  const totalPages  = Math.ceil(filtered.length / rowsPerPage);
+  const currentRows = filtered.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
 
-  if (loading) return <div style={{ padding: "40px", color: "#999" }}>Loading dashboard…</div>;
+  const pageNums = Array.from({ length: Math.min(totalPages, 3) }, (_, i) => i + 1);
+
+  if (loading) return (
+    <div className="flex items-center justify-center h-64 text-gray-400">
+      <div className="text-center">
+        <div className="animate-spin w-8 h-8 border-4 border-purple-200 border-t-purple-600 rounded-full mx-auto mb-3" />
+        Loading dashboard…
+      </div>
+    </div>
+  );
 
   return (
-    <div style={S.page}>
+    <div className="p-6 bg-gray-50 min-h-full font-sans">
 
-      {/* ── Title row + refresh icon top-right ── */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
-        <h2 style={{ ...S.pageTitle, marginBottom: 0 }}>Utilization Dashboard</h2>
-        {/* <button onClick={fetchAll} style={S.refreshBtn} title="Refresh">
-          <span style={{ fontSize: 16 }}>↻</span> Refresh
-        </button> */}
+      {/* ── Title ── */}
+      <div className="mb-5">
+        <h2 className="text-xl font-extrabold text-gray-800">Utilization Dashboard</h2>
+        <p className="text-sm text-gray-400 mt-0.5">Monitor resource allocation, project efforts, and completion status.</p>
       </div>
 
-      {/* ── KPI Strip — UNCHANGED ─────────────────────────────────────── */}
-      <div style={S.kpiRow}>
-        <KPI label="Total Employees" value={serviceDeliveryEmployees.length} color="#3498db" />
-        <KPI label="Total effort" value={totalLoad} color="#9b59b6" />
-        <KPI label="Total Assigned" value={totalAssigned} color="#f39c12" />
-        <KPI label="Total Completed" value={totalCompleted} color="#2ecc71" />
-        <KPI
-          label="Overall Completion"
-          value={`${totalAssigned > 0 ? Math.round((totalCompleted / totalAssigned) * 100) : 0}%`}
-          color="#e74c3c"
-        />
+      {/* ── KPI Strip ── */}
+      <div className="flex gap-3 flex-wrap mb-6">
+        <KpiCard icon="👥" label="Employees"    value={serviceDeliveryEmployees.length} accent="#6C5CE7" />
+        <KpiCard icon="⏱" label="Effort (Hrs)"  value={totalLoad}      accent="#f39c12" />
+        <KpiCard icon="📋" label="Assigned"      value={totalAssigned}  accent="#3498db" />
+        <KpiCard icon="✅" label="Completed"     value={totalCompleted} accent="#00b894" />
+        <KpiCard icon="📊" label="Overall Comp." value={`${overallPct}%`} accent="#e74c3c" sub />
       </div>
 
-      {/* ── Row 4: Detailed Table — UNCHANGED ────────────────────────── */}
-      <h3 style={S.sectionTitle}>Assignment Overview</h3>
-      <div style={S.tableCard}>
-        <div style={S.tableToolbar}>
-          <select
-            value={selProject}
-            onChange={(e) => setSelProject(e.target.value)}
-            style={S.select}
-          >
-            <option value="">All Projects</option>
-            {projects.map((p) => (
-              <option key={p.id} value={p.id}>{p.project_name || p.name}</option>
-            ))}
-          </select>
+      {/* ── Middle row: Employee Utilization + Work Distribution ── */}
+      <div className="flex gap-4 mb-5 flex-wrap">
 
-          <span style={{ fontSize: "13px", color: "#999" }}>{tableData.length} rows</span>
-        </div>
+        {/* Employee Utilization */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex-1 min-w-[340px]">
+          <div className="flex items-center justify-between px-5 pt-4 pb-2">
+            <div>
+              <div className="text-[13px] font-bold text-gray-700">Employee Utilization</div>
+              <div className="text-[11px] text-gray-400">Capacity and current load across teams</div>
+            </div>
+            <button className="text-gray-400 hover:text-gray-600">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+              </svg>
+            </button>
+          </div>
 
-        <div style={{ maxHeight: "420px", }}>
-          <table style={S.table}>
+          <table className="w-full text-sm">
             <thead>
-              <tr>
-                {["User", "Project", "Role", "Task", "Assigned", "Completed", "Pending", "Progress"].map(h => (
-                  <th key={h} style={S.th}>{h}</th>
+              <tr className="border-b border-gray-50">
+                {["EMPLOYEE","ROLE","UTILIZATION","STATUS"].map(h => (
+                  <th key={h} className="px-5 py-2 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {tableData.length === 0 ? (
-                <tr><td colSpan={8} style={{ ...S.td, textAlign: "center", color: "#bbb", padding: "30px" }}>
-                  No data available
-                </td></tr>
-              ) : (
-                // tableData.map((r, i) => {
-                currentRows.map((r, i) => {
-                  const pct = r.units_assigned > 0
-                    ? Math.round((r.units_completed / r.units_assigned) * 100) : 0;
-                  return (
-                    <tr key={i} style={i % 2 === 0 ? {} : { background: "#fafafa" }}>
-                      <td style={S.td}><strong>{r.user_name}</strong></td>
-                      <td style={S.td}>{r.project_name}</td>
-                      <td style={S.td}><RolePill role={r.role} /></td>
-                      <td style={{ ...S.td, maxWidth: "180px", fontSize: "12px" }}>{r.task_name}</td>
-                      <td style={{ ...S.td, textAlign: "center", fontWeight: "700" }}>{r.units_assigned}</td>
-                      <td style={{ ...S.td, textAlign: "center", color: "#2ecc71", fontWeight: "700" }}>{r.units_completed}</td>
-                      <td style={{ ...S.td, textAlign: "center", color: Number(r.units_pending) > 0 ? "#e74c3c" : "#2ecc71", fontWeight: "700" }}>
-                        {r.units_pending}
-                      </td>
-                      <td style={{ ...S.td, minWidth: "120px" }}>
-                        <MiniBar pct={pct} />
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
+              {empRows.length === 0 ? (
+                <tr><td colSpan={4} className="px-5 py-6 text-center text-gray-300 text-sm">No data</td></tr>
+              ) : empRows.map((r, i) => (
+                <tr key={i} className="border-b border-gray-50 last:border-0">
+                  <td className="px-5 py-3 font-semibold text-gray-700 text-[13px]">{r.name}</td>
+                  <td className="px-5 py-3"><RolePill role={r.role} /></td>
+                  <td className="px-5 py-3 min-w-[140px]"><UtilBar pct={r.pct} /></td>
+                  <td className="px-5 py-3"><StatusDot pct={r.pct} /></td>
+                </tr>
+              ))}
             </tbody>
           </table>
-        </div>
-        {/* Pagination */}
-        <div style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          padding: "10px 0"
-        }}>
-          <button
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage(prev => prev - 1)}
-            style={{
-              ...S.pageBtn,
-              opacity: currentPage === 1 ? 0.5 : 1,
-              cursor: currentPage === 1 ? "not-allowed" : "pointer"
-            }}
-            onMouseOver={(e) => {
-              if (currentPage !== 1) {
-                e.currentTarget.style.background = "#f5f6f7";
-                e.currentTarget.style.borderColor = "#ccc";
-              }
-            }}
-            onMouseOut={(e) => {
-              if (currentPage !== 1) {
-                e.currentTarget.style.background = "#ffffff";
-                e.currentTarget.style.borderColor = "#ddd";
-              }
-            }}
-          >
-            Previous
-          </button>
 
-          <span style={{ fontSize: "13px", color: "#666" }}>
-            Page {currentPage} of {totalPages}
-          </span>
-
-          <button
-            disabled={currentPage === totalPages}
-            onClick={() => setCurrentPage(prev => prev + 1)}
-            style={{
-              ...S.pageBtn,
-              opacity: currentPage === totalPages ? 0.5 : 1,
-              cursor: currentPage === totalPages ? "not-allowed" : "pointer"
-            }}
-            onMouseOver={(e) => {
-              if (currentPage !== totalPages) {
-                e.currentTarget.style.background = "#f5f6f7";
-                e.currentTarget.style.borderColor = "#ccc";
-              }
-            }}
-            onMouseOut={(e) => {
-              if (currentPage !== totalPages) {
-                e.currentTarget.style.background = "#ffffff";
-                e.currentTarget.style.borderColor = "#ddd";
-              }
-            }}
-          >
-            Next
-          </button>
-        </div>
-      </div>
-      {/* ── Row 1: CHANGED — horizontal scrollable bar + pie UNCHANGED ── */}
-      <div style={S.chartRow}>
-
-        {/* CHANGED: vertical layout (horizontal bars), scrollable */}
-        <div style={{ ...S.chartCard, padding: 0, overflow: "hidden" }}>
-          <h3 style={{ ...S.chartTitle, padding: "16px 18px 8px", marginBottom: 0 }}>User Utilization</h3>
-          <div style={{ overflowY: "auto", overflowX: "hidden", maxHeight: 340 }}>
-            <ResponsiveContainer width="100%" height={Math.max(260, overallChartData.length * 36)}>
-              <BarChart
-                layout="vertical"
-                data={overallChartData}
-                margin={{ top: 4, right: 20, bottom: 4, left: 30 }}
-                barSize={8}
-                barCategoryGap="35%"
-              >
-                <XAxis
-                  type="number"
-                  tick={{ fontSize: 10 }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis
-                  type="category"
-                  dataKey="name"
-                  width={105}
-                  tick={{ fontSize: 11, fill: "#444" }}
-                  axisLine={false}
-                  tickLine={false}
-                  tickFormatter={(v) => v.length > 15 ? v.slice(0, 14) + "…" : v}
-                />
-                <Tooltip
-                  contentStyle={{ fontSize: "12px", borderRadius: "6px" }}
-                  formatter={(val, name) => [`${val} units`, name]}
-                />
-                <Legend wrapperStyle={{ fontSize: "12px", paddingLeft: "110px" }} />
-                <Bar dataKey="Assigned" fill="#3498db" radius={[0, 3, 3, 0]} />
-                <Bar dataKey="Completed" fill="#2ecc71" radius={[0, 3, 3, 0]} />
-                <Bar dataKey="Pending" fill="#e74c3c" radius={[0, 3, 3, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+          <div className="px-5 py-3 text-right">
+            <button className="text-[12px] font-semibold text-purple-600 hover:text-purple-800 transition-colors">
+              View all {serviceDeliveryEmployees.length} employees
+            </button>
           </div>
         </div>
 
-        {/* Pie — UNCHANGED */}
-        <div style={{ ...S.chartCard, maxWidth: "320px" }}>
-          <h3 style={S.chartTitle}>Work Distribution</h3>
-          <ResponsiveContainer width="100%" height={220}>
+        {/* Work Distribution Donut */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 w-64 px-5 py-4 shrink-0">
+          <div className="text-[13px] font-bold text-gray-700 mb-3">Work Distribution</div>
+          <ResponsiveContainer width="100%" height={180}>
             <PieChart>
-              <Pie data={pieData} cx="50%" cy="50%" outerRadius={85}
-                dataKey="value" label={({ name, percent }) =>
-                  `${name} ${(percent * 100).toFixed(0)}%`}
-                labelLine={false}
-                style={{ fontSize: "11px" }}
+              <Pie
+                data={pieData}
+                cx="50%" cy="50%"
+                innerRadius={58} outerRadius={82}
+                dataKey="value"
+                strokeWidth={2}
               >
                 {pieData.map((_, i) => (
-                  <Cell key={i} fill={["#2ecc71", "#f39c12", "#e74c3c"][i]} />
+                  <Cell key={i} fill={DONUT_COLORS[i]} />
                 ))}
               </Pie>
-              <Tooltip formatter={(v) => [v, "units"]} contentStyle={{ fontSize: "12px" }} />
+              <Tooltip formatter={(v) => [v, "units"]} contentStyle={{ fontSize: "12px", borderRadius: "8px" }} />
+              <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle">
+                <tspan x="50%" dy="-6" fontSize="20" fontWeight="800" fill="#2d3436">{donutTotal}</tspan>
+                <tspan x="50%" dy="18" fontSize="11" fill="#aaa">Units</tspan>
+              </text>
             </PieChart>
           </ResponsiveContainer>
+          <div className="flex flex-col gap-1.5 mt-2">
+            {DONUT_LABELS.map((l, i) => (
+              <div key={l} className="flex items-center justify-between text-[11px]">
+                <div className="flex items-center gap-1.5">
+                  <span className="inline-block w-2 h-2 rounded-full" style={{ background: DONUT_COLORS[i] }} />
+                  <span className="text-gray-600">{l}</span>
+                </div>
+                <span className="font-semibold text-gray-500">
+                  {donutTotal > 0 ? Math.round((pieData[i].value / donutTotal) * 100) : 0}%
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
-
-
-      {/* ── Row 3: Project Health Cards — UNCHANGED ───────────────────── */}
-      <h3 style={S.sectionTitle}>Project Health</h3>
-      <div style={S.healthGrid}>
-        {health.map((p) => (
-          <HealthCard key={p.project_id} p={p} />
-        ))}
-      </div>
-
-
-    </div>
-  );
-};
-
-// ── Health Card — UNCHANGED ───────────────────────────────────────────────────
-const HealthCard = ({ p }) => {
-  console.log("project data", p);
-  const pct = Number(p.completion_pct);
-  const col = PCT_COLOR(pct);
-  const load = Number(p.total_load);
-  const Unassigned = Number(load - p.total_assigned);
-
-  return (
-    <div style={S.healthCard}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-        <div>
-          <div style={S.healthName}>{p.project_name}</div>
-          <StatusPill status={p.status} />
+      {/* ── Assignment Overview ── */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-5">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-50">
+          <h3 className="text-[14px] font-bold text-gray-800">Assignment Overview</h3>
+          <div className="flex items-center gap-3">
+            {/* search */}
+            <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-1.5 bg-gray-50">
+              <svg className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+              </svg>
+              <input
+                type="text"
+                placeholder="Search user or project..."
+                value={search}
+                onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
+                className="text-[12px] outline-none bg-transparent w-44 text-gray-600 placeholder-gray-400"
+              />
+            </div>
+            {/* project filter */}
+            <select
+              value={selProject}
+              onChange={e => setSelProject(e.target.value)}
+              className="border border-gray-200 rounded-lg px-3 py-1.5 text-[12px] text-gray-600 bg-white cursor-pointer outline-none"
+            >
+              <option value="">Filters</option>
+              {projects.map(p => (
+                <option key={p.id} value={p.id}>{p.project_name || p.name}</option>
+              ))}
+            </select>
+          </div>
         </div>
-        <div style={{ textAlign: "center" }}>
-          <div style={{ fontSize: "26px", fontWeight: "800", color: col }}>{pct}%</div>
-          <div style={{ fontSize: "11px", color: "#999" }}>complete</div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-50">
+                {["USER","PROJECT","ROLE","TASK","ASSIGNED","COMPLETED","PENDING","PROGRESS"].map(h => (
+                  <th key={h} className="px-4 py-3 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {currentRows.length === 0 ? (
+                <tr><td colSpan={8} className="px-4 py-8 text-center text-gray-300">No data available</td></tr>
+              ) : currentRows.map((r, i) => {
+                const pct = r.units_assigned > 0
+                  ? Math.round((r.units_completed / r.units_assigned) * 100) : 0;
+                return (
+                  <tr key={i} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                    <td className="px-4 py-3 font-semibold text-gray-700 text-[12px] whitespace-nowrap">{r.user_name}</td>
+                    <td className="px-4 py-3 text-gray-500 text-[12px] max-w-[180px]">
+                      <div className="truncate">{r.project_name}</div>
+                    </td>
+                    <td className="px-4 py-3"><RolePill role={r.role} /></td>
+                    <td className="px-4 py-3 text-gray-500 text-[12px]">{r.task_name}</td>
+                    <td className="px-4 py-3 text-center font-bold text-blue-600">{r.units_assigned}</td>
+                    <td className="px-4 py-3 text-center font-bold text-emerald-500">{r.units_completed}</td>
+                    <td className="px-4 py-3 text-center font-bold"
+                      style={{ color: Number(r.units_pending) > 0 ? "#e74c3c" : "#00b894" }}>
+                      {r.units_pending}
+                    </td>
+                    <td className="px-4 py-3 min-w-[130px]"><ProgressBar pct={pct} /></td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination */}
+        <div className="flex items-center justify-between px-5 py-3 border-t border-gray-50">
+          <span className="text-[11px] text-gray-400">
+            Showing {filtered.length === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1} to {Math.min(currentPage * rowsPerPage, filtered.length)} of {filtered.length} entries
+          </span>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="w-7 h-7 flex items-center justify-center rounded border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed text-xs"
+            >‹</button>
+            {pageNums.map(n => (
+              <button key={n}
+                onClick={() => setCurrentPage(n)}
+                className={`w-7 h-7 flex items-center justify-center rounded text-[12px] font-semibold border transition-colors
+                  ${currentPage === n
+                    ? "bg-purple-600 text-white border-purple-600"
+                    : "border-gray-200 text-gray-500 hover:bg-gray-50"}`}
+              >{n}</button>
+            ))}
+            {totalPages > 3 && <span className="text-gray-400 text-xs px-1">…</span>}
+            <button
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages || totalPages === 0}
+              className="w-7 h-7 flex items-center justify-center rounded border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed text-xs"
+            >›</button>
+          </div>
         </div>
       </div>
-      <div style={S.healthBarBg}>
-        <div style={{ ...S.healthBarFill, width: `${Math.min(pct, 100)}%`, background: col }} />
+
+      {/* ── Project Health Overview ── */}
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-[14px] font-bold text-gray-800">Project Health Overview</h3>
+        <button className="text-[12px] font-semibold text-purple-600 hover:text-purple-800 transition-colors">View All</button>
       </div>
-      <div style={S.healthStats}>
-        <Metric label="Effort" value={load} color="#9b59b6" />
-        <Metric label="Assigned" value={p.total_assigned} color="#3498db" />
-        <Metric label="Done" value={p.total_completed} color="#2ecc71" />
-        <Metric label="Pending" value={p.total_pending} color="#e74c3c" />
-        <Metric label="Unassigned" value={Unassigned} color="#e74c3c" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pb-4">
+        {health.map(p => <HealthCard key={p.project_id} p={p} />)}
       </div>
-      <div style={S.healthDates}>
-        {p.start_date && <span>{fmt(p.start_date)}</span>}
-        <span style={{ color: "#ccc" }}>→</span>
-        {p.end_date && <span>{fmt(p.end_date)}</span>}
-      </div>
+
     </div>
   );
-};
-
-// ── All helpers — UNCHANGED ───────────────────────────────────────────────────
-const fmt = (d) => {
-  if (!d) return "";
-  const dt = new Date(d);
-  return `${String(dt.getDate()).padStart(2, "0")}-${String(dt.getMonth() + 1).padStart(2, "0")}-${dt.getFullYear()}`;
-};
-
-const KPI = ({ label, value, color }) => (
-  <div style={{ ...S.kpi, borderTop: `3px solid ${color}` }}>
-    <div style={{ fontSize: "24px", fontWeight: "800", color }}>{value}</div>
-    <div style={{ fontSize: "12px", color: "#999" }}>{label}</div>
-  </div>
-);
-
-const Metric = ({ label, value, color }) => (
-  <div style={{ textAlign: "center" }}>
-    <div style={{ fontSize: "16px", fontWeight: "700", color }}>{value}</div>
-    <div style={{ fontSize: "10px", color: "#aaa" }}>{label}</div>
-  </div>
-);
-
-const statusMap = { active: "#2ecc71", completed: "#3498db", "on-hold": "#f39c12", default: "#95a5a6" };
-const StatusPill = ({ status }) => (
-  <span style={{
-    padding: "2px 8px", borderRadius: "10px", fontSize: "10px", fontWeight: "700",
-    background: statusMap[status?.toLowerCase()] || statusMap.default, color: "white",
-    textTransform: "uppercase"
-  }}>{status || "—"}</span>
-);
-
-const roleColors = {
-  BA: "#8e44ad", UI: "#2980b9", TL: "#16a085",
-  "FE Dev": "#d35400", "BE Dev": "#c0392b",
-  "Mobile/IOS Dev": "#1abc9c", Tester: "#f39c12",
-};
-const RolePill = ({ role }) => (
-  <span style={{
-    padding: "2px 8px", borderRadius: "10px", fontSize: "11px", fontWeight: "700",
-    background: roleColors[role] || "#555", color: "white", whiteSpace: "nowrap"
-  }}>{role}</span>
-);
-
-const MiniBar = ({ pct }) => {
-  const color = pct >= 100 ? "#2ecc71" : pct > 50 ? "#f39c12" : "#e74c3c";
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-      <div style={{ flex: 1, background: "#f0f0f0", borderRadius: "4px", height: "7px", overflow: "hidden" }}>
-        <div style={{ width: `${Math.min(pct, 100)}%`, height: "100%", background: color, borderRadius: "4px" }} />
-      </div>
-      <span style={{ fontSize: "11px", color, fontWeight: "700", minWidth: "32px" }}>{pct}%</span>
-    </div>
-  );
-};
-
-// ── Styles — UNCHANGED + 3 new keys ──────────────────────────────────────────
-const S = {
-  page: { padding: "20px", maxWidth: "1200px", margin: "0 auto", fontFamily: "sans-serif" },
-  pageTitle: { fontSize: "22px", fontWeight: "800", color: "#1e272e", marginBottom: "20px" },
-  sectionTitle: { fontSize: "16px", fontWeight: "700", color: "#1e272e", margin: "24px 0 12px" },
-  kpiRow: { display: "flex", gap: "14px", flexWrap: "wrap", marginBottom: "24px" },
-  kpi: { flex: "1", minWidth: "130px", background: "white", borderRadius: "8px", padding: "14px 18px", boxShadow: "0 2px 8px rgba(0,0,0,0.07)", textAlign: "center" },
-  chartRow: { display: "flex", gap: "16px", marginBottom: "16px", flexWrap: "wrap" },
-  chartCard: { flex: "1", minWidth: "280px", background: "white", borderRadius: "10px", padding: "18px 16px", boxShadow: "0 2px 10px rgba(0,0,0,0.07)", marginBottom: "16px" },
-  chartTitle: { fontSize: "14px", fontWeight: "700", color: "#333", marginBottom: "12px" },
-  healthGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: "16px", marginBottom: "8px" },
-  healthCard: { background: "white", borderRadius: "10px", padding: "18px", boxShadow: "0 2px 10px rgba(0,0,0,0.08)" },
-  healthName: { fontWeight: "700", fontSize: "14px", color: "#1e272e", marginBottom: "6px" },
-  healthBarBg: { height: "6px", background: "#f0f0f0", borderRadius: "4px", margin: "12px 0" },
-  healthBarFill: { height: "100%", borderRadius: "4px", transition: "width 0.6s ease" },
-  healthStats: { display: "flex", justifyContent: "space-between", marginBottom: "10px" },
-  healthDates: { display: "flex", justifyContent: "space-between", fontSize: "11px", color: "#aaa", marginTop: "8px", borderTop: "1px solid #f5f5f5", paddingTop: "8px" },
-  tableCard: { background: "white", borderRadius: "10px", boxShadow: "0 2px 10px rgba(0,0,0,0.07)", overflow: "hidden", marginBottom: "30px" },
-  tableToolbar: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", borderBottom: "1px solid #f0f0f0" },
-  select: { padding: "7px 12px", border: "1px solid #ddd", borderRadius: "6px", fontSize: "13px", background: "white", cursor: "pointer" },
-  table: { width: "100%", borderCollapse: "collapse", fontSize: "13px" },
-  th: { padding: "10px 14px", background: "#1e272e", color: "white", textAlign: "center", fontWeight: "600", fontSize: "12px", whiteSpace: "nowrap" },
-  td: { padding: "9px 14px", borderBottom: "1px solid #f5f5f5", color: "#333" },
-  // ── 3 new keys only ──
-  refreshBtn: { display: "flex", alignItems: "center", gap: "5px", padding: "7px 14px", background: "white", border: "1px solid #ddd", borderRadius: "8px", fontSize: "13px", fontWeight: "700", color: "#555", cursor: "pointer", boxShadow: "0 1px 4px rgba(0,0,0,0.07)" },
-  projectGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "14px", marginBottom: "8px" },
-  projCard: { background: "white", borderRadius: "10px", padding: "16px", boxShadow: "0 2px 10px rgba(0,0,0,0.07)" },
-  pageBtn: {
-    padding: "6px 12px",
-    background: "#ffffff",
-    border: "1px solid #ddd",
-    borderRadius: "6px",
-    fontSize: "13px",
-    fontWeight: "600",
-    color: "#333",
-    boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-    transition: "all 0.2s ease",
-  },
 };
 
 export default UtilizationDashboard;
