@@ -829,48 +829,307 @@ const addAssignment = async (req, res, next) => {
 // PUT /api/assignments/:id (UPDATED: Uses emp_id)
 const updateAssignment = async (req, res, next) => {
   try {
-    const { role, task_name, units_assigned, emp_id, user_id } = req.body;
+    const { id } = req.params;
+    const { 
+      units_assigned, 
+      estimated_days, 
+      estimated_hours 
+    } = req.body;
+
+    // ─── Validation: Check if assignment exists ──────────────────
+    const assignmentExists = await query(
+      `SELECT a.*, p.status as project_status 
+       FROM assignments a
+       LEFT JOIN projects p ON a.project_id = p.id
+       WHERE a.id = ?`,
+      [id]
+    );
     
-    // Build update query dynamically
-    let updateFields = [];
-    let updateValues = [];
-    
-    if (role) {
-      updateFields.push('role = ?');
-      updateValues.push(role);
-    }
-    if (task_name) {
-      updateFields.push('task_name = ?');
-      updateValues.push(task_name);
-    }
-    if (units_assigned !== undefined) {
-      updateFields.push('units_assigned = ?');
-      updateValues.push(units_assigned);
-    }
-    if (emp_id) {
-      updateFields.push('emp_id = ?');
-      updateValues.push(emp_id);
-    }
-    if (user_id) {
-      updateFields.push('user_id = ?');
-      updateValues.push(user_id);
-    }
-    
-    if (updateFields.length === 0) {
-      return res.status(400).json({
-        message: "No fields to update"
+    if (!assignmentExists.length) {
+      return res.status(404).json({
+        success: false,
+        message: 'Assignment not found'
       });
     }
+
+    const currentAssignment = assignmentExists[0];
+
+    // ─── Check if at least one field is provided for update ──────
+    if (units_assigned === undefined && estimated_days === undefined && estimated_hours === undefined) {
+      return res.status(400).json({
+        success: false,
+        message: 'At least one of units_assigned, estimated_days, or estimated_hours must be provided'
+      });
+    }
+
+    // ─── Check assignment progress for any work started ──────────
+    const progressCheck = await query(
+      `SELECT 
+         COUNT(*) as total_entries,
+         SUM(units_completed) as total_units_completed,
+         MAX(CASE WHEN status = 'APPROVED' THEN 1 ELSE 0 END) as has_approved,
+         MAX(CASE WHEN status = 'REJECTED' THEN 1 ELSE 0 END) as has_rejected,
+         MAX(status) as latest_status,
+         GROUP_CONCAT(DISTINCT status) as all_statuses
+       FROM assignment_progress 
+       WHERE assignment_id = ?`,
+      [id]
+    );
+
+    const progress = progressCheck[0] || {};
+    const totalEntries = Number(progress.total_entries || 0);
+    const totalUnitsCompleted = Number(progress.total_units_completed || 0);
+    const hasApproved = Number(progress.has_approved || 0) > 0;
+    const hasRejected = Number(progress.has_rejected || 0) > 0;
+    const latestStatus = progress.latest_status;
+
+    // ─── Determine if work has started ──────────────────────────
+    let workStarted = false;
+    let restrictionReason = '';
+
+    // Check 1: Any units completed
+    if (totalUnitsCompleted > 0) {
+      workStarted = true;
+      restrictionReason = `Work has started with ${totalUnitsCompleted} units already completed`;
+    }
+    // Check 2: Any approved entries (work has been accepted)
+    else if (hasApproved) {
+      workStarted = true;
+      restrictionReason = 'Work has been approved';
+    }
+    // Check 3: Any rejected entries (work was attempted)
+    else if (hasRejected) {
+      workStarted = true;
+      restrictionReason = 'Work has been submitted and rejected';
+    }
+    // Check 4: Any progress entries exist (even with 0 units)
+    else if (totalEntries > 0) {
+      // Check if any entry has actual task data (not just empty progress)
+      const hasTaskData = await query(
+        `SELECT COUNT(*) as count 
+         FROM assignment_progress 
+         WHERE assignment_id = ? 
+         AND (todays_tasks IS NOT NULL OR yesterdays_tasks IS NOT NULL)`,
+        [id]
+      );
+      
+      if (Number(hasTaskData[0]?.count || 0) > 0) {
+        workStarted = true;
+        restrictionReason = 'Task progress has been recorded';
+      }
+    }
+
+    if (workStarted) {
+      return res.status(403).json({
+        success: false,
+        message: 'Cannot update assignment. Work has already started on this task',
+        details: {
+          reason: restrictionReason,
+          total_units_completed: totalUnitsCompleted,
+          total_progress_entries: totalEntries,
+          latest_status: latestStatus || 'N/A',
+          has_approved: hasApproved,
+          has_rejected: hasRejected,
+          assignment_id: id,
+          task_name: currentAssignment.task_name,
+          role: currentAssignment.role
+        }
+      });
+    }
+
+    // ─── Check project status (additional safety) ──────────────
+    const allowedProjectStatuses = ['Not started', null, ''];
+    const projectStatus = currentAssignment.project_status || 'Not started';
     
-    updateValues.push(req.params.id);
-    
+    if (!allowedProjectStatuses.includes(projectStatus)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Cannot update assignment. Project is already in progress, completed, or abandoned',
+        details: {
+          project_status: projectStatus,
+          allowed_status: 'Not started',
+          project_id: currentAssignment.project_id
+        }
+      });
+    }
+
+    // ─── Validate against task limits ────────────────────────────
+    // Get the task load limits
+    const taskLoad = await query(
+      `SELECT 
+         planned_units, 
+         estimated_days, 
+         estimated_hours 
+       FROM project_task_loads 
+       WHERE project_id = ? AND role = ? AND task_name = ?`,
+      [currentAssignment.project_id, currentAssignment.role, currentAssignment.task_name]
+    );
+
+    if (taskLoad.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: `No task load found for ${currentAssignment.role} - ${currentAssignment.task_name}. Please define task load first.`
+      });
+    }
+
+    const plannedUnits = Number(taskLoad[0].planned_units) || 0;
+    const plannedDays = Number(taskLoad[0].estimated_days) || 0;
+    const plannedHours = Number(taskLoad[0].estimated_hours) || 0;
+
+    // Get currently assigned totals for this task (excluding this assignment)
+    const assignedTotals = await query(
+      `SELECT 
+         SUM(units_assigned) as total_units,
+         SUM(estimated_days) as total_days,
+         SUM(estimated_hours) as total_hours
+       FROM assignments 
+       WHERE project_id = ? AND role = ? AND task_name = ? AND id != ?`,
+      [currentAssignment.project_id, currentAssignment.role, currentAssignment.task_name, id]
+    );
+
+    const currentUnits = Number(assignedTotals[0]?.total_units || 0);
+    const currentDays = Number(assignedTotals[0]?.total_days || 0);
+    const currentHours = Number(assignedTotals[0]?.total_hours || 0);
+
+    // Determine new values (use existing if not provided)
+    const newUnits = units_assigned !== undefined ? Number(units_assigned) : Number(currentAssignment.units_assigned);
+    const newDays = estimated_days !== undefined ? Number(estimated_days) : Number(currentAssignment.estimated_days);
+    const newHours = estimated_hours !== undefined ? Number(estimated_hours) : Number(currentAssignment.estimated_hours);
+
+    // Check if any limit would be exceeded
+    const errors = [];
+    let wouldExceed = false;
+
+    // When checking units, subtract any units already completed
+    const completedUnits = Number(progress.total_units_completed || 0);
+    const effectiveCurrentUnits = currentUnits - completedUnits;
+
+    if ((effectiveCurrentUnits + newUnits) > plannedUnits) {
+      errors.push({
+        field: 'units',
+        message: `Cannot assign ${newUnits} units. Total would exceed planned units (${plannedUnits}). Already completed: ${completedUnits}, Remaining: ${plannedUnits - effectiveCurrentUnits}`,
+        planned: plannedUnits,
+        assigned: currentUnits,
+        completed: completedUnits,
+        requested: newUnits,
+        remaining: plannedUnits - effectiveCurrentUnits
+      });
+      wouldExceed = true;
+    }
+
+    if ((currentDays + newDays) > plannedDays) {
+      errors.push({
+        field: 'days',
+        message: `Cannot assign ${newDays} days. Total would exceed planned days (${plannedDays}). Remaining: ${plannedDays - currentDays}`,
+        planned: plannedDays,
+        assigned: currentDays,
+        requested: newDays,
+        remaining: plannedDays - currentDays
+      });
+      wouldExceed = true;
+    }
+
+    if ((currentHours + newHours) > plannedHours) {
+      errors.push({
+        field: 'hours',
+        message: `Cannot assign ${newHours} hours. Total would exceed planned hours (${plannedHours}). Remaining: ${plannedHours - currentHours}`,
+        planned: plannedHours,
+        assigned: currentHours,
+        requested: newHours,
+        remaining: plannedHours - currentHours
+      });
+      wouldExceed = true;
+    }
+
+    if (wouldExceed) {
+      return res.status(400).json({
+        success: false,
+        message: 'Update would exceed task limits',
+        errors: errors
+      });
+    }
+
+    // ─── Build update query (ONLY these 3 fields) ───────────────
+    let updateFields = [];
+    let updateValues = [];
+
+    if (units_assigned !== undefined) {
+      updateFields.push('units_assigned = ?');
+      updateValues.push(newUnits);
+    }
+
+    if (estimated_days !== undefined) {
+      updateFields.push('estimated_days = ?');
+      updateValues.push(newDays);
+    }
+
+    if (estimated_hours !== undefined) {
+      updateFields.push('estimated_hours = ?');
+      updateValues.push(newHours);
+    }
+
+    updateValues.push(id);
+
+    // ─── Execute update ──────────────────────────────────────────
     await query(
       `UPDATE assignments SET ${updateFields.join(', ')} WHERE id = ?`,
       updateValues
     );
-    
-    res.json({ message: "Updated" });
-  } catch (err) { next(err); }
+
+    // ─── Fetch updated assignment ────────────────────────────────
+    const updatedRows = await query(
+      `SELECT
+          a.*,
+          e.emp_name AS user_name,
+          p.project_name,
+          p.status as project_status,
+          ee.effort_days,
+          ee.effort_hrs,
+          ee.buffer_days,
+          ee.buffer_hrs,
+          ee.total_hrs,
+          ee.units,
+          ee.unit_label
+       FROM assignments a
+       LEFT JOIN master.emp e ON a.emp_id = e.emp_id
+       LEFT JOIN projects p ON a.project_id = p.id
+       LEFT JOIN effort_estimates ee ON ee.project_id = a.project_id AND ee.role = a.role
+       WHERE a.id = ?`,
+      [id]
+    );
+
+    // ─── Calculate remaining capacities ──────────────────────────
+    const updatedTotals = await query(
+      `SELECT 
+         SUM(units_assigned) as total_units,
+         SUM(estimated_days) as total_days,
+         SUM(estimated_hours) as total_hours
+       FROM assignments 
+       WHERE project_id = ? AND role = ? AND task_name = ?`,
+      [currentAssignment.project_id, currentAssignment.role, currentAssignment.task_name]
+    );
+
+    const totalUnits = Number(updatedTotals[0]?.total_units || 0);
+    const totalDays = Number(updatedTotals[0]?.total_days || 0);
+    const totalHours = Number(updatedTotals[0]?.total_hours || 0);
+
+    // ─── Return response ──────────────────────────────────────────
+    return res.status(200).json({
+      success: true,
+      message: 'Assignment updated successfully',
+      data: updatedRows[0],
+      remaining: {
+        units: plannedUnits - (totalUnits - completedUnits),
+        days: plannedDays - totalDays,
+        hours: plannedHours - totalHours
+      },
+      note: 'Only units_assigned, estimated_days, and estimated_hours can be updated'
+    });
+
+  } catch (err) {
+    console.error('❌ updateAssignment error:', err);
+    return next(err);
+  }
 };
 
 // DELETE /api/assignments/:id
