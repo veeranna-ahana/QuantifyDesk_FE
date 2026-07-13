@@ -19,6 +19,7 @@ const createProject = async (req, res, next) => {
       endDate,
       status,
       projectType,
+      teamLead,  // New field
     } = req.body;
 
     if (!name || !clientName) {
@@ -30,8 +31,8 @@ const createProject = async (req, res, next) => {
     const sql = `
       INSERT INTO projects
         (project_name, client_name, description, nbd_id, o2d_id,
-         project_code, sub_category, start_date, end_date, status, project_type)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         project_code, sub_category, start_date, end_date, status, project_type, team_lead)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const params = [
@@ -44,8 +45,9 @@ const createProject = async (req, res, next) => {
       subCategory   || null,
       startDate     || null,
       endDate       || null,
-      status        || 'ACTIVE',
+      status        || 'Not started',
       projectType   || null,
+      teamLead      || null,  // New parameter
     ];
 
     const result = await query(sql, params);
@@ -53,7 +55,7 @@ const createProject = async (req, res, next) => {
     // Return the full newly-created row
     const rows = await query(
       `SELECT id, project_name, client_name, description, nbd_id, o2d_id,
-              project_code, sub_category, start_date, end_date, status, project_type
+              project_code, sub_category, start_date, end_date, status, project_type, team_lead
        FROM projects WHERE id = ?`,
       [result.insertId]
     );
@@ -262,6 +264,7 @@ const updateProject = async (req, res, next) => {
       endDate,
       status,
       projectType,
+      teamLead,  // New field
     } = req.body;
 
     // Check if project exists
@@ -283,6 +286,7 @@ const updateProject = async (req, res, next) => {
     const updatedEndDate = endDate !== undefined ? endDate : current.end_date;
     const updatedStatus = status !== undefined ? status : current.status;
     const updatedProjectType = projectType !== undefined ? projectType : current.project_type;
+    const updatedTeamLead = teamLead !== undefined ? teamLead : current.team_lead;  // New field
 
     const updateSql = `
       UPDATE projects
@@ -297,7 +301,8 @@ const updateProject = async (req, res, next) => {
         start_date = ?,
         end_date = ?,
         status = ?,
-        project_type = ?
+        project_type = ?,
+        team_lead = ?
       WHERE id = ?
     `;
 
@@ -313,12 +318,13 @@ const updateProject = async (req, res, next) => {
       updatedEndDate,
       updatedStatus,
       updatedProjectType,
+      updatedTeamLead,  // New parameter
       id,
     ]);
 
     const updatedRows = await query(
       `SELECT id, project_name, client_name, description, nbd_id, o2d_id,
-              project_code, sub_category, start_date, end_date, status, project_type
+              project_code, sub_category, start_date, end_date, status, project_type, team_lead
        FROM projects WHERE id = ?`,
       [id]
     );
