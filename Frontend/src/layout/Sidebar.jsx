@@ -34,6 +34,9 @@ const Icons = {
 const ROLE_LINKS = {
   Admin: [
     { to: "/quantificationnew", label: "Utilization", icon: "utilization" },
+    { to: "/projects", label: "Projects", icon: "projects" },
+    { to: "/assignments", label: "Assignments", icon: "assignments" },
+    { to: "/dailyreport", label: "Daily Report", icon: "dailyUpdate" },
     {
       label: "Reconciliation", icon: "reconciliation",
       children: [

@@ -2,6 +2,16 @@ import React, { useEffect, useState, useCallback } from "react";
 import toast from "react-hot-toast";
 import axios from "axios";
 import { useSelector } from "react-redux";
+import Cookies from "js-cookie";
+
+// ── Role helper ───────────────────────────────────────────────────────────────
+const getUserRole = () => {
+  try {
+    const cookieUser = JSON.parse(Cookies.get('user') || 'null');
+    if (cookieUser?.role) return cookieUser.role.toUpperCase();
+  } catch { /* ignore */ }
+  return (localStorage.getItem('role') || 'EMPLOYEE').toUpperCase();
+};
 
 
 //const BASE_URL  = process.env.REACT_APP_API_BASE_URL;
@@ -74,7 +84,7 @@ const EffortChip = ({ label, value, color, valColor }) => (
 );
 
 // ── Assign Modal ──────────────────────────────────────────────────────────────
-const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onUpdate, onClose, extraData, setExtraData }) => {
+const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onUpdate, onClose, extraData, setExtraData, isAdmin = false }) => {
   const [selUser, setSelUser] = useState("");
   const [units, setUnits] = useState("");
   const [days, setDays] = useState("");
@@ -286,11 +296,12 @@ const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onUpdate, 
         {/* ── Header ── */}
         <div style={M.header}>
           <div>
-            <div style={M.title}>Assign Employee</div>
+            <div style={M.title}>{isAdmin ? 'View Assignments' : 'Assign Employee'}</div>
             <div style={M.sub}>
               <span style={{ ...badge(roleStyle(modal.role).border), marginRight: 6 }}>{modal.role}</span>
               {modal.task_name}
               {modal.unit_type && <span style={{ color: "#aaa", marginLeft: 6, fontSize: 11 }}>· {modal.unit_type}</span>}
+              {isAdmin && <span style={{ color: "#e74c3c", marginLeft: 8, fontSize: 11, fontWeight: 700 }}>🔒 View Only</span>}
             </div>
           </div>
           <button onClick={onClose} style={M.closeBtn}>✕</button>
@@ -332,74 +343,77 @@ const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onUpdate, 
           </div>
         </div>
 
-        {/* ── New assignment form ── */}
-        <div style={M.formRow}>
-          <div style={{ flex: 2, minWidth: 140 }}>
-            <label style={M.label}>Employee</label>
-            <select value={selUser} onChange={e => setSelUser(e.target.value)} style={M.select}>
-              <option value="">Select employee…</option>
-              {users.map(emp => (
-                <option key={emp.employee_id || emp.id} value={emp.employee_id || emp.id}>
-                  {emp.emp_name || emp.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div style={{ flex: 1, minWidth: 70 }}>
-            <label style={M.label}>Units</label>
-            <input
-              type="number"
-              min="1"
-              max={remainingUnits || undefined}
-              placeholder={remainingUnits > 0 ? `Max ${remainingUnits}` : "0"}
-              value={units}
-              onChange={e => setUnits(e.target.value)}
-              style={{ ...M.input, borderColor: unitsExceeded ? "#e74c3c" : "#ddd" }}
-            />
-          </div>
-          <div style={{ flex: 1, minWidth: 70 }}>
-            <label style={M.label}>Days</label>
-            <input
-              type="number"
-              min="0"
-              step="0.5"
-              placeholder="0"
-              value={days}
-              onChange={e => handleDaysChange(e.target.value)}
-              style={{ ...M.input, borderColor: daysExceeded ? "#e74c3c" : "#ddd" }}
-            />
-          </div>
-          <div style={{ flex: 1, minWidth: 70 }}>
-            <label style={M.label}>Hours</label>
-            <input
-              type="number"
-              min="0"
-              step="0.5"
-              placeholder="0"
-              value={hours}
-              onChange={e => handleHoursChange(e.target.value)}
-              style={{ ...M.input, borderColor: hoursExceeded ? "#e74c3c" : "#ddd" }}
-            />
-          </div>
-          <div style={{ alignSelf: "flex-end" }}>
-            <button
-              onClick={handleSubmit}
-              style={{
-                ...M.assignBtn,
-                opacity: (saving || unitsExceeded || daysExceeded || hoursExceeded || remainingUnits === 0) ? 0.5 : 1,
-                cursor: (saving || unitsExceeded || daysExceeded || hoursExceeded || remainingUnits === 0) ? "not-allowed" : "pointer",
-              }}
-              disabled={saving || unitsExceeded || daysExceeded || hoursExceeded || remainingUnits === 0}
-            >
-              {saving ? "Saving…" : "Assign"}
-            </button>
-          </div>
-        </div>
-
-        {(unitsExceeded || daysExceeded || hoursExceeded) && (
-          <div style={{ ...M.error, marginTop: 4 }}>
-            ⚠️ Values exceed remaining limits. Please adjust.
-          </div>
+        {/* ── New assignment form — hidden for Admin ── */}
+        {!isAdmin && (
+          <>
+            <div style={M.formRow}>
+              <div style={{ flex: 2, minWidth: 140 }}>
+                <label style={M.label}>Employee</label>
+                <select value={selUser} onChange={e => setSelUser(e.target.value)} style={M.select}>
+                  <option value="">Select employee…</option>
+                  {users.map(emp => (
+                    <option key={emp.employee_id || emp.id} value={emp.employee_id || emp.id}>
+                      {emp.emp_name || emp.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div style={{ flex: 1, minWidth: 70 }}>
+                <label style={M.label}>Units</label>
+                <input
+                  type="number"
+                  min="1"
+                  max={remainingUnits || undefined}
+                  placeholder={remainingUnits > 0 ? `Max ${remainingUnits}` : "0"}
+                  value={units}
+                  onChange={e => setUnits(e.target.value)}
+                  style={{ ...M.input, borderColor: unitsExceeded ? "#e74c3c" : "#ddd" }}
+                />
+              </div>
+              <div style={{ flex: 1, minWidth: 70 }}>
+                <label style={M.label}>Days</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.5"
+                  placeholder="0"
+                  value={days}
+                  onChange={e => handleDaysChange(e.target.value)}
+                  style={{ ...M.input, borderColor: daysExceeded ? "#e74c3c" : "#ddd" }}
+                />
+              </div>
+              <div style={{ flex: 1, minWidth: 70 }}>
+                <label style={M.label}>Hours</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.5"
+                  placeholder="0"
+                  value={hours}
+                  onChange={e => handleHoursChange(e.target.value)}
+                  style={{ ...M.input, borderColor: hoursExceeded ? "#e74c3c" : "#ddd" }}
+                />
+              </div>
+              <div style={{ alignSelf: "flex-end" }}>
+                <button
+                  onClick={handleSubmit}
+                  style={{
+                    ...M.assignBtn,
+                    opacity: (saving || unitsExceeded || daysExceeded || hoursExceeded || remainingUnits === 0) ? 0.5 : 1,
+                    cursor: (saving || unitsExceeded || daysExceeded || hoursExceeded || remainingUnits === 0) ? "not-allowed" : "pointer",
+                  }}
+                  disabled={saving || unitsExceeded || daysExceeded || hoursExceeded || remainingUnits === 0}
+                >
+                  {saving ? "Saving…" : "Assign"}
+                </button>
+              </div>
+            </div>
+            {(unitsExceeded || daysExceeded || hoursExceeded) && (
+              <div style={{ ...M.error, marginTop: 4 }}>
+                ⚠️ Values exceed remaining limits. Please adjust.
+              </div>
+            )}
+          </>
         )}
 
         {/* ── Employee's Current Workload ── */}
@@ -511,7 +525,7 @@ const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onUpdate, 
                   <th style={M.th}>Hours</th>
                   <th style={M.th}>Completed</th>
                   <th style={M.th}>Pending</th>
-                  <th style={{ ...M.th, minWidth: 140 }}>Actions</th>
+                  {!isAdmin && <th style={{ ...M.th, minWidth: 140 }}>Actions</th>}
                 </tr>
               </thead>
               <tbody>
@@ -580,41 +594,43 @@ const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onUpdate, 
                         {pending}
                       </td>
 
-                      {/* Actions */}
-                      <td style={{ ...M.td, whiteSpace: "nowrap" }}>
-                        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                          {isEditing ? (
-                            <>
-                              <button
-                                onClick={() => handleEditSave(a.id)}
-                                disabled={isSavingThis}
-                                style={M.saveBtn}
-                              >
-                                {isSavingThis ? '…' : '✓ Save'}
-                              </button>
-                              <button
-                                onClick={() => cancelEdit(a.id)}
-                                disabled={isSavingThis}
-                                style={M.cancelEditBtn}
-                              >
-                                Cancel
-                              </button>
-                            </>
-                          ) : (
-                            <>
-                              <button
-                                onClick={() => startEdit(a)}
-                                style={M.editBtn}
-                              >
-                                ✏️ Edit
-                              </button>
-                              <button onClick={() => onDelete(a.id)} style={M.removeBtn}>
-                                Remove
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </td>
+                      {/* Actions — hidden for Admin */}
+                      {!isAdmin && (
+                        <td style={{ ...M.td, whiteSpace: "nowrap" }}>
+                          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                            {isEditing ? (
+                              <>
+                                <button
+                                  onClick={() => handleEditSave(a.id)}
+                                  disabled={isSavingThis}
+                                  style={M.saveBtn}
+                                >
+                                  {isSavingThis ? '…' : '✓ Save'}
+                                </button>
+                                <button
+                                  onClick={() => cancelEdit(a.id)}
+                                  disabled={isSavingThis}
+                                  style={M.cancelEditBtn}
+                                >
+                                  Cancel
+                                </button>
+                              </>
+                            ) : (
+                              <>
+                                <button
+                                  onClick={() => startEdit(a)}
+                                  style={M.editBtn}
+                                >
+                                  ✏️ Edit
+                                </button>
+                                <button onClick={() => onDelete(a.id)} style={M.removeBtn}>
+                                  Remove
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   );
                 })}
@@ -636,6 +652,7 @@ const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onUpdate, 
 // MAIN COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 const AssignmentScreen = () => {
+  const isAdmin = getUserRole() === 'ADMIN';
   const serviceDeliveryEmployees = useSelector(
     (state) => state.auth.serviceDeliveryEmployees
   );
@@ -976,17 +993,24 @@ const AssignmentScreen = () => {
         <section style={S.card}>
           <div style={S.sectionHead}>
             <div>
-              <div style={S.sectionTitle}>Effort estimate & Assign</div>
+              <div style={S.sectionTitle}>
+                {isAdmin ? 'Effort estimate & Assignments' : 'Effort estimate & Assign'}
+                {isAdmin && <span style={{ marginLeft: 8, fontSize: 11, color: "#e74c3c", fontWeight: 700 }}>🔒 View Only</span>}
+              </div>
               <div style={S.sectionSub}>
-                Set planned units per role &amp; task, then click <strong>Assign</strong> on any row to assign employees.
+                {isAdmin
+                  ? 'Viewing task allocations and assignments (read-only mode).'
+                  : <>Set planned units per role &amp; task, then click <strong>Assign</strong> on any row to assign employees.</>}
               </div>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               {loadSaved && <span style={{ color: "#27ae60", fontSize: 13, fontWeight: 700 }}>✓ Saved!</span>}
               <div style={S.totalBadge}>Total: <strong style={{ marginLeft: 4 }}>{totalLoad} units</strong></div>
-              <button onClick={handleSaveLoads} style={S.primaryBtn} disabled={savingLoad}>
-                {savingLoad ? "Saving…" : "Save"}
-              </button>
+              {!isAdmin && (
+                <button onClick={handleSaveLoads} style={S.primaryBtn} disabled={savingLoad}>
+                  {savingLoad ? "Saving…" : "Save"}
+                </button>
+              )}
             </div>
           </div>
 
@@ -1088,34 +1112,46 @@ const AssignmentScreen = () => {
                           <tr key={t.id} style={{ background: i % 2 === 0 ? "#fff" : "#fafafa" }}>
                             <td style={S.td}>{t.task_name}</td>
 
-                            {/* Planned Units — CHANGED: reads from entry.planned_units */}
+                            {/* Planned Units — read-only for Admin */}
                             <td style={S.td}>
-                              <input
-                                type="number" min="0"
-                                value={entry.planned_units ?? ""} placeholder="0"
-                                onChange={e => handleLoadInput(role, t.task_name, "planned_units", e.target.value)}
-                                style={S.unitInput}
-                              />
+                              {isAdmin ? (
+                                <span style={S.readOnlyVal}>{entry.planned_units ?? '—'}</span>
+                              ) : (
+                                <input
+                                  type="number" min="0"
+                                  value={entry.planned_units ?? ""} placeholder="0"
+                                  onChange={e => handleLoadInput(role, t.task_name, "planned_units", e.target.value)}
+                                  style={S.unitInput}
+                                />
+                              )}
                             </td>
 
-                            {/* NEW: Est. Days */}
+                            {/* Est. Days — read-only for Admin */}
                             <td style={{ ...S.td }}>
-                              <input
-                                type="number" min="0" step="0.5"
-                                value={entry.estimated_days ?? ""} placeholder="0"
-                                onChange={e => handleLoadInput(role, t.task_name, "estimated_days", e.target.value)}
-                                style={{ ...S.unitInput, borderColor: "#95a5a6" }}
-                              />
+                              {isAdmin ? (
+                                <span style={S.readOnlyVal}>{entry.estimated_days ?? '—'}</span>
+                              ) : (
+                                <input
+                                  type="number" min="0" step="0.5"
+                                  value={entry.estimated_days ?? ""} placeholder="0"
+                                  onChange={e => handleLoadInput(role, t.task_name, "estimated_days", e.target.value)}
+                                  style={{ ...S.unitInput, borderColor: "#95a5a6" }}
+                                />
+                              )}
                             </td>
 
-                            {/* NEW: Est. Hours */}
+                            {/* Est. Hours — read-only for Admin */}
                             <td style={{ ...S.td }}>
-                              <input
-                                type="number" min="0" step="0.5"
-                                value={entry.estimated_hours ?? ""} placeholder="0"
-                                onChange={e => handleLoadInput(role, t.task_name, "estimated_hours", e.target.value)}
-                                style={{ ...S.unitInput, borderColor: "#95a5a6" }}
-                              />
+                              {isAdmin ? (
+                                <span style={S.readOnlyVal}>{entry.estimated_hours ?? '—'}</span>
+                              ) : (
+                                <input
+                                  type="number" min="0" step="0.5"
+                                  value={entry.estimated_hours ?? ""} placeholder="0"
+                                  onChange={e => handleLoadInput(role, t.task_name, "estimated_hours", e.target.value)}
+                                  style={{ ...S.unitInput, borderColor: "#95a5a6" }}
+                                />
+                              )}
                             </td>
 
                             <td style={{ ...S.td, color: "#999", fontSize: 12 }}>{t.unit_type}</td>
@@ -1188,6 +1224,7 @@ const AssignmentScreen = () => {
           onClose={() => setAssignModal(null)}
           extraData={assignExtraData}
           setExtraData={setAssignExtraData}
+          isAdmin={isAdmin}
         />
       )}
 
@@ -1210,6 +1247,7 @@ const S = {
   label: { display: "block", fontSize: 12, fontWeight: 600, color: "#666", marginBottom: 5 },
   select: { width: "100%", padding: "8px 10px", border: "1px solid #ddd", borderRadius: 5, fontSize: 14, background: "white", boxSizing: "border-box", cursor: "pointer" },
   unitInput: { width: "100%", padding: "5px 8px", border: "1px solid #ddd", borderRadius: 4, fontSize: 13, boxSizing: "border-box", textAlign: "center" },
+  readOnlyVal: { display: "inline-block", minWidth: 50, textAlign: "center", fontSize: 13, fontWeight: 600, color: "#555" },
   primaryBtn: { padding: "8px 20px", background: "#27ae60", color: "white", border: "none", borderRadius: 5, fontSize: 13, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" },
   roleBar: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 14px", borderRadius: "6px 6px 0 0", background: "#9ea4a0", },
   table: { width: "100%", borderCollapse: "collapse", fontSize: 13, border: "1px solid #eee" },
