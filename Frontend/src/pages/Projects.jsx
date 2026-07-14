@@ -2,6 +2,16 @@
 import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import axios from 'axios';
+import Cookies from 'js-cookie';
+
+// ── Role helper ───────────────────────────────────────────────────────────────
+const getUserRole = () => {
+  try {
+    const cookieUser = JSON.parse(Cookies.get('user') || 'null');
+    if (cookieUser?.role) return cookieUser.role.toUpperCase();
+  } catch { /* ignore */ }
+  return (localStorage.getItem('role') || 'EMPLOYEE').toUpperCase();
+};
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const getHeaders = () => ({
@@ -372,7 +382,7 @@ const EditProjectModal = ({ project, onClose, onUpdated }) => {
 };
 
 // ── Effort Estimate Modal ─────────────────────────────────────────────────────
-const EffortEstimateModal = ({ projects, onClose, onSaved, initialProjectId }) => {
+const EffortEstimateModal = ({ projects, onClose, onSaved, initialProjectId, readOnly = false }) => {
   const [selectedProject, setSelectedProject] = useState(initialProjectId || '');
   const [saving, setSaving] = useState(false);
   // rows: { role, days, hrs, bufferDays, bufferHrs, totalHrs, units, unitLabel }
@@ -588,8 +598,12 @@ const EffortEstimateModal = ({ projects, onClose, onSaved, initialProjectId }) =
         {/* Header */}
         <div style={O.header}>
           <div>
-            <div style={O.title}>Effort Estimate</div>
-            <div style={O.sub}>Enter days per role — hours are calculated automatically (1 day = 8 hrs).</div>
+            <div style={O.title}>{readOnly ? 'View Effort Estimate' : 'Effort Estimate'}</div>
+            <div style={O.sub}>
+              {readOnly
+                ? 'Viewing effort estimate (read-only).'
+                : 'Enter days per role — hours are calculated automatically (1 day = 8 hrs).'}
+            </div>
           </div>
           <button onClick={onClose} style={O.closeBtn}>✕</button>
         </div>
@@ -638,23 +652,31 @@ const EffortEstimateModal = ({ projects, onClose, onSaved, initialProjectId }) =
                   <td style={E.tdRole}>{r.role}</td>
 
                   <td style={E.td}>
-                    <input
-                      type="number" min="0" step="0.5"
-                      value={r.days} placeholder="0"
-                      onChange={e => handleChange(i, 'days', e.target.value)}
-                      style={E.numInput}
-                    />
+                    {readOnly ? (
+                      <span style={E.readOnlyVal}>{r.days || '—'}</span>
+                    ) : (
+                      <input
+                        type="number" min="0" step="0.5"
+                        value={r.days} placeholder="0"
+                        onChange={e => handleChange(i, 'days', e.target.value)}
+                        style={E.numInput}
+                      />
+                    )}
                   </td>
 
                   <td style={E.tdCalc}>{r.hrs || '—'}</td>
 
                   <td style={E.td}>
-                    <input
-                      type="number" min="0" step="0.5"
-                      value={r.bufferDays} placeholder="0"
-                      onChange={e => handleChange(i, 'bufferDays', e.target.value)}
-                      style={E.numInput}
-                    />
+                    {readOnly ? (
+                      <span style={E.readOnlyVal}>{r.bufferDays || '—'}</span>
+                    ) : (
+                      <input
+                        type="number" min="0" step="0.5"
+                        value={r.bufferDays} placeholder="0"
+                        onChange={e => handleChange(i, 'bufferDays', e.target.value)}
+                        style={E.numInput}
+                      />
+                    )}
                   </td>
 
                   <td style={E.tdCalc}>{r.bufferHrs || '—'}</td>
@@ -664,12 +686,16 @@ const EffortEstimateModal = ({ projects, onClose, onSaved, initialProjectId }) =
                   </td>
 
                   <td style={E.td}>
-                    <input
-                      type="number" min="0"
-                      value={r.units} placeholder="0"
-                      onChange={e => handleChange(i, 'units', e.target.value)}
-                      style={E.numInput}
-                    />
+                    {readOnly ? (
+                      <span style={E.readOnlyVal}>{r.units || '—'}</span>
+                    ) : (
+                      <input
+                        type="number" min="0"
+                        value={r.units} placeholder="0"
+                        onChange={e => handleChange(i, 'units', e.target.value)}
+                        style={E.numInput}
+                      />
+                    )}
                   </td>
 
                   <td style={{ ...E.tdCalc, textAlign: 'left', color: '#999', fontSize: 11 }}>
@@ -695,22 +721,12 @@ const EffortEstimateModal = ({ projects, onClose, onSaved, initialProjectId }) =
 
 
         <div style={O.footer}>
-
-          <button
-            onClick={onClose}
-            style={O.cancelBtn}
-          >
-            Close
-          </button>
-
-          <button
-            onClick={handleSubmit}
-            disabled={saving}
-            style={O.submitBtn}
-          >
-            {saving ? "Saving..." : "Save Estimate"}
-          </button>
-
+          <button onClick={onClose} style={O.cancelBtn}>Close</button>
+          {!readOnly && (
+            <button onClick={handleSubmit} disabled={saving} style={O.submitBtn}>
+              {saving ? 'Saving...' : 'Save Estimate'}
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -725,6 +741,8 @@ const Projects = () => {
   const [showEffortModal, setShowEffortModal] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
   const [initialEffortProjectId, setInitialEffortProjectId] = useState('');
+
+  const isAdmin = getUserRole() === 'ADMIN';
 
 
   const fetchProjects = async () => {
@@ -784,12 +802,16 @@ const Projects = () => {
           <div style={P.underline} />
         </div>
         <div style={P.btnGroup}>
-          <button onClick={() => { setInitialEffortProjectId(''); setShowEffortModal(true); }} style={P.effortBtn}>
-            📊 Effort Estimate
-          </button>
-          <button onClick={() => setShowCreateModal(true)} style={P.createBtn}>
-            + Create Project
-          </button>
+          {!isAdmin && (
+            <>
+              <button onClick={() => { setInitialEffortProjectId(''); setShowEffortModal(true); }} style={P.effortBtn}>
+                📊 Effort Estimate
+              </button>
+              <button onClick={() => setShowCreateModal(true)} style={P.createBtn}>
+                + Create Project
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -855,12 +877,14 @@ const Projects = () => {
                     </td>
                     <td style={P.td}>
                       <div style={{ display: 'flex', gap: '8px' }}>
-                        <button
-                          onClick={() => setEditingProject(p)}
-                          style={P.editBtn}
-                        >
-                          ✏️ Edit
-                        </button>
+                        {!isAdmin && (
+                          <button
+                            onClick={() => setEditingProject(p)}
+                            style={P.editBtn}
+                          >
+                            ✏️ Edit
+                          </button>
+                        )}
                         <button
                           onClick={() => {
                             setInitialEffortProjectId(p.id);
@@ -868,7 +892,7 @@ const Projects = () => {
                           }}
                           style={{ ...P.editBtn, background: '#1e272e', boxShadow: '0 1px 4px rgba(0,0,0,0.15)' }}
                         >
-                          📊 Effort
+                          {isAdmin ? '👁️ View Effort' : '📊 Effort'}
                         </button>
                       </div>
                     </td>
@@ -898,6 +922,7 @@ const Projects = () => {
         <EffortEstimateModal
           projects={projects}
           initialProjectId={initialEffortProjectId}
+          readOnly={isAdmin}
           onClose={() => {
             setShowEffortModal(false);
             setInitialEffortProjectId('');
@@ -1037,6 +1062,10 @@ const E = {
     width: 70, padding: '5px 7px', border: '1px solid #ddd',
     borderRadius: 5, fontSize: 12, textAlign: 'center',
     boxSizing: 'border-box', outline: 'none',
+  },
+  readOnlyVal: {
+    display: 'inline-block', width: 70, textAlign: 'center',
+    fontSize: 12, color: '#555', fontWeight: 600,
   },
 };
 
