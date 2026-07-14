@@ -74,7 +74,7 @@ const EffortChip = ({ label, value, color, valColor }) => (
 );
 
 // ── Assign Modal ──────────────────────────────────────────────────────────────
-const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onClose }) => {
+const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onUpdate, onClose, extraData, setExtraData }) => {
   const [selUser, setSelUser] = useState("");
   const [units, setUnits] = useState("");
   const [days, setDays] = useState("");
@@ -82,6 +82,11 @@ const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onClose })
   const [saving, setSaving] = useState(false);
   const [workload, setWorkload] = useState(null);
   const [loadingWorkload, setLoadingWorkload] = useState(false);
+  // ── Inline edit state: { [assignmentId]: { units, days, hours } } ──
+  const [editingRow, setEditingRow] = useState({});
+  const [savingEdit, setSavingEdit] = useState({});
+  // extraData + setExtraData are received from parent (AssignmentScreen)
+  // so the cache persists across modal close/reopen cycles
 
   useEffect(() => {
     if (!selUser) {
@@ -128,12 +133,80 @@ const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onClose })
     }
   };
 
-  // Assignments already on this role+task
-  const existing = assignments.filter(
-    a => a.role === modal.role && a.task_name === modal.task_name
-  );
+  // ── Inline edit helpers ────────────────────────────────────────────────────
+  const startEdit = (a) => {
+    setEditingRow(prev => ({
+      ...prev,
+      [a.id]: {
+        // Use augmented values (which include extraData) not raw API values
+        units: String(a.units_assigned),
+        days: String(a.estimated_days || 0),
+        hours: String(a.estimated_hours || 0),
+      },
+    }));
+  };
 
-  // Calculate totals
+  const cancelEdit = (id) => {
+    setEditingRow(prev => { const n = { ...prev }; delete n[id]; return n; });
+  };
+
+  const handleEditField = (id, field, val) => {
+    setEditingRow(prev => {
+      const row = { ...prev[id], [field]: val };
+      if (field === 'days') row.hours = val === '' || isNaN(Number(val)) ? '' : String(Number(val) * 8);
+      if (field === 'hours') row.days = val === '' || isNaN(Number(val)) ? '' : String(Number(val) / 8);
+      return { ...prev, [id]: row };
+    });
+  };
+
+  const handleEditSave = async (id) => {
+    const row = editingRow[id];
+    if (!row) return;
+    const unitsVal = Number(row.units);
+    if (!unitsVal || unitsVal <= 0) return toast.error('Units must be > 0.');
+    setSavingEdit(prev => ({ ...prev, [id]: true }));
+    try {
+      const res = await axios.put(
+        `${BASE_URL}/api/assignments/${id}`,
+        {
+          units_assigned: unitsVal,
+          estimated_days: Number(row.days) || 0,
+          estimated_hours: Number(row.hours) || 0,
+        },
+        { headers: getHeaders() }
+      );
+      // Cache the updated days/hours locally
+      const updated = res.data || {};
+      setExtraData(prev => ({
+        ...prev,
+        [id]: {
+          estimated_days: Number(row.days) || 0,
+          estimated_hours: Number(row.hours) || 0,
+          units_assigned: unitsVal,
+        },
+      }));
+      cancelEdit(id);
+      toast.success('Assignment updated!');
+      onUpdate?.();
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to update.');
+    } finally {
+      setSavingEdit(prev => ({ ...prev, [id]: false }));
+    }
+  };
+
+  // Assignments already on this role+task
+  const existing = assignments
+    .filter(a => a.role === modal.role && a.task_name === modal.task_name)
+    .map(a => ({
+      ...a,
+      // Merge locally-cached days/hours (GET response omits these fields)
+      estimated_days: extraData[a.id]?.estimated_days ?? a.estimated_days ?? 0,
+      estimated_hours: extraData[a.id]?.estimated_hours ?? a.estimated_hours ?? 0,
+      units_assigned: extraData[a.id]?.units_assigned ?? a.units_assigned,
+    }));
+
+  // Calculate totals from the augmented rows
   const totalAssignedUnits = existing.reduce((s, a) => s + Number(a.units_assigned), 0);
   const totalAssignedDays = existing.reduce((s, a) => s + Number(a.estimated_days || 0), 0);
   const totalAssignedHours = existing.reduce((s, a) => s + Number(a.estimated_hours || 0), 0);
@@ -171,7 +244,7 @@ const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onClose })
 
     setSaving(true);
     try {
-      await onAssign({
+      const newAssignment = await onAssign({
         user_id: selUser,
         role: modal.role,
         task_name: modal.task_name,
@@ -179,6 +252,19 @@ const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onClose })
         estimated_days: requestedDays,
         estimated_hours: requestedHours,
       });
+      // POST returns { success, data: assignment, remaining }
+      // so the new assignment lives at newAssignment.data, not newAssignment itself
+      const savedAssignment = newAssignment?.data || newAssignment;
+      if (savedAssignment?.id) {
+        setExtraData(prev => ({
+          ...prev,
+          [savedAssignment.id]: {
+            estimated_days: requestedDays,
+            estimated_hours: requestedHours,
+            units_assigned: requestedUnits,
+          },
+        }));
+      }
       setSelUser("");
       setUnits("");
       setDays("");
@@ -425,38 +511,109 @@ const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onClose })
                   <th style={M.th}>Hours</th>
                   <th style={M.th}>Completed</th>
                   <th style={M.th}>Pending</th>
-                  <th style={M.th}>Action</th>
+                  <th style={{ ...M.th, minWidth: 140 }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {existing.map((a, i) => {
                   const completed = Number(a.units_completed || 0);
                   const pending = Math.max(Number(a.units_assigned) - completed, 0);
+                  const isEditing = !!editingRow[a.id];
+                  const eRow = editingRow[a.id] || {};
+                  const isSavingThis = !!savingEdit[a.id];
                   return (
                     <tr key={a.id} style={{ background: i % 2 === 0 ? "#fff" : "#fafbfc" }}>
+                      {/* Employee — always read-only */}
                       <td style={M.td}>
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                           <div style={M.avatar}>{a.user_name?.[0]?.toUpperCase() || "?"}</div>
                           <strong>{a.user_name}</strong>
                         </div>
                       </td>
-                      <td style={{ ...M.td, textAlign: "center", fontWeight: 700, color: "#3498db" }}>
-                        {a.units_assigned}
+
+                      {/* Units */}
+                      <td style={{ ...M.td, textAlign: "center" }}>
+                        {isEditing ? (
+                          <input
+                            type="number" min="1"
+                            value={eRow.units}
+                            onChange={e => handleEditField(a.id, 'units', e.target.value)}
+                            style={M.editInput}
+                          />
+                        ) : (
+                          <span style={{ fontWeight: 700, color: "#3498db" }}>{a.units_assigned}</span>
+                        )}
                       </td>
-                      <td style={{ ...M.td, textAlign: "center", fontWeight: 700, color: "#2c3e50" }}>
-                        {a.estimated_days || 0}
+
+                      {/* Days */}
+                      <td style={{ ...M.td, textAlign: "center" }}>
+                        {isEditing ? (
+                          <input
+                            type="number" min="0" step="0.5"
+                            value={eRow.days}
+                            onChange={e => handleEditField(a.id, 'days', e.target.value)}
+                            style={M.editInput}
+                          />
+                        ) : (
+                          <span style={{ fontWeight: 700, color: "#2c3e50" }}>{a.estimated_days || 0}</span>
+                        )}
                       </td>
-                      <td style={{ ...M.td, textAlign: "center", fontWeight: 700, color: "#2c3e50" }}>
-                        {a.estimated_hours || 0}
+
+                      {/* Hours */}
+                      <td style={{ ...M.td, textAlign: "center" }}>
+                        {isEditing ? (
+                          <input
+                            type="number" min="0" step="0.5"
+                            value={eRow.hours}
+                            onChange={e => handleEditField(a.id, 'hours', e.target.value)}
+                            style={M.editInput}
+                          />
+                        ) : (
+                          <span style={{ fontWeight: 700, color: "#2c3e50" }}>{a.estimated_hours || 0}</span>
+                        )}
                       </td>
+
                       <td style={{ ...M.td, textAlign: "center", fontWeight: 700, color: "#27ae60" }}>
                         {completed}
                       </td>
                       <td style={{ ...M.td, textAlign: "center", fontWeight: 700, color: pending === 0 ? "#27ae60" : "#e74c3c" }}>
                         {pending}
                       </td>
-                      <td style={M.td}>
-                        <button onClick={() => onDelete(a.id)} style={M.removeBtn}>Remove</button>
+
+                      {/* Actions */}
+                      <td style={{ ...M.td, whiteSpace: "nowrap" }}>
+                        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                          {isEditing ? (
+                            <>
+                              <button
+                                onClick={() => handleEditSave(a.id)}
+                                disabled={isSavingThis}
+                                style={M.saveBtn}
+                              >
+                                {isSavingThis ? '…' : '✓ Save'}
+                              </button>
+                              <button
+                                onClick={() => cancelEdit(a.id)}
+                                disabled={isSavingThis}
+                                style={M.cancelEditBtn}
+                              >
+                                Cancel
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => startEdit(a)}
+                                style={M.editBtn}
+                              >
+                                ✏️ Edit
+                              </button>
+                              <button onClick={() => onDelete(a.id)} style={M.removeBtn}>
+                                Remove
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -498,6 +655,9 @@ const AssignmentScreen = () => {
 
   // ── Inline assign modal state ──────────────────────────────────────────────
   const [assignModal, setAssignModal] = useState(null);
+  // ── Persistent cache of per-assignment days/hours (survives modal close) ──
+  // Lifted here so it isn't lost when AssignModal unmounts
+  const [assignExtraData, setAssignExtraData] = useState({});
 
   // ── Initial fetch: projects, catalog ────────────────────────────────
   useEffect(() => {
@@ -515,60 +675,60 @@ const AssignmentScreen = () => {
   }, []);
 
   // ── Per-project fetch: loads, assignments, summary + NEW effort-estimates ───
-const fetchProjectData = useCallback(async (pid) => {
-  if (!pid) return;
-  try {
-    const [lRes, aRes, sRes, eRes] = await Promise.all([
-      axios.get(`${BASE_URL}/api/assignments/task-loads/${pid}`, { headers: getHeaders() }),
-      axios.get(`${BASE_URL}/api/assignments?projectId=${pid}`, { headers: getHeaders() }),
-      axios.get(`${BASE_URL}/api/assignments/summary/${pid}`, { headers: getHeaders() }),
-      axios.get(`${BASE_URL}/api/assignments/effort-estimates/${pid}`, { headers: getHeaders() }),
-    ]);
-    const loads = lRes.data.loads || [];
-    setTotalLoad(lRes.data.total_load || 0);
+  const fetchProjectData = useCallback(async (pid) => {
+    if (!pid) return;
+    try {
+      const [lRes, aRes, sRes, eRes] = await Promise.all([
+        axios.get(`${BASE_URL}/api/assignments/task-loads/${pid}`, { headers: getHeaders() }),
+        axios.get(`${BASE_URL}/api/assignments?projectId=${pid}`, { headers: getHeaders() }),
+        axios.get(`${BASE_URL}/api/assignments/summary/${pid}`, { headers: getHeaders() }),
+        axios.get(`${BASE_URL}/api/assignments/effort-estimates/${pid}`, { headers: getHeaders() }),
+      ]);
+      const loads = lRes.data.loads || [];
+      setTotalLoad(lRes.data.total_load || 0);
 
-    // Get effort data
-    const effortByRoleData = eRes.data?.byRole || {};
-    setEffortByRole(effortByRoleData);
-    
-    // 🔥 FIX: ONLY show roles that exist in effort estimates
-    const effortRoles = Object.keys(effortByRoleData);
-    
-    setCatalog(prevCatalog => {
-      const filteredCatalog = {};
-      // Only include roles that exist in effort estimates
-      effortRoles.forEach(role => {
-        if (prevCatalog[role]) {
-          // Use existing catalog tasks if available
-          filteredCatalog[role] = prevCatalog[role];
-        } else {
-          // Create default task for roles without catalog entry
-          filteredCatalog[role] = [
-            {
-              id: `default_${role}`,
-              task_name: `${role} Tasks`,
-              unit_type: "Tasks"
-            }
-          ];
-        }
+      // Get effort data
+      const effortByRoleData = eRes.data?.byRole || {};
+      setEffortByRole(effortByRoleData);
+
+      // 🔥 FIX: ONLY show roles that exist in effort estimates
+      const effortRoles = Object.keys(effortByRoleData);
+
+      setCatalog(prevCatalog => {
+        const filteredCatalog = {};
+        // Only include roles that exist in effort estimates
+        effortRoles.forEach(role => {
+          if (prevCatalog[role]) {
+            // Use existing catalog tasks if available
+            filteredCatalog[role] = prevCatalog[role];
+          } else {
+            // Create default task for roles without catalog entry
+            filteredCatalog[role] = [
+              {
+                id: `default_${role}`,
+                task_name: `${role} Tasks`,
+                unit_type: "Tasks"
+              }
+            ];
+          }
+        });
+        return filteredCatalog;
       });
-      return filteredCatalog;
-    });
 
-    // CHANGED: draft now stores object per key instead of plain number
-    const draft = {};
-    loads.forEach(l => {
-      draft[`${l.role}||${l.task_name}`] = {
-        planned_units: l.planned_units,
-        estimated_days: l.estimated_days || "",
-        estimated_hours: l.estimated_hours || "",
-      };
-    });
-    setLoadDraft(draft);
-    setAssignments(aRes.data || []);
-    setSummary(sRes.data || { rows: [], totals: {} });
-  } catch (err) { console.error(err); }
-}, []);
+      // CHANGED: draft now stores object per key instead of plain number
+      const draft = {};
+      loads.forEach(l => {
+        draft[`${l.role}||${l.task_name}`] = {
+          planned_units: l.planned_units,
+          estimated_days: l.estimated_days || "",
+          estimated_hours: l.estimated_hours || "",
+        };
+      });
+      setLoadDraft(draft);
+      setAssignments(aRes.data || []);
+      setSummary(sRes.data || { rows: [], totals: {} });
+    } catch (err) { console.error(err); }
+  }, []);
 
   useEffect(() => {
     if (selProject) fetchProjectData(selProject);
@@ -741,17 +901,12 @@ const fetchProjectData = useCallback(async (pid) => {
     });
   };
 
-  // ── Add assignment (called from modal) ────────────────────────────────────────
+  // ── Add assignment (called from modal) ─ returns new assignment for caching ──
   const handleAddAssignment = async ({
-    user_id,
-    role,
-    task_name,
-    units_assigned,
-    estimated_days,
-    estimated_hours
+    user_id, role, task_name, units_assigned, estimated_days, estimated_hours
   }) => {
     try {
-      await axios.post(
+      const res = await axios.post(
         `${BASE_URL}/api/assignments`,
         {
           project_id: selProject,
@@ -765,6 +920,8 @@ const fetchProjectData = useCallback(async (pid) => {
         { headers: getHeaders() }
       );
       await fetchProjectData(selProject);
+      // Return the created assignment so the modal can cache its id + days/hours
+      return res.data;
     } catch (err) {
       throw err;
     }
@@ -1023,11 +1180,14 @@ const fetchProjectData = useCallback(async (pid) => {
       {assignModal && (
         <AssignModal
           modal={assignModal}
-          users={serviceDeliveryEmployees} // ← USE THIS INSTEAD (from user table)
+          users={serviceDeliveryEmployees}
           assignments={assignments}
           onAssign={handleAddAssignment}
           onDelete={handleDelete}
+          onUpdate={() => fetchProjectData(selProject)}
           onClose={() => setAssignModal(null)}
+          extraData={assignExtraData}
+          setExtraData={setAssignExtraData}
         />
       )}
 
@@ -1137,6 +1297,25 @@ const M = {
   removeBtn: {
     padding: "3px 10px", background: "#e74c3c", color: "white",
     border: "none", borderRadius: 4, fontSize: 11, cursor: "pointer",
+  },
+  editBtn: {
+    padding: "3px 10px", background: "#f39c12", color: "white",
+    border: "none", borderRadius: 4, fontSize: 11, cursor: "pointer",
+    fontWeight: 600,
+  },
+  saveBtn: {
+    padding: "3px 10px", background: "#27ae60", color: "white",
+    border: "none", borderRadius: 4, fontSize: 11, cursor: "pointer",
+    fontWeight: 700,
+  },
+  cancelEditBtn: {
+    padding: "3px 10px", background: "#95a5a6", color: "white",
+    border: "none", borderRadius: 4, fontSize: 11, cursor: "pointer",
+  },
+  editInput: {
+    width: 60, padding: "3px 5px", border: "1px solid #3498db",
+    borderRadius: 4, fontSize: 12, textAlign: "center",
+    boxSizing: "border-box", outline: "none",
   },
   closeFooterBtn: {
     padding: "8px 24px", background: "#1e272e", color: "white",
