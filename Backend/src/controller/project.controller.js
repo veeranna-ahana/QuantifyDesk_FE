@@ -86,6 +86,7 @@ const getAllProjects = async (req, res, next) => {
     p.end_date,
     p.status,
     p.project_type,
+    p.team_lead,
     COALESCE(SUM(e.total_hrs), 0) AS total_effort_hours,
     COALESCE(SUM(e.effort_days + e.buffer_days), 0) AS total_effort_days
 
@@ -106,7 +107,8 @@ const getAllProjects = async (req, res, next) => {
     p.start_date,
     p.end_date,
     p.status,
-    p.project_type
+    p.project_type,
+    p.team_lead
 
   ORDER BY p.id ASC
 `;
