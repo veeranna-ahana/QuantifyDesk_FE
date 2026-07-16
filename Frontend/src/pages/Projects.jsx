@@ -1,7 +1,18 @@
 
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import axios from 'axios';
+import Cookies from 'js-cookie';
+
+// ── Role helper ───────────────────────────────────────────────────────────────
+const getUserRole = () => {
+  try {
+    const cookieUser = JSON.parse(Cookies.get('user') || 'null');
+    if (cookieUser?.role) return cookieUser.role.toUpperCase();
+  } catch { /* ignore */ }
+  return (localStorage.getItem('role') || 'EMPLOYEE').toUpperCase();
+};
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const getHeaders = () => ({
@@ -372,7 +383,7 @@ const EditProjectModal = ({ project, onClose, onUpdated }) => {
 };
 
 // ── Effort Estimate Modal ─────────────────────────────────────────────────────
-const EffortEstimateModal = ({ projects, onClose, onSaved, initialProjectId }) => {
+const EffortEstimateModal = ({ projects, onClose, onSaved, initialProjectId, readOnly = false }) => {
   const [selectedProject, setSelectedProject] = useState(initialProjectId || '');
   const [saving, setSaving] = useState(false);
   // rows: { role, days, hrs, bufferDays, bufferHrs, totalHrs, units, unitLabel }
@@ -588,8 +599,12 @@ const EffortEstimateModal = ({ projects, onClose, onSaved, initialProjectId }) =
         {/* Header */}
         <div style={O.header}>
           <div>
-            <div style={O.title}>Effort Estimate</div>
-            <div style={O.sub}>Enter days per role — hours are calculated automatically (1 day = 8 hrs).</div>
+            <div style={O.title}>{readOnly ? 'View Effort Estimate' : 'Effort Estimate'}</div>
+            <div style={O.sub}>
+              {readOnly
+                ? 'Viewing effort estimate (read-only).'
+                : 'Enter days per role — hours are calculated automatically (1 day = 8 hrs).'}
+            </div>
           </div>
           <button onClick={onClose} style={O.closeBtn}>✕</button>
         </div>
@@ -638,23 +653,31 @@ const EffortEstimateModal = ({ projects, onClose, onSaved, initialProjectId }) =
                   <td style={E.tdRole}>{r.role}</td>
 
                   <td style={E.td}>
-                    <input
-                      type="number" min="0" step="0.5"
-                      value={r.days} placeholder="0"
-                      onChange={e => handleChange(i, 'days', e.target.value)}
-                      style={E.numInput}
-                    />
+                    {readOnly ? (
+                      <span style={E.readOnlyVal}>{r.days || '—'}</span>
+                    ) : (
+                      <input
+                        type="number" min="0" step="0.5"
+                        value={r.days} placeholder="0"
+                        onChange={e => handleChange(i, 'days', e.target.value)}
+                        style={E.numInput}
+                      />
+                    )}
                   </td>
 
                   <td style={E.tdCalc}>{r.hrs || '—'}</td>
 
                   <td style={E.td}>
-                    <input
-                      type="number" min="0" step="0.5"
-                      value={r.bufferDays} placeholder="0"
-                      onChange={e => handleChange(i, 'bufferDays', e.target.value)}
-                      style={E.numInput}
-                    />
+                    {readOnly ? (
+                      <span style={E.readOnlyVal}>{r.bufferDays || '—'}</span>
+                    ) : (
+                      <input
+                        type="number" min="0" step="0.5"
+                        value={r.bufferDays} placeholder="0"
+                        onChange={e => handleChange(i, 'bufferDays', e.target.value)}
+                        style={E.numInput}
+                      />
+                    )}
                   </td>
 
                   <td style={E.tdCalc}>{r.bufferHrs || '—'}</td>
@@ -664,12 +687,16 @@ const EffortEstimateModal = ({ projects, onClose, onSaved, initialProjectId }) =
                   </td>
 
                   <td style={E.td}>
-                    <input
-                      type="number" min="0"
-                      value={r.units} placeholder="0"
-                      onChange={e => handleChange(i, 'units', e.target.value)}
-                      style={E.numInput}
-                    />
+                    {readOnly ? (
+                      <span style={E.readOnlyVal}>{r.units || '—'}</span>
+                    ) : (
+                      <input
+                        type="number" min="0"
+                        value={r.units} placeholder="0"
+                        onChange={e => handleChange(i, 'units', e.target.value)}
+                        style={E.numInput}
+                      />
+                    )}
                   </td>
 
                   <td style={{ ...E.tdCalc, textAlign: 'left', color: '#999', fontSize: 11 }}>
@@ -695,43 +722,56 @@ const EffortEstimateModal = ({ projects, onClose, onSaved, initialProjectId }) =
 
 
         <div style={O.footer}>
-
-          <button
-            onClick={onClose}
-            style={O.cancelBtn}
-          >
-            Close
-          </button>
-
-          <button
-            onClick={handleSubmit}
-            disabled={saving}
-            style={O.submitBtn}
-          >
-            {saving ? "Saving..." : "Save Estimate"}
-          </button>
-
+          <button onClick={onClose} style={O.cancelBtn}>Close</button>
+          {!readOnly && (
+            <button onClick={handleSubmit} disabled={saving} style={O.submitBtn}>
+              {saving ? 'Saving...' : 'Save Estimate'}
+            </button>
+          )}
         </div>
       </div>
     </div>
   );
 };
 
+// ── Pagination chevrons ───────────────────────────────────────────────────────
+const ChevL = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>;
+const ChevR = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>;
+const EditIcon = () => (
+  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+  </svg>
+);
+
+const PAGE_SIZE = 10;
+
+// ── Status badge config ───────────────────────────────────────────────────────
+const STATUS_CFG = {
+  'not started': { cls: 'bg-amber-100 text-amber-700',  label: 'NOT STARTED' },
+  'in progress':  { cls: 'bg-blue-100  text-blue-700',   label: 'IN PROGRESS'  },
+  completed:      { cls: 'bg-green-100 text-green-700',  label: 'COMPLETED'    },
+  abandoned:      { cls: 'bg-red-100   text-red-600',    label: 'ABANDONED'    },
+  active:         { cls: 'bg-green-100 text-green-700',  label: 'ACTIVE'       },
+  new:            { cls: 'bg-amber-100 text-amber-700',  label: 'NOT STARTED'  },
+};
+
 // ── Main Projects Component ───────────────────────────────────────────────────
 const Projects = () => {
-  const [projects, setProjects] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showEffortModal, setShowEffortModal] = useState(false);
-  const [editingProject, setEditingProject] = useState(null);
+  const navigate = useNavigate();
+  const [projects, setProjects]                   = useState([]);
+  const [loading, setLoading]                     = useState(true);
   const [initialEffortProjectId, setInitialEffortProjectId] = useState('');
+  const [page, setPage]                           = useState(1);
 
+  const isAdmin = getUserRole() === 'ADMIN';
 
   const fetchProjects = async () => {
     try {
       setLoading(true);
       const res = await axios.get(`${BASE_URL}/api/projects`, { headers: getHeaders() });
       setProjects(res.data || []);
+      setPage(1);
     } catch (err) {
       console.error(err);
       setProjects([]);
@@ -742,169 +782,229 @@ const Projects = () => {
 
   useEffect(() => { fetchProjects(); }, []);
 
-  const statusColor = (s = '') => {
-    const key = (s || '').toLowerCase();
-    const m = {
-      'not started': '#f39c12',
-      'in progress': '#3498db',
-      'completed': '#2ecc71',
-      'abandoned': '#e74c3c',
-      // legacy values
-      new: '#f39c12',
-      inprproess: '#3498db',
-      onhold: '#95a5a6',
-      active: '#2ecc71',
-    };
-    return m[key] || '#95a5a6';
+  // ── Pagination ──────────────────────────────────────────────────────────────
+  const totalPages = Math.max(1, Math.ceil(projects.length / PAGE_SIZE));
+  const pageRows   = projects.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const startEntry = projects.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const endEntry   = Math.min(page * PAGE_SIZE, projects.length);
+
+  // ── Status badge ────────────────────────────────────────────────────────────
+  const StatusBadge = ({ status }) => {
+    const key = (status || '').toLowerCase();
+    const cfg = STATUS_CFG[key] || { cls: 'bg-gray-100 text-gray-500', label: status || '—' };
+    return (
+      <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider ${cfg.cls}`}>
+        {cfg.label}
+      </span>
+    );
   };
 
-  const formatStatus = (s = '') => {
-    const key = (s || '').toLowerCase();
-    const labels = {
-      'not started': 'Not Started',
-      'in progress': 'In Progress',
-      'completed': 'Completed',
-      'abandoned': 'Abandoned',
-      // legacy
-      new: 'Not Started',
-      inprproess: 'In Progress',
-      onhold: 'On Hold',
-      active: 'Active',
-    };
-    return labels[key] || s;
-  };
+  // ── Cols ─────────────────────────────────────────────────────────────────────
+  const COLS = [
+    { label: 'PROJECT CODE',   w: 'w-[110px]' },
+    { label: 'NBD / O2D ID',   w: 'w-[110px]' },
+    { label: 'PROJECT NAME',   w: '' },
+    { label: 'TEAM LEAD',      w: 'w-[120px]' },
+    { label: 'TYPE',           w: 'w-[130px]' },
+    { label: 'TIMELINE',       w: 'w-[120px]' },
+    { label: 'STATUS',         w: 'w-[100px]' },
+    { label: 'EFFORT (HRS/DAYS)', w: 'w-[130px]' },
+    { label: 'ACTION',         w: 'w-[120px]' },
+  ];
 
   return (
-    <div style={P.page}>
+    <div className="min-h-screen bg-[#f0f0f8] p-6 font-sans">
 
-      {/* ── Page heading + action buttons ── */}
-      <div style={P.topBar}>
+      {/* ── Page header ── */}
+      <div className="flex items-start justify-between mb-6 flex-wrap gap-3">
         <div>
-          <h2 style={P.heading}>Projects</h2>
-          <div style={P.underline} />
+          <h1 className="text-2xl font-bold text-gray-900 leading-tight">Projects</h1>
+          <p className="text-sm text-gray-400 mt-0.5">Manage and reconcile enterprise-level project efforts.</p>
         </div>
-        <div style={P.btnGroup}>
-          <button onClick={() => { setInitialEffortProjectId(''); setShowEffortModal(true); }} style={P.effortBtn}>
-            📊 Effort Estimate
-          </button>
-          <button onClick={() => setShowCreateModal(true)} style={P.createBtn}>
-            + Create Project
-          </button>
-        </div>
+        {!isAdmin && (
+          <div className="flex items-center gap-3">
+            {/* Effort Estimate — outlined violet */}
+            <button
+              onClick={() => navigate('/projects/effort', { state: { projects, initialProjectId: '', readOnly: false } })}
+              className="flex items-center gap-2 px-4 py-2 border border-violet-500 text-violet-600 text-sm font-semibold rounded-lg hover:bg-violet-50 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>
+              </svg>
+              Effort Estimate
+            </button>
+            {/* Create Project — filled violet */}
+            <button
+              onClick={() => navigate('/projects/create')}
+              className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold rounded-lg shadow-sm transition-colors"
+            >
+              + Create Project
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* ── Projects table ── */}
-      {loading ? (
-        <div style={P.msg}>Loading projects…</div>
-      ) : !projects.length ? (
-        <div style={P.msg}>No projects found. Create one to get started.</div>
-      ) : (
-        <div style={P.tableWrap}>
-          <div style={{ maxHeight: 420, overflowY: 'auto', overflowX: 'auto' }}>
-            <table style={P.table}>
-              <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
-                <tr>
-                  {[
-                    '#',
-                    'Project Code',
-                    'NBD ID',
-                    'O2D ID',
-                    'Project Name',
-                    'Team Lead',
-                    'Type',
-                    'Start Date',
-                    'End Date',
-                    'Status',
-                    'Effort (Days)',
-                    'Effort (Hours)',
-                    'Action'
-                  ].map(h => (
-                    <th key={h} style={P.th}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {projects.map((p, i) => (
-                  <tr key={p.id} style={P.tr}>
-                    <td style={{ ...P.td, color: '#aaa', width: 40, textAlign: 'center' }}>{i + 1}</td>
-                    <td style={P.td}>{p.project_code || '—'}</td>
-                    <td style={P.td}>{p.nbd_id || '—'}</td>
-                    <td style={P.td}>{p.o2d_id || '—'}</td>
-                    <td style={{ ...P.td, fontWeight: 600, color: '#1e272e' }}>
-                      {p.project_name || p.name}
-                    </td>
-                    <td style={{ ...P.td, color: '#2c3e50', fontWeight: 500 }}>{p.team_lead || '—'}</td>
-                    <td style={P.td}>{p.project_type || '—'}</td>
-                    <td style={P.td}>{p.start_date ? fmtDate(p.start_date) : '—'}</td>
-                    <td style={P.td}>{p.end_date ? fmtDate(p.end_date) : '—'}</td>
-                    <td style={P.td}>
-                      <span style={{
-                        padding: '3px 10px', borderRadius: 12, fontSize: 11,
-                        fontWeight: 700, color: '#fff',
-                        background: statusColor(p.status),
-                      }}>
-                        {formatStatus(p.status)}
-                      </span>
-                    </td>
-                    <td style={P.td}>
-                      {`${p.total_effort_days ?? 0} Days`}
-                    </td>
-
-                    <td style={P.td}>
-                      {`${p.total_effort_hours ?? 0} Hrs`}
-                    </td>
-                    <td style={P.td}>
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <button
-                          onClick={() => setEditingProject(p)}
-                          style={P.editBtn}
-                        >
-                          ✏️ Edit
-                        </button>
-                        <button
-                          onClick={() => {
-                            setInitialEffortProjectId(p.id);
-                            setShowEffortModal(true);
-                          }}
-                          style={{ ...P.editBtn, background: '#1e272e', boxShadow: '0 1px 4px rgba(0,0,0,0.15)' }}
-                        >
-                          📊 Effort
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      {/* ── Table card ── */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        {loading ? (
+          <div className="flex items-center justify-center gap-2 py-20 text-gray-400">
+            <svg className="animate-spin w-5 h-5 text-violet-500" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+            </svg>
+            Loading projects…
           </div>
-        </div>
-      )}
+        ) : !projects.length ? (
+          <div className="py-20 text-center">
+            <svg className="w-12 h-12 text-gray-200 mx-auto mb-3" fill="none" stroke="currentColor" strokeWidth={1.4} viewBox="0 0 24 24">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+            </svg>
+            <p className="text-gray-400 text-sm">No projects found. Create one to get started.</p>
+          </div>
+        ) : (
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm border-collapse min-w-[900px]">
+                <thead>
+                  <tr className="border-b border-gray-100 bg-gray-50">
+                    {COLS.map(c => (
+                      <th key={c.label} className={`text-left px-4 py-3 text-[11px] font-semibold text-gray-400 tracking-wide uppercase whitespace-nowrap ${c.w}`}>
+                        {c.label}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {pageRows.map((p, i) => (
+                    <tr key={p.id} className="border-b border-gray-50 hover:bg-gray-50/60 transition-colors">
 
-      {/* ── Modals ── */}
-      {showCreateModal && (
-        <CreateProjectModal
-          onClose={() => setShowCreateModal(false)}
-          onCreated={fetchProjects}
-        />
-      )}
-      {editingProject && (
-        <EditProjectModal
-          project={editingProject}
-          onClose={() => setEditingProject(null)}
-          onUpdated={fetchProjects}
-        />
-      )}
-      {showEffortModal && (
-        <EffortEstimateModal
-          projects={projects}
-          initialProjectId={initialEffortProjectId}
-          onClose={() => {
-            setShowEffortModal(false);
-            setInitialEffortProjectId('');
-          }}
-          onSaved={fetchProjects}
-        />
-      )}
+                      {/* Project Code */}
+                      <td className="px-4 py-4">
+                        <span className="text-xs font-mono text-gray-600 leading-snug block">{p.project_code || '—'}</span>
+                      </td>
+
+                      {/* NBD / O2D */}
+                      <td className="px-4 py-4">
+                        {p.nbd_id ? (
+                          <div>
+                            <div className="text-xs font-bold text-gray-800">{p.nbd_id}</div>
+                            {p.o2d_id && <div className="text-[11px] text-gray-400">{p.o2d_id}</div>}
+                          </div>
+                        ) : (
+                          <span className="text-gray-300">—</span>
+                        )}
+                      </td>
+
+                      {/* Project Name */}
+                      <td className="px-4 py-4">
+                        <span className="font-semibold text-gray-800 leading-snug block">{p.project_name || p.name}</span>
+                        {p.client_name && (
+                          <span className="text-[11px] text-gray-400">{p.client_name}</span>
+                        )}
+                      </td>
+
+                      {/* Team Lead */}
+                      <td className="px-4 py-4 text-gray-600 text-xs">
+                        {p.team_lead || '—'}
+                      </td>
+
+                      {/* Type */}
+                      <td className="px-4 py-4 text-gray-500 text-xs">
+                        {p.project_type || '—'}
+                      </td>
+
+                      {/* Timeline */}
+                      <td className="px-4 py-4">
+                        {p.start_date ? (
+                          <div className="text-xs text-gray-600 leading-relaxed">
+                            <div>{fmtDate(p.start_date)}</div>
+                            <div className="text-gray-400">to {p.end_date ? fmtDate(p.end_date) : '—'}</div>
+                          </div>
+                        ) : <span className="text-gray-300">—</span>}
+                      </td>
+
+                      {/* Status */}
+                      <td className="px-4 py-4">
+                        <StatusBadge status={p.status} />
+                      </td>
+
+                      {/* Effort Hrs / Days */}
+                      <td className="px-4 py-4">
+                        <div className="text-violet-600 font-bold text-sm">
+                          {Number(p.total_effort_hours ?? 0).toFixed(2)}
+                          <span className="text-[11px] font-semibold ml-0.5"> Hrs</span>
+                        </div>
+                        <div className="text-gray-400 text-[11px]">
+                          {Number(p.total_effort_days ?? 0).toFixed(2)} Days
+                        </div>
+                      </td>
+
+                      {/* Action */}
+                      <td className="px-4 py-4">
+                        <div className="flex items-center gap-2">
+                          {!isAdmin && (
+                            <button
+                              onClick={() => navigate('/projects/edit', { state: { project: p } })}
+                              className="flex items-center gap-1 text-violet-600 hover:text-violet-800 text-xs font-semibold transition-colors"
+                            >
+                              <EditIcon />
+                              Edit
+                            </button>
+                          )}
+                          <button
+                            onClick={() => navigate('/projects/effort', { state: { projects, initialProjectId: p.id, readOnly: isAdmin } })}
+                            className="flex items-center gap-1 text-xs font-semibold text-gray-500 hover:text-gray-700 transition-colors"
+                          >
+                            {isAdmin ? '👁 View' : '📊 Effort'}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* ── Pagination footer ── */}
+            <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-white">
+              <p className="text-xs text-gray-400">
+                Showing {startEntry} to {endEntry} of {projects.length} entries
+              </p>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="w-8 h-8 flex items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 disabled:opacity-30 transition-colors"
+                >
+                  <ChevL />
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(n => (
+                  <button
+                    key={n}
+                    onClick={() => setPage(n)}
+                    className={`w-8 h-8 flex items-center justify-center rounded-md text-sm font-medium transition-colors ${
+                      n === page
+                        ? 'bg-violet-600 text-white shadow-sm'
+                        : 'text-gray-500 hover:bg-gray-100'
+                    }`}
+                  >
+                    {n}
+                  </button>
+                ))}
+                <button
+                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                  className="w-8 h-8 flex items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 disabled:opacity-30 transition-colors"
+                >
+                  <ChevR />
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* ── No modals ── Effort + Create + Edit are now separate pages */}
     </div>
   );
 };
@@ -1037,6 +1137,10 @@ const E = {
     width: 70, padding: '5px 7px', border: '1px solid #ddd',
     borderRadius: 5, fontSize: 12, textAlign: 'center',
     boxSizing: 'border-box', outline: 'none',
+  },
+  readOnlyVal: {
+    display: 'inline-block', width: 70, textAlign: 'center',
+    fontSize: 12, color: '#555', fontWeight: 600,
   },
 };
 
