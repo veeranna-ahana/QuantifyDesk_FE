@@ -1,34 +1,19 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Upload, Table, Select, Spin, message } from 'antd';
 import {
-    Upload,
-    Button,
-    Card,
-    Table,
-    Tag,
-    message,
-    Spin,
-    Alert,
-    Typography,
-    Space,
-    Select,
-    Divider,
-    Statistic,
-    Row,
-    Col
-} from 'antd';
-import {
-    UploadOutlined,
     FileExcelOutlined,
     CheckCircleOutlined,
     CloseCircleOutlined,
-    UserOutlined,
+    TeamOutlined,
     ReloadOutlined,
     InboxOutlined,
-    FolderOpenOutlined
+    FolderOpenOutlined,
+    WarningOutlined,
+    EyeInvisibleOutlined,
+     UploadOutlined  
 } from '@ant-design/icons';
 import { uploadTimesheet, getBatchDetails, getBatches } from '../api/timesheet.api';
 
-const { Text, Title } = Typography;
 const { Option } = Select;
 const { Dragger } = Upload;
 
@@ -102,7 +87,7 @@ const ReconciliationUpload = ({ onUploadSuccess }) => {
             }
             const project = projectMap.get(projectCode);
             project.total_hours += parseFloat(entry.hours || 0);
-            
+
             // ✅ Updated: Use emp_id from master.emp instead of user_id
             const empId = entry.emp_id || entry.original_emp_code;
             if (empId) {
@@ -115,7 +100,7 @@ const ReconciliationUpload = ({ onUploadSuccess }) => {
             }
             project.entry_count += 1;
         });
-        
+
         const data = Array.from(projectMap.values()).map(p => {
             const empMap = new Map();
             p.employee_details.forEach(emp => {
@@ -129,7 +114,7 @@ const ReconciliationUpload = ({ onUploadSuccess }) => {
             p.employee_count = p.employee_details.length;
             return p;
         });
-        
+
         data.sort((a, b) => {
             if (a.project_exists === b.project_exists) return a.project_code.localeCompare(b.project_code);
             return a.project_exists ? 1 : -1;
@@ -194,414 +179,477 @@ const ReconciliationUpload = ({ onUploadSuccess }) => {
         },
         fileList,
         maxCount: 1,
+        showUploadList: false,
     };
 
-    const projectStatusColumns = [
-        {
-            title: 'Project Code',
-            dataIndex: 'project_code',
-            key: 'project_code',
-            width: 180,
-            render: (text) => (
-                <Text code style={{ fontSize: 13 }}>{text || 'N/A'}</Text>
+   const projectStatusColumns = [
+    {
+        title: 'Project Code',
+        dataIndex: 'project_code',
+        key: 'project_code',
+        width: 190,
+        render: (text) => (
+            <span className="inline-block font-mono text-xs font-semibold text-[#856BFF] bg-[#EDEDF8] border border-[#856BFF]/20 px-2.5 py-1 rounded-md">
+                {text || 'N/A'}
+            </span>
+        ),
+    },
+    {
+        title: 'Project Name',
+        dataIndex: 'project_name',
+        key: 'project_name',
+        render: (text, record) => (
+            <span className="text-sm font-semibold text-gray-800">{text || record.project_code || 'Unknown'}</span>
+        ),
+    },
+    {
+        title: 'Status',
+        key: 'status',
+        width: 150,
+        render: (_, record) =>
+            record.project_exists ? (
+                <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-green-600">
+                    <CheckCircleOutlined /> Validated
+                </span>
+            ) : (
+                <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-red-500">
+                    <CloseCircleOutlined /> Not Found — Create
+                </span>
             ),
-        },
-        {
-            title: 'Project Name',
-            dataIndex: 'project_name',
-            key: 'project_name',
-            render: (text, record) => (
-                <Text style={{ color: '#1d1d1f' }}>{text || record.project_code || 'Unknown'}</Text>
-            ),
-        },
-        {
-            title: 'Status',
-            key: 'status',
-            width: 190,
-            render: (_, record) =>
-                record.project_exists ? (
-                    <Tag
-                        icon={<CheckCircleOutlined />}
-                        color="success"
-                        style={{ borderRadius: 20, padding: '2px 10px', fontWeight: 500 }}
-                    >
-                        Found in System
-                    </Tag>
+    },
+    {
+        title: <div className="text-center leading-tight">Total<br />Hours</div>,
+        dataIndex: 'total_hours',
+        key: 'total_hours',
+        align: 'center',
+        width: 110,
+        render: (hours) => (
+            <span className="text-sm font-bold text-gray-900">
+                {hours?.toFixed(1) || '0'} <span className="font-normal text-gray-400 text-xs">hrs</span>
+            </span>
+        ),
+    },
+    {
+        title: 'Employees',
+        dataIndex: 'employee_count',
+        key: 'employee_count',
+        align: 'center',
+        width: 100,
+        render: (count) => (
+            <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[#856BFF]/10 text-[#856BFF] text-xs font-bold">
+                {count || 0}
+            </span>
+        ),
+    },
+    {
+        title: 'Action',
+        key: 'actions',
+        align: 'center',
+        width: 130,
+        render: (_, record) => (
+            <button
+                onClick={() =>
+                    setExpandedProject(
+                        expandedProject === record.project_code ? null : record.project_code
+                    )
+                }
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#856BFF] hover:text-[#7259e6]"
+            >
+                {expandedProject === record.project_code ? (
+                    <>
+                        <EyeInvisibleOutlined /> Hide
+                    </>
                 ) : (
-                    <Tag
-                        icon={<CloseCircleOutlined />}
-                        color="error"
-                        style={{ borderRadius: 20, padding: '2px 10px', fontWeight: 500 }}
-                    >
-                        Not Found — Create
-                    </Tag>
-                ),
-        },
-        {
-            title: 'Total Hours',
-            dataIndex: 'total_hours',
-            key: 'total_hours',
-            align: 'right',
-            width: 120,
-            render: (hours) => (
-                <Text strong style={{ color: '#1d1d1f' }}>
-                    {hours?.toFixed(1) || '0'} <Text type="secondary" style={{ fontWeight: 400, fontSize: 12 }}>hrs</Text>
-                </Text>
-            ),
-        },
-        {
-            title: 'Employees',
-            dataIndex: 'employee_count',
-            key: 'employee_count',
-            align: 'center',
-            width: 100,
-            render: (count) => (
-                <Tag color="blue" style={{ borderRadius: 20, padding: '2px 10px' }}>
-                    {count || 0}
-                </Tag>
-            ),
-        },
-        {
-            title: '',
-            key: 'actions',
-            align: 'center',
-            width: 140,
-            render: (_, record) => (
-                <Button
-                    type="text"
-                    size="small"
-                    icon={<UserOutlined />}
-                    style={{ color: '#4f46e5', fontWeight: 500 }}
-                    onClick={() =>
-                        setExpandedProject(
-                            expandedProject === record.project_code ? null : record.project_code
-                        )
-                    }
-                >
-                    {expandedProject === record.project_code ? 'Hide' : 'Employees'}
-                </Button>
-            ),
-        },
-    ];
+                    <>
+                        <TeamOutlined /> Employees
+                    </>
+                )}
+            </button>
+        ),
+    },
+];
 
-    const expandedRowRender = (record) => {
-        if (!record.employee_details || record.employee_details.length === 0) {
-            return <div style={{ color: '#9ca3af', padding: '8px 16px' }}>No employee details available</div>;
-        }
-        const employeeColumns = [
-            { 
-                title: 'Employee Code', 
-                dataIndex: 'emp_id', 
-                key: 'emp_id', 
-                width: 150,
-                render: (text) => <Text code>{text || 'N/A'}</Text>
-            },
-            { 
-                title: 'Employee Name', 
-                dataIndex: 'name', 
-                key: 'name',
-                render: (text) => <Text>{text || 'Unknown'}</Text>
-            },
-            {
-                title: 'Hours',
-                dataIndex: 'hours',
-                key: 'hours',
-                align: 'right',
-                render: (hours) => `${hours?.toFixed(1) || '0'} hrs`,
-            },
-        ];
-        return (
-            <div style={{ padding: '12px 24px', background: '#f8fafc', borderRadius: 8, margin: '4px 0' }}>
-                <Text strong style={{ fontSize: 13, color: '#374151', display: 'block', marginBottom: 10 }}>
-                    👥 Employee Breakdown
-                </Text>
-                <Table
-                    columns={employeeColumns}
-                    dataSource={record.employee_details}
-                    pagination={false}
-                    size="small"
-                    rowKey="emp_id"
-                    style={{ background: 'transparent' }}
-                />
+const expandedRowRender = (record) => {
+    if (!record.employee_details || record.employee_details.length === 0) {
+        return <div className="text-sm text-gray-400 px-4 py-3">No employee details available</div>;
+    }
+    return (
+        <div className="bg-[#F5F5FA] rounded-lg p-4">
+            <div className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+                <TeamOutlined /> Employee Breakdown
             </div>
-        );
-    };
+            <div className="bg-white rounded-lg border border-gray-100 overflow-hidden">
+                <table className="w-full border-collapse">
+                    <thead>
+                        <tr className="bg-[#EEF0FC]">
+                            <th className="text-left text-[11px] font-bold text-gray-500 uppercase px-4 py-2.5">Employee Code</th>
+                            <th className="text-left text-[11px] font-bold text-gray-500 uppercase px-4 py-2.5">Employee Name</th>
+                            <th className="text-right text-[11px] font-bold text-gray-500 uppercase px-4 py-2.5">Hours</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {record.employee_details.map((emp, idx) => (
+                            <tr key={emp.emp_id} className={idx !== record.employee_details.length - 1 ? 'border-b border-gray-100' : ''}>
+                                <td className="px-4 py-2.5">
+                                    <span className="inline-block font-mono text-xs font-semibold text-gray-600 bg-gray-100 px-2 py-1 rounded-md">
+                                        {emp.emp_id || 'N/A'}
+                                    </span>
+                                </td>
+                                <td className="px-4 py-2.5 text-sm text-gray-700">{emp.name || 'Unknown'}</td>
+                                <td className="px-4 py-2.5 text-sm text-gray-700 text-right">{emp.hours?.toFixed(1) || '0'} hrs</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+};
 
     const foundProjects = projectStatusData.filter(p => p.project_exists).length;
     const notFoundProjects = projectStatusData.filter(p => !p.project_exists).length;
     const hasData = projectStatusData.length > 0;
+    const selectedBatch = allBatches.find(b => b.id === selectedBatchId);
 
     return (
-        <div style={{ padding: '24px', maxWidth: 1200, margin: '0 auto' }}>
+        <div className=" mx-auto p-6 font-sans">
 
-            {/* ── Page Header ─────────────────────────────────────── */}
-            <div style={{ marginBottom: 28 }}>
-                <Title level={4} style={{ margin: 0, color: '#111827', fontWeight: 700 }}>
-                    Timesheet Upload
-                </Title>
-                <Text type="secondary" style={{ fontSize: 13 }}>
-                    Upload and review timesheet data against active projects in the system
-                </Text>
+          {/* ── Page Header ── */}
+<div className="mb-6">
+    <h1 className="text-2xl font-bold text-gray-900 m-0">Timesheet Upload</h1>
+    <p className="text-sm text-gray-500 mt-1">
+        Upload and review timesheet data against active projects in the system
+    </p>
+</div>
+
+{/* ── Upload + Active Batch row ── */}
+<div className="flex flex-col md:flex-row gap-5 mb-5 items-start">
+    {/* Complete Drop Excel layout — 75% width */}
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm w-full md:w-[70%] p-8 flex flex-col gap-6">
+        <Dragger
+            {...uploadProps}
+            className="!bg-white !rounded-xl !border-2 !border-dashed !border-gray-200 !flex-1 !flex !items-center !justify-center"
+        >
+            <div className="flex flex-col items-center">
+                <div className="w-14 h-14 rounded-full bg-[#856BFF]/10 flex items-center justify-center mb-4">
+                    <UploadOutlined className="text-2xl text-[#856BFF]" />
+                </div>
+                {fileList.length > 0 ? (
+                    <>
+                        <p className="font-bold text-[#856BFF] text-base m-0">{fileList[0].name}</p>
+                        <p className="text-gray-400 text-sm mt-1">Click or drag to replace</p>
+                    </>
+                ) : (
+                    <>
+                        <p className="font-bold text-gray-900 text-base m-0">Drop your Excel file here</p>
+                        <p className="text-gray-400 text-sm mt-1">Max file size: 25MB · 1 file per upload</p>
+                    </>
+                )}
             </div>
+        </Dragger>
 
-            {/* ── Upload Card ──────────────────────────────────────── */}
-            <Card
-                style={{
-                    marginBottom: 20,
-                    borderRadius: 12,
-                    border: '1px solid #e5e7eb',
-                    boxShadow: '0 1px 4px rgba(0,0,0,0.06)'
-                }}
-                bodyStyle={{ padding: '24px' }}
+        {/* Cancel / Upload — inside the same white card, below the dropzone */}
+        <div className="flex justify-end gap-3">
+            <button
+                onClick={() => setFileList([])}
+                className="px-6 py-2.5 bg-white border border-gray-200 hover:bg-gray-50 rounded-lg text-sm font-semibold text-gray-700 transition-colors"
             >
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}>
-                    {/* Dragger zone */}
-                    <div style={{ flex: 1, minWidth: 260 }}>
-                        <Dragger
-                            {...uploadProps}
-                            style={{
-                                borderRadius: 10,
-                                background: '#f9fafb',
-                                borderColor: fileList.length > 0 ? '#4f46e5' : '#d1d5db',
-                                padding: '8px 0'
-                            }}
-                        >
-                            <p style={{ marginBottom: 6 }}>
-                                <InboxOutlined style={{ fontSize: 32, color: fileList.length > 0 ? '#4f46e5' : '#9ca3af' }} />
-                            </p>
-                            {fileList.length > 0 ? (
-                                <>
-                                    <p style={{ fontWeight: 600, color: '#4f46e5', margin: 0 }}>{fileList[0].name}</p>
-                                    <p style={{ color: '#9ca3af', fontSize: 12, margin: '4px 0 0' }}>Click or drag to replace</p>
-                                </>
-                            ) : (
-                                <>
-                                    <p style={{ fontWeight: 500, color: '#374151', margin: 0 }}>Drop your Excel file here</p>
-                                </>
-                            )}
-                        </Dragger>
-                    </div>
-
-                    {/* Upload action */}
-                    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingTop: 8 }}>
-                        <Button
-                            type="primary"
-                            size="large"
-                            onClick={handleUpload}
-                            loading={uploading}
-                            disabled={fileList.length === 0}
-                            icon={<FileExcelOutlined />}
-                            style={{
-                                background: fileList.length === 0 ? undefined : '#4f46e5',
-                                borderColor: fileList.length === 0 ? undefined : '#4f46e5',
-                                borderRadius: 8,
-                                height: 44,
-                                paddingInline: 28,
-                                fontWeight: 600,
-                                minWidth: 140
-                            }}
-                        >
-                            {uploading ? 'Uploading…' : 'Upload'}
-                        </Button>
-                        <Text type="secondary" style={{ fontSize: 11, marginTop: 6, textAlign: 'center' }}>
-                            Max 1 file per upload
-                        </Text>
-                    </div>
-                </div>
-            </Card>
-
-            {/* ── Batch Selector ───────────────────────────────────── */}
-            <Card
-                style={{
-                    marginBottom: 20,
-                    borderRadius: 12,
-                    border: '1px solid #e5e7eb',
-                    boxShadow: '0 1px 4px rgba(0,0,0,0.06)'
-                }}
-                bodyStyle={{ padding: '16px 24px' }}
+                Cancel
+            </button>
+            <button
+                onClick={handleUpload}
+                disabled={fileList.length === 0 || uploading}
+                className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#856BFF] hover:bg-[#7259e6] disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg text-sm font-bold transition-colors"
             >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                    <FolderOpenOutlined style={{ color: '#6b7280', fontSize: 16 }} />
-                    <Text style={{ fontWeight: 600, color: '#374151', whiteSpace: 'nowrap' }}>Active Batch</Text>
-                    <Select
-                        value={selectedBatchId}
-                        onChange={handleBatchChange}
-                        style={{ flex: 1, minWidth: 280, maxWidth: 480 }}
-                        loading={loadingBatches}
-                        placeholder="Select a batch…"
-                        size="middle"
-                    >
-                        {allBatches.map((batch) => (
-                            <Option key={batch.id} value={batch.id}>
-                                <span style={{ fontFamily: 'monospace', marginRight: 6 }}>{batch.batch_code}</span>
-                                <Text type="secondary" style={{ fontSize: 12 }}>
-                                    · {batch.file_name?.split('_').pop() || 'Unknown'} · {batch.total_entries || 0} entries · {batch.created_at?.split('T')[0]}
-                                </Text>
-                            </Option>
-                        ))}
-                    </Select>
-                    <Button
-                        icon={<ReloadOutlined />}
-                        onClick={fetchAllBatches}
-                        loading={loadingBatches}
-                        style={{ borderRadius: 8 }}
-                    >
-                        Refresh
-                    </Button>
-                </div>
-            </Card>
+                <FileExcelOutlined />
+                {uploading ? 'Uploading…' : 'Upload Batch'}
+            </button>
+        </div>
+    </div>
 
-            {/* ── Upload Result Summary ────────────────────────────── */}
+    {/* Active Batch layout — 25% width with fixed height */}
+    <div className="relative bg-white rounded-xl border border-gray-100 shadow-sm w-full md:w-[30%] h-[236px] p-4 flex flex-col gap-4 overflow-hidden">
+        <span className="absolute left-0 top-0 bottom-0 w-1 bg-[#856BFF]" />
+
+        <div className="flex items-center justify-between">
+            <span className="flex items-center gap-2 text-xs font-bold text-gray-800 uppercase tracking-wide">
+                <FolderOpenOutlined /> Active Batch
+            </span>
+            <button
+                onClick={fetchAllBatches}
+                disabled={loadingBatches}
+                className="flex items-center gap-1 text-xs font-semibold text-[#856BFF] hover:text-[#7259e6] disabled:opacity-50"
+            >
+                <ReloadOutlined spin={loadingBatches} /> Refresh
+            </button>
+        </div>
+
+        <Select
+            value={selectedBatchId}
+            onChange={handleBatchChange}
+            className="w-full"
+            loading={loadingBatches}
+            placeholder="Select a batch…"
+            size="large"
+        >
+            {allBatches.map((batch) => (
+                <Option key={batch.id} value={batch.id}>
+                    <span className="font-mono">{batch.batch_code}</span>{' '}
+                    <span className="text-gray-400 text-xs">
+                        · {batch.file_name?.split('_').pop() || 'Unknown'} · {batch.total_entries || 0} entries…
+                    </span>
+                </Option>
+            ))}
+        </Select>
+
+        {selectedBatch && (
+            <div className="bg-[#F5F3FF] rounded-xl p-4 flex-1 overflow-y-auto">
+                <div className="flex items-center justify-between mb-3">
+                    <span className="font-mono text-base font-bold text-[#856BFF]">{selectedBatch.batch_code}</span>
+                    <CheckCircleOutlined className="text-green-500 text-lg" />
+                </div>
+                <div className="flex items-center justify-between text-sm text-gray-700 mb-1.5">
+                    <span className="text-gray-500">
+                        Processed: <span className="font-semibold text-gray-800">{selectedBatch.file_name?.split('_').pop() || 'Unknown'}</span>
+                    </span>
+                    <span className="text-gray-500">
+                        Entries: <span className="font-semibold text-gray-800">{selectedBatch.total_entries || 0}</span>
+                    </span>
+                </div>
+                <div className="text-sm text-gray-500">
+                    Date: <span className="font-semibold text-gray-800">{selectedBatch.created_at?.split('T')[0]}</span>
+                </div>
+            </div>
+        )}
+    </div>
+</div>
+
+{/* ── Project Not Found alert ── */}
+{notFoundProjects > 0 && (
+    <div className="flex items-start gap-3 bg-orange-50 border border-orange-100 rounded-xl px-5 py-4 mb-5">
+        <WarningOutlined className="text-orange-500 text-lg mt-0.5" />
+        <div>
+            <div className="text-sm font-semibold text-orange-800">
+                {notFoundProjects} project{notFoundProjects > 1 ? 's' : ''} not found in the system
+            </div>
+            <div className="text-xs text-orange-600 mt-0.5">
+                These entries cannot be reconciled automatically. Create the missing projects or map them to existing entities before running the reconciliation report.
+            </div>
+        </div>
+    </div>
+)}
+
+            {/* ── Upload Result Summary ── */}
             {uploadResult && (
-                <Card
-                    style={{
-                        marginBottom: 20,
-                        borderRadius: 12,
-                        border: '1px solid #d1fae5',
-                        background: '#f0fdf4',
-                        boxShadow: '0 1px 4px rgba(0,0,0,0.04)'
-                    }}
-                    bodyStyle={{ padding: '20px 28px' }}
-                >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                        <CheckCircleOutlined style={{ color: '#16a34a', fontSize: 18 }} />
-                        <Text strong style={{ fontSize: 15, color: '#15803d' }}>Upload Successful</Text>
+                <div className="bg-green-50 border border-green-100 rounded-xl px-7 py-5 mb-5">
+                    <div className="flex items-center gap-2 mb-4">
+                        <CheckCircleOutlined className="text-green-600 text-lg" />
+                        <span className="font-bold text-green-700 text-[15px]">Upload Successful</span>
                     </div>
-                    <Row gutter={32}>
-                        <Col>
-                            <Statistic
-                                title={<Text type="secondary" style={{ fontSize: 12 }}>Total Records</Text>}
-                                value={uploadResult.data?.total_records || 0}
-                                valueStyle={{ fontSize: 22, fontWeight: 700, color: '#111827' }}
-                            />
-                        </Col>
-                        <Col>
-                            <Statistic
-                                title={<Text type="secondary" style={{ fontSize: 12 }}>Entries Stored</Text>}
-                                value={uploadResult.data?.total_entries_stored || 0}
-                                valueStyle={{ fontSize: 22, fontWeight: 700, color: '#111827' }}
-                            />
-                        </Col>
-                        <Col>
-                            <Statistic
-                                title={<Text type="secondary" style={{ fontSize: 12 }}>Duplicates Skipped</Text>}
-                                value={uploadResult.data?.duplicate_entries || 0}
-                                valueStyle={{
-                                    fontSize: 22,
-                                    fontWeight: 700,
-                                    color: uploadResult.data?.duplicate_entries > 0 ? '#dc2626' : '#16a34a'
-                                }}
-                            />
-                        </Col>
-                        <Col>
-                            <Statistic
-                                title={<Text type="secondary" style={{ fontSize: 12 }}>Projects</Text>}
-                                value={`${foundProjects} / ${notFoundProjects}`}
-                                suffix={<Text type="secondary" style={{ fontSize: 12, fontWeight: 400 }}>found / missing</Text>}
-                                valueStyle={{ fontSize: 22, fontWeight: 700, color: '#111827' }}
-                            />
-                        </Col>
-                    </Row>
-                </Card>
+                    <div className="flex flex-wrap gap-10">
+                        <div>
+                            <div className="text-xs text-gray-400 mb-1">Total Records</div>
+                            <div className="text-xl font-bold text-gray-900">{uploadResult.data?.total_records || 0}</div>
+                        </div>
+                        <div>
+                            <div className="text-xs text-gray-400 mb-1">Entries Stored</div>
+                            <div className="text-xl font-bold text-gray-900">{uploadResult.data?.total_entries_stored || 0}</div>
+                        </div>
+                        <div>
+                            <div className="text-xs text-gray-400 mb-1">Duplicates Skipped</div>
+                            <div className={`text-xl font-bold ${uploadResult.data?.duplicate_entries > 0 ? 'text-red-500' : 'text-green-600'}`}>
+                                {uploadResult.data?.duplicate_entries || 0}
+                            </div>
+                        </div>
+                        <div>
+                            <div className="text-xs text-gray-400 mb-1">Projects</div>
+                            <div className="text-xl font-bold text-gray-900">
+                                {foundProjects} / {notFoundProjects}{' '}
+                                <span className="text-xs font-normal text-gray-400">found / missing</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             )}
 
-            {/* ── Alerts ──────────────────────────────────────────── */}
-            {notFoundProjects > 0 && (
-                <Alert
-                    message={`${notFoundProjects} project${notFoundProjects > 1 ? 's' : ''} not found in the system`}
-                    description="Create the missing projects before running reconciliation."
-                    type="warning"
-                    showIcon
-                    style={{ marginBottom: 12, borderRadius: 10 }}
-                />
-            )}
+            
             {uploadResult?.data?.duplicate_entries > 0 && (
-                <Alert
-                    message={`${uploadResult.data.duplicate_entries} duplicate entries skipped`}
-                    description="These entries already exist in the system and were not inserted again."
-                    type="info"
-                    showIcon
-                    style={{ marginBottom: 12, borderRadius: 10 }}
-                />
+                <div className="flex items-start gap-3 bg-blue-50 border border-blue-100 rounded-xl px-5 py-4 mb-5">
+                    <InboxOutlined className="text-blue-500 text-lg mt-0.5" />
+                    <div>
+                        <div className="text-sm font-semibold text-blue-800">
+                            {uploadResult.data.duplicate_entries} duplicate entries skipped
+                        </div>
+                        <div className="text-xs text-blue-600 mt-0.5">
+                            These entries already exist in the system and were not inserted again.
+                        </div>
+                    </div>
+                </div>
             )}
 
-            {/* ── Project Status Table ─────────────────────────────── */}
+            {/* ── Project Status Table ── */}
             {loadingDetails ? (
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '60px 0', flexDirection: 'column', gap: 12 }}>
+                <div className="flex flex-col items-center justify-center gap-3 py-16">
                     <Spin size="large" />
-                    <Text type="secondary" style={{ fontSize: 13 }}>Loading project details…</Text>
+                    <span className="text-sm text-gray-400">Loading project details…</span>
                 </div>
             ) : hasData ? (
-                <Card
-                    style={{
-                        borderRadius: 12,
-                        border: '1px solid #e5e7eb',
-                        boxShadow: '0 1px 4px rgba(0,0,0,0.06)'
-                    }}
-                    bodyStyle={{ padding: 0 }}
-                    title={
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0' }}>
-                            <Text strong style={{ fontSize: 15, color: '#111827' }}>Project Status</Text>
-                            <Space size={8}>
-                                <Tag
-                                    icon={<CheckCircleOutlined />}
-                                    color="success"
-                                    style={{ borderRadius: 20, padding: '3px 12px', fontWeight: 500 }}
-                                >
-                                    {foundProjects} Found
-                                </Tag>
-                                <Tag
-                                    icon={<CloseCircleOutlined />}
-                                    color="error"
-                                    style={{ borderRadius: 20, padding: '3px 12px', fontWeight: 500 }}
-                                >
-                                    {notFoundProjects} Missing
-                                </Tag>
-                            </Space>
-                        </div>
-                    }
-                    headStyle={{ padding: '16px 24px', borderBottom: '1px solid #f3f4f6' }}
-                >
-                    <Table
-                        columns={projectStatusColumns}
-                        dataSource={projectStatusData}
-                        rowKey="project_code"
-                        pagination={{ pageSize: 10, showSizeChanger: false }}
-                        size="middle"
-                        scroll={{ x: 800 }}
-                        rowClassName={(record) =>
-                            !record.project_exists ? 'row-missing' : ''
-                        }
-                        expandable={{
-                            expandedRowRender,
-                            expandedRowKeys: expandedProject ? [expandedProject] : [],
-                            onExpand: (expanded, record) =>
-                                setExpandedProject(expanded ? record.project_code : null),
-                            rowExpandable: (record) =>
-                                record.employee_details && record.employee_details.length > 0,
-                            showExpandColumn: false,
-                        }}
-                        style={{ borderRadius: '0 0 12px 12px', overflow: 'hidden' }}
-                    />
-                </Card>
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <div className="flex items-center justify-between px-6 py-4">
+        <span className="font-bold text-gray-900 text-base">Project Validation Status</span>
+        <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-50 text-green-600 text-xs font-semibold">
+                <CheckCircleOutlined /> {foundProjects} Found
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-50 text-red-500 text-xs font-semibold">
+                <CloseCircleOutlined /> {notFoundProjects} Missing
+            </span>
+        </div>
+    </div>
+
+                   <Table
+        columns={projectStatusColumns}
+        dataSource={projectStatusData}
+        rowKey="project_code"
+        pagination={{
+            pageSize: 10,
+            showSizeChanger: false,
+            showTotal: (total, range) => `Showing ${range[0]} to ${range[1]} of ${total} projects`,
+            className: 'custom-pagination',
+        }}
+        size="middle"
+        scroll={{ x: 800 }}
+        rowClassName={() => 'align-top'}
+        expandable={{
+            expandedRowRender,
+            expandedRowKeys: expandedProject ? [expandedProject] : [],
+            onExpand: (expanded, record) =>
+                setExpandedProject(expanded ? record.project_code : null),
+            rowExpandable: (record) =>
+                record.employee_details && record.employee_details.length > 0,
+            showExpandColumn: false,
+        }}
+    />
+                </div>
             ) : uploadResult && !loadingDetails ? (
-                <Card
-                    style={{ borderRadius: 12, border: '1px solid #e5e7eb', textAlign: 'center', padding: '40px 0' }}
-                >
-                    <InboxOutlined style={{ fontSize: 40, color: '#d1d5db', display: 'block', marginBottom: 12 }} />
-                    <Text type="secondary" style={{ fontSize: 14 }}>No project data found in this batch</Text>
-                </Card>
+                <div className="bg-white rounded-xl border border-gray-200 text-center py-10">
+                    <InboxOutlined className="text-4xl text-gray-300 block mb-3" />
+                    <span className="text-sm text-gray-400">No project data found in this batch</span>
+                </div>
             ) : null}
 
-            {/* Row highlight style for missing projects */}
-            <style>{`
-                .row-missing td {
-                    background-color: #fff7f7 !important;
-                }
-                .row-missing:hover td {
-                    background-color: #fff0f0 !important;
-                }
-            `}</style>
+            {/* Table look & feel overrides */}
+           <style>{`
+    .ant-table-thead > tr > th {
+        background: #EEF0FC !important;
+        color: #6b7280 !important;
+        font-size: 11px !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.03em !important;
+        border-bottom: none !important;
+    }
+    .ant-table-tbody > tr > td {
+        border-bottom: 1px solid #f3f4f6 !important;
+        vertical-align: middle !important;
+    }
+    .ant-table-expanded-row > td {
+        background: #ffffff !important;
+        padding: 0 24px 16px !important;
+    }
+    .ant-pagination-item-active {
+        border-color: #856BFF !important;
+        background: #856BFF !important;
+    }
+    .ant-pagination-item-active a {
+        color: #fff !important;
+    }
+       
+   /* Pagination Container Styles matching the image */
+    .custom-pagination {
+        background: #EFF4FF !important;
+        padding: 16px 24px !important;
+        border-bottom-left-radius: 16px !important;
+        border-bottom-right-radius: 16px !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        border: none !important;
+        margin: 0 !important;
+    }
+    
+    .custom-pagination .ant-pagination-total-text {
+        color: #6B7280 !important;
+        font-family: inherit !important;
+        font-weight: 400 !important;
+        font-size: 13px !important;
+        margin-right: auto !important;
+    }
+    
+    .custom-pagination.ant-table-pagination {
+        display: flex !important;
+    }
+    
+    .custom-pagination .ant-pagination-item,
+    .custom-pagination .ant-pagination-prev,
+    .custom-pagination .ant-pagination-next {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border: none !important;
+        background: transparent !important;
+        min-width: 28px !important;
+        height: 24px !important;
+        line-height: 24px !important;
+        margin: 0 4px !important;
+        cursor: pointer !important;
+    }
+    
+    .custom-pagination .ant-pagination-item a {
+        color: #1F2937 !important;
+        font-weight: 500 !important;
+        font-size: 13px !important;
+        padding: 0 4px !important;
+        transition: none !important;
+    }
+    
+    /* Active State (Purple Pill Button) */
+    .custom-pagination .ant-pagination-item-active {
+        background: #856BFF !important;
+        border-radius: 6px !important;
+    }
+    
+    .custom-pagination .ant-pagination-item-active a {
+        color: #ffffff !important;
+        font-weight: 600 !important;
+    }
+    
+    /* Navigation Arrows */
+    .custom-pagination .ant-pagination-prev .ant-pagination-item-link,
+    .custom-pagination .ant-pagination-next .ant-pagination-item-link {
+        color: #1F2937 !important;
+        border: none !important;
+        background: transparent !important;
+        font-size: 12px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    
+    /* Disabled Arrow State */
+    .custom-pagination .ant-pagination-disabled .ant-pagination-item-link {
+        color: #9CA3AF !important;
+        opacity: 0.6 !important;
+        cursor: not-allowed !important;
+    }
+    
+    /* Hide unneeded Ant utilities */
+    .custom-pagination .ant-pagination-options,
+    .custom-pagination .ant-pagination-jump-prev,
+    .custom-pagination .ant-pagination-jump-next {
+        display: none !important;
+    }
+`}</style>
         </div>
     );
 };
