@@ -54,6 +54,7 @@ const ROLE_LINKS = {
   Employee: [
     { to: "/quantificationnew", label: "Utilization", icon: "utilization" },
     { to: "/my-work", label: "My Work", icon: "myWork" },
+    { to: "/dailyreport", label: "Daily Report", icon: "dailyUpdate" },
   ],
 };
 
