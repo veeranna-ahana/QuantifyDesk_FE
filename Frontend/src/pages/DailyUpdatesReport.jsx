@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
+import Cookies from 'js-cookie';
+import { useNavigate } from 'react-router-dom';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL;
 const PAGE_SIZE = 10;
@@ -61,72 +63,192 @@ const SelectWrapper = ({ label, children }) => (
 
 // ─────────────────────────────────────────────────────────────────────────────
 export default function DailyUpdatesReport() {
+  const navigate = useNavigate();
+  const reduxUser = useSelector(state => state.auth?.user);
   const serviceDeliveryEmployees = useSelector(state => state.auth.serviceDeliveryEmployees);
 
-  const [meta, setMeta]                   = useState({ dates: [], projects: [] });
-  const [selectedDate, setSelectedDate]   = useState('');
+  // ── Get user from Redux or cookie ──────────────────────────────────────────
+  const user = useMemo(() => {
+    if (reduxUser) return reduxUser;
+    try {
+      return JSON.parse(Cookies.get("user") || "null");
+    } catch {
+      return null;
+    }
+  }, [reduxUser]);
+
+  const userId = user?.emp_id || localStorage.getItem("emp_id");
+  const userRole = user?.role || localStorage.getItem("role") || 'Employee';
+  const token = localStorage.getItem("token");
+  
+  // Check if user is Admin or Manager
+  const isAdminOrManager = useMemo(() => {
+    const role = userRole?.toUpperCase();
+    return role === 'ADMIN' || role === 'MANAGER';
+  }, [userRole]);
+
+  const [meta, setMeta] = useState({ dates: [], projects: [] });
+  const [selectedDate, setSelectedDate] = useState('');
   const [selectedProject, setSelectedProject] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState('');
-  const [pendingDate, setPendingDate]     = useState('');
+  const [pendingDate, setPendingDate] = useState('');
   const [pendingProject, setPendingProject] = useState('');
   const [pendingEmployee, setPendingEmployee] = useState('');
 
-  const [rows, setRows]               = useState([]);
+  const [rows, setRows] = useState([]);
   const [loadingMeta, setLoadingMeta] = useState(true);
   const [loadingRows, setLoadingRows] = useState(false);
-  const [error, setError]             = useState('');
-  const [page, setPage]               = useState(1);
+  const [error, setError] = useState('');
+  const [authError, setAuthError] = useState(false);
+  const [page, setPage] = useState(1);
 
-  // ── Load filter meta (dates + projects) ────────────────────────────────────
+  // ── Check authentication ──
+  const isAuthenticated = useMemo(() => {
+    return !!token && !!userId;
+  }, [token, userId]);
+
+  // ── Redirect if not authenticated ──
   useEffect(() => {
+    if (!isAuthenticated) {
+      console.error('❌ User not authenticated');
+      setAuthError(true);
+      setError('Session expired. Please login again.');
+    } else {
+      setAuthError(false);
+    }
+  }, [isAuthenticated]);
+
+  // ── Load filter meta (dates + projects) based on role ─────────────────────
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
     async function loadMeta() {
       try {
-        const token = localStorage.getItem('token');
-        const res = await fetch(`${API_BASE}/api/daily-updates/meta`, {
-          headers: { Authorization: `Bearer ${token}` },
+        setLoadingMeta(true);
+        setError('');
+        
+        // ✅ Different API based on role
+        let endpoint;
+        if (isAdminOrManager) {
+          // Admin/Manager: Get all projects
+          endpoint = `${API_BASE}/api/daily-updates/meta`;
+          console.log('👑 Admin/Manager - fetching all projects');
+        } else {
+          // Employee: Get only assigned projects
+          endpoint = `${API_BASE}/api/daily-updates/employee-projects`;
+          console.log('👤 Employee - fetching assigned projects only');
+        }
+        
+        console.log('📡 Fetching from:', endpoint);
+        console.log('🔑 Using token:', token ? 'Present' : 'Missing');
+        
+        const res = await fetch(endpoint, {
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
         });
-        if (!res.ok) throw new Error('Failed to load filters');
+        
+        if (res.status === 401) {
+          setAuthError(true);
+          throw new Error('Session expired. Please login again.');
+        }
+        
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.error || 'Failed to load filters');
+        }
+        
         const data = await res.json();
         if (!data.success) throw new Error(data.error || 'Failed to load filters');
 
-        setMeta({ dates: data.dates || [], projects: data.projects || [] });
+        // Generate dates
+        const today = new Date();
+        const startDate = new Date("2025-01-01");
+        const dates = [];
+        for (let d = new Date(startDate); d <= today; d.setDate(d.getDate() + 1)) {
+          dates.push(d.toISOString().split("T")[0]);
+        }
+        dates.sort((a, b) => new Date(b) - new Date(a));
 
-        const today = new Date().toISOString().split('T')[0];
-        const defaultDate =
-          data.dates?.includes(today) ? today : data.dates?.[0] || '';
+        // Set projects based on role
+        if (isAdminOrManager) {
+          setMeta({ 
+            dates: data.dates || dates, 
+            projects: data.projects || [] 
+          });
+        } else {
+          setMeta({ 
+            dates: dates, 
+            projects: data.projects || [] 
+          });
+        }
+
+        // Set default date
+        const todayStr = new Date().toISOString().split('T')[0];
+        const defaultDate = dates.includes(todayStr) ? todayStr : dates[0] || '';
         setSelectedDate(defaultDate);
         setPendingDate(defaultDate);
+        
       } catch (err) {
+        console.error('❌ Load meta error:', err);
         setError(err.message);
       } finally {
         setLoadingMeta(false);
       }
     }
+    
     loadMeta();
-  }, []);
+  }, [isAdminOrManager, userId, token, isAuthenticated]);
 
   // ── Load rows whenever applied filters change ───────────────────────────────
   useEffect(() => {
-    if (!selectedDate) return;
+    if (!selectedDate || !isAuthenticated) return;
+    
     async function loadRows() {
       setLoadingRows(true);
       setError('');
       setPage(1);
       try {
-        const token = localStorage.getItem('token');
         const params = new URLSearchParams({ date: selectedDate });
-        if (selectedProject)  params.set('project_id', selectedProject);
-        if (selectedEmployee) params.set('user_id', selectedEmployee);
+        
+        // ✅ For non-admin users, always filter by their user_id
+        if (!isAdminOrManager) {
+          params.set('user_id', userId);
+        }
+        
+        if (selectedProject) params.set('project_id', selectedProject);
+        if (selectedEmployee && isAdminOrManager) {
+          params.set('user_id', selectedEmployee);
+        }
+
+        console.log('📊 Fetching report with params:', params.toString());
 
         const res = await fetch(
           `${API_BASE}/api/daily-updates/report?${params}`,
-          { headers: { Authorization: `Bearer ${token}` } }
+          { 
+            headers: { 
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            } 
+          }
         );
-        if (!res.ok) throw new Error('Failed to load daily updates');
+        
+        if (res.status === 401) {
+          setAuthError(true);
+          throw new Error('Session expired. Please login again.');
+        }
+        
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.error || 'Failed to load daily updates');
+        }
+        
         const data = await res.json();
         if (!data.success) throw new Error(data.error || 'Failed to load daily updates');
         setRows(data.data || []);
       } catch (err) {
+        console.error('❌ Load rows error:', err);
         setError(err.message);
         setRows([]);
       } finally {
@@ -134,16 +256,17 @@ export default function DailyUpdatesReport() {
       }
     }
     loadRows();
-  }, [selectedDate, selectedProject, selectedEmployee]);
+  }, [selectedDate, selectedProject, selectedEmployee, userId, isAdminOrManager, token, isAuthenticated]);
 
-  // ── Employee dropdown options ───────────────────────────────────────────────
+  // ── Employee dropdown options (only for Admin/Manager) ────────────────────
   const employeeOptions = useMemo(() => {
+    if (!isAdminOrManager) return [];
     if (!serviceDeliveryEmployees?.length) return [];
     return serviceDeliveryEmployees.map(emp => ({
       id: emp.employee_id || emp.u_id || emp.id,
       name: emp.emp_name || emp.name,
     }));
-  }, [serviceDeliveryEmployees]);
+  }, [isAdminOrManager, serviceDeliveryEmployees]);
 
   // ── Apply filter ───────────────────────────────────────────────────────────
   const handleFilter = () => {
@@ -152,14 +275,18 @@ export default function DailyUpdatesReport() {
     setSelectedEmployee(pendingEmployee);
   };
 
+  // ── Handle logout on auth error ──
+  const handleLogout = () => {
+    Cookies.remove("user");
+    ["token", "email", "emp_id", "role", "userName"].forEach(k => localStorage.removeItem(k));
+    navigate('/login');
+  };
+
   // ── Pagination ─────────────────────────────────────────────────────────────
   const totalPages  = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
   const pageRows    = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   const startEntry  = rows.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
   const endEntry    = Math.min(page * PAGE_SIZE, rows.length);
-
-  // Visible page numbers (up to 3)
-  const pageNumbers = Array.from({ length: Math.min(totalPages, 3) }, (_, i) => i + 1);
 
   // ── Format date for display (MM/DD/YYYY) ───────────────────────────────────
   const formatDisplay = (d) => {
@@ -178,13 +305,35 @@ export default function DailyUpdatesReport() {
     'TOTAL TIME NEEDED', 'AVAILABILITY', 'UTILIZATION (%)',
   ];
 
+  // ── Show authentication error state ──
+  if (authError) {
+    return (
+      <div className="min-h-screen bg-[#f0f0f8] p-6 font-sans flex items-center justify-center">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 max-w-md w-full text-center">
+          <div className="text-5xl mb-4">🔒</div>
+          <h2 className="text-xl font-bold text-gray-800 mb-2">Session Expired</h2>
+          <p className="text-gray-500 mb-6">Your session has expired. Please login again to continue.</p>
+          <button
+            onClick={handleLogout}
+            className="px-6 py-2.5 bg-violet-600 hover:bg-violet-700 text-white font-semibold rounded-lg transition-colors"
+          >
+            Login Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#f0f0f8] p-6 font-sans">
 
       {/* ── Page header ── */}
       <div className="mb-5">
         <h1 className="text-2xl font-bold text-gray-900 leading-tight">Daily Status Report</h1>
-        <p className="text-sm text-gray-400 mt-0.5">Monitor daily activity and resource updates</p>
+        <p className="text-sm text-gray-400 mt-0.5">
+          Monitor daily activity and resource updates
+          {!isAdminOrManager && ' (Your assigned projects only)'}
+        </p>
       </div>
 
       {/* ── Filter bar ── */}
@@ -197,7 +346,6 @@ export default function DailyUpdatesReport() {
               {pendingDate ? formatDisplay(pendingDate) : 'Select date'}
             </span>
             <CalIcon />
-            {/* hidden native date input overlaid for UX */}
             <input
               type="date"
               value={pendingDate}
@@ -207,12 +355,13 @@ export default function DailyUpdatesReport() {
           </div>
         </SelectWrapper>
 
-        {/* Project */}
+        {/* Project - Shows different options based on role */}
         <SelectWrapper label="Project">
           <select
             value={pendingProject}
             onChange={e => setPendingProject(e.target.value)}
             className={selectCls}
+            disabled={loadingMeta}
           >
             <option value="">All projects</option>
             {meta.projects.map(p => (
@@ -224,31 +373,33 @@ export default function DailyUpdatesReport() {
           </span>
         </SelectWrapper>
 
-        {/* Employee */}
-        <SelectWrapper label="Employee">
-          <select
-            value={pendingEmployee}
-            onChange={e => setPendingEmployee(e.target.value)}
-            disabled={employeeOptions.length === 0}
-            className={selectCls}
-          >
-            <option value="">All employees</option>
-            {employeeOptions.map(emp => (
-              <option key={emp.id} value={emp.id}>{emp.name}</option>
-            ))}
-          </select>
-          <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
-          </span>
-        </SelectWrapper>
+        {/* Employee - Only shown for Admin/Manager */}
+        {isAdminOrManager && (
+          <SelectWrapper label="Employee">
+            <select
+              value={pendingEmployee}
+              onChange={e => setPendingEmployee(e.target.value)}
+              disabled={employeeOptions.length === 0 || loadingMeta}
+              className={selectCls}
+            >
+              <option value="">All employees</option>
+              {employeeOptions.map(emp => (
+                <option key={emp.id} value={emp.id}>{emp.name}</option>
+              ))}
+            </select>
+            <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+            </span>
+          </SelectWrapper>
+        )}
 
         {/* Filter button */}
         <button
           onClick={handleFilter}
-          disabled={loadingMeta}
+          disabled={loadingMeta || loadingRows}
           className="self-end px-6 py-2.5 bg-violet-600 hover:bg-violet-700 active:bg-violet-800 text-white text-sm font-semibold rounded-lg shadow-sm transition-colors disabled:opacity-50"
         >
-          Filter Results
+          {loadingMeta ? 'Loading...' : 'Filter Results'}
         </button>
       </div>
 

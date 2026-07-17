@@ -1,14 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts";
-import {
   getReconFilters,
   getReconDashboard,
   getProjectLevelRecon,
@@ -16,15 +7,175 @@ import {
   getProjectDetail,
 } from "../api/recon.api";
 
-// ─── Color Palettes ─────────────────────────────────────────────
-const STATUS_PILLS = {
-  "On Track": { bg: "#d1fae5", text: "#065f46" },
-  "Over Utilized": { bg: "#fee2e2", text: "#991b1b" },
-  "Under Utilized": { bg: "#fef3c7", text: "#92400e" },
-  "Project Not Found": { bg: "#fee2e2", text: "#991b1b" },
-  "No Estimate": { bg: "#fef3c7", text: "#92400e" },
-  "Not Assigned": { bg: "#fef3c7", text: "#92400e" },
-  "No Activity": { bg: "#f3f4f6", text: "#6b7280" },
+// ─── Status colors (shared by pill + text variants) ─────────────
+const STATUS_STYLES = {
+  "On Track": { bg: "#d1fae5", text: "#059669" },
+  "Over Utilized": { bg: "#fee2e2", text: "#dc2626" },
+  "Under Utilized": { bg: "#fef3c7", text: "#d97706" },
+  "Project Not Found": { bg: "#fee2e2", text: "#dc2626" },
+  "No Estimate": { bg: "#fef3c7", text: "#d97706" },
+  "Not Assigned": { bg: "#fef3c7", text: "#d97706" },
+  "No Activity": { bg: "#f3f4f6", text: "#9ca3af" },
+};
+
+// Pill-style status badge — used on the Project Level table
+const StatusPill = ({ status }) => {
+  const c = STATUS_STYLES[status] || STATUS_STYLES["On Track"];
+  return (
+    <span
+      className="inline-block px-2.5 py-1 rounded-md text-xs font-semibold whitespace-nowrap"
+      style={{ backgroundColor: c.bg, color: c.text }}
+    >
+      {status}
+    </span>
+  );
+};
+
+// Plain-text status — used on the Employee Level table
+const StatusText = ({ status }) => {
+  const c = STATUS_STYLES[status] || STATUS_STYLES["On Track"];
+  return (
+    <span className="text-[11px] font-bold uppercase tracking-wide" style={{ color: c.text }}>
+      {status}
+    </span>
+  );
+};
+
+// ─── Small inline icons ──────────────────────────────────────────
+const SearchIcon = ({ className = "w-4 h-4" }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <circle cx="11" cy="11" r="8" />
+    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+  </svg>
+);
+
+const EyeIcon = ({ className = "w-4 h-4" }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
+    <circle cx="12" cy="12" r="3" />
+  </svg>
+);
+
+const ChevronLeftIcon = ({ className = "w-4 h-4" }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <polyline points="15 18 9 12 15 6" />
+  </svg>
+);
+
+const ChevronRightIcon = ({ className = "w-4 h-4" }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <polyline points="9 18 15 12 9 6" />
+  </svg>
+);
+
+const RefreshIcon = ({ className = "w-4 h-4" }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <polyline points="23 4 23 10 17 10" />
+    <polyline points="1 20 1 14 7 14" />
+    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+  </svg>
+);
+
+const ClockIcon = ({ className = "w-4 h-4" }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <circle cx="12" cy="12" r="9" />
+    <polyline points="12 7 12 12 15.5 14" />
+  </svg>
+);
+
+const HistoryIcon = ({ className = "w-4 h-4" }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M3 12a9 9 0 1 0 3-6.7" />
+    <polyline points="3 4 3 9 8 9" />
+    <polyline points="12 8 12 12 15 14" />
+  </svg>
+);
+
+const UsersIcon = ({ className = "w-4 h-4" }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+    <circle cx="9" cy="7" r="4" />
+    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+  </svg>
+);
+
+const FilterIcon = ({ className = "w-4 h-4" }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <line x1="4" y1="6" x2="20" y2="6" />
+    <line x1="7" y1="12" x2="17" y2="12" />
+    <line x1="10" y1="18" x2="14" y2="18" />
+  </svg>
+);
+
+// ─── Reusable numbered pagination bar ────────────────────────────
+const Pagination = ({ page, pageSize, total, onPageChange, onPageSizeChange, entryLabel = "entries" }) => {
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const start = total === 0 ? 0 : (page - 1) * pageSize + 1;
+  const end = Math.min(page * pageSize, total);
+
+  const getPageNumbers = () => {
+    const maxVisible = 3;
+    let startPage = Math.max(1, page - 1);
+    let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+    if (endPage - startPage + 1 < maxVisible) {
+      startPage = Math.max(1, endPage - maxVisible + 1);
+    }
+    const pages = [];
+    for (let i = startPage; i <= endPage; i++) pages.push(i);
+    return pages;
+  };
+
+  return (
+    <div className="flex justify-between items-center px-5 py-4 border-t border-gray-100 flex-wrap gap-3">
+      <div className="text-xs text-gray-500">
+        Showing {start} to {end} of {total} {entryLabel}
+      </div>
+      <div className="flex items-center gap-2">
+        {onPageSizeChange && (
+          <select
+            value={pageSize}
+            onChange={onPageSizeChange}
+            className="px-2.5 py-1.5 border border-gray-200 rounded-md text-xs text-gray-600 focus:outline-none"
+          >
+            <option value={5}>5</option>
+            <option value={10}>10</option>
+            <option value={25}>25</option>
+            <option value={50}>50</option>
+          </select>
+        )}
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => onPageChange(page - 1)}
+            disabled={page === 1}
+            className="w-7 h-7 flex items-center justify-center rounded-md text-gray-400 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-100 hover:text-gray-600 transition-colors"
+            aria-label="Previous page"
+          >
+            <ChevronLeftIcon className="w-4 h-4" />
+          </button>
+          {getPageNumbers().map((p) => (
+            <button
+              key={p}
+              onClick={() => onPageChange(p)}
+              className={`min-w-[28px] h-7 px-1.5 flex items-center justify-center rounded-md text-xs font-semibold transition-colors ${
+                p === page ? "bg-[#856BFF] text-white" : "text-gray-500 hover:bg-gray-100"
+              }`}
+            >
+              {p}
+            </button>
+          ))}
+          <button
+            onClick={() => onPageChange(page + 1)}
+            disabled={page >= totalPages}
+            className="w-7 h-7 flex items-center justify-center rounded-md text-gray-400 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-100 hover:text-gray-600 transition-colors"
+            aria-label="Next page"
+          >
+            <ChevronRightIcon className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 const ReconPage = () => {
@@ -45,6 +196,7 @@ const ReconPage = () => {
   // ─── Search States ─────────────────────────────────────────────
   const [projectSearch, setProjectSearch] = useState("");
   const [employeeSearch, setEmployeeSearch] = useState("");
+  const [resourceSearch, setResourceSearch] = useState("");
 
   // ─── Pagination States ─────────────────────────────────────────
   const [projectPage, setProjectPage] = useState(1);
@@ -78,17 +230,16 @@ const ReconPage = () => {
   const [employeeReconList, setEmployeeReconList] = useState([]);
 
   const [selectedProjectId, setSelectedProjectId] = useState(null);
-  // const [projectDetail, setProjectDetail] = useState(null);
-  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showDetailView, setShowDetailView] = useState(false);
   const [loadingDetail, setLoadingDetail] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [projectDetail, setProjectDetail] = useState({
-  employeePage: 1,
-  employeePageSize: 5,
-  employeeSummary: [],
-  project: null,
-});
+    employeePage: 1,
+    employeePageSize: 5,
+    employeeSummary: [],
+    project: null,
+  });
 
   // ─── Filtered Data with Search ─────────────────────────────────
   const filteredProjects = useMemo(() => {
@@ -113,6 +264,18 @@ const ReconPage = () => {
     );
   }, [employeeReconList, employeeSearch]);
 
+  const filteredResourceSummary = useMemo(() => {
+    const list = projectDetail.employeeSummary || [];
+    if (!resourceSearch.trim()) return list;
+    const search = resourceSearch.toLowerCase().trim();
+    return list.filter(
+      (e) =>
+        (e.employee_name && e.employee_name.toLowerCase().includes(search)) ||
+        (e.employee_code && e.employee_code.toLowerCase().includes(search)) ||
+        (e.role && e.role.toLowerCase().includes(search))
+    );
+  }, [projectDetail.employeeSummary, resourceSearch]);
+
   // ─── Paginated Data ────────────────────────────────────────────
   const paginatedProjects = useMemo(() => {
     const start = (projectPage - 1) * projectPageSize;
@@ -133,6 +296,10 @@ const ReconPage = () => {
     setEmployeePage(1);
   }, [employeeSearch]);
 
+  useEffect(() => {
+    setProjectDetail((prev) => ({ ...prev, employeePage: 1 }));
+  }, [resourceSearch]);
+
   // ─── Data Fetching ──────────────────────────────────────────────
   const fetchFilterOpts = useCallback(async () => {
     try {
@@ -149,10 +316,6 @@ const ReconPage = () => {
       const dashboard = await getReconDashboard(filters);
       const projectLevel = await getProjectLevelRecon(filters);
       const employeeLevel = await getEmployeeLevelRecon(filters);
-
-      console.log("Dashboard Response:", dashboard);
-      console.log("Project Level Response:", projectLevel);
-      console.log("Employee Level Response:", employeeLevel);
 
       setDashboardData({
         total_projects: dashboard?.total_projects || 0,
@@ -174,7 +337,6 @@ const ReconPage = () => {
       // Reset pages when data loads
       setProjectPage(1);
       setEmployeePage(1);
-
     } catch (err) {
       console.error("Error fetching reconciliation data:", err);
     } finally {
@@ -222,17 +384,30 @@ const ReconPage = () => {
 
     setSelectedProjectId(id);
     setLoadingDetail(true);
-    setShowDetailModal(true);
+    setShowDetailView(true);
+    setResourceSearch("");
     try {
       const data = await getProjectDetail(id, filters);
       setProjectDetail(data);
     } catch (err) {
       console.error("Error fetching project details:", err);
       alert("Failed to load project details.");
-      setShowDetailModal(false);
+      setShowDetailView(false);
     } finally {
       setLoadingDetail(false);
     }
+  };
+
+  const handleBackToDashboard = () => {
+    setShowDetailView(false);
+    setSelectedProjectId(null);
+    setResourceSearch("");
+    setProjectDetail({
+      employeePage: 1,
+      employeePageSize: 5,
+      employeeSummary: [],
+      project: null,
+    });
   };
 
   // ─── Pagination Handlers ───────────────────────────────────────
@@ -276,1625 +451,875 @@ const ReconPage = () => {
 
   const yearsList = ["2024", "2025", "2026"];
 
+  const inputCls =
+    "w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#856BFF]/30";
+
   // ─── Render ─────────────────────────────────────────────────────
   return (
-    <div style={styles.container}>
-      {/* Header */}
-      <div style={styles.headerRow}>
-        <div>
-          <h1 style={styles.title}>Effort Reconciliation Dashboard</h1>
-          <p style={styles.subtitle}>
-            Compare Project Estimates against Actual Hours logged in Timesheets
-          </p>
-        </div>
-        <div style={styles.headerActions}>
-          <button onClick={fetchData} style={styles.refreshBtn} title="Refresh Data">
-            ↻ Refresh
-          </button>
-        </div>
-      </div>
+    <div className="max-w-[1400px] mx-auto p-6 font-sans bg-gray-50 min-h-screen">
+      {/* ── If Detail View is Active, Show Only Project Details ── */}
+      {showDetailView ? (
+        <div className="px-4 pt-4">
+  <button
+    onClick={handleBackToDashboard}
+    className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-[#6D5EF6] mb-4 transition"
+  >
+    <span className="text-lg">←</span>
+    Back to Recon Dashboard
+  </button>
 
-      {/* ─── KPI Cards - 11 Cards ─── */}
-      <div style={styles.kpiGrid}>
-        <KPICard
-          label="Total Projects"
-          value={dashboardData.total_projects}
-          icon="📁"
-          color="#6366f1"
-        />
-        <KPICard
-          label="Projects with Estimates"
-          value={dashboardData.projects_with_estimates}
-          icon="✅"
-          color="#10b981"
-        />
-        <KPICard
-          label="Projects without Estimates"
-          value={dashboardData.projects_without_estimates}
-          icon="⚠️"
-          color="#f59e0b"
-        />
-        <KPICard
-          label="Projects with Timesheets"
-          value={dashboardData.projects_with_timesheets}
-          icon="📊"
-          color="#3b82f6"
-        />
-        <KPICard
-          label="Projects without Timesheets"
-          value={dashboardData.projects_without_timesheets}
-          icon="❌"
-          color="#ef4444"
-        />
-        {/* <KPICard
-          label="Total Employees"
-          value={dashboardData.total_employees}
-          icon="👥"
-          color="#8b5cf6"
-        /> */}
-       <KPICard
-  label="Total Estimated Person Hours"
-  value={`${Number(dashboardData.total_estimated_hours).toLocaleString()} 
-  
-  
-  `}
-  icon="⏱️"
-  color="#3b82f6"
-/>
-        <KPICard
-  label="Total Actual Person Hours"
-  value={`${Number(dashboardData.total_actual_hours).toLocaleString()}`}
-  icon="✅"
-  color="#10b981"
-/>
-        <KPICard
-  label="Total Variance Person Hours"
-  value={`${Number(dashboardData.total_variance_hours) > 0 ? "+" : ""}${Number(
-    dashboardData.total_variance_hours
-  ).toLocaleString()} `}
-  icon="📊"
-  color={Number(dashboardData.total_variance_hours) > 0 ? "#ef4444" : "#10b981"}
-/>
-        <KPICard
-          label="Overutilized Projects"
-          value={dashboardData.overutilized_count}
-          icon="📈"
-          color="#ef4444"
-        />
-        <KPICard
-          label="Underutilized Projects"
-          value={dashboardData.underutilized_count}
-          icon="📉"
-          color="#f59e0b"
-        />
-      </div>
-
-      {/* Filters */}
-      <div style={styles.filterCard}>
-        <div style={styles.filterTitleRow}>
-          <h3 style={styles.sectionTitle}>🔍 Search & Filters</h3>
-          <button onClick={resetFilters} style={styles.resetBtn}>
-            Reset Filters
-          </button>
-        </div>
-        <div style={styles.filterGrid}>
-          <div style={styles.filterGroup}>
-            <label style={styles.filterLabel}>Month</label>
-            <select
-              value={filters.month}
-              onChange={(e) => handleFilterChange("month", e.target.value)}
-              style={styles.select}
-            >
-              <option value="">All Months</option>
-              {monthsList.map((m) => (
-                <option key={m.value} value={m.value}>
-                  {m.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div style={styles.filterGroup}>
-            <label style={styles.filterLabel}>Year</label>
-            <select
-              value={filters.year}
-              onChange={(e) => handleFilterChange("year", e.target.value)}
-              style={styles.select}
-            >
-              <option value="">All Years</option>
-              {yearsList.map((y) => (
-                <option key={y} value={y}>
-                  {y}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div style={styles.filterGroup}>
-            <label style={styles.filterLabel}>Customer Name</label>
-            <select
-              value={filters.clientName}
-              onChange={(e) => handleFilterChange("clientName", e.target.value)}
-              style={styles.select}
-            >
-              <option value="">All Customers</option>
-              {filterOpts.clients?.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div style={styles.filterGroup}>
-            <label style={styles.filterLabel}>Project Code</label>
-            <input
-              type="text"
-              placeholder="e.g. PRJ-001"
-              value={filters.projectCode}
-              onChange={(e) => handleFilterChange("projectCode", e.target.value)}
-              style={styles.input}
-            />
-          </div>
-
-          <div style={styles.filterGroup}>
-            <label style={styles.filterLabel}>Project Name</label>
-            <input
-              type="text"
-              placeholder="e.g. ERP Phase 2"
-              value={filters.projectName}
-              onChange={(e) => handleFilterChange("projectName", e.target.value)}
-              style={styles.input}
-            />
-          </div>
-
-          {/* <div style={styles.filterGroup}>
-            <label style={styles.filterLabel}>Employee Name</label>
-            <input
-              type="text"
-              placeholder="Search Employee..."
-              value={filters.employeeName}
-              onChange={(e) => handleFilterChange("employeeName", e.target.value)}
-              style={styles.input}
-            />
-          </div> */}
-
-          {/* <div style={styles.filterGroup}>
-            <label style={styles.filterLabel}>Department</label>
-            <select
-              value={filters.department}
-              onChange={(e) => handleFilterChange("department", e.target.value)}
-              style={styles.select}
-            >
-              <option value="">All Departments</option>
-              {filterOpts.departments?.map((d) => (
-                <option key={d} value={d}>
-                  {d}
-                </option>
-              ))}
-            </select>
-          </div> */}
-
-          {/* <div style={styles.filterGroup}>
-            <label style={styles.filterLabel}>Reporting Manager</label>
-            <select
-              value={filters.reportingManager}
-              onChange={(e) => handleFilterChange("reportingManager", e.target.value)}
-              style={styles.select}
-            >
-              <option value="">All Managers</option>
-              {filterOpts.managers?.map((m) => (
-                <option key={m} value={m}>
-                  {m}
-                </option>
-              ))}
-            </select>
-          </div> */}
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div style={styles.tabsContainer}>
-        <button
-          onClick={() => setActiveTab("project")}
-          style={{
-            ...styles.tabBtn,
-            ...(activeTab === "project" ? styles.tabBtnActive : {}),
-          }}
-        >
-          📂 Project Level Reconciliation
-        </button>
-        <button
-          onClick={() => setActiveTab("employee")}
-          style={{
-            ...styles.tabBtn,
-            ...(activeTab === "employee" ? styles.tabBtnActive : {}),
-          }}
-        >
-          👥 Employee Level Reconciliation
-        </button>
-      </div>
-
-      {/* Tab Contents */}
-      {loading ? (
-        <div style={styles.loadingContainer}>
-          <div style={styles.spinner}></div>
-          <span style={{ marginTop: 12, color: "#6b7280" }}>
-            Refreshing Reconciliation Data...
-          </span>
-        </div>
-      ) : (
-        <>
-          {/* ─── Project Tab ─── */}
-{activeTab === "project" && (
-  <div style={styles.tableCard}>
-    <div style={styles.tableHeader}>
-      <h3 style={styles.sectionTitle}>Project Level Reconciliation</h3>
-      <div style={styles.tableControls}>
-        <input
-          type="text"
-          placeholder="🔍 Search Project..."
-          value={projectSearch}
-          onChange={(e) => setProjectSearch(e.target.value)}
-          style={styles.searchInput}
-        />
-        <span style={styles.rowCount}>
-          {filteredProjects.length} projects found
-        </span>
-      </div>
-    </div>
-    <div style={styles.tableResponsive}>
-      <table style={styles.table}>
-        <thead>
-  <tr>
-    <th style={styles.th}>Project Code</th>
-    <th style={styles.th}>Project Name</th>
-    <th style={{ ...styles.th, textAlign: "right" }}>
-      <div>Estimated</div>
-      <div style={styles.subHeader}>(Person-Hrs)</div>
-    </th>
-    <th style={{ ...styles.th, textAlign: "right" }}>Estimated Days</th>
-    <th style={{ ...styles.th, textAlign: "right" }}>
-      <div>Actual</div>
-      <div style={styles.subHeader}>(Person-Hrs)</div>
-    </th>
-    <th style={{ ...styles.th, textAlign: "right" }}>Actual Days</th>
-    <th style={{ ...styles.th, textAlign: "right" }}>Utilized %</th>
-    <th style={{ ...styles.th, textAlign: "right" }}>
-      <div>Variance</div>
-      <div style={styles.subHeader}>(Person-Hrs)</div>
-    </th>
-    <th style={{ ...styles.th, textAlign: "right" }}>Variance %</th>
-    <th style={styles.th}>Status</th>
-    <th style={{ ...styles.th, textAlign: "center" }}>Actions</th>
-  </tr>
-</thead>
-        <tbody>
-          {paginatedProjects.length === 0 ? (
-            <tr>
-              <td colSpan={11} style={styles.emptyCell}>
-                No reconciliation records match current filters.
-              </td>
-            </tr>
-          ) : (
-            paginatedProjects.map((item) => {
-              // Calculate actual hours used percentage
-              const estimatedHours = parseFloat(item.estimated_hours) || 0;
-              const actualHours = parseFloat(item.actual_hours) || 0;
-              let usagePercentage = 0;
-              
-              if (estimatedHours > 0) {
-                usagePercentage = (actualHours / estimatedHours) * 100;
-              }
-              
-              // Determine row background and text color based on percentage
-              let rowBgColor = "transparent";
-              let textColor = "#1f2937"; // Default dark color
-              
-              if (usagePercentage > 100) {
-                rowBgColor = "#fee2e2"; // Light red background
-                textColor = "#dc2626"; // Red text
-              } else if (usagePercentage >= 80 && usagePercentage < 100) {
-                rowBgColor = "#fef3c7"; // Light yellow background
-                textColor = "#d97706"; // Amber/Yellow text
-              } else if (usagePercentage === 100) {
-                rowBgColor = "transparent"; // No background
-                textColor = "#1f2937"; // No change - default color
-              }
-              // Below 80%: no change (transparent background, default color)
-              
-              return (
-                <tr 
-                  key={item.project_id || item.project_code} 
-                  style={{
-                    ...styles.tr,
-                    backgroundColor: rowBgColor,
-                    transition: "background-color 0.2s",
-                  }}
-                >
-                  <td style={styles.td}>
-                    <strong>{item.project_code || "—"}</strong>
-                  </td>
-                  <td style={styles.td}>{item.project_name}</td>
-                  <td style={{ ...styles.td, textAlign: "right", fontWeight: "600" }}>
-                    {Number(item.estimated_hours).toLocaleString()}
-                  </td>
-                  <td style={{ ...styles.td, textAlign: "right", fontWeight: "600" }}>
-                    {Number(item.estimated_days).toLocaleString()}
-                  </td>
-                  <td
-                    style={{
-                      ...styles.td,
-                      textAlign: "right",
-                      fontWeight: "600",
-                      color: "#4f46e5",
-                    }}
-                  >
-                    {Number(item.actual_hours).toLocaleString()}
-                  </td>
-                  <td style={{ ...styles.td, textAlign: "right", fontWeight: "600", color: "#4f46e5" }}>
-                    {Number(item.actual_days).toLocaleString()}
-                  </td>
-                  {/* Utilized % with conditional text color */}
-                  <td
-                    style={{
-                      ...styles.td,
-                      textAlign: "right",
-                      fontWeight: "700",
-                      color: textColor,
-                    }}
-                  >
-                    {estimatedHours > 0 ? `${usagePercentage.toFixed(1)}%` : "N/A"}
-                  </td>
-                  <td
-                    style={{
-                      ...styles.td,
-                      textAlign: "right",
-                      fontWeight: "600",
-                      color: Number(item.variance_hours) > 0 ? "#10b981" : "#ef4444",
-                    }}
-                  >
-                    {Number(item.variance_hours) > 0 ? "+" : ""}
-                    {Number(item.variance_hours).toLocaleString()}
-                  </td>
-                  <td
-                    style={{
-                      ...styles.td,
-                      textAlign: "right",
-                      fontWeight: "600",
-                      color: Number(item.variance_pct) > 0 ? "#10b981" : "#ef4444",
-                    }}
-                  >
-                    {Number(item.variance_pct) > 0 ? "+" : ""}
-                    {item.variance_pct}%
-                  </td>
-                  <td style={styles.td}>
-                    <span
-                      style={{
-                        ...styles.statusPill,
-                        ...(STATUS_PILLS[item.status] || STATUS_PILLS["On Track"]),
-                      }}
-                    >
-                      {item.status}
-                    </span>
-                  </td>
-                  <td style={{ ...styles.td, textAlign: "center" }}>
-                    <button
-                      onClick={() => handleViewProjectDetails(item)}
-                      style={styles.actionBtn}
-                    >
-                      👁️ View Details
-                    </button>
-                  </td>
-                </tr>
-              );
-            })
-          )}
-        </tbody>
-      </table>
-    </div>
-    {/* ─── Project Pagination ─── */}
-    {filteredProjects.length > 0 && (
-      <div style={styles.paginationContainer}>
-        <div style={styles.paginationInfo}>
-          Showing {(projectPage - 1) * projectPageSize + 1} to{" "}
-          {Math.min(projectPage * projectPageSize, filteredProjects.length)} of{" "}
-          {filteredProjects.length} entries
-        </div>
-        <div style={styles.paginationControls}>
-          <select
-            value={projectPageSize}
-            onChange={handleProjectPageSizeChange}
-            style={styles.pageSizeSelect}
-          >
-            <option value={5}>5</option>
-            <option value={10}>10</option>
-            <option value={25}>25</option>
-            <option value={50}>50</option>
-          </select>
-          <button
-            onClick={() => handleProjectPageChange(projectPage - 1)}
-            disabled={projectPage === 1}
-            style={{
-              ...styles.pageBtn,
-              opacity: projectPage === 1 ? 0.5 : 1,
-              cursor: projectPage === 1 ? "not-allowed" : "pointer",
-            }}
-          >
-            ◀ Prev
-          </button>
-          <span style={styles.pageInfo}>
-            Page {projectPage} of{" "}
-            {Math.ceil(filteredProjects.length / projectPageSize) || 1}
-          </span>
-          <button
-            onClick={() => handleProjectPageChange(projectPage + 1)}
-            disabled={projectPage >= Math.ceil(filteredProjects.length / projectPageSize)}
-            style={{
-              ...styles.pageBtn,
-              opacity:
-                projectPage >= Math.ceil(filteredProjects.length / projectPageSize)
-                  ? 0.5
-                  : 1,
-              cursor:
-                projectPage >= Math.ceil(filteredProjects.length / projectPageSize)
-                  ? "not-allowed"
-                  : "pointer",
-            }}
-          >
-            Next ▶
-          </button>
-        </div>
-      </div>
-    )}
-  </div>
-)}
-
-          {/* ─── Employee Tab ─── */}
-          {activeTab === "employee" && (
-            <div style={styles.tableCard}>
-              <div style={styles.tableHeader}>
-                <h3 style={styles.sectionTitle}>Employee Level Reconciliation</h3>
-                <div style={styles.tableControls}>
-                  <input
-                    type="text"
-                    placeholder="🔍 Search Employee or Project..."
-                    value={employeeSearch}
-                    onChange={(e) => setEmployeeSearch(e.target.value)}
-                    style={styles.searchInput}
-                  />
-                  <span style={styles.rowCount}>
-                    {filteredEmployees.length} assignments found
-                  </span>
-                </div>
-              </div>
-              <div style={styles.tableResponsive}>
-                <table style={styles.table}>
-                  <thead>
-  <tr>
-    <th style={styles.th}>Employee Code</th>
-    <th style={styles.th}>Employee Name</th>
-    <th style={styles.th}>Reporting Manager</th>
-    <th style={styles.th}>Project Code</th>
-    <th style={styles.th}>Project Name</th>
-    <th style={{ ...styles.th, textAlign: "right" }}>
-      <div>Assigned</div>
-      <div style={styles.subHeader}>(Person-Hrs)</div>
-    </th>
-    <th style={{ ...styles.th, textAlign: "right" }}>
-      <div>Actual</div>
-      <div style={styles.subHeader}>(Person-Hrs)</div>
-    </th>
-    <th style={{ ...styles.th, textAlign: "right" }}>Utilization %</th>
-    <th style={{ ...styles.th, textAlign: "right" }}>
-      <div>Variance</div>
-      <div style={styles.subHeader}>(Person-Hrs)</div>
-    </th>
-    <th style={{ ...styles.th, textAlign: "right" }}>Variance %</th>
-    <th style={styles.th}>Status</th>
-  </tr>
-</thead>
-                 <tbody>
-  {paginatedEmployees.length === 0 ? (
-    <tr>
-      <td colSpan={11} style={styles.emptyCell}>
-        No employee assignments found matching current filters.
-      </td>
-    </tr>
+  {loadingDetail || !projectDetail?.project ? (
+    <div className="h-28 rounded-2xl bg-white animate-pulse" />
   ) : (
-    paginatedEmployees.map((item, idx) => {
-      // Calculate utilization %
-      const assigned = parseFloat(item.assigned_hours) || 0;
-      const actual = parseFloat(item.actual_hours) || 0;
-      let utilizationPct = 0;
-      let utilizationDisplay = "0%";
-      
-      if (assigned > 0) {
-        utilizationPct = (actual / assigned) * 100;
-        utilizationDisplay = utilizationPct.toFixed(1) + "%";
-      } else if (actual > 0 && assigned === 0) {
-        utilizationDisplay = "N/A";
-      }
-      
-      // Determine row background and text color based on utilization percentage
-      let rowBgColor = "transparent";
-      let textColor = "#1f2937"; // Default dark color
-      
-      if (utilizationPct > 100) {
-        rowBgColor = "#fee2e2"; // Light red background
-        textColor = "#dc2626"; // Red text
-      } else if (utilizationPct >= 80 && utilizationPct < 100) {
-        rowBgColor = "#fef3c7"; // Light yellow background
-        textColor = "#d97706"; // Amber/Yellow text
-      } else if (utilizationPct === 100) {
-        rowBgColor = "transparent"; // No background
-        textColor = "#1f2937"; // No change - default color
-      } else if (utilizationPct < 80 && utilizationPct > 0) {
-        rowBgColor = "#d1fae5"; // Light green (optional - for below 80%)
-        textColor = "#059669"; // Green text
-      }
-      // Below 80%: green background and text (optional)
-      
-      return (
-        <tr 
-          key={idx} 
-          style={{
-            ...styles.tr,
-            backgroundColor: rowBgColor,
-            transition: "background-color 0.2s",
-          }}
-        >
-          <td style={styles.td}>
-            <strong>{item.employee_code || "—"}</strong>
-          </td>
-          <td style={styles.td}>{item.employee_name}</td>
-          <td style={styles.td}>{item.reporting_manager || "—"}</td>
-          <td style={styles.td}>{item.project_code || "—"}</td>
-          <td style={styles.td}>{item.project_name}</td>
-          <td style={{ ...styles.td, textAlign: "right", fontWeight: "600" }}>
-            {Number(item.assigned_hours).toLocaleString()}
-          </td>
-          <td
-            style={{
-              ...styles.td,
-              textAlign: "right",
-              fontWeight: "600",
-              color: "#4f46e5",
-            }}
-          >
-            {Number(item.actual_hours).toLocaleString()}
-          </td>
-          <td
-            style={{
-              ...styles.td,
-              textAlign: "right",
-              fontWeight: "700",
-              color: textColor,
-            }}
-          >
-            {utilizationDisplay}
-          </td>
-          <td
-            style={{
-              ...styles.td,
-              textAlign: "right",
-              fontWeight: "600",
-              color: Number(item.variance_hours) > 0 ? "#10b981" : " #ef4444",
-            }}
-          >
-            {Number(item.variance_hours) > 0 ? "+" : ""}
-            {Number(item.variance_hours).toLocaleString()}
-          </td>
-          <td
-            style={{
-              ...styles.td,
-              textAlign: "right",
-              fontWeight: "600",
-              color: Number(item.variance_pct) > 0 ? "#10b981" : "#ef4444",
-            }}
-          >
-            {Number(item.variance_pct) > 0 ? "+" : ""}
-            {item.variance_pct}%
-          </td>
-          <td style={styles.td}>
-            <span
-              style={{
-                ...styles.statusPill,
-                ...(STATUS_PILLS[item.status] || STATUS_PILLS["On Track"]),
-              }}
-            >
-              {item.status}
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="flex">
+        <div className="w-1 bg-[#7C5CFC]" />
+
+        <div className="flex-1 px-6 py-2">
+          <h1 className="text-[24px] font-normal text-[#191B23] leading-tight">
+            {projectDetail.project?.project_name || "—"}
+          </h1>
+
+          <div className="flex items-center gap-3 mt-3">
+            <span className="bg-gray-100 text-[11px] font-medium text-gray-600 px-3 py-1 rounded">
+              CODE: {projectDetail.project?.project_code || "—"}
             </span>
-          </td>
-        </tr>
-      );
-    })
+
+            {projectDetail.project?.status && (
+              <span className="text-xs font-medium text-red-500">
+                Status: {projectDetail.project.status}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
   )}
-</tbody>
-                </table>
-              </div>
-              {/* ─── Employee Pagination ─── */}
-              {filteredEmployees.length > 0 && (
-                <div style={styles.paginationContainer}>
-                  <div style={styles.paginationInfo}>
-                    Showing {(employeePage - 1) * employeePageSize + 1} to{" "}
-                    {Math.min(employeePage * employeePageSize, filteredEmployees.length)} of{" "}
-                    {filteredEmployees.length} entries
-                  </div>
-                  <div style={styles.paginationControls}>
-                    <select
-                      value={employeePageSize}
-                      onChange={handleEmployeePageSizeChange}
-                      style={styles.pageSizeSelect}
+
+
+          {loadingDetail || !projectDetail?.project ? (
+            <div className="flex flex-col items-center justify-center py-16 gap-3">
+              <div className="w-9 h-9 border-4 border-gray-100 border-t-[#856BFF] rounded-full animate-spin" />
+              <span className="text-sm text-gray-500">Loading detail reports…</span>
+            </div>
+          ) : (
+            <div className="py-5 ">
+              {/* Stat cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 mt-6">
+  {/* Estimated */}
+  <div className="relative bg-white rounded-2xl shadow-sm border border-gray-100 px-5 py-2 overflow-hidden">
+    <ClockIcon className="absolute top-5 right-5 w-10 h-10 text-gray-200" />
+
+    <p className="text-xs text-gray-500 font-medium">
+      Estimated Effort
+    </p>
+
+    <h3 className="mt-3 text-4xl font-semibold text-gray-900">
+      {Number(projectDetail.project?.estimated_hours).toLocaleString()}
+      <span className="text-base font-normal text-gray-500 ml-1">
+        Hours
+      </span>
+    </h3>
+
+    <p className="mt-2 text-sm text-gray-500">
+      ~ {Number(projectDetail.project?.estimated_days).toLocaleString()} Work Days
+    </p>
+  </div>
+
+  {/* Actual */}
+  <div className="relative bg-white rounded-2xl shadow-sm border border-gray-100 px-5 py-2overflow-hidden">
+    <HistoryIcon className="absolute top-5 right-5 w-10 h-10 text-gray-200" />
+
+    <p className="text-xs text-gray-500 font-medium">
+      Actual Logged
+    </p>
+
+    <h3 className="mt-3 text-4xl font-semibold text-gray-900">
+      {Number(projectDetail.project?.actual_hours).toLocaleString()}
+      <span className="text-base font-normal text-gray-500 ml-1">
+        Hours
+      </span>
+    </h3>
+
+    <p className="mt-2 text-sm text-gray-500">
+      ~ {Number(projectDetail.project?.actual_days).toLocaleString()} Work Days
+    </p>
+  </div>
+
+  {/* Variance */}
+  <div className="relative bg-white rounded-2xl shadow-sm border border-gray-100 px-5 py-2 pl-6 overflow-hidden">
+    <div
+      className={`absolute left-0 top-0 h-full w-1 ${
+        Number(projectDetail.project?.variance_hours) < 0
+          ? "bg-red-500"
+          : "bg-green-500"
+      }`}
+    />
+
+    <p className="text-xs text-gray-500 font-medium">
+      Total Variance
+    </p>
+
+    <h3
+      className={`mt-3 text-4xl font-semibold ${
+        Number(projectDetail.project?.variance_hours) < 0
+          ? "text-red-600"
+          : "text-green-600"
+      }`}
+    >
+      {Number(projectDetail.project?.variance_hours) > 0 ? "+" : ""}
+      {Number(projectDetail.project?.variance_hours).toLocaleString()}
+
+      <span className="text-base font-normal ml-1">
+        Hrs
+      </span>
+    </h3>
+
+    <p
+      className={`mt-2 text-sm ${
+        Number(projectDetail.project?.variance_hours) < 0
+          ? "text-red-500"
+          : "text-green-500"
+      }`}
+    >
+      ({projectDetail.project?.variance_pct}%)
+      {" "}
+      {Number(projectDetail.project?.variance_hours) < 0
+        ? "Over-allocated"
+        : "Under-allocated"}
+    </p>
+  </div>
+
+  {/* Resources */}
+  <div className="relative bg-white rounded-2xl shadow-sm border border-gray-100 px-5 py-2 overflow-hidden">
+    <UsersIcon className="absolute top-5 right-5 w-10 h-10 text-gray-200" />
+
+    <p className="text-xs text-gray-500 font-medium">
+      Active Resources
+    </p>
+
+    <h3 className="mt-3 text-4xl font-semibold text-[#7C5CFC]">
+      {projectDetail.employeeSummary?.length || 0}
+
+      <span className="text-base font-normal text-gray-500 ml-1">
+        Members
+      </span>
+    </h3>
+
+    <div className="flex items-center mt-4">
+      {(projectDetail.employeeSummary || []).slice(0, 4).map((e, i) => (
+        <div
+          key={i}
+          className="w-8 h-8 rounded-full bg-[#7C5CFC]/15 border-2 border-white flex items-center justify-center text-xs font-semibold text-[#7C5CFC]"
+          style={{ marginLeft: i === 0 ? 0 : -10 }}
+        >
+          {(e.employee_name || "?").charAt(0).toUpperCase()}
+        </div>
+      ))}
+
+      {(projectDetail.employeeSummary?.length || 0) > 4 && (
+        <div
+          className="w-8 h-8 rounded-full bg-[#7C5CFC]/15 border-2 border-white flex items-center justify-center text-[11px] font-semibold text-[#7C5CFC]"
+          style={{ marginLeft: -10 }}
+        >
+          +{projectDetail.employeeSummary.length - 4}
+        </div>
+      )}
+    </div>
+  </div>
+</div>
+
+              {/* Employee-wise Breakdown */}
+              <div className=" bg-[#FFFFFF] rounded-lg mt-6 px-2">
+                <div className="flex items-center justify-between mb-3 flex-wrap gap-3">
+                  <span className="font-bold text-[#191B23] text-[18px]">Resource Breakdown &amp; Timesheets</span>
+                  <div className="flex items-center gap-2">
+                    <div className="relative">
+                      <SearchIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                      <input
+                        type="text"
+                        placeholder="Search resources..."
+                        value={resourceSearch}
+                        onChange={(e) => setResourceSearch(e.target.value)}
+                        className="w-56 pl-9 pr-3.5 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#856BFF]/30"
+                      />
+                    </div>
+                    {/* <button
+                      type="button"
+                      title="Filters"
+                      className="w-9 h-9 flex items-center justify-center border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50 transition-colors"
                     >
-                      <option value={5}>5</option>
-                      <option value={10}>10</option>
-                      <option value={25}>25</option>
-                      <option value={50}>50</option>
-                    </select>
-                    <button
-                      onClick={() => handleEmployeePageChange(employeePage - 1)}
-                      disabled={employeePage === 1}
-                      style={{
-                        ...styles.pageBtn,
-                        opacity: employeePage === 1 ? 0.5 : 1,
-                        cursor: employeePage === 1 ? "not-allowed" : "pointer",
-                      }}
-                    >
-                      ◀ Prev
-                    </button>
-                    <span style={styles.pageInfo}>
-                      Page {employeePage} of{" "}
-                      {Math.ceil(filteredEmployees.length / employeePageSize) || 1}
-                    </span>
-                    <button
-                      onClick={() => handleEmployeePageChange(employeePage + 1)}
-                      disabled={employeePage >= Math.ceil(filteredEmployees.length / employeePageSize)}
-                      style={{
-                        ...styles.pageBtn,
-                        opacity:
-                          employeePage >= Math.ceil(filteredEmployees.length / employeePageSize)
-                            ? 0.5
-                            : 1,
-                        cursor:
-                          employeePage >= Math.ceil(filteredEmployees.length / employeePageSize)
-                            ? "not-allowed"
-                            : "pointer",
-                      }}
-                    >
-                      Next ▶
-                    </button>
+                      <FilterIcon className="w-4 h-4" />
+                    </button> */}
                   </div>
                 </div>
-              )}
+
+                <div className="w-full overflow-x-auto rounded-xl border border-gray-100">
+                  <table className="w-full border-collapse text-sm">
+                    <thead>
+                      <tr className="bg-[#EFF4FF]">
+                        <th className="px-3 py-3 text-left text-[11px] font-bold text-gray-500 uppercase">Employee</th>
+                        <th className="px-3 py-3 text-left text-[11px] font-bold text-gray-500 uppercase">Role</th>
+                        <th className="px-3 py-3 text-left text-[11px] font-bold text-gray-500 uppercase">Assigned (H/D)</th>
+                        <th className="px-3 py-3 text-left text-[11px] font-bold text-gray-500 uppercase">Actual (H/D)</th>
+                        <th className="px-3 py-3 text-left text-[11px] font-bold text-gray-500 uppercase">Utilization %</th>
+                        <th className="px-3 py-3 text-left text-[11px] font-bold text-gray-500 uppercase">Variance (H/%)</th>
+                        <th className="px-3 py-3 text-left text-[11px] font-bold text-gray-500 uppercase">Status</th>
+                        <th className="px-3 py-3 text-left text-[11px] font-bold text-gray-500 uppercase">Timesheet Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredResourceSummary.length === 0 ? (
+                        <tr>
+                          <td colSpan={8} className="text-center py-8 text-gray-400">
+                            No employee allocations or timesheets registered.
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredResourceSummary
+                          ?.slice(
+                            ((projectDetail.employeePage || 1) - 1) * (projectDetail.employeePageSize || 5),
+                            (projectDetail.employeePage || 1) * (projectDetail.employeePageSize || 5)
+                          )
+                          ?.map((e, idx) => {
+                            const assigned = parseFloat(e.assigned_hours) || 0;
+                            const actual = parseFloat(e.actual_hours) || 0;
+                            let utilPct = 0;
+                            let utilizationDisplay = "0%";
+
+                            if (assigned > 0) {
+                              utilPct = (actual / assigned) * 100;
+                              utilizationDisplay = utilPct.toFixed(1) + "%";
+                            } else if (actual > 0 && assigned === 0) {
+                              utilizationDisplay = "N/A";
+                            }
+
+                            let rowBgClass = "";
+                            let barColor = "#d1d5db";
+                            let pctColor = "text-gray-500";
+
+                            if (utilPct > 100) {
+                              rowBgClass = "bg-red-50";
+                              barColor = "#dc2626";
+                              pctColor = "text-red-600";
+                            } else if (utilPct >= 80 && utilPct < 100) {
+                              rowBgClass = "bg-amber-50";
+                              barColor = "#d97706";
+                              pctColor = "text-amber-600";
+                            } else if (utilPct > 0 && utilPct < 80) {
+                              barColor = "#059669";
+                              pctColor = "text-green-600";
+                            }
+
+                            return (
+                              <tr key={idx} className={`border-b border-gray-100 last:border-0 ${rowBgClass}`}>
+                                <td className="px-3 py-2.5">
+                                  <div className="font-semibold text-gray-900">{e.employee_name}</div>
+                                  <div className="text-[11px] text-gray-400">{e.employee_code || "—"}</div>
+                                </td>
+                                <td className="px-3 py-2.5">
+                                  <span className={e.role === "Not Assigned" ? "text-amber-500 font-medium" : "text-gray-700"}>
+                                    {e.role || "Not Assigned"}
+                                  </span>
+                                </td>
+                                <td className="px-3 py-2.5 text-gray-800">
+                                  <div className="font-semibold">{Number(e.assigned_hours).toLocaleString()}</div>
+                                  <div className="text-[11px] text-gray-400">({Number(e.assigned_days).toFixed(1)}D)</div>
+                                </td>
+                                <td className="px-3 py-2.5 text-gray-800">
+                                  <div className="font-semibold">{Number(e.actual_hours).toLocaleString()}</div>
+                                  <div className="text-[11px] text-gray-400">({Number(e.actual_days).toFixed(1)}D)</div>
+                                </td>
+                                <td className="px-3 py-2.5">
+                                  <div className="w-28">
+                                    <div className="w-full h-1 rounded-full bg-gray-100 overflow-hidden mb-1">
+                                      <div
+                                        className="h-full rounded-full transition-all duration-500"
+                                        style={{ width: `${Math.min(utilPct, 100)}%`, backgroundColor: barColor }}
+                                      />
+                                    </div>
+                                    <span className={`text-xs font-bold ${pctColor}`}>{utilizationDisplay}</span>
+                                  </div>
+                                </td>
+                                <td className="px-3 py-2.5">
+                                  <div className={`font-semibold ${Number(e.variance_hours) > 0 ? "text-green-600" : "text-red-500"}`}>
+                                    {Number(e.variance_hours) > 0 ? "+" : ""}
+                                    {Number(e.variance_hours).toLocaleString()}
+                                  </div>
+                                  <div className={`text-[11px] ${Number(e.variance_pct) > 0 ? "text-green-600" : "text-red-500"}`}>
+                                    ({Number(e.variance_pct) > 0 ? "+" : ""}
+                                    {e.variance_pct}%)
+                                  </div>
+                                </td>
+                                <td className="px-3 py-2.5">
+                                  <span
+                                    className="inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold"
+                                    style={{
+                                      backgroundColor: e.assignment_status === "Assigned" ? "#d1fae5" : "#fee2e2",
+                                      color: e.assignment_status === "Assigned" ? "#059669" : "#dc2626",
+                                    }}
+                                  >
+                                    {e.assignment_status || "Not Assigned"}
+                                  </span>
+                                </td>
+                                <td className="px-3 py-2.5">
+                                  <span
+                                    className="inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold"
+                                    style={{
+                                      backgroundColor: e.timesheet_status === "Present" ? "#ede9fe" : "#fee2e2",
+                                      color: e.timesheet_status === "Present" ? "#7c3aed" : "#dc2626",
+                                    }}
+                                  >
+                                    {e.timesheet_status || "Not Present"}
+                                  </span>
+                                </td>
+                              </tr>
+                            );
+                          })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pagination */}
+                {filteredResourceSummary.length > 0 && (
+                  <Pagination
+                    page={projectDetail.employeePage || 1}
+                    pageSize={projectDetail.employeePageSize || 5}
+                    total={filteredResourceSummary.length}
+                    entryLabel="employees"
+                    onPageChange={(newPage) =>
+                      setProjectDetail((prev) => ({
+                        ...prev,
+                        employeePage: Math.min(
+                          Math.max(1, Math.ceil(filteredResourceSummary.length / (prev.employeePageSize || 5))),
+                          Math.max(1, newPage)
+                        ),
+                      }))
+                    }
+                    onPageSizeChange={(e) => {
+                      const newSize = parseInt(e.target.value);
+                      setProjectDetail((prev) => ({ ...prev, employeePageSize: newSize, employeePage: 1 }));
+                    }}
+                  />
+                )}
+              </div>
             </div>
           )}
-        </>
-      )}
-
-      {/* ─── Project Details Modal ─── */}
-      {showDetailModal && (
-        <div
-          style={styles.modalOverlay}
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setShowDetailModal(false);
-          }}
-        >
-          <div style={styles.modalContent}>
-  <div style={styles.modalHeader}>
-    <div>
-      <h2 style={styles.modalTitle}>Detailed Reconciliation</h2>
-      <span style={styles.modalSubtitle}>
-        Detailed audit for chosen project & timesheets
-      </span>
-    </div>
-    <button onClick={() => setShowDetailModal(false)} style={styles.modalClose}>
-      ✕
-    </button>
-  </div>
-
-  {loadingDetail || !projectDetail ? (
-    <div style={styles.modalLoading}>
-      <div style={styles.spinner}></div>
-      <span style={{ marginTop: 12 }}>Loading detail reports...</span>
-    </div>
-  ) : (
-    <div style={styles.modalBody}>
-      {/* Project Summary */}
-      <div style={styles.detailSection}>
-        <h4 style={styles.detailSecTitle}>📋 Project Summary Details</h4>
-        <div style={styles.detailSummaryGrid}>
-          <div style={styles.detailField}>
-            <span style={styles.detailLabel}>Project Code</span>
-            <span style={styles.detailValue}>
-              {projectDetail.project?.project_code || "—"}
-            </span>
-          </div>
-          <div style={styles.detailField}>
-            <span style={styles.detailLabel}>Project Name</span>
-            <span style={styles.detailValue}>
-              {projectDetail.project?.project_name || "—"}
-            </span>
-          </div>
-         <div style={styles.detailField}>
-  <span style={styles.detailLabel}>Estimated Hours</span>
-  <span style={styles.detailValue}>
-    {Number(projectDetail.project?.estimated_hours).toLocaleString()} Person-Hrs
-  </span>
-</div>
-<div style={styles.detailField}>
-  <span style={styles.detailLabel}>Actual Hours Logged</span>
-  <span style={{ ...styles.detailValue, color: "#4f46e5" }}>
-    {Number(projectDetail.project?.actual_hours).toLocaleString()} Person-Hrs
-  </span>
-</div>
-<div style={styles.detailField}>
-  <span style={styles.detailLabel}>Remaining Hours</span>
-  <span style={{ ...styles.detailValue, color: "#10b981" }}>
-    {Number(projectDetail.project?.remaining_hours).toLocaleString()} Person-Hrs
-  </span>
-</div>
         </div>
-      </div>
+      ) : (
+        /* ── Main Dashboard Content (Only shown when not in detail view) ── */
+        <>
+          {/* ── Header ── */}
+          <div className="flex justify-between items-center flex-wrap gap-4 mb-6">
+            <div>
+              <h1 className="text-2xl font-extrabold text-[#191B23] m-0">Recon Dashboard</h1>
+              <p className="text-sm text-gray-500 mt-1">
+                Compare project estimates against actual hours logged in timesheets
+              </p>
+            </div>
+            <button
+              onClick={fetchData}
+              className="flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 hover:bg-gray-50 rounded-lg text-sm font-semibold text-gray-600 shadow-sm transition-colors"
+            >
+              <RefreshIcon className="w-3.5 h-3.5" /> Refresh
+            </button>
+          </div>
 
-     {/* Employee-wise Breakdown */}
-<div style={styles.detailSection}>
-  <h4 style={styles.detailSecTitle}>👥 Employee Allocation & Timesheet</h4>
-  
-  <div style={styles.tableResponsive}>
-    <table style={styles.subTable}>
-      <thead style={styles.stickyHeader}>
-  <tr>
-    <th style={styles.subTh}>Employee Code</th>
-    <th style={styles.subTh}>Employee Name</th>
-    <th style={styles.subTh}>Role</th>
-    <th style={{ ...styles.subTh, textAlign: "right" }}>
-      <div>Assigned</div>
-      <div style={styles.subHeader}>(Person-Hrs)</div>
-    </th>
-    <th style={{ ...styles.subTh, textAlign: "right" }}>Assigned Days</th>
-    <th style={{ ...styles.subTh, textAlign: "right" }}>
-      <div>Actual</div>
-      <div style={styles.subHeader}>(Person-Hrs)</div>
-    </th>
-    <th style={{ ...styles.subTh, textAlign: "right" }}>Actual Days</th>
-    <th style={{ ...styles.subTh, textAlign: "right" }}>Utilization %</th>
-    <th style={{ ...styles.subTh, textAlign: "right" }}>
-      <div>Variance</div>
-      <div style={styles.subHeader}>(Person-Hrs)</div>
-    </th>
-    <th style={styles.subTh}>Assignment Status</th>
-    <th style={styles.subTh}>Timesheet Status</th>
-  </tr>
-</thead>
-      <tbody>
-        {projectDetail.employeeSummary?.length === 0 ? (
-          <tr>
-            <td colSpan={11} style={styles.emptyCell}>
-              No employee allocations or timesheets registered.
-            </td>
-          </tr>
-        ) : (
-          projectDetail.employeeSummary
-            ?.slice(
-              ((projectDetail.employeePage || 1) - 1) * (projectDetail.employeePageSize || 5),
-              (projectDetail.employeePage || 1) * (projectDetail.employeePageSize || 5)
-            )
-            ?.map((e, idx) => {
-              const assigned = parseFloat(e.assigned_hours) || 0;
-              const actual = parseFloat(e.actual_hours) || 0;
-              let utilizationDisplay = "0%";
-              
-              if (assigned > 0) {
-                const utilPct = (actual / assigned) * 100;
-                // Show actual percentage even if above 100%
-                utilizationDisplay = utilPct.toFixed(1) + "%";
-              } else if (actual > 0 && assigned === 0) {
-                utilizationDisplay = "N/A";
-              }
-              
-              return (
-                <tr 
-                  key={idx} 
-                  style={{
-                    ...styles.subTr,
-                    backgroundColor: (() => {
-                      const assigned = parseFloat(e.assigned_hours) || 0;
-                      const actual = parseFloat(e.actual_hours) || 0;
-                      let utilPct = 0;
-                      if (assigned > 0) {
-                        utilPct = (actual / assigned) * 100;
-                      }
-                      
-                      // Row background color based on utilization
-                      if (utilPct > 100) {
-                        return "#fee2e2"; // Light red
-                      } else if (utilPct >= 80 && utilPct < 100) {
-                        return "#fef3c7"; // Light yellow
-                      } else if (utilPct < 80 && utilPct > 0) {
-                        return "#d1fae5"; // Light green (optional - for below 80%)
-                      }
-                      return "transparent";
-                    })(),
-                    transition: "background-color 0.2s",
-                  }}
+          {/* ── Project Status + Hours Summary cards ── */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+            {/* Project Status */}
+            <div className="relative bg-white rounded-2xl border border-gray-100 shadow-sm p-5 overflow-hidden">
+              <span className="absolute left-0 top-0 bottom-0 w-1 bg-[#856BFF]" />
+              <div className="flex items-center gap-2 mb-4">
+                <span className="w-7 h-7 rounded-md bg-[#856BFF]/10 flex items-center justify-center text-[#856BFF] text-sm">📋</span>
+                <span className="text-[20px] font-bold text-[#191B23] text-sm">Project Status</span>
+              </div>
+              <div className="grid grid-cols-3 gap-x-4 gap-y-5">
+                <div>
+                  <div className="text-[12px] font-semibold text-[#64748B] uppercase tracking-wide">Total Projects</div>
+                  <div className="text-xl font-extrabold text-gray-900 mt-1">{dashboardData.total_projects}</div>
+                </div>
+                <div>
+                  <div className="text-[12px] font-semibold text-[#64748B]  uppercase tracking-wide">With Estimates</div>
+                  <div className="text-xl font-extrabold text-green-600 mt-1">{dashboardData.projects_with_estimates}</div>
+                </div>
+                <div>
+                  <div className="text-[12px] font-semibold text-[#64748B]  uppercase tracking-wide">Without Estimates</div>
+                  <div className="text-xl font-extrabold text-amber-500 mt-1">{dashboardData.projects_without_estimates}</div>
+                </div>
+                <div>
+                  <div className="text-[12px] font-semibold text-[#64748B]  uppercase tracking-wide">With Timesheets</div>
+                  <div className="text-xl font-extrabold text-[#856BFF] mt-1">{dashboardData.projects_with_timesheets}</div>
+                </div>
+                <div>
+                  <div className="text-[12px] font-semibold text-[#64748B] uppercase tracking-wide">Without Timesheets</div>
+                  <div className="text-xl font-extrabold text-red-500 mt-1">{dashboardData.projects_without_timesheets}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Hours Summary */}
+            <div className="relative bg-white rounded-2xl border border-gray-100 shadow-sm p-5 overflow-hidden">
+              <span className="absolute left-0 top-0 bottom-0 w-1 bg-[#856BFF]" />
+              <div className="flex items-center gap-2 mb-4">
+                <span className="w-7 h-7 rounded-md bg-[#856BFF]/10 flex items-center justify-center text-[#856BFF] text-sm">🕒</span>
+                <span className="text-[20px] font-bold text-[#191B23] text-sm">Hours Summary</span>
+              </div>
+              <div className="grid grid-cols-3 gap-4 mb-5">
+                <div>
+                  <div className="text-[12px] font-semibold text-[#64748B] uppercase tracking-wide">Total Estimated</div>
+                  <div className="text-xl font-extrabold text-gray-900 mt-1">
+                    {Number(dashboardData.total_estimated_hours).toLocaleString()}
+                    <span className="text-xs font-normal text-gray-400"> hrs</span>
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[12px] font-semibold text-[#64748B]  uppercase tracking-wide">Total Actual</div>
+                  <div className="text-xl font-extrabold text-green-600 mt-1">
+                    {Number(dashboardData.total_actual_hours).toLocaleString()}
+                    <span className="text-xs font-normal text-gray-400"> hrs</span>
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[12px] font-semibold text-[#64748B]  uppercase tracking-wide">Total Variance</div>
+                  <div className={`text-xl font-extrabold mt-1 ${Number(dashboardData.total_variance_hours) > 0 ? "text-red-500" : "text-green-600"}`}>
+                    {Number(dashboardData.total_variance_hours) > 0 ? "+" : ""}
+                    {Number(dashboardData.total_variance_hours).toLocaleString()}
+                    <span className="text-xs font-normal text-gray-400"> hrs</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-gray-100 pt-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="w-6 h-6 rounded-md bg-[#856BFF]/10 flex items-center justify-center text-[#856BFF] text-xs">📊</span>
+                  <span className="text-[20px] font-bold text-[#191B23]  text-xs">Utilization Summary</span>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <div className="text-[12px] font-semibold text-[#64748B]  uppercase tracking-wide">Overutilized Projects</div>
+                    <div className="text-lg font-extrabold text-red-500 mt-1">{dashboardData.overutilized_count}</div>
+                  </div>
+                  <div>
+                    <div className="text-[12px] font-semibold text-[#64748B]  uppercase tracking-wide">Underutilized Projects</div>
+                    <div className="text-lg font-extrabold text-green-600 mt-1">{dashboardData.underutilized_count}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Filters ── */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <span className="flex items-center gap-2 font-bold text-gray-900 text-sm">
+                <span className="text-[#191B23 text-[20px] text-sm">☰</span> Search &amp; Filters
+              </span>
+              <button onClick={resetFilters} className="text-xs font-semibold text-[#856BFF] hover:text-[#7259e6]">
+                Reset Filters
+              </button>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 items-end">
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1.5">Month</label>
+                <select
+                  value={filters.month}
+                  onChange={(e) => handleFilterChange("month", e.target.value)}
+                  className={inputCls}
                 >
-                  <td style={styles.subTd}>{e.employee_code || "—"}</td>
-                  <td style={styles.subTd}>
-                    <strong>{e.employee_name}</strong>
-                  </td>
-                  <td style={styles.subTd}>
-                    <span
-                      style={{
-                        color: e.role === "Not Assigned" ? "#f59e0b" : "#1f2937",
-                        fontWeight: e.role === "Not Assigned" ? "500" : "normal",
-                      }}
-                    >
-                      {e.role || "Not Assigned"}
-                    </span>
-                  </td>
-                  <td style={{ ...styles.subTd, textAlign: "right" }}>
-                    {Number(e.assigned_hours).toLocaleString()}
-                  </td>
-                  <td style={{ ...styles.subTd, textAlign: "right" }}>
-                    {Number(e.assigned_days).toFixed(1)}
-                  </td>
-                  <td
-                    style={{
-                      ...styles.subTd,
-                      textAlign: "right",
-                      color: "#4f46e5",
-                    }}
-                  >
-                    {Number(e.actual_hours).toLocaleString()}
-                  </td>
-                  <td
-                    style={{
-                      ...styles.subTd,
-                      textAlign: "right",
-                      color: "#4f46e5",
-                    }}
-                  >
-                    {Number(e.actual_days).toFixed(1)}
-                  </td>
-                  <td
-                    style={{
-                      ...styles.subTd,
-                      textAlign: "right",
-                      fontWeight: "600",
-                    }}
-                  >
-                    <span
-                      style={{
-                        color: (() => {
-                          const assigned = parseFloat(e.assigned_hours) || 0;
-                          const actual = parseFloat(e.actual_hours) || 0;
-                          let utilPct = 0;
-                          if (assigned > 0) {
-                            utilPct = (actual / assigned) * 100;
-                          }
-                          
-                          // Text color based on utilization
-                          if (utilPct > 100) {
-                            return "#dc2626"; // Red text
-                          } else if (utilPct >= 80 && utilPct < 100) {
-                            return "#d97706"; // Amber/Yellow text
-                          } else if (utilPct < 80 && utilPct > 0) {
-                            return "#059669"; // Green text
-                          }
-                          return "#6b7280";
-                        })(),
-                      }}
-                    >
-                      {(() => {
-                        const assigned = parseFloat(e.assigned_hours) || 0;
-                        const actual = parseFloat(e.actual_hours) || 0;
-                        let utilizationDisplay = "0%";
-                        
-                        if (assigned > 0) {
-                          const utilPct = (actual / assigned) * 100;
-                          // Show actual percentage even if above 100%
-                          utilizationDisplay = utilPct.toFixed(1) + "%";
-                        } else if (actual > 0 && assigned === 0) {
-                          utilizationDisplay = "N/A";
-                        }
-                        return utilizationDisplay;
-                      })()}
-                    </span>
-                  </td>
-                  <td
-                    style={{
-                      ...styles.subTd,
-                      textAlign: "right",
-                      fontWeight: "600",
-                      color: Number(e.variance_hours) > 0 ? "#10b981" : "#ef4444",
-                    }}
-                  >
-                    {Number(e.variance_hours) > 0 ? "+" : ""}
-                    {Number(e.variance_hours).toLocaleString()}
-                  </td>
-                  <td style={styles.subTd}>
-                    <span
-                      style={{
-                        padding: "2px 8px",
-                        borderRadius: "12px",
-                        fontSize: "11px",
-                        fontWeight: "600",
-                        backgroundColor:
-                          e.assignment_status === "Assigned"
-                            ? "#d1fae5"
-                            : "#fef3c7",
-                        color:
-                          e.assignment_status === "Assigned" ? "#065f46" : "#92400e",
-                      }}
-                    >
-                      {e.assignment_status || "Not Assigned"}
-                    </span>
-                  </td>
-                  <td style={styles.subTd}>
-                    <span
-                      style={{
-                        padding: "2px 8px",
-                        borderRadius: "12px",
-                        fontSize: "11px",
-                        fontWeight: "600",
-                        backgroundColor:
-                          e.timesheet_status === "Present" ? "#dbeafe" : "#fee2e2",
-                        color:
-                          e.timesheet_status === "Present" ? "#1e40af" : "#991b1b",
-                      }}
-                    >
-                      {e.timesheet_status || "Not Present"}
-                    </span>
-                  </td>
-                </tr>
-              );
-            })
-        )}
-      </tbody>
-    </table>
-  </div>
-  
-  {/* Pagination Controls - Moved to bottom */}
-  {projectDetail.employeeSummary?.length > 0 && (
-    <div style={styles.modalPaginationContainer}>
-      <div style={styles.modalPaginationInfo}>
-        Showing {((projectDetail.employeePage || 1) - 1) * (projectDetail.employeePageSize || 5) + 1} to{" "}
-        {Math.min((projectDetail.employeePage || 1) * (projectDetail.employeePageSize || 5), projectDetail.employeeSummary.length)} of{" "}
-        {projectDetail.employeeSummary.length} entries
-      </div>
-      <div style={styles.modalPaginationControls}>
-        <select
-          value={projectDetail.employeePageSize || 5}
-          onChange={(e) => {
-            const newSize = parseInt(e.target.value);
-            setProjectDetail(prev => ({
-              ...prev,
-              employeePageSize: newSize,
-              employeePage: 1
-            }));
-          }}
-          style={styles.modalPageSizeSelect}
-        >
-          <option value={5}>5</option>
-          <option value={10}>10</option>
-          <option value={25}>25</option>
-          <option value={50}>50</option>
-        </select>
-        <button
-          onClick={() => {
-            setProjectDetail(prev => ({
-              ...prev,
-              employeePage: Math.max(1, (prev.employeePage || 1) - 1)
-            }));
-          }}
-          disabled={(projectDetail.employeePage || 1) === 1}
-          style={{
-            ...styles.modalPageBtn,
-            opacity: (projectDetail.employeePage || 1) === 1 ? 0.5 : 1,
-            cursor: (projectDetail.employeePage || 1) === 1 ? "not-allowed" : "pointer",
-          }}
-        >
-          ◀ Prev
-        </button>
-        <span style={styles.modalPageInfo}>
-          Page {projectDetail.employeePage || 1} of{" "}
-          {Math.ceil(projectDetail.employeeSummary.length / (projectDetail.employeePageSize || 5)) || 1}
-        </span>
-        <button
-          onClick={() => {
-            setProjectDetail(prev => ({
-              ...prev,
-              employeePage: Math.min(
-                Math.ceil(prev.employeeSummary.length / (prev.employeePageSize || 5)),
-                (prev.employeePage || 1) + 1
-              )
-            }));
-          }}
-          disabled={(projectDetail.employeePage || 1) >= Math.ceil(projectDetail.employeeSummary.length / (projectDetail.employeePageSize || 5))}
-          style={{
-            ...styles.modalPageBtn,
-            opacity: (projectDetail.employeePage || 1) >= Math.ceil(projectDetail.employeeSummary.length / (projectDetail.employeePageSize || 5)) ? 0.5 : 1,
-            cursor: (projectDetail.employeePage || 1) >= Math.ceil(projectDetail.employeeSummary.length / (projectDetail.employeePageSize || 5)) ? "not-allowed" : "pointer",
-          }}
-        >
-          Next ▶
-        </button>
-      </div>
-    </div>
-  )}
-</div>
-    </div>
-  )}
-  <div style={styles.modalFooter}>
-    <button onClick={() => setShowDetailModal(false)} style={styles.closeModalBtn}>
-      Close Details
-    </button>
-  </div>
-</div>
-        </div>
+                  <option value="">All Months</option>
+                  {monthsList.map((m) => (
+                    <option key={m.value} value={m.value}>{m.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1.5">Year</label>
+                <select
+                  value={filters.year}
+                  onChange={(e) => handleFilterChange("year", e.target.value)}
+                  className={inputCls}
+                >
+                  <option value="">All Years</option>
+                  {yearsList.map((y) => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1.5">Customer Name</label>
+                <select
+                  value={filters.clientName}
+                  onChange={(e) => handleFilterChange("clientName", e.target.value)}
+                  className={inputCls}
+                >
+                  <option value="">All Customers</option>
+                  {filterOpts.clients?.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1.5">Project Code</label>
+                <input
+                  type="text"
+                  placeholder="e.g. PRJ-001"
+                  value={filters.projectCode}
+                  onChange={(e) => handleFilterChange("projectCode", e.target.value)}
+                  className={inputCls}
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1.5">Project Name</label>
+                <input
+                  type="text"
+                  placeholder="e.g. ERP"
+                  value={filters.projectName}
+                  onChange={(e) => handleFilterChange("projectName", e.target.value)}
+                  className={inputCls}
+                />
+              </div>
+
+              <div>
+                <button
+                  onClick={fetchData}
+                  className="w-full px-4 py-2 bg-[#856BFF] hover:bg-[#7259e6] text-white rounded-lg text-sm font-bold transition-colors"
+                >
+                  Apply
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Tabs ── */}
+          <div className="flex gap-1 mb-5 border-b border-gray-200">
+            <button
+              onClick={() => setActiveTab("project")}
+              className={`px-5 py-3 text-sm font-semibold border-b-2 -mb-px transition-colors ${
+                activeTab === "project" ? "text-[#856BFF] border-[#856BFF]" : "text-gray-500 border-transparent hover:text-gray-700"
+              }`}
+            >
+              Project Level Reconciliation
+            </button>
+            <button
+              onClick={() => setActiveTab("employee")}
+              className={`px-5 py-3 text-sm font-semibold border-b-2 -mb-px transition-colors ${
+                activeTab === "employee" ? "text-[#856BFF] border-[#856BFF]" : "text-gray-500 border-transparent hover:text-gray-700"
+              }`}
+            >
+              Employee Level Reconciliation
+            </button>
+          </div>
+
+          {/* ── Tab Contents ── */}
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-16 gap-3">
+              <div className="w-9 h-9 border-4 border-gray-100 border-t-[#856BFF] rounded-full animate-spin" />
+              <span className="text-sm text-gray-500">Refreshing Reconciliation Data…</span>
+            </div>
+          ) : (
+            <>
+              {/* ─── Project Tab ─── */}
+              {activeTab === "project" && (
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-9">
+                  <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-wrap gap-3">
+                    <span className="font-bold text-gray-900 text-[15px]">Project Breakdown</span>
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <div className="relative">
+                        <SearchIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input
+                          type="text"
+                          placeholder="Search projects..."
+                          value={projectSearch}
+                          onChange={(e) => setProjectSearch(e.target.value)}
+                          className="w-56 pl-9 pr-3.5 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#856BFF]/30"
+                        />
+                      </div>
+                      <span className="text-xs font-medium text-gray-400">{filteredProjects.length} projects</span>
+                    </div>
+                  </div>
+
+                  <div className="w-full overflow-x-auto">
+                    <table className="w-full border-collapse text-sm">
+                      <thead>
+                        <tr className="bg-[#F5F3FF]">
+                          <th className="px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Project Code</th>
+                          <th className="px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Project Name</th>
+                          <th className="px-4 py-3 text-right text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">
+                            Est. Hours <span className="font-normal normal-case text-gray-400">(Days)</span>
+                          </th>
+                          <th className="px-4 py-3 text-right text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">
+                            Actual Hours <span className="font-normal normal-case text-gray-400">(Days)</span>
+                          </th>
+                          <th className="px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Utilized %</th>
+                          <th className="px-4 py-3 text-right text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">
+                            Variance <span className="font-normal normal-case text-gray-400">(Hrs / %)</span>
+                          </th>
+                          <th className="px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Status</th>
+                          <th className="px-4 py-3 text-center text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {paginatedProjects.length === 0 ? (
+                          <tr>
+                            <td colSpan={8} className="text-center py-10 text-gray-400">
+                              No reconciliation records match current filters.
+                            </td>
+                          </tr>
+                        ) : (
+                          paginatedProjects.map((item) => {
+                            const estimatedHours = parseFloat(item.estimated_hours) || 0;
+                            const actualHours = parseFloat(item.actual_hours) || 0;
+                            let usagePercentage = 0;
+                            if (estimatedHours > 0) {
+                              usagePercentage = (actualHours / estimatedHours) * 100;
+                            }
+
+                            let rowBgClass = "";
+                            let barColor = "#856BFF";
+                            let pctColor = "text-gray-800";
+
+                            if (usagePercentage > 100) {
+                              rowBgClass = "bg-red-50";
+                              barColor = "#dc2626";
+                              pctColor = "text-red-600";
+                            } else if (usagePercentage >= 80 && usagePercentage < 100) {
+                              rowBgClass = "bg-amber-50";
+                              barColor = "#d97706";
+                              pctColor = "text-amber-600";
+                            } else if (usagePercentage > 0) {
+                              barColor = "#10b981";
+                            }
+
+                            return (
+                              <tr
+                                key={item.project_id || item.project_code}
+                                className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${rowBgClass}`}
+                              >
+                                <td className="px-4 py-3">
+                                  <button
+                                    onClick={() => handleViewProjectDetails(item)}
+                                    className="text-xs font-semibold text-[#856BFF] hover:underline text-left"
+                                  >
+                                    {item.project_code || "—"}
+                                  </button>
+                                </td>
+                                <td className="px-4 py-3 text-gray-800">{item.project_name}</td>
+                                <td className="px-4 py-3 text-right font-semibold text-gray-900 whitespace-nowrap">
+                                  {Number(item.estimated_hours).toLocaleString()}{" "}
+                                  <span className="text-gray-400 font-normal">({Number(item.estimated_days).toLocaleString()})</span>
+                                </td>
+                                <td className="px-4 py-3 text-right font-semibold text-[#856BFF] whitespace-nowrap">
+                                  {Number(item.actual_hours).toLocaleString()}{" "}
+                                  <span className="text-gray-400 font-normal">({Number(item.actual_days).toLocaleString()})</span>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <div className="flex items-center gap-2 min-w-[110px]">
+                                    <div className="w-16 h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                                      <div
+                                        className="h-full rounded-full transition-all duration-500"
+                                        style={{ width: `${Math.min(usagePercentage, 100)}%`, backgroundColor: barColor }}
+                                      />
+                                    </div>
+                                    <span className={`text-xs font-bold ${pctColor}`}>
+                                      {estimatedHours > 0 ? `${usagePercentage.toFixed(1)}%` : "N/A"}
+                                    </span>
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3 text-right whitespace-nowrap">
+                                  <div className={`font-semibold ${Number(item.variance_hours) > 0 ? "text-green-600" : "text-red-500"}`}>
+                                    {Number(item.variance_hours) > 0 ? "+" : ""}
+                                    {Number(item.variance_hours).toLocaleString()}
+                                  </div>
+                                  <div className={`text-[11px] ${Number(item.variance_pct) > 0 ? "text-green-600" : "text-red-500"}`}>
+                                    ({Number(item.variance_pct) > 0 ? "+" : ""}
+                                    {item.variance_pct}%)
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <StatusPill status={item.status} />
+                                </td>
+                                <td className="px-4 py-3 text-center">
+                                  <button
+                                    onClick={() => handleViewProjectDetails(item)}
+                                    className="inline-flex items-center justify-center text-[#856BFF] hover:text-[#7259e6] transition-colors"
+                                    title="View Details"
+                                  >
+                                    <EyeIcon className="w-[18px] h-[18px]" />
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Pagination */}
+                  {filteredProjects.length > 0 && (
+                    <Pagination
+                      page={projectPage}
+                      pageSize={projectPageSize}
+                      total={filteredProjects.length}
+                      entryLabel="entries"
+                      onPageChange={handleProjectPageChange}
+                      onPageSizeChange={handleProjectPageSizeChange}
+                    />
+                  )}
+                </div>
+              )}
+
+              {/* ─── Employee Tab ─── */}
+              {activeTab === "employee" && (
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-9">
+                  <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-wrap gap-3">
+                    <span className="font-bold text-gray-900 text-[15px]">Employee Level Analysis</span>
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <div className="relative">
+                        <SearchIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input
+                          type="text"
+                          placeholder="Find employee..."
+                          value={employeeSearch}
+                          onChange={(e) => setEmployeeSearch(e.target.value)}
+                          className="w-56 pl-9 pr-3.5 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#856BFF]/30"
+                        />
+                      </div>
+                      <span className="text-xs font-medium text-gray-400">Showing {filteredEmployees.length} assignments</span>
+                    </div>
+                  </div>
+
+                  <div className="w-full overflow-x-auto">
+                    <table className="w-full border-collapse text-sm">
+                      <thead>
+                        <tr className="bg-[#F5F3FF]">
+                          <th className="px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Employee</th>
+                          <th className="px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Reporting Manager</th>
+                          <th className="px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Project Code</th>
+                          <th className="px-4 py-3 text-right text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Assigned (H)</th>
+                          <th className="px-4 py-3 text-right text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Actual (H)</th>
+                          <th className="px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Utilization %</th>
+                          <th className="px-4 py-3 text-right text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Variance %</th>
+                          <th className="px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {paginatedEmployees.length === 0 ? (
+                          <tr>
+                            <td colSpan={8} className="text-center py-10 text-gray-400">
+                              No employee assignments found matching current filters.
+                            </td>
+                          </tr>
+                        ) : (
+                          paginatedEmployees.map((item, idx) => {
+                            const assigned = parseFloat(item.assigned_hours) || 0;
+                            const actual = parseFloat(item.actual_hours) || 0;
+                            let utilizationPct = 0;
+                            let utilizationDisplay = "0%";
+
+                            if (assigned > 0) {
+                              utilizationPct = (actual / assigned) * 100;
+                              utilizationDisplay = utilizationPct.toFixed(1) + "%";
+                            } else if (actual > 0 && assigned === 0) {
+                              utilizationDisplay = "N/A";
+                            }
+
+                            let rowBgClass = "";
+                            let barColor = "#9ca3af";
+                            let pctColor = "text-gray-500";
+                            let utilTag = "";
+
+                            if (utilizationPct > 100) {
+                              rowBgClass = "bg-red-50";
+                              barColor = "#dc2626";
+                              pctColor = "text-red-600";
+                              utilTag = "Overflow";
+                            } else if (utilizationPct >= 80 && utilizationPct < 100) {
+                              rowBgClass = "bg-amber-50";
+                              barColor = "#d97706";
+                              pctColor = "text-amber-600";
+                            } else if (utilizationPct > 0 && utilizationPct < 80) {
+                              barColor = "#059669";
+                              pctColor = "text-green-600";
+                              utilTag = "Optimized";
+                            }
+
+                            return (
+                              <tr key={idx} className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${rowBgClass}`}>
+                                <td className="px-4 py-3">
+                                  <div className="font-semibold text-gray-900">{item.employee_name}</div>
+                                  <div className="text-[11px] text-gray-400">{item.employee_code || "—"}</div>
+                                </td>
+                                <td className="px-4 py-3 text-gray-600">{item.reporting_manager || "—"}</td>
+                                <td className="px-4 py-3">
+                                  <span className="text-xs text-gray-600">{item.project_code || "—"}</span>
+                                </td>
+                                <td className="px-4 py-3 text-right font-semibold text-gray-900">
+                                  {Number(item.assigned_hours).toLocaleString()}
+                                </td>
+                                <td className="px-4 py-3 text-right font-semibold text-[#856BFF]">
+                                  {Number(item.actual_hours).toLocaleString()}
+                                </td>
+                                <td className="px-4 py-3">
+                                  <div className="flex items-center gap-2 min-w-[110px]">
+                                    <div className="w-16 h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                                      <div
+                                        className="h-full rounded-full transition-all duration-500"
+                                        style={{ width: `${Math.min(utilizationPct, 100)}%`, backgroundColor: barColor }}
+                                      />
+                                    </div>
+                                    <div>
+                                      <div className={`text-xs font-bold ${pctColor}`}>{utilizationDisplay}</div>
+                                      {utilTag && <div className={`text-[10px] ${pctColor}`}>{utilTag}</div>}
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3 text-right whitespace-nowrap">
+                                  <div className={`font-semibold ${Number(item.variance_hours) > 0 ? "text-green-600" : "text-red-500"}`}>
+                                    {Number(item.variance_hours) > 0 ? "+" : ""}
+                                    {Number(item.variance_hours || 0).toLocaleString()}
+                                  </div>
+                                  <div className={`text-[11px] ${Number(item.variance_pct) > 0 ? "text-green-600" : "text-red-500"}`}>
+                                    {Number(item.variance_pct) > 0 ? "+" : ""}
+                                    {item.variance_pct}%
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <StatusText status={item.status} />
+                                </td>
+                              </tr>
+                            );
+                          })
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Pagination */}
+                  {filteredEmployees.length > 0 && (
+                    <Pagination
+                      page={employeePage}
+                      pageSize={employeePageSize}
+                      total={filteredEmployees.length}
+                      entryLabel="entries"
+                      onPageChange={handleEmployeePageChange}
+                      onPageSizeChange={handleEmployeePageSizeChange}
+                    />
+                  )}
+                </div>
+              )}
+            </>
+          )}
+        </>
       )}
     </div>
   );
 };
-
-// ─── KPICard Component ──────────────────────────────────────────
-const KPICard = ({ label, value, icon, color }) => (
-  <div style={{ ...styles.kpiCard, borderLeft: `5px solid ${color}` }}>
-    <div style={styles.kpiIconWrapper}>
-      <span style={{ fontSize: 24 }}>{icon}</span>
-    </div>
-    <div style={styles.kpiContent}>
-      <span style={styles.kpiLabel}>{label}</span>
-      <span style={{ ...styles.kpiValue, color: "#1f2937" }}>{value}</span>
-    </div>
-  </div>
-);
-
-// ─── Styles ──────────────────────────────────────────────────────
-const styles = {
-  container: {
-    padding: "24px",
-    maxWidth: "1400px",
-    margin: "0 auto",
-    fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
-    backgroundColor: "#f9fafb",
-    minHeight: "100vh",
-  },
-  headerRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "24px",
-    flexWrap: "wrap",
-    gap: "16px",
-  },
-  title: {
-    fontSize: "26px",
-    fontWeight: "800",
-    color: "#111827",
-    margin: 0,
-  },
-  subtitle: {
-    fontSize: "14px",
-    color: "#6b7280",
-    margin: "4px 0 0 0",
-  },
-  headerActions: {
-    display: "flex",
-    gap: "12px",
-    alignItems: "center",
-  },
-  refreshBtn: {
-    padding: "10px 14px",
-    background: "#ffffff",
-    border: "1px solid #e5e7eb",
-    borderRadius: "8px",
-    color: "#4b5563",
-    fontSize: "14px",
-    fontWeight: "600",
-    cursor: "pointer",
-    boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
-    transition: "background 0.15s",
-    ":hover": { background: "#f9fafb" },
-  },
-  kpiGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
-    gap: "16px",
-    marginBottom: "28px",
-  },
-  kpiCard: {
-    backgroundColor: "#ffffff",
-    padding: "14px 18px",
-    borderRadius: "12px",
-    boxShadow: "0 4px 10px rgba(0, 0, 0, 0.04)",
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-  },
-  kpiIconWrapper: {
-    width: "40px",
-    height: "40px",
-    borderRadius: "50%",
-    backgroundColor: "#f3f4f6",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  kpiContent: {
-    display: "flex",
-    flexDirection: "column",
-  },
-  kpiLabel: {
-    fontSize: "11px",
-    color: "#6b7280",
-    fontWeight: "500",
-    textTransform: "uppercase",
-    letterSpacing: "0.3px",
-  },
-  kpiValue: {
-    fontSize: "18px",
-    fontWeight: "800",
-    marginTop: "1px",
-  },
-  filterCard: {
-    backgroundColor: "#ffffff",
-    borderRadius: "12px",
-    padding: "20px",
-    boxShadow: "0 4px 10px rgba(0, 0, 0, 0.04)",
-    marginBottom: "28px",
-  },
-  filterTitleRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "16px",
-    borderBottom: "1px solid #f3f4f6",
-    paddingBottom: "12px",
-  },
-  sectionTitle: {
-    margin: 0,
-    fontSize: "15px",
-    fontWeight: "700",
-    color: "#1f2937",
-  },
-  resetBtn: {
-    background: "none",
-    border: "none",
-    color: "#4f46e5",
-    fontWeight: "600",
-    fontSize: "13px",
-    cursor: "pointer",
-    padding: "4px 8px",
-  },
-  filterGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-    gap: "14px",
-  },
-  filterGroup: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "4px",
-  },
-  filterLabel: {
-    fontSize: "12px",
-    fontWeight: "600",
-    color: "#4b5563",
-  },
-  select: {
-    padding: "8px 12px",
-    border: "1px solid #d1d5db",
-    borderRadius: "8px",
-    fontSize: "13px",
-    backgroundColor: "#ffffff",
-    color: "#1f2937",
-    outline: "none",
-    cursor: "pointer",
-  },
-  input: {
-    padding: "8px 12px",
-    border: "1px solid #d1d5db",
-    borderRadius: "8px",
-    fontSize: "13px",
-    color: "#1f2937",
-    outline: "none",
-  },
-  tabsContainer: {
-    display: "flex",
-    gap: "4px",
-    marginBottom: "20px",
-    borderBottom: "2px solid #e5e7eb",
-    paddingBottom: "2px",
-  },
-  tabBtn: {
-    padding: "10px 18px",
-    background: "none",
-    border: "none",
-    fontSize: "14px",
-    fontWeight: "600",
-    color: "#6b7280",
-    cursor: "pointer",
-    borderBottom: "2px solid transparent",
-    transition: "all 0.15s",
-  },
-  tabBtnActive: {
-    color: "#4f46e5",
-    borderBottom: "2px solid #4f46e5",
-  },
-  loadingContainer: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: "64px 0",
-  },
-  spinner: {
-    width: "36px",
-    height: "36px",
-    border: "4px solid #f3f4f6",
-    borderTop: "4px solid #4f46e5",
-    borderRadius: "50%",
-    animation: "spin 1s linear infinite",
-  },
-  tableCard: {
-    backgroundColor: "#ffffff",
-    borderRadius: "12px",
-    boxShadow: "0 4px 10px rgba(0, 0, 0, 0.04)",
-    overflow: "hidden",
-    marginBottom: "36px",
-  },
-  tableHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: "16px 20px",
-    borderBottom: "1px solid #f3f4f6",
-    flexWrap: "wrap",
-    gap: "10px",
-  },
-  tableControls: {
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-    flexWrap: "wrap",
-  },
-  searchInput: {
-    padding: "8px 14px",
-    border: "1px solid #d1d5db",
-    borderRadius: "8px",
-    fontSize: "13px",
-    color: "#1f2937",
-    outline: "none",
-    width: "250px",
-    transition: "border-color 0.15s",
-    ":focus": {
-      borderColor: "#4f46e5",
-      boxShadow: "0 0 0 3px rgba(79, 70, 229, 0.1)",
-    },
-  },
-  rowCount: {
-    fontSize: "12px",
-    color: "#6b7280",
-    fontWeight: "500",
-  },
-  tableResponsive: {
-    width: "100%",
-    overflowX: "auto",
-  },
-  table: {
-    width: "100%",
-    borderCollapse: "collapse",
-    fontSize: "13px",
-  },
-  th: {
-    padding: "10px 16px",
-    background: "#f9fafb",
-    color: "#374151",
-    fontWeight: "600",
-    textAlign: "left",
-    borderBottom: "1px solid #e5e7eb",
-    whiteSpace: "nowrap",
-  },
-  tr: {
-    borderBottom: "1px solid #f3f4f6",
-    transition: "background-color 0.15s",
-    ":hover": { backgroundColor: "#f9fafb" },
-  },
-  td: {
-    padding: "12px 16px",
-    color: "#4b5563",
-  },
-  emptyCell: {
-    textAlign: "center",
-    padding: "40px",
-    color: "#9ca3af",
-  },
-  statusPill: {
-    padding: "4px 10px",
-    borderRadius: "20px",
-    fontSize: "11px",
-    fontWeight: "700",
-    display: "inline-block",
-    textTransform: "uppercase",
-    letterSpacing: "0.2px",
-  },
-  actionBtn: {
-    padding: "6px 12px",
-    background: "#e0e7ff",
-    color: "#4338ca",
-    border: "none",
-    borderRadius: "6px",
-    fontSize: "12px",
-    fontWeight: "600",
-    cursor: "pointer",
-    transition: "all 0.15s",
-    ":hover": { background: "#c7d2fe" },
-  },
-  paginationContainer: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: "16px 20px",
-    borderTop: "1px solid #f3f4f6",
-    flexWrap: "wrap",
-    gap: "10px",
-  },
-  paginationInfo: {
-    fontSize: "13px",
-    color: "#6b7280",
-  },
-  paginationControls: {
-    display: "flex",
-    alignItems: "center",
-    gap: "10px",
-  },
-  pageSizeSelect: {
-    padding: "6px 10px",
-    border: "1px solid #d1d5db",
-    borderRadius: "6px",
-    fontSize: "13px",
-    color: "#1f2937",
-    outline: "none",
-    cursor: "pointer",
-    backgroundColor: "#ffffff",
-  },
-  pageBtn: {
-    padding: "6px 14px",
-    border: "1px solid #d1d5db",
-    borderRadius: "6px",
-    background: "#ffffff",
-    fontSize: "13px",
-    fontWeight: "500",
-    color: "#1f2937",
-    cursor: "pointer",
-    transition: "all 0.15s",
-    ":hover:not(:disabled)": {
-      background: "#f9fafb",
-      borderColor: "#4f46e5",
-    },
-  },
-  pageInfo: {
-    fontSize: "13px",
-    color: "#6b7280",
-  },
-  modalOverlay: {
-    position: "fixed",
-    inset: 0,
-    backgroundColor: "rgba(17, 24, 39, 0.6)",
-    backdropFilter: "blur(4px)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 1000,
-    padding: "20px",
-  },
-  modalContent: {
-    backgroundColor: "#ffffff",
-    borderRadius: "16px",
-    width: "100%",
-    maxWidth: "850px",
-    maxHeight: "90vh",
-    display: "flex",
-    flexDirection: "column",
-    boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
-  },
-  modalHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    padding: "20px 24px",
-    borderBottom: "1px solid #f3f4f6",
-  },
-  modalTitle: {
-    margin: 0,
-    fontSize: "18px",
-    fontWeight: "800",
-    color: "#111827",
-  },
-  modalSubtitle: {
-    fontSize: "12px",
-    color: "#6b7280",
-    marginTop: "2px",
-  },
-  modalClose: {
-    background: "none",
-    border: "none",
-    fontSize: "20px",
-    color: "#9ca3af",
-    cursor: "pointer",
-    padding: "4px 8px",
-  },
-  modalLoading: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: "48px 0",
-    color: "#6b7280",
-  },
-  modalBody: {
-    padding: "24px",
-    overflowY: "auto",
-    display: "flex",
-    flexDirection: "column",
-    gap: "24px",
-  },
-  detailSection: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "12px",
-  },
-  detailSecTitle: {
-    margin: 0,
-    fontSize: "14px",
-    fontWeight: "700",
-    color: "#1f2937",
-    borderBottom: "1px solid #f3f4f6",
-    paddingBottom: "8px",
-  },
-  detailSummaryGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
-    gap: "12px",
-    backgroundColor: "#f9fafb",
-    padding: "14px",
-    borderRadius: "8px",
-  },
-  detailField: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "2px",
-  },
-  detailLabel: {
-    fontSize: "10px",
-    fontWeight: "600",
-    color: "#9ca3af",
-    textTransform: "uppercase",
-    letterSpacing: "0.3px",
-  },
-  detailValue: {
-    fontSize: "14px",
-    fontWeight: "700",
-    color: "#1f2937",
-  },
-  subTable: {
-    width: "100%",
-    borderCollapse: "collapse",
-    fontSize: "13px",
-  },
-  subTh: {
-    padding: "8px 12px",
-    background: "#f9fafb",
-    color: "#4b5563",
-    fontWeight: "600",
-    textAlign: "left",
-    borderBottom: "1px solid #e5e7eb",
-  },
-  subTr: {
-    borderBottom: "1px solid #f3f4f6",
-  },
-  subTd: {
-    padding: "8px 12px",
-    color: "#374151",
-  },
-  modalFooter: {
-    padding: "16px 24px",
-    borderTop: "1px solid #f3f4f6",
-    display: "flex",
-    justifyContent: "flex-end",
-  },
-  closeModalBtn: {
-    padding: "8px 18px",
-    background: "#1f2937",
-    color: "#ffffff",
-    border: "none",
-    borderRadius: "8px",
-    fontSize: "13px",
-    fontWeight: "600",
-    cursor: "pointer",
-    transition: "background 0.15s",
-    ":hover": { background: "#374151" },
-  },
-  // Add these styles to your existing styles object
-stickyHeader: {
-  position: "sticky",
-  top: 0,
-  zIndex: 10,
-  backgroundColor: "#ffffff",
-  boxShadow: "0 2px 4px rgba(0, 0, 0, 0.08)",
-},
-
-modalPaginationContainer: {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  padding: "12px 0",
-  flexWrap: "wrap",
-  gap: "10px",
-  borderTop: "1px solid #f3f4f6",
-  borderBottom: "1px solid #f3f4f6",
-  marginBottom: "12px",
-},
-
-modalPaginationInfo: {
-  fontSize: "13px",
-  color: "#6b7280",
-},
-
-modalPaginationControls: {
-  display: "flex",
-  alignItems: "center",
-  gap: "10px",
-},
-
-modalPageSizeSelect: {
-  padding: "4px 8px",
-  border: "1px solid #d1d5db",
-  borderRadius: "6px",
-  fontSize: "12px",
-  color: "#1f2937",
-  outline: "none",
-  cursor: "pointer",
-  backgroundColor: "#ffffff",
-},
-
-modalPageBtn: {
-  padding: "4px 12px",
-  border: "1px solid #d1d5db",
-  borderRadius: "6px",
-  background: "#ffffff",
-  fontSize: "12px",
-  fontWeight: "500",
-  color: "#1f2937",
-  cursor: "pointer",
-  transition: "all 0.15s",
-  ":hover:not(:disabled)": {
-    background: "#f9fafb",
-    borderColor: "#4f46e5",
-  },
-},
-
-modalPageInfo: {
-  fontSize: "13px",
-  color: "#6b7280",
-},
-subHeader: {
-  fontSize: "9px",
-  fontWeight: "400",
-  color: "#6b7280",
-  marginTop: "1px",
-},
-};
-
-// ─── Global CSS for spinner animation ──────────────────────────
-const styleSheet = document.createElement("style");
-styleSheet.textContent = `
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
-`;
-document.head.appendChild(styleSheet);
 
 export default ReconPage;
