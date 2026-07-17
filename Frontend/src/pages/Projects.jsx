@@ -735,12 +735,12 @@ const EffortEstimateModal = ({ projects, onClose, onSaved, initialProjectId, rea
 };
 
 // ── Pagination chevrons ───────────────────────────────────────────────────────
-const ChevL = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>;
-const ChevR = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>;
+const ChevL = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" /></svg>;
+const ChevR = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" /></svg>;
 const EditIcon = () => (
   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
   </svg>
 );
 
@@ -748,21 +748,21 @@ const PAGE_SIZE = 10;
 
 // ── Status badge config ───────────────────────────────────────────────────────
 const STATUS_CFG = {
-  'not started': { cls: 'bg-amber-100 text-amber-700',  label: 'NOT STARTED' },
-  'in progress':  { cls: 'bg-blue-100  text-blue-700',   label: 'IN PROGRESS'  },
-  completed:      { cls: 'bg-green-100 text-green-700',  label: 'COMPLETED'    },
-  abandoned:      { cls: 'bg-red-100   text-red-600',    label: 'ABANDONED'    },
-  active:         { cls: 'bg-green-100 text-green-700',  label: 'ACTIVE'       },
-  new:            { cls: 'bg-amber-100 text-amber-700',  label: 'NOT STARTED'  },
+  'not started': { cls: 'bg-amber-100 text-amber-700', label: 'NOT STARTED' },
+  'in progress': { cls: 'bg-blue-100  text-blue-700', label: 'IN PROGRESS' },
+  completed: { cls: 'bg-green-100 text-green-700', label: 'COMPLETED' },
+  abandoned: { cls: 'bg-red-100   text-red-600', label: 'ABANDONED' },
+  active: { cls: 'bg-green-100 text-green-700', label: 'ACTIVE' },
+  new: { cls: 'bg-amber-100 text-amber-700', label: 'NOT STARTED' },
 };
 
 // ── Main Projects Component ───────────────────────────────────────────────────
 const Projects = () => {
   const navigate = useNavigate();
-  const [projects, setProjects]                   = useState([]);
-  const [loading, setLoading]                     = useState(true);
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [initialEffortProjectId, setInitialEffortProjectId] = useState('');
-  const [page, setPage]                           = useState(1);
+  const [page, setPage] = useState(1);
 
   const isAdmin = getUserRole() === 'ADMIN';
 
@@ -784,9 +784,9 @@ const Projects = () => {
 
   // ── Pagination ──────────────────────────────────────────────────────────────
   const totalPages = Math.max(1, Math.ceil(projects.length / PAGE_SIZE));
-  const pageRows   = projects.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const pageRows = projects.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   const startEntry = projects.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
-  const endEntry   = Math.min(page * PAGE_SIZE, projects.length);
+  const endEntry = Math.min(page * PAGE_SIZE, projects.length);
 
   // ── Status badge ────────────────────────────────────────────────────────────
   const StatusBadge = ({ status }) => {
@@ -801,15 +801,15 @@ const Projects = () => {
 
   // ── Cols ─────────────────────────────────────────────────────────────────────
   const COLS = [
-    { label: 'PROJECT CODE',   w: 'w-[110px]' },
-    { label: 'NBD / O2D ID',   w: 'w-[110px]' },
-    { label: 'PROJECT NAME',   w: '' },
-    { label: 'TEAM LEAD',      w: 'w-[120px]' },
-    { label: 'TYPE',           w: 'w-[130px]' },
-    { label: 'TIMELINE',       w: 'w-[120px]' },
-    { label: 'STATUS',         w: 'w-[100px]' },
+    { label: 'PROJECT CODE', w: 'w-[110px]' },
+    { label: 'NBD / O2D ID', w: 'w-[110px]' },
+    { label: 'PROJECT NAME', w: '' },
+    { label: 'TEAM LEAD', w: 'w-[120px]' },
+    { label: 'TYPE', w: 'w-[130px]' },
+    { label: 'TIMELINE', w: 'w-[120px]' },
+    { label: 'STATUS', w: 'w-[100px]' },
     { label: 'EFFORT (HRS/DAYS)', w: 'w-[130px]' },
-    { label: 'ACTION',         w: 'w-[120px]' },
+    { label: 'ACTION', w: 'w-[120px]' },
   ];
 
   return (
@@ -829,7 +829,7 @@ const Projects = () => {
               className="flex items-center gap-2 px-4 py-2 border border-violet-500 text-violet-600 text-sm font-semibold rounded-lg hover:bg-violet-50 transition-colors"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>
+                <rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18M9 21V9" />
               </svg>
               Effort Estimate
             </button>
@@ -849,15 +849,15 @@ const Projects = () => {
         {loading ? (
           <div className="flex items-center justify-center gap-2 py-20 text-gray-400">
             <svg className="animate-spin w-5 h-5 text-violet-500" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
             </svg>
             Loading projects…
           </div>
         ) : !projects.length ? (
           <div className="py-20 text-center">
             <svg className="w-12 h-12 text-gray-200 mx-auto mb-3" fill="none" stroke="currentColor" strokeWidth={1.4} viewBox="0 0 24 24">
-              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
             </svg>
             <p className="text-gray-400 text-sm">No projects found. Create one to get started.</p>
           </div>
@@ -866,9 +866,9 @@ const Projects = () => {
             <div className="overflow-x-auto">
               <table className="w-full text-sm border-collapse min-w-[900px]">
                 <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50">
+                  <tr className="border-b border-gray-100 bg-gray-50 bg-[#EFF4FF]">
                     {COLS.map(c => (
-                      <th key={c.label} className={`text-left px-4 py-3 text-[11px] font-semibold text-gray-400 tracking-wide uppercase whitespace-nowrap ${c.w}`}>
+                      <th key={c.label} className={`text-left px-4 py-3 text-[11px] font-bold text-slate-500 tracking-wide uppercase whitespace-nowrap ${c.w}`}>
                         {c.label}
                       </th>
                     ))}
@@ -982,11 +982,10 @@ const Projects = () => {
                   <button
                     key={n}
                     onClick={() => setPage(n)}
-                    className={`w-8 h-8 flex items-center justify-center rounded-md text-sm font-medium transition-colors ${
-                      n === page
-                        ? 'bg-violet-600 text-white shadow-sm'
-                        : 'text-gray-500 hover:bg-gray-100'
-                    }`}
+                    className={`w-8 h-8 flex items-center justify-center rounded-md text-sm font-medium transition-colors ${n === page
+                      ? 'bg-violet-600 text-white shadow-sm'
+                      : 'text-gray-500 hover:bg-gray-100'
+                      }`}
                   >
                     {n}
                   </button>

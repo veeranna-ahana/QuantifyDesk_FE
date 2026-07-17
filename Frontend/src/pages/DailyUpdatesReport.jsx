@@ -259,11 +259,11 @@ export default function DailyUpdatesReport() {
 
             {/* Head */}
             <thead>
-              <tr className="border-b border-gray-100">
+              <tr className="border-b border-gray-100 bg-[#EFF4FF]">
                 {COLS.map(col => (
                   <th
                     key={col}
-                    className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 tracking-wide uppercase whitespace-nowrap"
+                    className="text-left px-4 py-3 text-[11px] font-bold text-slate-500 tracking-wide uppercase whitespace-nowrap"
                   >
                     {col}
                   </th>
