@@ -133,7 +133,7 @@ export default function EditProject() {
           endDate:     form.endDate   || null,
           status:      form.status,
           projectType: form.projectType,
-          createCR:    form.status === 'New CR' ? form.createCR.trim() : null,
+          createCr:    form.status === 'New CR' ? form.createCR.trim() : null,
         },
         { headers: getHeaders() }
       );

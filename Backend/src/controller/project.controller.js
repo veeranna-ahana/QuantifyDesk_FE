@@ -45,7 +45,7 @@ const createProject = async (req, res, next) => {
       subCategory   || null,
       startDate     || null,
       endDate       || null,
-      status        || 'Not started',
+      status        || 'New',
       projectType   || null,
       teamLead      || null,  // New parameter
     ];
@@ -87,6 +87,7 @@ const getAllProjects = async (req, res, next) => {
     p.status,
     p.project_type,
     p.team_lead,
+    p.create_cr,
     COALESCE(SUM(e.total_hrs), 0) AS total_effort_hours,
     COALESCE(SUM(e.effort_days + e.buffer_days), 0) AS total_effort_days
 
@@ -108,7 +109,8 @@ const getAllProjects = async (req, res, next) => {
     p.end_date,
     p.status,
     p.project_type,
-    p.team_lead
+    p.team_lead,
+    p.create_cr
 
   ORDER BY p.id ASC
 `;
