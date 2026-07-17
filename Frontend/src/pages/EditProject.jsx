@@ -94,7 +94,8 @@ export default function EditProject() {
     startDate:   project.start_date   ? project.start_date.split('T')[0] : '',
     endDate:     project.end_date     ? project.end_date.split('T')[0]   : '',
     projectType: project.project_type || 'one time project - otp',
-    status:      project.status       || 'Not started',
+    status:      project.status       || 'New',
+    createCR:    project.create_cr    || '',
   });
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
@@ -132,6 +133,7 @@ export default function EditProject() {
           endDate:     form.endDate   || null,
           status:      form.status,
           projectType: form.projectType,
+          createCR:    form.status === 'New CR' ? form.createCR.trim() : null,
         },
         { headers: getHeaders() }
       );
@@ -322,16 +324,29 @@ export default function EditProject() {
                     onChange={e => set('status', e.target.value)}
                     className={`${inputCls} appearance-none pr-9 cursor-pointer`}
                   >
-                    <option value="Not started">New</option>
-                    <option value="In progress">In Progress</option>
+                    <option value="New">New</option>
+                    <option value="On Hold">On Hold</option>
                     <option value="Completed">Completed</option>
-                    <option value="Abandoned">Abandoned</option>
-                    <option value="active">Active</option>
+                    <option value="New CR">New CR</option>
                   </select>
                   <ChevDownIcon />
                 </div>
               </div>
             </div>
+
+            {/* Create CR — shown only when status is New CR */}
+            {form.status === 'New CR' && (
+              <div className="mt-4">
+                <Label>Create CR</Label>
+                <input
+                  type="text"
+                  value={form.createCR}
+                  onChange={e => set('createCR', e.target.value)}
+                  placeholder="Created new CR"
+                  className={inputCls}
+                />
+              </div>
+            )}
           </Section>
 
           {/* ── Footer actions ── */}
