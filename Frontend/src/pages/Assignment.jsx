@@ -2,9 +2,17 @@ import React, { useEffect, useState, useCallback } from "react";
 import toast from "react-hot-toast";
 import axios from "axios";
 import { useSelector } from "react-redux";
+import Cookies from "js-cookie";
 
+// ── Role helper ───────────────────────────────────────────────────────────────
+const getUserRole = () => {
+  try {
+    const cookieUser = JSON.parse(Cookies.get('user') || 'null');
+    if (cookieUser?.role) return cookieUser.role.toUpperCase();
+  } catch { /* ignore */ }
+  return (localStorage.getItem('role') || 'EMPLOYEE').toUpperCase();
+};
 
-//const BASE_URL  = process.env.REACT_APP_API_BASE_URL;
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const getHeaders = () => ({ Authorization: `Bearer ${localStorage.getItem("token") || ""}` });
 
@@ -22,59 +30,48 @@ const ROLE_ORDER = [
 
 // ── Role colour map ───────────────────────────────────────────────────────────
 const ROLE_COLORS = {
-  "BA": { bg: "#f0e6ff", border: "#8e44ad", text: "#6c3483" },
-  "Solution Architect": { bg: "#f0e6ff", border: "#8e44ad", text: "#6c3483" },
-  "UI/UX": { bg: "#e8f4fd", border: "#2980b9", text: "#1a5276" },
-  "FE Dev": { bg: "#fff3e0", border: "#f39c12", text: "#9a6000" },
-  "BE Dev": { bg: "#fdecea", border: "#e74c3c", text: "#a93226" },
-  // "Mobile/IOS Dev": { bg: "#e0f7fa", border: "#00acc1", text: "#006064" },
-  "Tester": { bg: "#f3e5f5", border: "#8e24aa", text: "#6a1b9a" },
-  "Deployment": { bg: "#f3e5f5", border: "#8e24aa", text: "#6a1b9a" },
-  "Warranty & Support": { bg: "#f3e5f5", border: "#8e24aa", text: "#6a1b9a" },
-  "Project Manager": { bg: "#eafaf1", border: "#2ecc71", text: "#196f3d" },
+  "BA": { bg: "#f8f8fd", border: "#7f5feb", text: "#7f5feb" },
+  "Solution Architect": { bg: "#f8f8fd", border: "#7f5feb", text: "#7f5feb" },
+  "UI/UX": { bg: "#f5f6ff", border: "#5352ed", text: "#5352ed" },
+  "FE Dev": { bg: "#fffaf0", border: "#f39c12", text: "#f39c12" },
+  "BE Dev": { bg: "#f6f8ff", border: "#3742fa", text: "#3742fa" },
+  "Tester": { bg: "#fdf8ff", border: "#8e44ad", text: "#8e44ad" },
+  "Deployment": { bg: "#fdf8ff", border: "#8e44ad", text: "#8e44ad" },
+  "Warranty & Support": { bg: "#fdf8ff", border: "#8e44ad", text: "#8e44ad" },
+  "Project Manager": { bg: "#eafaf1", border: "#2ecc71", text: "#2ecc71" },
 };
 const roleStyle = (role) => ROLE_COLORS[role] || { bg: "#f5f5f5", border: "#999", text: "#333" };
 const pct = (a, b) => (b > 0 ? Math.round((a / b) * 100) : 0);
 
-// ── Small helpers ─────────────────────────────────────────────────────────────
-const badge = (bg) => ({
-  padding: "2px 8px", borderRadius: "10px", fontSize: "11px",
-  fontWeight: "700", background: bg, color: "white", whiteSpace: "nowrap",
-});
-
 const StatusBadge = ({ assigned, planned }) => {
   const p = pct(assigned, planned);
-  if (planned === 0) return <span style={badge("#aaa")}>No Load</span>;
-  if (p === 0) return <span style={badge("#e74c3c")}>Unassigned</span>;
-  if (p < 100) return <span style={badge("#f39c12")}>{p}% Assigned</span>;
-  return <span style={badge("#27ae60")}>Fully Assigned</span>;
+  if (planned === 0) return <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider bg-slate-100 text-slate-500">NO LOAD</span>;
+  if (p === 0) return <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider bg-red-50 text-red-600 border border-red-100">UNASSIGNED</span>;
+  if (p < 100) return <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider bg-amber-50 text-amber-600 border border-amber-100">{p}% ASSIGNED</span>;
+  return <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider bg-emerald-50 text-emerald-600 border border-emerald-100">ASSIGNED</span>;
 };
 
+// ── KPI Card Component ────────────────────────────────────────────────────────
 const KPI = ({ label, value, color }) => (
-  <div style={{
-    textAlign: "center", background: "white", borderRadius: 8,
-    padding: "10px 16px", boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
-    borderTop: `3px solid ${color}`, minWidth: 90,
-  }}>
-    <div style={{ fontSize: 20, fontWeight: 800, color }}>{value}</div>
-    <div style={{ fontSize: 11, color: "#999" }}>{label}</div>
+  <div className="flex-1 min-w-[130px] bg-white border border-slate-100 rounded-xl p-4 shadow-sm"
+    style={{ borderLeft: '4px solid', borderLeftColor: color.includes('violet') ? '#7f5feb' : color.includes('slate') ? '#94a3b8' : color.includes('sky') ? '#0ea5e9' : color.includes('emerald') ? '#10b981' : '#f43f5e' }}>
+    <div className="text-[10px] font-bold tracking-widest text-slate-400 uppercase mb-2 leading-none">{label}</div>
+    <div className={`text-[22px] font-extrabold leading-none ${color}`}>{value}</div>
   </div>
 );
 
-// ── NEW: Effort chip shown in role bar header ─────────────────────────────────
-const EffortChip = ({ label, value, color, valColor }) => (
-  <div style={{
-    display: "flex", flexDirection: "column", alignItems: "center",
-    background: "rgba(255,255,255,0.28)", borderRadius: 5,
-    padding: "2px 8px", minWidth: 52,
-  }}>
-    <span style={{ fontSize: 12, fontWeight: 800, color: valColor || color }}>{value ?? "—"}</span>
-    <span style={{ fontSize: 9, color, opacity: 0.75, textTransform: "uppercase", letterSpacing: "0.3px" }}>{label}</span>
+// ── Effort Chip Component ─────────────────────────────────────────────────────
+const EffortChip = ({ label, value, valColor }) => (
+  <div className="flex flex-col items-center bg-slate-50 border border-slate-200/60 px-3 py-1 rounded-lg min-w-[80px]">
+    <span className="text-[9px] text-slate-400 font-bold tracking-wider uppercase leading-none">{label}</span>
+    <span className={`text-[12px] font-bold mt-0.5 leading-none ${valColor || 'text-violet-600'}`}>
+      {value !== undefined && value !== null && value !== '' ? Number(value).toFixed(2) : "0.00"}
+    </span>
   </div>
 );
 
-// ── Assign Modal ──────────────────────────────────────────────────────────────
-const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onClose }) => {
+// ── Assign Modal Component ────────────────────────────────────────────────────
+const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onUpdate, onClose, extraData, setExtraData, isAdmin = false }) => {
   const [selUser, setSelUser] = useState("");
   const [units, setUnits] = useState("");
   const [days, setDays] = useState("");
@@ -82,6 +79,8 @@ const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onClose })
   const [saving, setSaving] = useState(false);
   const [workload, setWorkload] = useState(null);
   const [loadingWorkload, setLoadingWorkload] = useState(false);
+  const [editingRow, setEditingRow] = useState({});
+  const [savingEdit, setSavingEdit] = useState({});
 
   useEffect(() => {
     if (!selUser) {
@@ -128,12 +127,73 @@ const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onClose })
     }
   };
 
-  // Assignments already on this role+task
-  const existing = assignments.filter(
-    a => a.role === modal.role && a.task_name === modal.task_name
-  );
+  const startEdit = (a) => {
+    setEditingRow(prev => ({
+      ...prev,
+      [a.id]: {
+        units: String(a.units_assigned),
+        days: String(a.estimated_days || 0),
+        hours: String(a.estimated_hours || 0),
+      },
+    }));
+  };
 
-  // Calculate totals
+  const cancelEdit = (id) => {
+    setEditingRow(prev => { const n = { ...prev }; delete n[id]; return n; });
+  };
+
+  const handleEditField = (id, field, val) => {
+    setEditingRow(prev => {
+      const row = { ...prev[id], [field]: val };
+      if (field === 'days') row.hours = val === '' || isNaN(Number(val)) ? '' : String(Number(val) * 8);
+      if (field === 'hours') row.days = val === '' || isNaN(Number(val)) ? '' : String(Number(val) / 8);
+      return { ...prev, [id]: row };
+    });
+  };
+
+  const handleEditSave = async (id) => {
+    const row = editingRow[id];
+    if (!row) return;
+    const unitsVal = Number(row.units);
+    if (!unitsVal || unitsVal <= 0) return toast.error('Units must be > 0.');
+    setSavingEdit(prev => ({ ...prev, [id]: true }));
+    try {
+      await axios.put(
+        `${BASE_URL}/api/assignments/${id}`,
+        {
+          units_assigned: unitsVal,
+          estimated_days: Number(row.days) || 0,
+          estimated_hours: Number(row.hours) || 0,
+        },
+        { headers: getHeaders() }
+      );
+      setExtraData(prev => ({
+        ...prev,
+        [id]: {
+          estimated_days: Number(row.days) || 0,
+          estimated_hours: Number(row.hours) || 0,
+          units_assigned: unitsVal,
+        },
+      }));
+      cancelEdit(id);
+      toast.success('Assignment updated!');
+      onUpdate?.();
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to update.');
+    } finally {
+      setSavingEdit(prev => ({ ...prev, [id]: false }));
+    }
+  };
+
+  const existing = assignments
+    .filter(a => a.role === modal.role && a.task_name === modal.task_name)
+    .map(a => ({
+      ...a,
+      estimated_days: extraData[a.id]?.estimated_days ?? a.estimated_days ?? 0,
+      estimated_hours: extraData[a.id]?.estimated_hours ?? a.estimated_hours ?? 0,
+      units_assigned: extraData[a.id]?.units_assigned ?? a.units_assigned,
+    }));
+
   const totalAssignedUnits = existing.reduce((s, a) => s + Number(a.units_assigned), 0);
   const totalAssignedDays = existing.reduce((s, a) => s + Number(a.estimated_days || 0), 0);
   const totalAssignedHours = existing.reduce((s, a) => s + Number(a.estimated_hours || 0), 0);
@@ -142,7 +202,6 @@ const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onClose })
   const remainingDays = Math.max((modal.estimated_days || 0) - totalAssignedDays, 0);
   const remainingHours = Math.max((modal.estimated_hours || 0) - totalAssignedHours, 0);
 
-  // Check if any limit would be exceeded
   const unitsExceeded = units && Number(units) > remainingUnits;
   const daysExceeded = days && Number(days) > remainingDays;
   const hoursExceeded = hours && Number(hours) > remainingHours;
@@ -155,7 +214,6 @@ const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onClose })
     const requestedDays = days ? Number(days) : 0;
     const requestedHours = hours ? Number(hours) : 0;
 
-    // Validate against remaining limits
     if (requestedUnits > remainingUnits) {
       toast.error(`Cannot assign ${requestedUnits} units. Only ${remainingUnits} units remaining.`);
       return;
@@ -171,7 +229,7 @@ const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onClose })
 
     setSaving(true);
     try {
-      await onAssign({
+      const newAssignment = await onAssign({
         user_id: selUser,
         role: modal.role,
         task_name: modal.task_name,
@@ -179,210 +237,213 @@ const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onClose })
         estimated_days: requestedDays,
         estimated_hours: requestedHours,
       });
+      const savedAssignment = newAssignment?.data || newAssignment;
+      if (savedAssignment?.id) {
+        setExtraData(prev => ({
+          ...prev,
+          [savedAssignment.id]: {
+            estimated_days: requestedDays,
+            estimated_hours: requestedHours,
+            units_assigned: requestedUnits,
+          },
+        }));
+      }
       setSelUser("");
       setUnits("");
       setDays("");
       setHours("");
       toast.success("Employee assigned successfully!");
     } catch (e) {
-      const errMsg = e?.response?.data?.message || "Failed to assign.";
-      toast.error(errMsg);
+      toast.error(e?.response?.data?.message || "Failed to assign.");
     } finally {
       setSaving(false);
     }
   };
 
+  const rs = roleStyle(modal.role);
 
   return (
-    <div style={M.overlay} onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div style={M.modal}>
+    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[1000] p-4"
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 flex flex-col gap-5">
 
-        {/* ── Header ── */}
-        <div style={M.header}>
+        {/* Header */}
+        <div className="flex justify-between items-start">
           <div>
-            <div style={M.title}>Assign Employee</div>
-            <div style={M.sub}>
-              <span style={{ ...badge(roleStyle(modal.role).border), marginRight: 6 }}>{modal.role}</span>
-              {modal.task_name}
-              {modal.unit_type && <span style={{ color: "#aaa", marginLeft: 6, fontSize: 11 }}>· {modal.unit_type}</span>}
+            <h3 className="text-xl font-extrabold text-slate-800">{isAdmin ? 'View Assignments' : 'Assign Employee'}</h3>
+            <div className="flex items-center gap-2 mt-2 flex-wrap text-sm">
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold text-white uppercase"
+                style={{ backgroundColor: rs.border }}>
+                {modal.role.split(/\s+/).map(w => w[0]).join("").slice(0, 2).toUpperCase()}
+              </span>
+              <span className="text-slate-800 font-bold">{modal.task_name}</span>
+              <span className="text-slate-400 font-bold">·</span>
+              <span className="text-slate-400 text-xs font-semibold">{modal.unit_type}</span>
+              {isAdmin && <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-100">🔒 VIEW ONLY</span>}
             </div>
           </div>
-          <button onClick={onClose} style={M.closeBtn}>✕</button>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 font-semibold p-1 text-lg">✕</button>
         </div>
 
-        {/* ── Load summary strip — UPDATED: Est. Days + Est. Hours added ── */}
-        <div style={M.strip}>
-          <div style={M.chip}>
-            <span style={M.chipLabel}>Planned Units</span>
-            <span style={{ ...M.chipVal, color: "#9b59b6" }}>{modal.planned_units ?? "—"}</span>
+        {/* KPI Cards (Planned Limits) */}
+        <div className="grid grid-cols-4 gap-3">
+          <div className="bg-[#f5f6ff] rounded-xl p-3.5 flex flex-col items-center justify-center min-h-[76px]">
+            <span className="text-[9px] font-extrabold text-slate-400 tracking-wider uppercase mb-1">PLANNED UNITS</span>
+            <span className="text-xl font-extrabold text-slate-800">{modal.planned_units ?? 0}</span>
           </div>
-          <div style={M.chip}>
-            <span style={M.chipLabel}>Est. Days</span>
-            <span style={{ ...M.chipVal, color: "#2c3e50" }}>{modal.estimated_days ?? "—"}</span>
+          <div className="bg-[#f5f6ff] rounded-xl p-3.5 flex flex-col items-center justify-center min-h-[76px]">
+            <span className="text-[9px] font-extrabold text-slate-400 tracking-wider uppercase mb-1">EST. DAYS</span>
+            <span className="text-xl font-extrabold text-slate-800">{modal.estimated_days ?? 0}</span>
           </div>
-          <div style={M.chip}>
-            <span style={M.chipLabel}>Est. Hours</span>
-            <span style={{ ...M.chipVal, color: "#2c3e50" }}>{modal.estimated_hours ?? "—"}</span>
+          <div className="bg-[#f5f6ff] rounded-xl p-3.5 flex flex-col items-center justify-center min-h-[76px]">
+            <span className="text-[9px] font-extrabold text-slate-400 tracking-wider uppercase mb-1">EST. HOURS</span>
+            <span className="text-xl font-extrabold text-slate-800">{modal.estimated_hours ?? 0}</span>
           </div>
-          <div style={M.chip}>
-            <span style={M.chipLabel}>Assigned Units</span>
-            <span style={{ ...M.chipVal, color: "#3498db" }}>{totalAssignedUnits}</span>
-          </div>
-        </div>
-
-        {/* ── Remaining Strip ── */}
-        <div style={{ ...M.strip, background: "#e8f4fd" }}>
-          <div style={M.chip}>
-            <span style={M.chipLabel}>Remaining Units</span>
-            <span style={{ ...M.chipVal, color: remainingUnits === 0 ? "#27ae60" : "#e74c3c" }}>{remainingUnits}</span>
-          </div>
-          <div style={M.chip}>
-            <span style={M.chipLabel}>Remaining Days</span>
-            <span style={{ ...M.chipVal, color: remainingDays === 0 ? "#27ae60" : "#e74c3c" }}>{remainingDays}</span>
-          </div>
-          <div style={M.chip}>
-            <span style={M.chipLabel}>Remaining Hours</span>
-            <span style={{ ...M.chipVal, color: remainingHours === 0 ? "#27ae60" : "#e74c3c" }}>{remainingHours}</span>
+          <div className="bg-[#f5f6ff] rounded-xl p-3.5 flex flex-col items-center justify-center min-h-[76px] border-b-[3px] border-[#0052cc]">
+            <span className="text-[9px] font-extrabold text-[#0052cc] tracking-wider uppercase mb-1">ASSIGNED UNITS</span>
+            <span className="text-xl font-extrabold text-[#0052cc]">{totalAssignedUnits}</span>
           </div>
         </div>
 
-        {/* ── New assignment form ── */}
-        <div style={M.formRow}>
-          <div style={{ flex: 2, minWidth: 140 }}>
-            <label style={M.label}>Employee</label>
-            <select value={selUser} onChange={e => setSelUser(e.target.value)} style={M.select}>
-              <option value="">Select employee…</option>
-              {users.map(emp => (
-                <option key={emp.employee_id || emp.id} value={emp.employee_id || emp.id}>
-                  {emp.emp_name || emp.name}
-                </option>
-              ))}
-            </select>
+        {/* Remaining Balance Strip */}
+        <div className="bg-[#f8f9fc] border border-blue-100/80 rounded-xl p-4 flex justify-around items-center text-center">
+          <div className="flex-1">
+            <div className="text-[9px] font-bold text-[#0052cc] tracking-wider uppercase leading-none mb-1.5">REMAINING UNITS</div>
+            <div className="text-lg font-bold text-emerald-600">{remainingUnits}</div>
           </div>
-          <div style={{ flex: 1, minWidth: 70 }}>
-            <label style={M.label}>Units</label>
-            <input
-              type="number"
-              min="1"
-              max={remainingUnits || undefined}
-              placeholder={remainingUnits > 0 ? `Max ${remainingUnits}` : "0"}
-              value={units}
-              onChange={e => setUnits(e.target.value)}
-              style={{ ...M.input, borderColor: unitsExceeded ? "#e74c3c" : "#ddd" }}
-            />
+          <div className="w-[1px] h-8 bg-slate-200" />
+          <div className="flex-1">
+            <div className="text-[9px] font-bold text-[#0052cc] tracking-wider uppercase leading-none mb-1.5">REMAINING DAYS</div>
+            <div className="text-lg font-bold text-emerald-600">{remainingDays}</div>
           </div>
-          <div style={{ flex: 1, minWidth: 70 }}>
-            <label style={M.label}>Days</label>
-            <input
-              type="number"
-              min="0"
-              step="0.5"
-              placeholder="0"
-              value={days}
-              onChange={e => handleDaysChange(e.target.value)}
-              style={{ ...M.input, borderColor: daysExceeded ? "#e74c3c" : "#ddd" }}
-            />
-          </div>
-          <div style={{ flex: 1, minWidth: 70 }}>
-            <label style={M.label}>Hours</label>
-            <input
-              type="number"
-              min="0"
-              step="0.5"
-              placeholder="0"
-              value={hours}
-              onChange={e => handleHoursChange(e.target.value)}
-              style={{ ...M.input, borderColor: hoursExceeded ? "#e74c3c" : "#ddd" }}
-            />
-          </div>
-          <div style={{ alignSelf: "flex-end" }}>
-            <button
-              onClick={handleSubmit}
-              style={{
-                ...M.assignBtn,
-                opacity: (saving || unitsExceeded || daysExceeded || hoursExceeded || remainingUnits === 0) ? 0.5 : 1,
-                cursor: (saving || unitsExceeded || daysExceeded || hoursExceeded || remainingUnits === 0) ? "not-allowed" : "pointer",
-              }}
-              disabled={saving || unitsExceeded || daysExceeded || hoursExceeded || remainingUnits === 0}
-            >
-              {saving ? "Saving…" : "Assign"}
-            </button>
+          <div className="w-[1px] h-8 bg-slate-200" />
+          <div className="flex-1">
+            <div className="text-[9px] font-bold text-[#0052cc] tracking-wider uppercase leading-none mb-1.5">REMAINING HOURS</div>
+            <div className="text-lg font-bold text-emerald-600">{remainingHours}</div>
           </div>
         </div>
 
-        {(unitsExceeded || daysExceeded || hoursExceeded) && (
-          <div style={{ ...M.error, marginTop: 4 }}>
-            ⚠️ Values exceed remaining limits. Please adjust.
+        {/* New Assignment Form */}
+        {!isAdmin && (
+          <div className="flex flex-col gap-2">
+            <h4 className="text-[11px] font-extrabold text-slate-500 tracking-wider uppercase">New Assignment</h4>
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end bg-slate-50/50 p-4 border border-slate-100 rounded-xl">
+              <div className="md:col-span-2">
+                <label className="block text-[10px] font-semibold text-slate-400 mb-1">Employee</label>
+                <div className="relative">
+                  <select
+                    value={selUser}
+                    onChange={e => setSelUser(e.target.value)}
+                    className="w-full pl-3 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 cursor-pointer appearance-none"
+                  >
+                    <option value="">Select employee...</option>
+                    {users.map(emp => (
+                      <option key={emp.employee_id || emp.id} value={emp.employee_id || emp.id}>
+                        {emp.emp_name || emp.name}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </span>
+                </div>
+              </div>
+              <div>
+                <label className="block text-[10px] font-semibold text-slate-400 mb-1">Units</label>
+                <input
+                  type="number" min="0" placeholder="0"
+                  value={units} onChange={e => setUnits(e.target.value)}
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-center text-slate-700 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+                  style={{ borderColor: unitsExceeded ? "#f43f5e" : "#e2e8f0" }}
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-semibold text-slate-400 mb-1">Days</label>
+                <input
+                  type="number" min="0" step="0.5" placeholder="0"
+                  value={days} onChange={e => handleDaysChange(e.target.value)}
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-center text-slate-700 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+                  style={{ borderColor: daysExceeded ? "#f43f5e" : "#e2e8f0" }}
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-semibold text-slate-400 mb-1">Hours</label>
+                <input
+                  type="number" min="0" step="0.5" placeholder="0"
+                  value={hours} onChange={e => handleHoursChange(e.target.value)}
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-center text-slate-700 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+                  style={{ borderColor: hoursExceeded ? "#f43f5e" : "#e2e8f0" }}
+                />
+              </div>
+              <button
+                onClick={handleSubmit}
+                disabled={saving || unitsExceeded || daysExceeded || hoursExceeded || remainingUnits === 0}
+                className={`w-full py-2 rounded-xl font-bold text-xs transition-all border ${
+                  saving || unitsExceeded || daysExceeded || hoursExceeded || remainingUnits === 0
+                    ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed"
+                    : "bg-[#E6FFFA] hover:bg-[#D5FFF6] text-[#319795] border-[#319795] shadow-sm"
+                }`}
+              >
+                {saving ? "Saving…" : "Assign"}
+              </button>
+            </div>
+            {(unitsExceeded || daysExceeded || hoursExceeded) && (
+              <div className="text-rose-500 text-[11px] font-semibold mt-1">
+                ⚠️ Values exceed remaining limits. Please adjust.
+              </div>
+            )}
           </div>
         )}
 
-        {/* ── Employee's Current Workload ── */}
+        {/* Employee's Current Workload */}
         {selUser && (
-          <div style={{ marginTop: 20, borderTop: "1px solid #eee", paddingTop: 16 }}>
-            <h4 style={{ fontSize: 13, fontWeight: 700, color: "#2c3e50", marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>
+          <div className="border-t border-slate-100 pt-4">
+            <h4 className="text-xs font-bold text-slate-700 mb-2.5 flex items-center gap-1.5">
               💼 Current Workload
             </h4>
             {loadingWorkload ? (
-              <div style={{ fontSize: 13, color: "#95a5a6", fontStyle: "italic", padding: "8px 0" }}>
-                Loading current workload...
-              </div>
+              <div className="text-xs text-slate-400 italic py-2">Loading current workload...</div>
             ) : workload && workload.tasks && workload.tasks.length > 0 ? (
-              <div style={{ maxHeight: 200, overflowY: "auto", border: "1px solid #eef2f3", borderRadius: 6, padding: 8, background: "#fafbfc" }}>
+              <div className="max-h-40 overflow-y-auto border border-slate-100 rounded-xl p-3 bg-slate-50/50 flex flex-col gap-3">
                 {workload.tasks.map((proj) => (
-                  <div key={proj.project_id} style={{ marginBottom: 12 }}>
-                    <div style={{ fontWeight: 700, fontSize: 12, color: "#34495e", borderBottom: "1px dashed #ddd", paddingBottom: 4, marginBottom: 6 }}>
+                  <div key={proj.project_id} className="border border-slate-200/40 rounded-lg p-2 bg-white">
+                    <div className="font-bold text-[11px] text-slate-700 border-b border-dashed border-slate-100 pb-1.5 mb-2">
                       📁 {proj.project_name}
                     </div>
-                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
+                    <table className="w-full text-[11px] text-left">
                       <thead>
-                        <tr style={{ background: "#f1f2f6" }}>
-                          <th style={{ padding: "4px 8px", textAlign: "left", color: "#7f8c8d" }}>Task Name</th>
-                          <th style={{ padding: "4px 8px", textAlign: "left", color: "#7f8c8d" }}>Role</th>
-                          <th style={{ padding: "4px 8px", textAlign: "right", color: "#7f8c8d" }}>Assigned Hrs</th>
-                          <th style={{ padding: "4px 8px", textAlign: "center", color: "#7f8c8d" }}>Status</th>
+                        <tr className="bg-slate-50 text-slate-400 font-bold">
+                          <th className="py-1 px-2 rounded-l">Task</th>
+                          <th className="py-1 px-2">Role</th>
+                          <th className="py-1 px-2 text-right">Hrs</th>
+                          <th className="py-1 px-2 text-center rounded-r">Status</th>
                         </tr>
                       </thead>
                       <tbody>
                         {proj.tasks.map((task) => {
-                          let statusBg = "#e2e8f0";
-                          let statusColor = "#4a5568";
+                          let statusCls = "bg-slate-100 text-slate-600";
                           let statusText = "Not Started";
                           if (task.status === "in_progress") {
-                            statusBg = "#dbeafe";
-                            statusColor = "#1e40af";
+                            statusCls = "bg-blue-50 text-blue-600 border border-blue-100";
                             statusText = "In Progress";
                           } else if (task.status === "completed") {
-                            statusBg = "#dcfce7";
-                            statusColor = "#166534";
+                            statusCls = "bg-emerald-50 text-emerald-600 border border-emerald-100";
                             statusText = "Completed";
                           }
                           return (
-                            <tr key={task.task_id} style={{ borderBottom: "1px solid #f1f2f6" }}>
-                              <td style={{ padding: "6px 8px", color: "#2c3e50", fontWeight: 500 }}>{task.task_name}</td>
-                              <td style={{ padding: "6px 8px", color: "#7f8c8d" }}>
-                                <span style={{
-                                  padding: "2px 6px",
-                                  borderRadius: 4,
-                                  fontSize: 10,
-                                  background: roleStyle(task.role).bg,
-                                  color: roleStyle(task.role).text,
-                                  border: `1px solid ${roleStyle(task.role).border}`,
-                                  fontWeight: 600
-                                }}>{task.role}</span>
+                            <tr key={task.task_id} className="border-b border-slate-50 last:border-none">
+                              <td className="py-1.5 px-2 font-semibold text-slate-700">{task.task_name}</td>
+                              <td className="py-1.5 px-2">
+                                <span className="px-1.5 py-0.2 rounded text-[9px] font-bold"
+                                  style={{ backgroundColor: `${roleStyle(task.role).border}12`, color: roleStyle(task.role).border }}>
+                                  {task.role}
+                                </span>
                               </td>
-                              <td style={{ padding: "6px 8px", textAlign: "right", color: "#2c3e50", fontWeight: 700 }}>
-                                {task.estimated_hours}
-                              </td>
-                              <td style={{ padding: "6px 8px", textAlign: "center" }}>
-                                <span style={{
-                                  padding: "2px 6px",
-                                  borderRadius: 10,
-                                  fontSize: 9,
-                                  fontWeight: 700,
-                                  background: statusBg,
-                                  color: statusColor,
-                                  whiteSpace: "nowrap"
-                                }}>
+                              <td className="py-1.5 px-2 text-right font-bold text-slate-700">{task.estimated_hours}</td>
+                              <td className="py-1.5 px-2 text-center">
+                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${statusCls}`}>
                                   {statusText}
                                 </span>
                               </td>
@@ -395,80 +456,145 @@ const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onClose })
                 ))}
               </div>
             ) : (
-              <div style={{
-                padding: "16px",
-                background: "#f9f9f9",
-                border: "1px dashed #e0e0e0",
-                borderRadius: 8,
-                textAlign: "center",
-                color: "#7f8c8d",
-                fontSize: 13
-              }}>
+              <div className="p-4 border border-dashed border-slate-200 bg-slate-50/50 rounded-xl text-center text-xs text-slate-400">
                 No active project assignments found.
               </div>
             )}
           </div>
         )}
 
-        {/* ── Already assigned ── */}
-        <div style={{ marginTop: 18 }}>
-          <div style={M.existingTitle}>
-            {existing.length === 0 ? "No employees assigned yet" : `Current Assignments (${existing.length})`}
+        {/* Existing Assignments */}
+        <div className="border-t border-slate-100 pt-4 flex flex-col gap-3">
+          <div className="flex justify-between items-center">
+            <span className="text-[11px] font-bold text-slate-500 tracking-wider uppercase">
+              Current Assignments ({existing.length})
+            </span>
+            <span className="text-[9px] font-bold text-slate-300">LAST UPDATED: JUST NOW</span>
           </div>
-          {existing.length > 0 && (
-            <table style={M.table}>
-              <thead>
-                <tr>
-                  <th style={{ ...M.th, textAlign: "left" }}>Employee</th>
-                  <th style={M.th}>Units</th>
-                  <th style={M.th}>Days</th>
-                  <th style={M.th}>Hours</th>
-                  <th style={M.th}>Completed</th>
-                  <th style={M.th}>Pending</th>
-                  <th style={M.th}>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {existing.map((a, i) => {
-                  const completed = Number(a.units_completed || 0);
-                  const pending = Math.max(Number(a.units_assigned) - completed, 0);
-                  return (
-                    <tr key={a.id} style={{ background: i % 2 === 0 ? "#fff" : "#fafbfc" }}>
-                      <td style={M.td}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <div style={M.avatar}>{a.user_name?.[0]?.toUpperCase() || "?"}</div>
-                          <strong>{a.user_name}</strong>
-                        </div>
-                      </td>
-                      <td style={{ ...M.td, textAlign: "center", fontWeight: 700, color: "#3498db" }}>
-                        {a.units_assigned}
-                      </td>
-                      <td style={{ ...M.td, textAlign: "center", fontWeight: 700, color: "#2c3e50" }}>
-                        {a.estimated_days || 0}
-                      </td>
-                      <td style={{ ...M.td, textAlign: "center", fontWeight: 700, color: "#2c3e50" }}>
-                        {a.estimated_hours || 0}
-                      </td>
-                      <td style={{ ...M.td, textAlign: "center", fontWeight: 700, color: "#27ae60" }}>
-                        {completed}
-                      </td>
-                      <td style={{ ...M.td, textAlign: "center", fontWeight: 700, color: pending === 0 ? "#27ae60" : "#e74c3c" }}>
-                        {pending}
-                      </td>
-                      <td style={M.td}>
-                        <button onClick={() => onDelete(a.id)} style={M.removeBtn}>Remove</button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          {existing.length > 0 ? (
+            <div className="overflow-x-auto border border-slate-100 rounded-xl">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-[#EFF4FF] border-b border-slate-100 text-slate-500 font-bold text-[10px] uppercase">
+                    <th className="py-2.5 px-3">Employee</th>
+                    <th className="py-2.5 px-3 text-center w-16">Units</th>
+                    <th className="py-2.5 px-3 text-center w-16">Days</th>
+                    <th className="py-2.5 px-3 text-center w-16">Hours</th>
+                    <th className="py-2.5 px-3 text-center w-20">Completed</th>
+                    <th className="py-2.5 px-3 text-center w-20">Pending</th>
+                    {!isAdmin && <th className="py-2.5 px-3 text-center w-40">Action</th>}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {existing.map((a) => {
+                    const completed = Number(a.units_completed || 0);
+                    const pending = Math.max(Number(a.units_assigned) - completed, 0);
+                    const isEditing = !!editingRow[a.id];
+                    const eRow = editingRow[a.id] || {};
+                    const isSavingThis = !!savingEdit[a.id];
+                    return (
+                      <tr key={a.id} className="hover:bg-slate-50/20">
+                        <td className="py-3 px-3">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-full bg-violet-100 text-[#7f5feb] flex items-center justify-center text-[10px] font-bold shrink-0">
+                              {a.user_name?.[0]?.toUpperCase() || "?"}
+                            </div>
+                            <span className="font-bold text-slate-800">{a.user_name}</span>
+                          </div>
+                        </td>
+                        <td className="py-3 px-3 text-center">
+                          {isEditing ? (
+                            <input
+                              type="number" min="1" value={eRow.units}
+                              onChange={e => handleEditField(a.id, 'units', e.target.value)}
+                              className="w-14 px-1 py-0.5 border border-violet-500 rounded text-center font-semibold text-xs outline-none"
+                            />
+                          ) : (
+                            <span className="font-bold text-blue-600">{a.units_assigned}</span>
+                          )}
+                        </td>
+                        <td className="py-3 px-3 text-center text-slate-700">
+                          {isEditing ? (
+                            <input
+                              type="number" min="0" step="0.5" value={eRow.days}
+                              onChange={e => handleEditField(a.id, 'days', e.target.value)}
+                              className="w-14 px-1 py-0.5 border border-violet-500 rounded text-center font-semibold text-xs outline-none"
+                            />
+                          ) : (
+                            <span>{a.estimated_days || 0}</span>
+                          )}
+                        </td>
+                        <td className="py-3 px-3 text-center text-slate-700">
+                          {isEditing ? (
+                            <input
+                              type="number" min="0" step="0.5" value={eRow.hours}
+                              onChange={e => handleEditField(a.id, 'hours', e.target.value)}
+                              className="w-14 px-1 py-0.5 border border-violet-500 rounded text-center font-semibold text-xs outline-none"
+                            />
+                          ) : (
+                            <span>{a.estimated_hours || 0}</span>
+                          )}
+                        </td>
+                        <td className="py-3 px-3 text-center font-bold text-emerald-600">{completed}</td>
+                        <td className="py-3 px-3 text-center font-bold text-rose-500">{pending}</td>
+                        {!isAdmin && (
+                          <td className="py-3 px-3 text-center">
+                            <div className="flex gap-2 justify-center">
+                              {isEditing ? (
+                                <>
+                                  <button
+                                    onClick={() => handleEditSave(a.id)}
+                                    disabled={isSavingThis}
+                                    className="border border-emerald-500 text-emerald-600 hover:bg-emerald-50 font-bold px-2 py-0.5 rounded-lg text-[10px] transition-all"
+                                  >
+                                    Save
+                                  </button>
+                                  <button
+                                    onClick={() => cancelEdit(a.id)}
+                                    disabled={isSavingThis}
+                                    className="border border-slate-300 text-slate-500 hover:bg-slate-50 font-bold px-2 py-0.5 rounded-lg text-[10px] transition-all"
+                                  >
+                                    Cancel
+                                  </button>
+                                </>
+                              ) : (
+                                <>
+                                  <button
+                                    onClick={() => startEdit(a)}
+                                    className="border border-violet-500 text-violet-500 hover:bg-violet-50 font-bold px-3 py-1 rounded-lg transition-all"
+                                  >
+                                    Edit
+                                  </button>
+                                  <button
+                                    onClick={() => onDelete(a.id)}
+                                    className="border border-rose-500 text-rose-500 hover:bg-rose-50 font-bold px-3 py-1 rounded-lg transition-all"
+                                  >
+                                    Remove
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          </td>
+                        )}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="p-4 border border-dashed border-slate-200 bg-slate-50/50 rounded-xl text-center text-xs text-slate-400">
+              No employees assigned yet.
+            </div>
           )}
         </div>
 
-        {/* ── Footer ── */}
-        <div style={{ marginTop: 20, textAlign: "right" }}>
-          <button onClick={onClose} style={M.closeFooterBtn}>Done</button>
+        {/* Footer */}
+        <div className="flex justify-end border-t border-slate-100 pt-4">
+          <button onClick={onClose}
+            className="bg-[#7f5feb] hover:bg-[#6c4ce0] text-white font-bold text-sm py-2 px-8 rounded-xl transition-all shadow-sm">
+            Done
+          </button>
         </div>
       </div>
     </div>
@@ -476,28 +602,29 @@ const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onClose })
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MAIN COMPONENT
+// MAIN SCREEN COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 const AssignmentScreen = () => {
+  const isAdmin = getUserRole() === 'ADMIN';
   const serviceDeliveryEmployees = useSelector(
     (state) => state.auth.serviceDeliveryEmployees
   );
   const [projects, setProjects] = useState([]);
-  // const [users,        setUsers]        = useState([]);
   const [catalog, setCatalog] = useState({});
   const [selProject, setSelProject] = useState("");
-  // CHANGED: loadDraft values are now objects { planned_units, estimated_days, estimated_hours }
   const [loadDraft, setLoadDraft] = useState({});
   const [totalLoad, setTotalLoad] = useState(0);
   const [savingLoad, setSavingLoad] = useState(false);
   const [loadSaved, setLoadSaved] = useState(false);
   const [assignments, setAssignments] = useState([]);
   const [summary, setSummary] = useState({ rows: [], totals: {} });
-  // NEW: effort estimates keyed by role
   const [effortByRole, setEffortByRole] = useState({});
-
-  // ── Inline assign modal state ──────────────────────────────────────────────
   const [assignModal, setAssignModal] = useState(null);
+  const [assignExtraData, setAssignExtraData] = useState({});
+  const [collapsedRoles, setCollapsedRoles] = useState({});
+
+  const toggleRole = (role) =>
+    setCollapsedRoles(prev => ({ ...prev, [role]: !prev[role] }));
 
   // ── Initial fetch: projects, catalog ────────────────────────────────
   useEffect(() => {
@@ -514,67 +641,60 @@ const AssignmentScreen = () => {
     fetchBase();
   }, []);
 
-  // ── Per-project fetch: loads, assignments, summary + NEW effort-estimates ───
-const fetchProjectData = useCallback(async (pid) => {
-  if (!pid) return;
-  try {
-    const [lRes, aRes, sRes, eRes] = await Promise.all([
-      axios.get(`${BASE_URL}/api/assignments/task-loads/${pid}`, { headers: getHeaders() }),
-      axios.get(`${BASE_URL}/api/assignments?projectId=${pid}`, { headers: getHeaders() }),
-      axios.get(`${BASE_URL}/api/assignments/summary/${pid}`, { headers: getHeaders() }),
-      axios.get(`${BASE_URL}/api/assignments/effort-estimates/${pid}`, { headers: getHeaders() }),
-    ]);
-    const loads = lRes.data.loads || [];
-    setTotalLoad(lRes.data.total_load || 0);
+  // ── Per-project fetch: loads, assignments, summary, effort-estimates ───
+  const fetchProjectData = useCallback(async (pid) => {
+    if (!pid) return;
+    try {
+      const [lRes, aRes, sRes, eRes] = await Promise.all([
+        axios.get(`${BASE_URL}/api/assignments/task-loads/${pid}`, { headers: getHeaders() }),
+        axios.get(`${BASE_URL}/api/assignments?projectId=${pid}`, { headers: getHeaders() }),
+        axios.get(`${BASE_URL}/api/assignments/summary/${pid}`, { headers: getHeaders() }),
+        axios.get(`${BASE_URL}/api/assignments/effort-estimates/${pid}`, { headers: getHeaders() }),
+      ]);
+      const loads = lRes.data.loads || [];
+      setTotalLoad(lRes.data.total_load || 0);
 
-    // Get effort data
-    const effortByRoleData = eRes.data?.byRole || {};
-    setEffortByRole(effortByRoleData);
-    
-    // 🔥 FIX: ONLY show roles that exist in effort estimates
-    const effortRoles = Object.keys(effortByRoleData);
-    
-    setCatalog(prevCatalog => {
-      const filteredCatalog = {};
-      // Only include roles that exist in effort estimates
-      effortRoles.forEach(role => {
-        if (prevCatalog[role]) {
-          // Use existing catalog tasks if available
-          filteredCatalog[role] = prevCatalog[role];
-        } else {
-          // Create default task for roles without catalog entry
-          filteredCatalog[role] = [
-            {
-              id: `default_${role}`,
-              task_name: `${role} Tasks`,
-              unit_type: "Tasks"
-            }
-          ];
-        }
+      const effortByRoleData = eRes.data?.byRole || {};
+      setEffortByRole(effortByRoleData);
+
+      const effortRoles = Object.keys(effortByRoleData);
+
+      setCatalog(prevCatalog => {
+        const filteredCatalog = {};
+        effortRoles.forEach(role => {
+          if (prevCatalog[role]) {
+            filteredCatalog[role] = prevCatalog[role];
+          } else {
+            filteredCatalog[role] = [
+              {
+                id: `default_${role}`,
+                task_name: `${role} Tasks`,
+                unit_type: "Tasks"
+              }
+            ];
+          }
+        });
+        return filteredCatalog;
       });
-      return filteredCatalog;
-    });
 
-    // CHANGED: draft now stores object per key instead of plain number
-    const draft = {};
-    loads.forEach(l => {
-      draft[`${l.role}||${l.task_name}`] = {
-        planned_units: l.planned_units,
-        estimated_days: l.estimated_days || "",
-        estimated_hours: l.estimated_hours || "",
-      };
-    });
-    setLoadDraft(draft);
-    setAssignments(aRes.data || []);
-    setSummary(sRes.data || { rows: [], totals: {} });
-  } catch (err) { console.error(err); }
-}, []);
+      const draft = {};
+      loads.forEach(l => {
+        draft[`${l.role}||${l.task_name}`] = {
+          planned_units: l.planned_units,
+          estimated_days: l.estimated_days || "",
+          estimated_hours: l.estimated_hours || "",
+        };
+      });
+      setLoadDraft(draft);
+      setAssignments(aRes.data || []);
+      setSummary(sRes.data || { rows: [], totals: {} });
+    } catch (err) { console.error(err); }
+  }, []);
 
   useEffect(() => {
     if (selProject) fetchProjectData(selProject);
   }, [selProject, fetchProjectData]);
 
-  // ── Load draft input — CHANGED: now handles sub-fields ───────────────────
   const handleLoadInput = (role, taskName, field, val) => {
     const key = `${role}||${taskName}`;
     setLoadDraft(prev => {
@@ -596,7 +716,6 @@ const fetchProjectData = useCallback(async (pid) => {
     });
   };
 
-  // Returns error message string, or null if valid
   const validateLoads = (roleToValidate = null) => {
     const rolesToCheck = roleToValidate ? [roleToValidate] : Object.keys(catalog);
 
@@ -613,7 +732,6 @@ const fetchProjectData = useCallback(async (pid) => {
         }
       });
 
-      // Only validate roles that have any values entered
       if (rolePlannedUnits <= 0 && rolePlannedHours <= 0) continue;
 
       const effortData = effortByRole[role];
@@ -632,10 +750,9 @@ const fetchProjectData = useCallback(async (pid) => {
         return `Role "${role}": estimated hours (${rolePlannedHours} hrs) exceeds the estimated hours limit (${maxHours} hrs).`;
       }
     }
-    return null; // all good
+    return null;
   };
 
-  // ── Save all loads — CHANGED: now sends estimated_days + estimated_hours ──
   const handleSaveLoads = async () => {
     if (!selProject) return;
 
@@ -684,7 +801,6 @@ const fetchProjectData = useCallback(async (pid) => {
     }
   };
 
-  // ── Open the assign modal ─────────────────────────────────────────────────────
   const openAssignModal = async (role, task) => {
     const key = `${role}||${task.task_name}`;
     const entry = loadDraft[key] || {};
@@ -698,14 +814,12 @@ const fetchProjectData = useCallback(async (pid) => {
     }
     const estimatedHours = Number(entry.estimated_hours) || 0;
 
-    // Validate before saving task load
     const validationError = validateLoads(role);
     if (validationError) {
       toast.error(validationError);
       return;
     }
 
-    // ─── Step 1: Save task load first ────────────────────────────
     if (plannedUnits > 0 || estimatedDays > 0 || estimatedHours > 0) {
       try {
         await axios.post(
@@ -722,7 +836,6 @@ const fetchProjectData = useCallback(async (pid) => {
           },
           { headers: getHeaders() }
         );
-        // Refresh data after saving
         await fetchProjectData(selProject);
       } catch (err) {
         toast.error("Failed to save task load. Please try again.");
@@ -730,7 +843,6 @@ const fetchProjectData = useCallback(async (pid) => {
       }
     }
 
-    // ─── Step 2: Open the assign modal ────────────────────────────
     setAssignModal({
       role,
       task_name: task.task_name,
@@ -741,17 +853,11 @@ const fetchProjectData = useCallback(async (pid) => {
     });
   };
 
-  // ── Add assignment (called from modal) ────────────────────────────────────────
   const handleAddAssignment = async ({
-    user_id,
-    role,
-    task_name,
-    units_assigned,
-    estimated_days,
-    estimated_hours
+    user_id, role, task_name, units_assigned, estimated_days, estimated_hours
   }) => {
     try {
-      await axios.post(
+      const res = await axios.post(
         `${BASE_URL}/api/assignments`,
         {
           project_id: selProject,
@@ -765,74 +871,140 @@ const fetchProjectData = useCallback(async (pid) => {
         { headers: getHeaders() }
       );
       await fetchProjectData(selProject);
+      return res.data;
     } catch (err) {
       throw err;
     }
   };
 
-  // ── Delete assignment (called from modal) — UNCHANGED ────────────────────
   const handleDelete = async (id) => {
     if (!window.confirm("Remove this assignment?")) return;
     await axios.delete(`${BASE_URL}/api/assignments/${id}`, { headers: getHeaders() });
     await fetchProjectData(selProject);
   };
 
-  // ── Derived ───────────────────────────────────────────────────────────────
   const summaryByKey = {};
   (summary.rows || []).forEach(r => { summaryByKey[`${r.role}||${r.task_name}`] = r; });
   const { total_planned = 0, total_effort_days = 0, total_effort_hours = 0, total_assigned = 0, total_completed = 0 } = summary.totals || {};
 
-
-
-  console.log("Redux employees:", serviceDeliveryEmployees);
   return (
-    <div style={S.page}>
-      <h2 style={S.pageTitle}>Task Allocation</h2>
+    <div className="p-6 bg-slate-50 min-h-full font-sans">
 
-      {/* ── Project selector + KPI strip — UNCHANGED ── */}
-      <section style={S.card}>
-        <div style={S.row}>
-          <div style={{ flex: 1, minWidth: 220 }}>
-            <label style={S.label}>Project's</label>
-            <select value={selProject} onChange={e => setSelProject(e.target.value)} style={S.select}>
-              <option value="">Choose a project…</option>
-              {projects.map(p => (
-                <option key={p.id} value={p.id}>{p.project_name || p.name}</option>
-              ))}
-            </select>
-          </div>
-          {selProject && (
-            <div style={S.kpiStrip}>
-              <KPI label="Total Effort" value={total_planned} color="#9b59b6" />
-              <KPI label="Total Days" value={total_effort_days} color="#9b59b6" />
-              <KPI label="Total Hours" value={total_effort_hours} color="#9b59b6" />
-              <KPI label="Assigned" value={total_assigned} color="#3498db" />
-              <KPI label="Completed" value={total_completed} color="#27ae60" />
-              <KPI label="Pending" value={Math.max(total_assigned - total_completed, 0)} color="#e74c3c" />
-            </div>
-          )}
-        </div>
-      </section>
+      {/* Title */}
+      <div className="mb-6">
+        <h2 className="text-2xl font-extrabold text-slate-800">Task Allocation</h2>
+        <p className="text-sm text-slate-500 mt-1">Manage workloads and assign personnel to active projects.</p>
+      </div>
 
-      {/* ── Load definition table (with inline Assign button) ── */}
-      {selProject && (
-        <section style={S.card}>
-          <div style={S.sectionHead}>
-            <div>
-              <div style={S.sectionTitle}>Effort estimate & Assign</div>
-              <div style={S.sectionSub}>
-                Set planned units per role &amp; task, then click <strong>Assign</strong> on any row to assign employees.
+      {/* Main card */}
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 mb-6">
+        {selProject ? (
+          <div className="flex flex-col gap-6">
+            {/* Top row: Title + Dropdown */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-5">
+              <div>
+                <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                  Effort Estimate & Assign
+                  {isAdmin && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-100">
+                      🔒 VIEW ONLY
+                    </span>
+                  )}
+                </h3>
+              </div>
+
+              {/* Dropdown select styled as Figma */}
+              <div className="relative w-full md:w-[480px]">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </span>
+                <select
+                  value={selProject}
+                  onChange={e => setSelProject(e.target.value)}
+                  className="w-full pl-9 pr-10 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 shadow-sm focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 cursor-pointer appearance-none"
+                >
+                  <option value="">Search or choose a project...</option>
+                  {projects.map(p => (
+                    <option key={p.id} value={p.id}>{p.project_name || p.name}</option>
+                  ))}
+                </select>
+                <span className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </span>
               </div>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              {loadSaved && <span style={{ color: "#27ae60", fontSize: 13, fontWeight: 700 }}>✓ Saved!</span>}
-              <div style={S.totalBadge}>Total: <strong style={{ marginLeft: 4 }}>{totalLoad} units</strong></div>
-              <button onClick={handleSaveLoads} style={S.primaryBtn} disabled={savingLoad}>
-                {savingLoad ? "Saving…" : "Save"}
-              </button>
+
+            {/* KPI Row */}
+            <div className="flex gap-3 flex-wrap">
+              <KPI label="Total Effort" value={total_planned + " units"} color="text-violet-600 border-l-violet-500" />
+              <KPI label="Total Days" value={total_effort_days} color="text-slate-800 border-l-slate-400" />
+              <KPI label="Total Hours" value={total_effort_hours} color="text-slate-800 border-l-slate-400" />
+              <KPI label="Assigned" value={total_assigned} color="text-sky-500 border-l-sky-400" />
+              <KPI label="Completed" value={total_completed} color="text-emerald-500 border-l-emerald-400" />
+              <KPI label="Pending" value={Math.max(total_assigned - total_completed, 0)} color="text-rose-500 border-l-rose-400" />
             </div>
           </div>
+        ) : (
+          <div>
+            <label className="block text-[11px] font-bold text-slate-400 tracking-widest uppercase mb-2">SELECTED PROJECT</label>
+            <div className="relative w-full md:w-[480px] mb-6">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </span>
+              <select
+                value={selProject}
+                onChange={e => setSelProject(e.target.value)}
+                className="w-full pl-9 pr-10 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 shadow-sm focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 cursor-pointer appearance-none"
+              >
+                <option value="">Search or choose a project...</option>
+                {projects.map(p => (
+                  <option key={p.id} value={p.id}>{p.project_name || p.name}</option>
+                ))}
+              </select>
+              <span className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </span>
+            </div>
 
+            {/* Empty state illustration */}
+            <div className="border-2 border-dashed border-slate-200/80 bg-slate-50/50 rounded-2xl p-12 flex flex-col items-center justify-center text-center">
+              <div className="w-32 h-32 flex items-center justify-center mb-4">
+                <svg width="120" height="120" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="80" cy="80" r="60" fill="#f3f0ff" />
+                  <g filter="drop-shadow(0px 8px 16px rgba(127, 95, 235, 0.15))">
+                    <rect x="56" y="44" width="48" height="64" rx="8" fill="white" />
+                    <circle cx="68" cy="58" r="3" fill="#c7d2fe" />
+                    <rect x="76" y="56" width="18" height="4" rx="2" fill="#e2e8f0" />
+                    <circle cx="68" cy="70" r="3" fill="#c7d2fe" />
+                    <rect x="76" y="68" width="18" height="4" rx="2" fill="#e2e8f0" />
+                    <circle cx="68" cy="82" r="3" fill="#c7d2fe" />
+                    <rect x="76" y="80" width="18" height="4" rx="2" fill="#e2e8f0" />
+                  </g>
+                  <rect x="92" y="38" width="22" height="22" rx="6" fill="#7f5feb" />
+                  <path d="M103 45C104.657 45 106 46.3431 106 48C106 49.6569 104.657 51 103 51C101.343 51 100 49.6569 100 48C100 46.3431 101.343 45 103 45Z" fill="white" />
+                  <path d="M96 56C96 53.7909 97.7909 52 100 52H106C108.209 52 110 53.7909 110 56V57H96V56Z" fill="white" />
+                </svg>
+              </div>
+              <h4 className="text-lg font-bold text-slate-800 mb-1.5">No Project Selected</h4>
+              <p className="text-sm text-slate-500 max-w-sm">
+                Select a project from the dropdown above to define resource loads and begin assigning employees to specific tasks.
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Accordion role table list */}
+      {selProject && (
+        <div className="flex flex-col gap-4">
           {Object.entries(catalog)
             .sort(([roleA], [roleB]) => {
               const indexA = ROLE_ORDER.indexOf(roleA);
@@ -844,322 +1016,232 @@ const fetchProjectData = useCallback(async (pid) => {
             })
             .map(([role, tasks]) => {
               const rs = roleStyle(role);
-              const effortData = effortByRole[role] || null; // NEW
-              // CHANGED: read planned_units from entry object
+              const effortData = effortByRole[role] || null;
               const rolePlanned = tasks.reduce((s, t) => s + (Number(loadDraft[`${role}||${t.task_name}`]?.planned_units) || 0), 0);
               const roleAssigned = tasks.reduce((s, t) => s + Number(summaryByKey[`${role}||${t.task_name}`]?.total_assigned || 0), 0);
-
               const roleAllocatedHrs = tasks.reduce((s, t) => s + (Number(loadDraft[`${role}||${t.task_name}`]?.estimated_hours) || 0), 0);
               const remainingBalanceHrs = effortData ? (Number(effortData.total_hrs) || 0) - roleAllocatedHrs : 0;
               const remainingBalanceUnits = effortData ? (Number(effortData.units) || 0) - rolePlanned : 0;
 
-              return (
-                <div key={role} style={{ marginBottom: 16 }}>
+              const isCollapsed = !!collapsedRoles[role];
 
-                  {/* ── Role bar — CHANGED: flex-wrap added + effort chips ── */}
-                  <div style={{ ...S.roleBar, flexWrap: "wrap", gap: 8 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <span style={{ color: rs.text, fontWeight: 700, fontSize: 13 }}>{role}</span>
-                      <span style={{ fontSize: 12, color: rs.text, opacity: 0.75 }}>
-                        {rolePlanned} planned · {roleAssigned} assigned
-                      </span>
+              return (
+                <div key={role} className="border border-slate-200/80 rounded-2xl overflow-hidden shadow-sm bg-white">
+
+                  {/* Accordion Header */}
+                  <div
+                    onClick={() => toggleRole(role)}
+                    className="flex flex-col lg:flex-row lg:items-center justify-between p-4 cursor-pointer hover:bg-slate-50/50 transition-all select-none border-l-4"
+                    style={{ borderLeftColor: rs.border }}
+                  >
+                    {/* Left: Initials + Title */}
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
+                        style={{ backgroundColor: rs.border }}
+                      >
+                        {role.split(/\s+/).map(w => w[0]).join("").slice(0, 2).toUpperCase()}
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-slate-800">{role}</h4>
+                        <p className="text-[11px] text-slate-400 font-semibold mt-0.5">
+                          {rolePlanned} planned · {roleAssigned} assigned
+                        </p>
+                      </div>
                     </div>
 
-                    {/* NEW: effort estimate chips from effort_estimates table */}
-                    {effortData ? (
-                      <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
-                        <span style={{ fontSize: 10, color: rs.text, opacity: 0.6, marginRight: 2 }}>Estimated:</span>
-                        <EffortChip label="Days" value={effortData.effort_days} color={rs.text} />
-                        <EffortChip label="Hrs" value={effortData.effort_hrs} color={rs.text} />
-                        <EffortChip label="Buf Days" value={effortData.buffer_days} color={rs.text} />
-                        <EffortChip label="Total Hrs" value={effortData.total_hrs} color={rs.text} />
-                        <EffortChip label={effortData.unit_label || "Units"} value={effortData.units} color={rs.text} />
+                    {/* Center: Est Chips */}
+                    <div className="flex flex-wrap items-center gap-2 mt-3 lg:mt-0 justify-center lg:justify-end flex-1 lg:mr-4">
+                      {effortData ? (
+                        <>
+                          <EffortChip label="Est. Days" value={effortData.effort_days} />
+                          <EffortChip label="Est. Hrs" value={effortData.effort_hrs} />
+                          <EffortChip label="Buf Days" value={effortData.buffer_days} />
+                          <EffortChip label="Total Hrs" value={effortData.total_hrs} />
+                          <EffortChip
+                            label="Bal Hrs"
+                            value={remainingBalanceHrs}
+                            valColor={remainingBalanceHrs < 0 ? "text-rose-500" : "text-emerald-500"}
+                          />
+                          <EffortChip
+                            label="Bal Units"
+                            value={remainingBalanceUnits}
+                            valColor={remainingBalanceUnits < 0 ? "text-rose-500" : "text-emerald-500"}
+                          />
+                        </>
+                      ) : (
+                        <span className="text-xs text-slate-400 italic">No estimate found</span>
+                      )}
+                    </div>
 
-                        <span style={{ fontSize: 10, color: rs.text, opacity: 0.6, marginLeft: 8, marginRight: 2 }}>Balance:</span>
-                        <EffortChip
-                          label="Bal Hrs"
-                          value={remainingBalanceHrs}
-                          color={rs.text}
-                          valColor={remainingBalanceHrs < 0 ? "#e74c3c" : "#27ae60"}
-                        />
-                        <EffortChip
-                          label="Bal Units"
-                          value={remainingBalanceUnits}
-                          color={rs.text}
-                          valColor={remainingBalanceUnits < 0 ? "#e74c3c" : "#27ae60"}
-                        />
-                      </div>
-                    ) : (
-                      <span style={{ fontSize: 10, color: rs.text, opacity: 0.45, fontStyle: "italic" }}>
-                        No estimate found
-                      </span>
-                    )}
+                    {/* Right: Chevron */}
+                    <div className="shrink-0 flex items-center justify-center text-slate-400 mt-2 lg:mt-0">
+                      <svg
+                        className={`w-5 h-5 transition-transform duration-200 ${isCollapsed ? '-rotate-90' : 'rotate-0'}`}
+                        fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
                   </div>
 
-                  {/* Task rows — CHANGED: added Est. Days + Est. Hours columns */}
-                  <table style={S.table}>
-                    <thead>
-                      <tr>
-                        <th style={S.th}>Task</th>
-                        <th style={{ ...S.th, width: 120 }}>Planned Units</th>
-                        {/* NEW columns */}
-                        <th style={{ ...S.th, width: 105 }}>Est. Days</th>
-                        <th style={{ ...S.th, width: 105 }}>Est. Hours</th>
-                        <th style={S.th}>Unit Type</th>
-                        <th style={{ ...S.th, width: 90 }}>Assigned</th>
-                        <th style={{ ...S.th, width: 90 }}>Completed</th>
-                        <th style={{ ...S.th, width: 130 }}>Status</th>
-                        <th style={{ ...S.th, width: 100 }}>Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {tasks.map((t, i) => {
-                        const key = `${role}||${t.task_name}`;
-                        const entry = loadDraft[key] || {}; // CHANGED: now an object
-                        const planned = Number(entry.planned_units) || 0;
-                        const estimatedDays = Number(entry.estimated_days) || 0;
-                        const sumRow = summaryByKey[key];
-                        const assigned = sumRow ? Number(sumRow.total_assigned) : 0;
-                        const completed = sumRow ? Number(sumRow.total_completed) : 0;
-
-                        // How many people are already assigned to this row
-                        const assigneeCount = assignments.filter(
-                          a => a.role === role && a.task_name === t.task_name
-                        ).length;
-
-                        return (
-                          <tr key={t.id} style={{ background: i % 2 === 0 ? "#fff" : "#fafafa" }}>
-                            <td style={S.td}>{t.task_name}</td>
-
-                            {/* Planned Units — CHANGED: reads from entry.planned_units */}
-                            <td style={S.td}>
-                              <input
-                                type="number" min="0"
-                                value={entry.planned_units ?? ""} placeholder="0"
-                                onChange={e => handleLoadInput(role, t.task_name, "planned_units", e.target.value)}
-                                style={S.unitInput}
-                              />
-                            </td>
-
-                            {/* NEW: Est. Days */}
-                            <td style={{ ...S.td }}>
-                              <input
-                                type="number" min="0" step="0.5"
-                                value={entry.estimated_days ?? ""} placeholder="0"
-                                onChange={e => handleLoadInput(role, t.task_name, "estimated_days", e.target.value)}
-                                style={{ ...S.unitInput, borderColor: "#95a5a6" }}
-                              />
-                            </td>
-
-                            {/* NEW: Est. Hours */}
-                            <td style={{ ...S.td }}>
-                              <input
-                                type="number" min="0" step="0.5"
-                                value={entry.estimated_hours ?? ""} placeholder="0"
-                                onChange={e => handleLoadInput(role, t.task_name, "estimated_hours", e.target.value)}
-                                style={{ ...S.unitInput, borderColor: "#95a5a6" }}
-                              />
-                            </td>
-
-                            <td style={{ ...S.td, color: "#999", fontSize: 12 }}>{t.unit_type}</td>
-                            <td style={{ ...S.td, textAlign: "center", fontWeight: 700, color: "#3498db" }}>
-                              {assigned}
-                            </td>
-                            <td style={{ ...S.td, textAlign: "center", fontWeight: 700, color: "#27ae60" }}>
-                              {completed}
-                            </td>
-                            <td style={S.td}>
-                              <StatusBadge assigned={assigned} planned={planned} />
-                            </td>
-                            {/* Assign button per row — NOW SAVES LOAD FIRST */}
-                            <td style={S.td}>
-                              <button
-                                onClick={() => openAssignModal(role, t)}
-                                style={{
-                                  ...S.assignRowBtn,
-                                  background: (planned <= 0 || estimatedDays <= 0) ? "#bdc3c7" : "#3498db",
-                                  cursor: (planned <= 0 || estimatedDays <= 0) ? "not-allowed" : "pointer"
-                                }}
-                                title={(planned <= 0 || estimatedDays <= 0) ? "Please enter both Planned Units and Est. Days first" : `Assign employees to ${t.task_name}`}
-                              >
-                                👤 Assign
-                                {assigneeCount > 0 && (
-                                  <span style={S.assigneeCountBadge}>{assigneeCount}</span>
-                                )}
-                              </button>
-                            </td>
+                  {/* Accordion Body */}
+                  {!isCollapsed && (
+                    <div className="overflow-x-auto border-t border-slate-100">
+                      <table className="w-full text-left border-collapse">
+                        <thead>
+                          <tr className="border-b border-slate-100 bg-[#EFF4FF]">
+                            <th className="py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase">Task Name</th>
+                            <th className="py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-28">Planned Units</th>
+                            <th className="py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-24">Est. Days</th>
+                            <th className="py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-24">Est. Hours</th>
+                            <th className="py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase w-32">Unit Type</th>
+                            <th className="py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-20">Assigned</th>
+                            <th className="py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-20">Completed</th>
+                            <th className="py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-36">Status</th>
+                            <th className="py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-28">Action</th>
                           </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {tasks.map((t) => {
+                            const key = `${role}||${t.task_name}`;
+                            const entry = loadDraft[key] || {};
+                            const planned = Number(entry.planned_units) || 0;
+                            const estimatedDays = Number(entry.estimated_days) || 0;
+                            const sumRow = summaryByKey[key];
+                            const assigned = sumRow ? Number(sumRow.total_assigned) : 0;
+                            const completed = sumRow ? Number(sumRow.total_completed) : 0;
+                            const assigneeCount = assignments.filter(
+                              a => a.role === role && a.task_name === t.task_name
+                            ).length;
+
+                            return (
+                              <tr key={t.id} className="hover:bg-slate-50/20 transition-colors">
+                                <td className="py-3.5 px-4 text-sm font-semibold text-slate-700">{t.task_name}</td>
+
+                                {/* Planned Units */}
+                                <td className="py-3.5 px-4 text-center">
+                                  {isAdmin ? (
+                                    <span className="text-sm font-semibold text-slate-600">{entry.planned_units ?? '—'}</span>
+                                  ) : (
+                                    <input
+                                      type="number" min="0"
+                                      value={entry.planned_units ?? ""} placeholder="0"
+                                      onClick={e => e.stopPropagation()}
+                                      onChange={e => handleLoadInput(role, t.task_name, "planned_units", e.target.value)}
+                                      className="w-20 px-2 py-1 bg-white border border-slate-200 rounded-lg text-center text-xs font-semibold focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+                                    />
+                                  )}
+                                </td>
+
+                                {/* Est. Days */}
+                                <td className="py-3.5 px-4 text-center">
+                                  {isAdmin ? (
+                                    <span className="text-sm font-semibold text-slate-600">{entry.estimated_days ?? '—'}</span>
+                                  ) : (
+                                    <input
+                                      type="number" min="0" step="0.5"
+                                      value={entry.estimated_days ?? ""} placeholder="0"
+                                      onClick={e => e.stopPropagation()}
+                                      onChange={e => handleLoadInput(role, t.task_name, "estimated_days", e.target.value)}
+                                      className="w-20 px-2 py-1 bg-white border border-slate-200 rounded-lg text-center text-xs font-semibold focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+                                    />
+                                  )}
+                                </td>
+
+                                {/* Est. Hours */}
+                                <td className="py-3.5 px-4 text-center">
+                                  {isAdmin ? (
+                                    <span className="text-sm font-semibold text-slate-600">{entry.estimated_hours ?? '—'}</span>
+                                  ) : (
+                                    <input
+                                      type="number" min="0" step="0.5"
+                                      value={entry.estimated_hours ?? ""} placeholder="0"
+                                      onClick={e => e.stopPropagation()}
+                                      onChange={e => handleLoadInput(role, t.task_name, "estimated_hours", e.target.value)}
+                                      className="w-20 px-2 py-1 bg-white border border-slate-200 rounded-lg text-center text-xs font-semibold focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+                                    />
+                                  )}
+                                </td>
+
+                                <td className="py-3.5 px-4 text-xs font-semibold text-slate-400">{t.unit_type}</td>
+                                <td className="py-3.5 px-4 text-center text-sm font-bold text-sky-600">{assigned}</td>
+                                <td className="py-3.5 px-4 text-center text-sm font-bold text-slate-500">{completed}</td>
+                                <td className="py-3.5 px-4 text-center">
+                                  <StatusBadge assigned={assigned} planned={planned} />
+                                </td>
+
+                                {/* Assign button */}
+                                <td className="py-3.5 px-4 text-center">
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); openAssignModal(role, t); }}
+                                    disabled={planned <= 0 || estimatedDays <= 0}
+                                    className={`w-full py-1.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1 transition-all ${planned <= 0 || estimatedDays <= 0
+                                        ? "bg-slate-100 text-slate-400 cursor-not-allowed"
+                                        : "bg-[#7f5feb] hover:bg-[#6c4ce0] text-white shadow-sm"
+                                      }`}
+                                    title={planned <= 0 || estimatedDays <= 0 ? "Enter Planned Units and Est. Days first" : `Assign employees to ${t.task_name}`}
+                                  >
+                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                    </svg>
+                                    Assign
+                                    {assigneeCount > 0 && (
+                                      <span className="ml-1 bg-white/20 px-1.5 py-0.5 rounded-full text-[10px]">{assigneeCount}</span>
+                                    )}
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </div>
               );
             })}
-        </section>
-      )}
 
-      {/* ── Empty state — UNCHANGED ── */}
-      {!selProject && (
-        <div style={{ ...S.card, textAlign: "center", padding: "50px 20px", color: "#bbb" }}>
-          <div style={{ fontSize: 36, marginBottom: 10 }}>📋</div>
-          <p style={{ fontSize: 15 }}>Select a project to define loads and assign employees</p>
+          {/* Bottom Actions */}
+          {selProject && (
+            <div className="flex justify-end gap-3 mt-6 pb-12">
+              <button
+                onClick={() => setSelProject("")}
+                className="border border-slate-200 hover:bg-slate-50 text-slate-600 font-bold text-sm py-2.5 px-6 rounded-xl transition-all"
+              >
+                Cancel
+              </button>
+              {!isAdmin && (
+                <button
+                  onClick={handleSaveLoads}
+                  disabled={savingLoad}
+                  className="bg-[#7f5feb] hover:bg-[#6c4ce0] text-white font-bold text-sm py-2.5 px-6 rounded-xl transition-all shadow-sm disabled:opacity-55 disabled:cursor-not-allowed"
+                >
+                  {savingLoad ? "Saving..." : "Submit Final Estimate"}
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
 
-      {/* ── Inline Assign Modal — UNCHANGED ── */}
-      {/* {assignModal && (
+      {/* Assign Modal */}
+      {assignModal && (
         <AssignModal
           modal={assignModal}
           users={serviceDeliveryEmployees}
           assignments={assignments}
           onAssign={handleAddAssignment}
           onDelete={handleDelete}
+          onUpdate={() => fetchProjectData(selProject)}
           onClose={() => setAssignModal(null)}
-        />
-      )} */}
-
-      {/* ── Inline Assign Modal ── */}
-      {assignModal && (
-        <AssignModal
-          modal={assignModal}
-          users={serviceDeliveryEmployees} // ← USE THIS INSTEAD (from user table)
-          assignments={assignments}
-          onAssign={handleAddAssignment}
-          onDelete={handleDelete}
-          onClose={() => setAssignModal(null)}
+          extraData={assignExtraData}
+          setExtraData={setAssignExtraData}
+          isAdmin={isAdmin}
         />
       )}
-
-
     </div>
   );
-};
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Styles — ALL ORIGINAL, unchanged
-// ─────────────────────────────────────────────────────────────────────────────
-const S = {
-  page: { padding: "20px", maxWidth: "1200px", margin: "0 auto", fontFamily: "sans-serif" },
-  pageTitle: { fontSize: "22px", fontWeight: "800", color: "#1e272e", marginBottom: "20px", textAlign: "left" },
-  card: { background: "#fff", borderRadius: 10, boxShadow: "0 2px 10px rgba(0,0,0,0.07)", padding: "20px", marginBottom: 20 },
-  sectionHead: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12, marginBottom: 16 },
-  sectionTitle: { fontSize: 15, fontWeight: 700, color: "#1e272e", marginBottom: 4 },
-  sectionSub: { fontSize: 12, color: "#999" },
-  row: { display: "flex", gap: 14, flexWrap: "wrap", alignItems: "flex-start" },
-  label: { display: "block", fontSize: 12, fontWeight: 600, color: "#666", marginBottom: 5 },
-  select: { width: "100%", padding: "8px 10px", border: "1px solid #ddd", borderRadius: 5, fontSize: 14, background: "white", boxSizing: "border-box", cursor: "pointer" },
-  unitInput: { width: "100%", padding: "5px 8px", border: "1px solid #ddd", borderRadius: 4, fontSize: 13, boxSizing: "border-box", textAlign: "center" },
-  primaryBtn: { padding: "8px 20px", background: "#27ae60", color: "white", border: "none", borderRadius: 5, fontSize: 13, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" },
-  roleBar: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 14px", borderRadius: "6px 6px 0 0", background: "#9ea4a0", },
-  table: { width: "100%", borderCollapse: "collapse", fontSize: 13, border: "1px solid #eee" },
-  th: { padding: "8px 12px", background: "#f8f9fa", fontWeight: 600, color: "#555", textAlign: "center", borderBottom: "1px solid #dee2e6", fontSize: 12 },
-  td: { padding: "8px 12px", borderBottom: "1px solid #f5f5f5", color: "#333" },
-  kpiStrip: { display: "flex", gap: 10, flexWrap: "wrap" },
-  totalBadge: { background: "#f0f0f0", borderRadius: 6, padding: "6px 14px", fontSize: 13, color: "#555" },
-  assignRowBtn: {
-    display: "inline-flex", alignItems: "center", gap: 5,
-    padding: "4px 12px", background: "#3498db", color: "white",
-    border: "none", borderRadius: 5, fontSize: 12, fontWeight: 700,
-    cursor: "pointer", whiteSpace: "nowrap",
-  },
-  assigneeCountBadge: {
-    display: "inline-flex", alignItems: "center", justifyContent: "center",
-    width: 16, height: 16, borderRadius: "50%",
-    background: "rgba(255,255,255,0.35)", fontSize: 10, fontWeight: 800,
-  },
-};
-
-// Modal styles — ALL ORIGINAL, unchanged
-const M = {
-  overlay: {
-    position: "fixed", inset: 0,
-    background: "rgba(0,0,0,0.45)", backdropFilter: "blur(2px)",
-    display: "flex", alignItems: "center", justifyContent: "center",
-    zIndex: 1000, padding: 20,
-  },
-  modal: {
-    background: "#fff", borderRadius: 12,
-    boxShadow: "0 8px 40px rgba(0,0,0,0.2)",
-    width: "100%", maxWidth: 560,
-    maxHeight: "90vh", overflowY: "auto",
-    padding: "24px 28px",
-  },
-  header: {
-    display: "flex", justifyContent: "space-between",
-    alignItems: "flex-start", marginBottom: 16,
-  },
-  title: { fontSize: 18, fontWeight: 800, color: "#1e272e", marginBottom: 4 },
-  sub: { fontSize: 13, color: "#555", display: "flex", alignItems: "center", flexWrap: "wrap", gap: 4 },
-  closeBtn: {
-    background: "none", border: "none", fontSize: 18,
-    cursor: "pointer", color: "#999", padding: "0 4px",
-    lineHeight: 1,
-  },
-  strip: {
-    display: "flex", gap: 12, marginBottom: 20,
-    background: "#f8f9fa", borderRadius: 8, padding: "12px 16px",
-    flexWrap: "wrap",
-  },
-  chip: { flex: 1, textAlign: "center", minWidth: 55 },
-  chipLabel: { display: "block", fontSize: 11, color: "#aaa", marginBottom: 2 },
-  chipVal: { fontSize: 20, fontWeight: 800 },
-  formRow: {
-    display: "flex", gap: 10, alignItems: "flex-end",
-    flexWrap: "wrap", marginBottom: 8,
-  },
-  label: { display: "block", fontSize: 12, fontWeight: 600, color: "#666", marginBottom: 4 },
-  select: {
-    width: "100%", padding: "8px 10px", border: "1px solid #ddd",
-    borderRadius: 5, fontSize: 14, background: "white",
-    boxSizing: "border-box", cursor: "pointer",
-  },
-  input: {
-    width: "100%", padding: "8px 10px", border: "1px solid #ddd",
-    borderRadius: 5, fontSize: 14, boxSizing: "border-box",
-  },
-  assignBtn: {
-    padding: "9px 18px", background: "#27ae60", color: "white",
-    border: "none", borderRadius: 5, fontSize: 13, fontWeight: 700,
-    cursor: "pointer", whiteSpace: "nowrap",
-  },
-  error: { color: "#e74c3c", fontSize: 12, margin: "4px 0 0" },
-  existingTitle: { fontSize: 13, fontWeight: 700, color: "#555", marginBottom: 8 },
-  table: { width: "100%", borderCollapse: "collapse", fontSize: 13 },
-  th: { padding: "7px 10px", background: "#f8f9fa", fontWeight: 600, color: "#666", textAlign: "left", borderBottom: "1px solid #eee", fontSize: 12 },
-  td: { padding: "8px 10px", borderBottom: "1px solid #f5f5f5" },
-  avatar: {
-    width: 28, height: 28, borderRadius: "50%",
-    background: "#3498db", color: "white",
-    display: "flex", alignItems: "center", justifyContent: "center",
-    fontSize: 12, fontWeight: 700, flexShrink: 0,
-  },
-  removeBtn: {
-    padding: "3px 10px", background: "#e74c3c", color: "white",
-    border: "none", borderRadius: 4, fontSize: 11, cursor: "pointer",
-  },
-  closeFooterBtn: {
-    padding: "8px 24px", background: "#1e272e", color: "white",
-    border: "none", borderRadius: 6, fontSize: 13, fontWeight: 700,
-    cursor: "pointer",
-  },
-  toast: {
-    position: "fixed",
-    top: 24,
-    right: 24,
-    zIndex: 99999,
-    color: "white",
-    padding: "12px 22px",
-    borderRadius: "10px",
-    fontWeight: 700,
-    fontSize: "14px",
-    boxShadow: "0 6px 24px rgba(0,0,0,0.28)",
-    pointerEvents: "none",
-    minWidth: 240,
-    maxWidth: 400,
-    wordBreak: "break-word",
-    animation: "fadeInSlide 0.25s ease"
-  }
 };
 
 export default AssignmentScreen;

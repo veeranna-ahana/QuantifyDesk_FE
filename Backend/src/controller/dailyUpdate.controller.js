@@ -216,7 +216,7 @@ const deleteDailyUpdate = async (req, res, next) => {
 // GET /api/daily-updates/meta
 async function getMeta(req, res) {
   try {
-    console.log('🚀 getMeta called');
+    console.log('🚀 getMeta called - Admin/Manager view');
     
     // Generate all dates from Jan 1, 2025 to today
     const today = new Date();
@@ -228,7 +228,7 @@ async function getMeta(req, res) {
     }
     dates.sort((a, b) => new Date(b) - new Date(a));
 
-    // Get projects
+    // Get ALL projects
     const projects = await query(`
       SELECT id, project_name
       FROM projects
@@ -246,6 +246,46 @@ async function getMeta(req, res) {
     res.status(500).json({
       success: false,
       error: "Failed to load filter options",
+      details: err.message
+    });
+  }
+}
+
+// GET /api/daily-updates/employee-projects - For Employees (assigned projects only)
+async function getEmployeeProjects(req, res) {
+  try {
+    const userId = req.user?.emp_id;
+    const userRole = req.user?.role;
+    
+    console.log('👤 getEmployeeProjects called for:', { userId, userRole });
+    
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        error: "User not authenticated"
+      });
+    }
+    
+    // ✅ Query based on your actual table structure (no status column)
+    const projects = await query(`
+      SELECT DISTINCT p.id, p.project_name
+      FROM projects p
+      INNER JOIN assignments a ON a.project_id = p.id
+      WHERE a.emp_id = ?
+      ORDER BY p.project_name
+    `, [userId]);
+    
+    console.log(`📋 Found ${projects.length} assigned projects for employee ${userId}`);
+    
+    res.status(200).json({
+      success: true,
+      projects: projects
+    });
+  } catch (err) {
+    console.error('❌ getEmployeeProjects error:', err);
+    res.status(500).json({
+      success: false,
+      error: "Failed to load employee projects",
       details: err.message
     });
   }
@@ -359,5 +399,6 @@ module.exports = {
   getAllDailyUpdates,
   updateDailyUpdate,
   deleteDailyUpdate,
-  getMeta, getDailyUpdates
+  getMeta, getDailyUpdates,
+  getEmployeeProjects
 };

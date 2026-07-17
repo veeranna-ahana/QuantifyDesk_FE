@@ -9,6 +9,9 @@ import MainLayout from './layout/MainLayout';
 import './App.css';
 import Users from './pages/Users';
 import Projects from './pages/Projects';
+import CreateProject from './pages/CreateProject';
+import EditProject from './pages/EditProject';
+import EffortEstimate from './pages/EffortEstimate';
 import Tasks from './pages/Tasks';
 import DailyUpdates from './pages/DailyUpdate';
 import AssignmentScreen from './pages/Assignment';
@@ -48,6 +51,9 @@ function App() {
         <Route path="/" element={<MainLayout />}>
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="projects" element={<Projects />} />
+          <Route path="projects/create" element={<CreateProject />} />
+          <Route path="projects/edit" element={<EditProject />} />
+          <Route path="projects/effort" element={<EffortEstimate />} />
           <Route path="users" element={<Users />} />
           <Route path="tasks" element={<Tasks />} />
           <Route path="daily-update" element={<DailyUpdates />} />
