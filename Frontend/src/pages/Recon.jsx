@@ -157,9 +157,8 @@ const Pagination = ({ page, pageSize, total, onPageChange, onPageSizeChange, ent
             <button
               key={p}
               onClick={() => onPageChange(p)}
-              className={`min-w-[28px] h-7 px-1.5 flex items-center justify-center rounded-md text-xs font-semibold transition-colors ${
-                p === page ? "bg-[#856BFF] text-white" : "text-gray-500 hover:bg-gray-100"
-              }`}
+              className={`min-w-[28px] h-7 px-1.5 flex items-center justify-center rounded-md text-xs font-semibold transition-colors ${p === page ? "bg-[#856BFF] text-white" : "text-gray-500 hover:bg-gray-100"
+                }`}
             >
               {p}
             </button>
@@ -197,12 +196,15 @@ const ReconPage = () => {
   const [projectSearch, setProjectSearch] = useState("");
   const [employeeSearch, setEmployeeSearch] = useState("");
   const [resourceSearch, setResourceSearch] = useState("");
+  const [unitSearch, setUnitSearch] = useState("");
 
   // ─── Pagination States ─────────────────────────────────────────
   const [projectPage, setProjectPage] = useState(1);
   const [projectPageSize, setProjectPageSize] = useState(10);
   const [employeePage, setEmployeePage] = useState(1);
   const [employeePageSize, setEmployeePageSize] = useState(10);
+  const [unitPage, setUnitPage] = useState(1);
+  const [unitPageSize, setUnitPageSize] = useState(10);
 
   const [filterOpts, setFilterOpts] = useState({
     clients: [],
@@ -370,8 +372,10 @@ const ReconPage = () => {
     });
     setProjectSearch("");
     setEmployeeSearch("");
+    setUnitSearch("");
     setProjectPage(1);
     setEmployeePage(1);
+    setUnitPage(1);
   };
 
   const handleViewProjectDetails = async (project) => {
@@ -460,41 +464,41 @@ const ReconPage = () => {
       {/* ── If Detail View is Active, Show Only Project Details ── */}
       {showDetailView ? (
         <div className="px-4 pt-4">
-  <button
-    onClick={handleBackToDashboard}
-    className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-[#6D5EF6] mb-4 transition"
-  >
-    <span className="text-lg">←</span>
-    Back to Recon Dashboard
-  </button>
+          <button
+            onClick={handleBackToDashboard}
+            className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-[#6D5EF6] mb-4 transition"
+          >
+            <span className="text-lg">←</span>
+            Back to Recon Dashboard
+          </button>
 
-  {loadingDetail || !projectDetail?.project ? (
-    <div className="h-28 rounded-2xl bg-white animate-pulse" />
-  ) : (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-      <div className="flex">
-        <div className="w-1 bg-[#7C5CFC]" />
+          {loadingDetail || !projectDetail?.project ? (
+            <div className="h-28 rounded-2xl bg-white animate-pulse" />
+          ) : (
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="flex">
+                <div className="w-1 bg-[#7C5CFC]" />
 
-        <div className="flex-1 px-6 py-2">
-          <h1 className="text-[24px] font-normal text-[#191B23] leading-tight">
-            {projectDetail.project?.project_name || "—"}
-          </h1>
+                <div className="flex-1 px-6 py-2">
+                  <h1 className="text-[24px] font-normal text-[#191B23] leading-tight">
+                    {projectDetail.project?.project_name || "—"}
+                  </h1>
 
-          <div className="flex items-center gap-3 mt-3">
-            <span className="bg-gray-100 text-[11px] font-medium text-gray-600 px-3 py-1 rounded">
-              CODE: {projectDetail.project?.project_code || "—"}
-            </span>
+                  <div className="flex items-center gap-3 mt-3">
+                    <span className="bg-gray-100 text-[11px] font-medium text-gray-600 px-3 py-1 rounded">
+                      CODE: {projectDetail.project?.project_code || "—"}
+                    </span>
 
-            {projectDetail.project?.status && (
-              <span className="text-xs font-medium text-red-500">
-                Status: {projectDetail.project.status}
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  )}
+                    {projectDetail.project?.status && (
+                      <span className="text-xs font-medium text-red-500">
+                        Status: {projectDetail.project.status}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
 
           {loadingDetail || !projectDetail?.project ? (
@@ -506,128 +510,125 @@ const ReconPage = () => {
             <div className="py-5 ">
               {/* Stat cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 mt-6">
-  {/* Estimated */}
-  <div className="relative bg-white rounded-2xl shadow-sm border border-gray-100 px-5 py-2 overflow-hidden">
-    <ClockIcon className="absolute top-5 right-5 w-10 h-10 text-gray-200" />
+                {/* Estimated */}
+                <div className="relative bg-white rounded-2xl shadow-sm border border-gray-100 px-5 py-2 overflow-hidden">
+                  <ClockIcon className="absolute top-5 right-5 w-10 h-10 text-gray-200" />
 
-    <p className="text-xs text-gray-500 font-medium">
-      Estimated Effort
-    </p>
+                  <p className="text-xs text-gray-500 font-medium">
+                    Estimated Effort
+                  </p>
 
-    <h3 className="mt-3 text-4xl font-semibold text-gray-900">
-      {Number(projectDetail.project?.estimated_hours).toLocaleString()}
-      <span className="text-base font-normal text-gray-500 ml-1">
-        Hours
-      </span>
-    </h3>
+                  <h3 className="mt-3 text-4xl font-semibold text-gray-900">
+                    {Number(projectDetail.project?.estimated_hours).toLocaleString()}
+                    <span className="text-base font-normal text-gray-500 ml-1">
+                      Hours
+                    </span>
+                  </h3>
 
-    <p className="mt-2 text-sm text-gray-500">
-      ~ {Number(projectDetail.project?.estimated_days).toLocaleString()} Work Days
-    </p>
-  </div>
+                  <p className="mt-2 text-sm text-gray-500">
+                    ~ {Number(projectDetail.project?.estimated_days).toLocaleString()} Work Days
+                  </p>
+                </div>
 
-  {/* Actual */}
-  <div className="relative bg-white rounded-2xl shadow-sm border border-gray-100 px-5 py-2overflow-hidden">
-    <HistoryIcon className="absolute top-5 right-5 w-10 h-10 text-gray-200" />
+                {/* Actual */}
+                <div className="relative bg-white rounded-2xl shadow-sm border border-gray-100 px-5 py-2overflow-hidden">
+                  <HistoryIcon className="absolute top-5 right-5 w-10 h-10 text-gray-200" />
 
-    <p className="text-xs text-gray-500 font-medium">
-      Actual Logged
-    </p>
+                  <p className="text-xs text-gray-500 font-medium">
+                    Actual Logged
+                  </p>
 
-    <h3 className="mt-3 text-4xl font-semibold text-gray-900">
-      {Number(projectDetail.project?.actual_hours).toLocaleString()}
-      <span className="text-base font-normal text-gray-500 ml-1">
-        Hours
-      </span>
-    </h3>
+                  <h3 className="mt-3 text-4xl font-semibold text-gray-900">
+                    {Number(projectDetail.project?.actual_hours).toLocaleString()}
+                    <span className="text-base font-normal text-gray-500 ml-1">
+                      Hours
+                    </span>
+                  </h3>
 
-    <p className="mt-2 text-sm text-gray-500">
-      ~ {Number(projectDetail.project?.actual_days).toLocaleString()} Work Days
-    </p>
-  </div>
+                  <p className="mt-2 text-sm text-gray-500">
+                    ~ {Number(projectDetail.project?.actual_days).toLocaleString()} Work Days
+                  </p>
+                </div>
 
-  {/* Variance */}
-  <div className="relative bg-white rounded-2xl shadow-sm border border-gray-100 px-5 py-2 pl-6 overflow-hidden">
-    <div
-      className={`absolute left-0 top-0 h-full w-1 ${
-        Number(projectDetail.project?.variance_hours) < 0
-          ? "bg-red-500"
-          : "bg-green-500"
-      }`}
-    />
+                {/* Variance */}
+                <div className="relative bg-white rounded-2xl shadow-sm border border-gray-100 px-5 py-2 pl-6 overflow-hidden">
+                  <div
+                    className={`absolute left-0 top-0 h-full w-1 ${Number(projectDetail.project?.variance_hours) < 0
+                      ? "bg-red-500"
+                      : "bg-green-500"
+                      }`}
+                  />
 
-    <p className="text-xs text-gray-500 font-medium">
-      Total Variance
-    </p>
+                  <p className="text-xs text-gray-500 font-medium">
+                    Total Variance
+                  </p>
 
-    <h3
-      className={`mt-3 text-4xl font-semibold ${
-        Number(projectDetail.project?.variance_hours) < 0
-          ? "text-red-600"
-          : "text-green-600"
-      }`}
-    >
-      {Number(projectDetail.project?.variance_hours) > 0 ? "+" : ""}
-      {Number(projectDetail.project?.variance_hours).toLocaleString()}
+                  <h3
+                    className={`mt-3 text-4xl font-semibold ${Number(projectDetail.project?.variance_hours) < 0
+                      ? "text-red-600"
+                      : "text-green-600"
+                      }`}
+                  >
+                    {Number(projectDetail.project?.variance_hours) > 0 ? "+" : ""}
+                    {Number(projectDetail.project?.variance_hours).toLocaleString()}
 
-      <span className="text-base font-normal ml-1">
-        Hrs
-      </span>
-    </h3>
+                    <span className="text-base font-normal ml-1">
+                      Hrs
+                    </span>
+                  </h3>
 
-    <p
-      className={`mt-2 text-sm ${
-        Number(projectDetail.project?.variance_hours) < 0
-          ? "text-red-500"
-          : "text-green-500"
-      }`}
-    >
-      ({projectDetail.project?.variance_pct}%)
-      {" "}
-      {Number(projectDetail.project?.variance_hours) < 0
-        ? "Over-allocated"
-        : "Under-allocated"}
-    </p>
-  </div>
+                  <p
+                    className={`mt-2 text-sm ${Number(projectDetail.project?.variance_hours) < 0
+                      ? "text-red-500"
+                      : "text-green-500"
+                      }`}
+                  >
+                    ({projectDetail.project?.variance_pct}%)
+                    {" "}
+                    {Number(projectDetail.project?.variance_hours) < 0
+                      ? "Over-allocated"
+                      : "Under-allocated"}
+                  </p>
+                </div>
 
-  {/* Resources */}
-  <div className="relative bg-white rounded-2xl shadow-sm border border-gray-100 px-5 py-2 overflow-hidden">
-    <UsersIcon className="absolute top-5 right-5 w-10 h-10 text-gray-200" />
+                {/* Resources */}
+                <div className="relative bg-white rounded-2xl shadow-sm border border-gray-100 px-5 py-2 overflow-hidden">
+                  <UsersIcon className="absolute top-5 right-5 w-10 h-10 text-gray-200" />
 
-    <p className="text-xs text-gray-500 font-medium">
-      Active Resources
-    </p>
+                  <p className="text-xs text-gray-500 font-medium">
+                    Active Resources
+                  </p>
 
-    <h3 className="mt-3 text-4xl font-semibold text-[#7C5CFC]">
-      {projectDetail.employeeSummary?.length || 0}
+                  <h3 className="mt-3 text-4xl font-semibold text-[#7C5CFC]">
+                    {projectDetail.employeeSummary?.length || 0}
 
-      <span className="text-base font-normal text-gray-500 ml-1">
-        Members
-      </span>
-    </h3>
+                    <span className="text-base font-normal text-gray-500 ml-1">
+                      Members
+                    </span>
+                  </h3>
 
-    <div className="flex items-center mt-4">
-      {(projectDetail.employeeSummary || []).slice(0, 4).map((e, i) => (
-        <div
-          key={i}
-          className="w-8 h-8 rounded-full bg-[#7C5CFC]/15 border-2 border-white flex items-center justify-center text-xs font-semibold text-[#7C5CFC]"
-          style={{ marginLeft: i === 0 ? 0 : -10 }}
-        >
-          {(e.employee_name || "?").charAt(0).toUpperCase()}
-        </div>
-      ))}
+                  <div className="flex items-center mt-4">
+                    {(projectDetail.employeeSummary || []).slice(0, 4).map((e, i) => (
+                      <div
+                        key={i}
+                        className="w-8 h-8 rounded-full bg-[#7C5CFC]/15 border-2 border-white flex items-center justify-center text-xs font-semibold text-[#7C5CFC]"
+                        style={{ marginLeft: i === 0 ? 0 : -10 }}
+                      >
+                        {(e.employee_name || "?").charAt(0).toUpperCase()}
+                      </div>
+                    ))}
 
-      {(projectDetail.employeeSummary?.length || 0) > 4 && (
-        <div
-          className="w-8 h-8 rounded-full bg-[#7C5CFC]/15 border-2 border-white flex items-center justify-center text-[11px] font-semibold text-[#7C5CFC]"
-          style={{ marginLeft: -10 }}
-        >
-          +{projectDetail.employeeSummary.length - 4}
-        </div>
-      )}
-    </div>
-  </div>
-</div>
+                    {(projectDetail.employeeSummary?.length || 0) > 4 && (
+                      <div
+                        className="w-8 h-8 rounded-full bg-[#7C5CFC]/15 border-2 border-white flex items-center justify-center text-[11px] font-semibold text-[#7C5CFC]"
+                        style={{ marginLeft: -10 }}
+                      >
+                        +{projectDetail.employeeSummary.length - 4}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
 
               {/* Employee-wise Breakdown */}
               <div className=" bg-[#FFFFFF] rounded-lg mt-6 px-2">
@@ -1000,19 +1001,24 @@ const ReconPage = () => {
           <div className="flex gap-1 mb-5 border-b border-gray-200">
             <button
               onClick={() => setActiveTab("project")}
-              className={`px-5 py-3 text-sm font-semibold border-b-2 -mb-px transition-colors ${
-                activeTab === "project" ? "text-[#856BFF] border-[#856BFF]" : "text-gray-500 border-transparent hover:text-gray-700"
-              }`}
+              className={`px-5 py-3 text-sm font-semibold border-b-2 -mb-px transition-colors ${activeTab === "project" ? "text-[#856BFF] border-[#856BFF]" : "text-gray-500 border-transparent hover:text-gray-700"
+                }`}
             >
               Project Level Reconciliation
             </button>
             <button
               onClick={() => setActiveTab("employee")}
-              className={`px-5 py-3 text-sm font-semibold border-b-2 -mb-px transition-colors ${
-                activeTab === "employee" ? "text-[#856BFF] border-[#856BFF]" : "text-gray-500 border-transparent hover:text-gray-700"
-              }`}
+              className={`px-5 py-3 text-sm font-semibold border-b-2 -mb-px transition-colors ${activeTab === "employee" ? "text-[#856BFF] border-[#856BFF]" : "text-gray-500 border-transparent hover:text-gray-700"
+                }`}
             >
               Employee Level Reconciliation
+            </button>
+            <button
+              onClick={() => setActiveTab("unit")}
+              className={`px-5 py-3 text-sm font-semibold border-b-2 -mb-px transition-colors ${activeTab === "unit" ? "text-[#856BFF] border-[#856BFF]" : "text-gray-500 border-transparent hover:text-gray-700"
+                }`}
+            >
+              Unit Wise Reconciliation
             </button>
           </div>
 
@@ -1312,6 +1318,121 @@ const ReconPage = () => {
                       onPageSizeChange={handleEmployeePageSizeChange}
                     />
                   )}
+                </div>
+              )}
+
+              {/* ─── Unit Wise Tab ─── */}
+              {activeTab === "unit" && (
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-9">
+                  {/* Header */}
+                  <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-wrap gap-3">
+                    <div>
+                      <span className="font-bold text-gray-900 text-[15px]">Unit Wise Analysis</span>
+                      <p className="text-xs text-gray-400 mt-0.5">Compare estimated vs actual units consumed per task across projects</p>
+                    </div>
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <div className="relative">
+                        <SearchIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input
+                          type="text"
+                          placeholder="Search project or task..."
+                          value={unitSearch}
+                          onChange={(e) => { setUnitSearch(e.target.value); setUnitPage(1); }}
+                          className="w-56 pl-9 pr-3.5 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#856BFF]/30"
+                        />
+                      </div>
+
+                    </div>
+                  </div>
+
+                  {/* Summary chips */}
+                  <div className="flex gap-3 flex-wrap px-5 py-3 border-b border-gray-50 bg-gray-50/60">
+                    {[
+                      { label: "Total Tasks", value: "—", color: "#6366f1" },
+                      { label: "Est. Units", value: "—", color: "#0ea5e9" },
+                      { label: "Actual Units", value: "—", color: "#10b981" },
+                      { label: "Over Budget", value: "—", color: "#ef4444" },
+                      { label: "Under Budget", value: "—", color: "#f59e0b" },
+                    ].map((chip) => (
+                      <div key={chip.label} className="flex items-center gap-2 bg-white border border-gray-100 rounded-lg px-3 py-2 shadow-sm">
+                        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: chip.color }} />
+                        <span className="text-[11px] text-gray-500 font-medium">{chip.label}</span>
+                        <span className="text-sm font-extrabold text-gray-800">{chip.value}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Table */}
+                  <div className="w-full overflow-x-auto">
+                    <table className="w-full border-collapse text-sm">
+                      <thead>
+                        <tr className="bg-[#F5F3FF]">
+                          <th className="px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Project</th>
+                          <th className="px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Employee</th>
+                          <th className="px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Task / Activity</th>
+                          <th className="px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Unit Type</th>
+                          <th className="px-4 py-3 text-right text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Est. Units</th>
+                          <th className="px-4 py-3 text-right text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Actual Units</th>
+                          <th className="px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Utilization %</th>
+                          <th className="px-4 py-3 text-right text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Variance</th>
+                          <th className="px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {/* Empty state — replace with real data map once API is wired */}
+                        <tr>
+                          <td colSpan={9} className="py-16 text-center">
+                            <div className="flex flex-col items-center gap-3">
+                              <div className="w-12 h-12 rounded-full bg-[#856BFF]/10 flex items-center justify-center">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="#856BFF" strokeWidth="1.5" className="w-6 h-6">
+                                  <rect x="3" y="3" width="7" height="7" rx="1" />
+                                  <rect x="14" y="3" width="7" height="7" rx="1" />
+                                  <rect x="3" y="14" width="7" height="7" rx="1" />
+                                  <rect x="14" y="14" width="7" height="7" rx="1" />
+                                </svg>
+                              </div>
+                              <div>
+                                <p className="text-sm font-semibold text-gray-700">Unit Wise Reconciliation</p>
+
+                              </div>
+
+                            </div>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Pagination placeholder */}
+                  <div className="flex justify-between items-center px-5 py-4 border-t border-gray-100">
+                    <span className="text-xs text-gray-400">Showing 0 to 0 of 0 entries</span>
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={unitPageSize}
+                        onChange={(e) => { setUnitPageSize(parseInt(e.target.value)); setUnitPage(1); }}
+                        className="px-2.5 py-1.5 border border-gray-200 rounded-md text-xs text-gray-600 focus:outline-none"
+                      >
+                        {[5, 10, 25, 50].map((n) => <option key={n} value={n}>{n}</option>)}
+                      </select>
+                      <div className="flex items-center gap-1">
+                        <button
+                          disabled
+                          className="w-7 h-7 flex items-center justify-center rounded-md text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                          <ChevronLeftIcon className="w-4 h-4" />
+                        </button>
+                        <button className="min-w-[28px] h-7 px-1.5 flex items-center justify-center rounded-md text-xs font-semibold bg-[#856BFF] text-white">
+                          1
+                        </button>
+                        <button
+                          disabled
+                          className="w-7 h-7 flex items-center justify-center rounded-md text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                          <ChevronRightIcon className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
             </>
