@@ -16,7 +16,7 @@ const InfoIcon = () => (
 );
 const FingerprintIcon = () => (
   <svg className="w-5 h-5 text-violet-600 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-    <path d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 0 0 8 11a4 4 0 1 1 8 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0 0 15.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 0 0 8 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4"/>
+    <path d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 0 0 8 11a4 4 0 1 1 8 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0 0 15.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 0 0 8 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4" />
   </svg>
 );
 const CalendarIcon = () => (
@@ -26,12 +26,12 @@ const CalendarIcon = () => (
 );
 const ArrowRightIcon = () => (
   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-    <path d="M5 12h14M12 5l7 7-7 7"/>
+    <path d="M5 12h14M12 5l7 7-7 7" />
   </svg>
 );
 const ChevDownIcon = () => (
   <svg className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-    <path d="M6 9l6 6 6-6"/>
+    <path d="M6 9l6 6 6-6" />
   </svg>
 );
 
@@ -86,7 +86,7 @@ export default function CreateProject() {
   const validate = () => {
     const e = {};
     if (!form.projectName.trim()) e.projectName = 'Project Name is required.';
-    if (!form.customer.trim())    e.customer    = 'Customer is required.';
+    if (!form.customer.trim()) e.customer = 'Customer is required.';
     return e;
   };
 
@@ -99,17 +99,17 @@ export default function CreateProject() {
       await axios.post(
         `${BASE_URL}/api/projects`,
         {
-          name:        form.projectName.trim(),
-          clientName:  form.customer.trim(),
+          name: form.projectName.trim(),
+          clientName: form.customer.trim(),
           description: form.description.trim(),
-          nbdId:       form.nbdId.trim(),
-          o2dId:       form.o2dId.trim(),
+          nbdId: form.nbdId.trim(),
+          o2dId: form.o2dId.trim(),
           projectCode: form.projectCode.trim(),
           subCategory: form.subCategory.trim(),
-          teamLead:    form.teamLead.trim() || null,
-          startDate:   form.startDate || null,
-          endDate:     form.endDate   || null,
-          status:      form.status,
+          teamLead: form.teamLead.trim() || null,
+          startDate: form.startDate || null,
+          endDate: form.endDate || null,
+          status: form.status,
           projectType: form.projectType,
         },
         { headers: getHeaders() }
@@ -283,8 +283,8 @@ export default function CreateProject() {
                     className={`${inputCls} appearance-none pr-9 cursor-pointer`}
                   >
                     <option value="">Select Type</option>
-                    <option value="one time project - otp">one time project - otp</option>
-                    <option value="managed service">managed service</option>
+                    <option value="one time project - otp">One Time Project - OTP</option>
+                    <option value="managed service">Managed Service</option>
                     <option value="Staff Augmentation">Staff Augmentation</option>
                   </select>
                   <ChevDownIcon />
