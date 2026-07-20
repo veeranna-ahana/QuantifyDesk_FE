@@ -148,6 +148,7 @@ const Header = () => {
           <button
             onClick={handleBellOpen}
             className="relative w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
+            style={{ padding: 0, border: 'none', background: 'transparent' }}
           >
             <BellIcon />
             {unreadCount > 0 && (

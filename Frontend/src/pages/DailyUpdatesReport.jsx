@@ -8,12 +8,12 @@ const PAGE_SIZE = 10;
 
 // ── Status badge colours (matching Figma) ─────────────────────────────────────
 const STATUS_CONFIG = {
-  'in-progress':  { bg: 'bg-violet-100', text: 'text-violet-700',  label: 'IN-PROGRESS'  },
-  'in_progress':  { bg: 'bg-violet-100', text: 'text-violet-700',  label: 'IN-PROGRESS'  },
-  completed:      { bg: 'bg-green-100',  text: 'text-green-700',   label: 'COMPLETED'    },
-  blocked:        { bg: 'bg-red-100',    text: 'text-red-600',     label: 'BLOCKED'      },
-  practicing:     { bg: 'bg-pink-100',   text: 'text-pink-700',    label: 'PRACTICING'   },
-  'not started':  { bg: 'bg-gray-100',   text: 'text-gray-500',    label: 'NOT STARTED'  },
+  'in-progress': { bg: 'bg-violet-100', text: 'text-violet-700', label: 'IN-PROGRESS' },
+  'in_progress': { bg: 'bg-violet-100', text: 'text-violet-700', label: 'IN-PROGRESS' },
+  completed: { bg: 'bg-green-100', text: 'text-green-700', label: 'COMPLETED' },
+  blocked: { bg: 'bg-red-100', text: 'text-red-600', label: 'BLOCKED' },
+  practicing: { bg: 'bg-pink-100', text: 'text-pink-700', label: 'PRACTICING' },
+  'not started': { bg: 'bg-gray-100', text: 'text-gray-500', label: 'NOT STARTED' },
 };
 
 function StatusBadge({ value }) {
@@ -48,8 +48,8 @@ const ClipboardIcon = () => (
 );
 
 // ── ChevronLeft / Right ───────────────────────────────────────────────────────
-const ChevLeft  = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>;
-const ChevRight = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>;
+const ChevLeft = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" /></svg>;
+const ChevRight = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" /></svg>;
 
 // ── Thin chevron-down for selects ─────────────────────────────────────────────
 const SelectWrapper = ({ label, children }) => (
@@ -80,7 +80,7 @@ export default function DailyUpdatesReport() {
   const userId = user?.emp_id || localStorage.getItem("emp_id");
   const userRole = user?.role || localStorage.getItem("role") || 'Employee';
   const token = localStorage.getItem("token");
-  
+
   // Check if user is Admin or Manager
   const isAdminOrManager = useMemo(() => {
     const role = userRole?.toUpperCase();
@@ -126,7 +126,7 @@ export default function DailyUpdatesReport() {
       try {
         setLoadingMeta(true);
         setError('');
-        
+
         // ✅ Different API based on role
         let endpoint;
         if (isAdminOrManager) {
@@ -138,27 +138,27 @@ export default function DailyUpdatesReport() {
           endpoint = `${API_BASE}/api/daily-updates/employee-projects`;
           console.log('👤 Employee - fetching assigned projects only');
         }
-        
+
         console.log('📡 Fetching from:', endpoint);
         console.log('🔑 Using token:', token ? 'Present' : 'Missing');
-        
+
         const res = await fetch(endpoint, {
-          headers: { 
+          headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           },
         });
-        
+
         if (res.status === 401) {
           setAuthError(true);
           throw new Error('Session expired. Please login again.');
         }
-        
+
         if (!res.ok) {
           const errorData = await res.json();
           throw new Error(errorData.error || 'Failed to load filters');
         }
-        
+
         const data = await res.json();
         if (!data.success) throw new Error(data.error || 'Failed to load filters');
 
@@ -173,14 +173,14 @@ export default function DailyUpdatesReport() {
 
         // Set projects based on role
         if (isAdminOrManager) {
-          setMeta({ 
-            dates: data.dates || dates, 
-            projects: data.projects || [] 
+          setMeta({
+            dates: data.dates || dates,
+            projects: data.projects || []
           });
         } else {
-          setMeta({ 
-            dates: dates, 
-            projects: data.projects || [] 
+          setMeta({
+            dates: dates,
+            projects: data.projects || []
           });
         }
 
@@ -189,7 +189,7 @@ export default function DailyUpdatesReport() {
         const defaultDate = dates.includes(todayStr) ? todayStr : dates[0] || '';
         setSelectedDate(defaultDate);
         setPendingDate(defaultDate);
-        
+
       } catch (err) {
         console.error('❌ Load meta error:', err);
         setError(err.message);
@@ -197,26 +197,26 @@ export default function DailyUpdatesReport() {
         setLoadingMeta(false);
       }
     }
-    
+
     loadMeta();
   }, [isAdminOrManager, userId, token, isAuthenticated]);
 
   // ── Load rows whenever applied filters change ───────────────────────────────
   useEffect(() => {
     if (!selectedDate || !isAuthenticated) return;
-    
+
     async function loadRows() {
       setLoadingRows(true);
       setError('');
       setPage(1);
       try {
         const params = new URLSearchParams({ date: selectedDate });
-        
+
         // ✅ For non-admin users, always filter by their user_id
         if (!isAdminOrManager) {
           params.set('user_id', userId);
         }
-        
+
         if (selectedProject) params.set('project_id', selectedProject);
         if (selectedEmployee && isAdminOrManager) {
           params.set('user_id', selectedEmployee);
@@ -226,24 +226,24 @@ export default function DailyUpdatesReport() {
 
         const res = await fetch(
           `${API_BASE}/api/daily-updates/report?${params}`,
-          { 
-            headers: { 
+          {
+            headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
-            } 
+            }
           }
         );
-        
+
         if (res.status === 401) {
           setAuthError(true);
           throw new Error('Session expired. Please login again.');
         }
-        
+
         if (!res.ok) {
           const errorData = await res.json();
           throw new Error(errorData.error || 'Failed to load daily updates');
         }
-        
+
         const data = await res.json();
         if (!data.success) throw new Error(data.error || 'Failed to load daily updates');
         setRows(data.data || []);
@@ -283,16 +283,16 @@ export default function DailyUpdatesReport() {
   };
 
   // ── Pagination ─────────────────────────────────────────────────────────────
-  const totalPages  = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
-  const pageRows    = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-  const startEntry  = rows.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
-  const endEntry    = Math.min(page * PAGE_SIZE, rows.length);
+  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const pageRows = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const startEntry = rows.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const endEntry = Math.min(page * PAGE_SIZE, rows.length);
 
-  // ── Format date for display (MM/DD/YYYY) ───────────────────────────────────
+  // ── Format date for display (DD-MM-YYYY) ───────────────────────────────────
   const formatDisplay = (d) => {
     if (!d) return '';
     const [y, m, day] = d.split('-');
-    return `${m}/${day}/${y}`;
+    return `${day}-${m}-${y}`;
   };
 
   const selectCls =
@@ -369,7 +369,7 @@ export default function DailyUpdatesReport() {
             ))}
           </select>
           <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" /></svg>
           </span>
         </SelectWrapper>
 
@@ -388,7 +388,7 @@ export default function DailyUpdatesReport() {
               ))}
             </select>
             <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" /></svg>
             </span>
           </SelectWrapper>
         )}
@@ -430,8 +430,8 @@ export default function DailyUpdatesReport() {
                   <td colSpan={COLS.length} className="py-16 text-center">
                     <div className="flex items-center justify-center gap-2 text-gray-400">
                       <svg className="animate-spin w-5 h-5 text-violet-500" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
                       </svg>
                       <span>Loading updates…</span>
                     </div>
@@ -467,8 +467,8 @@ export default function DailyUpdatesReport() {
                   row.availability !== '';
                 const availabilityText = hasStoredAvailability
                   ? (String(row.availability).toLowerCase().includes('hr')
-                      ? row.availability
-                      : `${row.availability}`)
+                    ? row.availability
+                    : `${row.availability}`)
                   : `${8 - totalTimeNeeded} hrs`;
                 const utilization = ((totalTimeNeeded / 8) * 100).toFixed(0);
 
@@ -560,11 +560,10 @@ export default function DailyUpdatesReport() {
                 <button
                   key={n}
                   onClick={() => setPage(n)}
-                  className={`w-8 h-8 flex items-center justify-center rounded-md text-sm font-medium transition-colors ${
-                    n === page
-                      ? 'bg-violet-600 text-white shadow-sm'
-                      : 'text-gray-500 hover:bg-gray-100'
-                  }`}
+                  className={`w-8 h-8 flex items-center justify-center rounded-md text-sm font-medium transition-colors ${n === page
+                    ? 'bg-violet-600 text-white shadow-sm'
+                    : 'text-gray-500 hover:bg-gray-100'
+                    }`}
                 >
                   {n}
                 </button>
