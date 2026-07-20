@@ -750,10 +750,12 @@ const PAGE_SIZE = 10;
 const STATUS_CFG = {
   'not started': { cls: 'bg-amber-100 text-amber-700', label: 'NOT STARTED' },
   'in progress': { cls: 'bg-blue-100  text-blue-700', label: 'IN PROGRESS' },
-  completed: { cls: 'bg-green-100 text-green-700', label: 'COMPLETED' },
-  abandoned: { cls: 'bg-red-100   text-red-600', label: 'ABANDONED' },
-  active: { cls: 'bg-green-100 text-green-700', label: 'ACTIVE' },
-  new: { cls: 'bg-amber-100 text-amber-700', label: 'NOT STARTED' },
+  completed:     { cls: 'bg-green-100 text-green-700', label: 'COMPLETED' },
+  abandoned:     { cls: 'bg-red-100   text-red-600',   label: 'ABANDONED' },
+  active:        { cls: 'bg-green-100 text-green-700', label: 'ACTIVE' },
+  new:           { cls: 'bg-violet-100 text-violet-700', label: 'NEW' },
+  'on hold':     { cls: 'bg-orange-100 text-orange-700', label: 'ON HOLD' },
+  'new cr':      { cls: 'bg-indigo-100 text-indigo-700', label: 'NEW CR' },
 };
 
 // ── Main Projects Component ───────────────────────────────────────────────────

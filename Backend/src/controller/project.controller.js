@@ -45,7 +45,7 @@ const createProject = async (req, res, next) => {
       subCategory   || null,
       startDate     || null,
       endDate       || null,
-      status        || 'Not started',
+      status        || 'New',
       projectType   || null,
       teamLead      || null,  // New parameter
     ];
@@ -87,6 +87,7 @@ const getAllProjects = async (req, res, next) => {
     p.status,
     p.project_type,
     p.team_lead,
+    p.create_cr,
     COALESCE(SUM(e.total_hrs), 0) AS total_effort_hours,
     COALESCE(SUM(e.effort_days + e.buffer_days), 0) AS total_effort_days
 
@@ -108,7 +109,8 @@ const getAllProjects = async (req, res, next) => {
     p.end_date,
     p.status,
     p.project_type,
-    p.team_lead
+    p.team_lead,
+    p.create_cr
 
   ORDER BY p.id ASC
 `;
@@ -266,7 +268,8 @@ const updateProject = async (req, res, next) => {
       endDate,
       status,
       projectType,
-      teamLead,  // New field
+      teamLead,
+      createCr,  
     } = req.body;
 
     // Check if project exists
@@ -288,7 +291,8 @@ const updateProject = async (req, res, next) => {
     const updatedEndDate = endDate !== undefined ? endDate : current.end_date;
     const updatedStatus = status !== undefined ? status : current.status;
     const updatedProjectType = projectType !== undefined ? projectType : current.project_type;
-    const updatedTeamLead = teamLead !== undefined ? teamLead : current.team_lead;  // New field
+    const updatedTeamLead = teamLead !== undefined ? teamLead : current.team_lead;
+    const updatedCreateCr = createCr !== undefined ? createCr : current.create_cr;  
 
     const updateSql = `
       UPDATE projects
@@ -304,7 +308,8 @@ const updateProject = async (req, res, next) => {
         end_date = ?,
         status = ?,
         project_type = ?,
-        team_lead = ?
+        team_lead = ?,
+        create_cr = ?
       WHERE id = ?
     `;
 
@@ -320,13 +325,15 @@ const updateProject = async (req, res, next) => {
       updatedEndDate,
       updatedStatus,
       updatedProjectType,
-      updatedTeamLead,  // New parameter
+      updatedTeamLead,
+      updatedCreateCr,  
       id,
     ]);
 
     const updatedRows = await query(
       `SELECT id, project_name, client_name, description, nbd_id, o2d_id,
-              project_code, sub_category, start_date, end_date, status, project_type, team_lead
+              project_code, sub_category, start_date, end_date, status, 
+              project_type, team_lead, create_cr
        FROM projects WHERE id = ?`,
       [id]
     );

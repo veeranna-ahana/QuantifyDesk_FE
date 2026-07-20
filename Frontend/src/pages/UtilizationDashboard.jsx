@@ -198,6 +198,7 @@ const UtilizationDashboard = () => {
   const [tableData, setTableData]   = useState([]);
   const [loading, setLoading]       = useState(true);
   const [search, setSearch]         = useState("");
+  const [showAllEmployees, setShowAllEmployees] = useState(false);
 
   // pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -252,8 +253,8 @@ const UtilizationDashboard = () => {
   const overallPct = totalAssigned > 0
     ? Math.round((totalCompleted / totalAssigned) * 100) : 0;
 
-  // employee utilization top-4
-  const empRows = filteredOverall.slice(0, 4).map(u => ({
+  // employee utilization (top-4 or all)
+  const empRows = (showAllEmployees ? filteredOverall : filteredOverall.slice(0, 4)).map(u => ({
     name: u.user_name.replace(/^(Mr\.|Ms\.|Mrs\.)\s*/i, ""),
     role: u.role || "—",
     pct:  Number(u.utilization_pct) || 0,
@@ -336,8 +337,13 @@ const UtilizationDashboard = () => {
           </table>
 
           <div className="px-5 py-3 text-right">
-            <button className="text-[12px] font-semibold text-purple-600 hover:text-purple-800 transition-colors">
-              View all {serviceDeliveryEmployees.length} employees
+            <button
+              onClick={() => setShowAllEmployees(prev => !prev)}
+              className="text-[12px] font-semibold text-purple-600 hover:text-purple-800 transition-colors"
+            >
+              {showAllEmployees
+                ? "Show less"
+                : `View all ${serviceDeliveryEmployees.length} employees`}
             </button>
           </div>
         </div>

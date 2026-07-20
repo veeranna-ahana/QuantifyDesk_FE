@@ -73,7 +73,7 @@ export default function CreateProject() {
     startDate: '',
     endDate: '',
     projectType: '',
-    status: 'Not started',
+    status: 'New',
   });
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
@@ -300,10 +300,10 @@ export default function CreateProject() {
                     onChange={e => set('status', e.target.value)}
                     className={`${inputCls} appearance-none pr-9 cursor-pointer`}
                   >
-                    <option value="Not started">New</option>
-                    <option value="In progress">In Progress</option>
+                    <option value="New">New</option>
+                    <option value="On Hold">On Hold</option>
                     <option value="Completed">Completed</option>
-                    <option value="Abandoned">Abandoned</option>
+                    <option value="New CR">New CR</option>
                   </select>
                   <ChevDownIcon />
                 </div>

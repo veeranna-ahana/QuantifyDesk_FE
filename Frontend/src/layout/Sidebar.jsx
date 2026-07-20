@@ -50,6 +50,13 @@ const ROLE_LINKS = {
     { to: "/dailyreport", label: "Daily Report", icon: "dailyUpdate" },
     { to: "/projects", label: "Projects", icon: "projects" },
     { to: "/assignments", label: "Assignments", icon: "assignments" },
+    {
+      label: "Reconciliation", icon: "reconciliation",
+      children: [
+        { to: "/reconciliation/upload", label: "Timesheet Upload", icon: "reconciliation" },
+        { to: "/reconciliation/dashboard", label: "Recon Dashboard", icon: "reconDash" },
+      ],
+    },
   ],
   Employee: [
     { to: "/quantificationnew", label: "Utilization", icon: "utilization" },
