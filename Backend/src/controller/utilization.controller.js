@@ -574,8 +574,14 @@ const getProjectUtilization = async (req, res, next) => {
         a.role,
         a.task_name,
         a.units_assigned,
+        a.estimated_hours                                 AS hours_assigned,
         COALESCE(ap_totals.units_completed, 0)            AS units_completed,
         GREATEST(a.units_assigned - COALESCE(ap_totals.units_completed, 0), 0) AS units_pending,
+        COALESCE(ap_totals.total_time_needed, 0)          AS hours_utilized,
+        GREATEST(
+          a.estimated_hours - COALESCE(ap_totals.total_time_needed, 0), 
+          0
+        )                                                 AS hours_pending,
         CASE
           WHEN a.units_assigned = 0 THEN 0
           ELSE ROUND(
@@ -586,7 +592,10 @@ const getProjectUtilization = async (req, res, next) => {
       LEFT JOIN projects p ON a.project_id = p.id
       LEFT JOIN master.emp e ON a.emp_id = e.emp_id
       LEFT JOIN (
-        SELECT assignment_id, SUM(units_completed) AS units_completed
+        SELECT 
+          assignment_id, 
+          SUM(units_completed) AS units_completed,
+          SUM(CAST(total_time_needed AS DECIMAL(10,2))) AS total_time_needed
         FROM assignment_progress
         WHERE status = 'APPROVED'
         GROUP BY assignment_id
