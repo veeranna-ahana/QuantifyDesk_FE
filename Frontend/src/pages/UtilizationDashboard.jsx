@@ -45,12 +45,12 @@ const KpiCard = ({ icon, label, value, accent, sub }) => (
 // ── Role Pill ─────────────────────────────────────────────────────────────────
 const roleMap = {
   Lead: { bg: "#EEE8FF", text: "#7C3AED" },
-  Dev:  { bg: "#E0F2FE", text: "#0369A1" },
-  QA:   { bg: "#FEF9C3", text: "#A16207" },
+  Dev: { bg: "#E0F2FE", text: "#0369A1" },
+  QA: { bg: "#FEF9C3", text: "#A16207" },
   Analyst: { bg: "#E0FDF4", text: "#065F46" },
-  BA:   { bg: "#FAE8FF", text: "#86198F" },
+  BA: { bg: "#FAE8FF", text: "#86198F" },
   Tester: { bg: "#FFF7ED", text: "#C2410C" },
-  TL:   { bg: "#EFF6FF", text: "#1D4ED8" },
+  TL: { bg: "#EFF6FF", text: "#1D4ED8" },
 };
 const RolePill = ({ role }) => {
   const s = roleMap[role] || { bg: "#F3F4F6", text: "#374151" };
@@ -191,13 +191,14 @@ const UtilizationDashboard = () => {
     (state) => state.auth.serviceDeliveryEmployees
   );
 
-  const [overall, setOverall]   = useState([]);
-  const [health, setHealth]     = useState([]);
+  const [overall, setOverall] = useState([]);
+  const [health, setHealth] = useState([]);
   const [projects, setProjects] = useState([]);
   const [selProject, setSelProject] = useState("");
-  const [tableData, setTableData]   = useState([]);
-  const [loading, setLoading]       = useState(true);
-  const [search, setSearch]         = useState("");
+  const [selEmployee, setSelEmployee] = useState("");
+  const [tableData, setTableData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
   const [showAllEmployees, setShowAllEmployees] = useState(false);
 
   // pagination
@@ -208,12 +209,12 @@ const UtilizationDashboard = () => {
     setLoading(true);
     try {
       const [oRes, hRes, pRes] = await Promise.all([
-        axios.get(`${BASE_URL}/api/utilization/overall`,       { headers: getHeaders() }),
-        axios.get(`${BASE_URL}/api/utilization/project-health`,{ headers: getHeaders() }),
-        axios.get(`${BASE_URL}/api/projects`,                  { headers: getHeaders() }),
+        axios.get(`${BASE_URL}/api/utilization/overall`, { headers: getHeaders() }),
+        axios.get(`${BASE_URL}/api/utilization/project-health`, { headers: getHeaders() }),
+        axios.get(`${BASE_URL}/api/projects`, { headers: getHeaders() }),
       ]);
-      setOverall(oRes.data  || []);
-      setHealth(hRes.data   || []);
+      setOverall(oRes.data || []);
+      setHealth(hRes.data || []);
       setProjects(pRes.data || []);
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
@@ -239,14 +240,14 @@ const UtilizationDashboard = () => {
   const serviceDeliveryNames = serviceDeliveryEmployees.map(e => e.emp_name);
   const filteredOverall = overall.filter(u => serviceDeliveryNames.includes(u.user_name));
 
-  const totalLoad      = health.reduce((s, p) => s + Number(p.total_load),      0);
-  const totalAssigned  = health.reduce((s, p) => s + Number(p.total_assigned),  0);
+  const totalLoad = health.reduce((s, p) => s + Number(p.total_load), 0);
+  const totalAssigned = health.reduce((s, p) => s + Number(p.total_assigned), 0);
   const totalCompleted = health.reduce((s, p) => s + Number(p.total_completed), 0);
 
   const pieData = [
     { name: "UI UX Design", value: Math.round(totalAssigned * 0.10) },
-    { name: "Development",  value: Math.round(totalAssigned * 0.70) },
-    { name: "Testing",      value: Math.round(totalAssigned * 0.20) },
+    { name: "Development", value: Math.round(totalAssigned * 0.70) },
+    { name: "Testing", value: Math.round(totalAssigned * 0.20) },
   ];
   const donutTotal = totalAssigned || 0;
 
@@ -257,15 +258,20 @@ const UtilizationDashboard = () => {
   const empRows = (showAllEmployees ? filteredOverall : filteredOverall.slice(0, 4)).map(u => ({
     name: u.user_name.replace(/^(Mr\.|Ms\.|Mrs\.)\s*/i, ""),
     role: u.role || "—",
-    pct:  Number(u.utilization_pct) || 0,
+    pct: Number(u.utilization_pct) || 0,
   }));
 
-  // assignment table with search + pagination
+  // unique employee names for filter dropdown
+  const employeeOptions = [...new Set(tableData.map(r => r.user_name).filter(Boolean))].sort();
+
+  // assignment table with search + employee filter + pagination
   const filtered = tableData.filter(r => {
     const q = search.toLowerCase();
-    return !q || r.user_name?.toLowerCase().includes(q) || r.project_name?.toLowerCase().includes(q);
+    const matchesSearch = !q || r.user_name?.toLowerCase().includes(q) || r.project_name?.toLowerCase().includes(q);
+    const matchesEmployee = !selEmployee || r.user_name === selEmployee;
+    return matchesSearch && matchesEmployee;
   });
-  const totalPages  = Math.ceil(filtered.length / rowsPerPage);
+  const totalPages = Math.ceil(filtered.length / rowsPerPage);
   const currentRows = filtered.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
 
   const pageNums = Array.from({ length: Math.min(totalPages, 3) }, (_, i) => i + 1);
@@ -290,10 +296,10 @@ const UtilizationDashboard = () => {
 
       {/* ── KPI Strip ── */}
       <div className="flex gap-3 flex-wrap mb-6">
-        <KpiCard icon="👥" label="Employees"    value={serviceDeliveryEmployees.length} accent="#6C5CE7" />
-        <KpiCard icon="⏱" label="Effort (Hrs)"  value={totalLoad}      accent="#f39c12" />
-        <KpiCard icon="📋" label="Assigned"      value={totalAssigned}  accent="#3498db" />
-        <KpiCard icon="✅" label="Completed"     value={totalCompleted} accent="#00b894" />
+        <KpiCard icon="👥" label="Employees" value={serviceDeliveryEmployees.length} accent="#6C5CE7" />
+        <KpiCard icon="⏱" label="Effort (Hrs)" value={totalLoad} accent="#f39c12" />
+        <KpiCard icon="📋" label="Assigned" value={totalAssigned} accent="#3498db" />
+        <KpiCard icon="✅" label="Completed" value={totalCompleted} accent="#00b894" />
         <KpiCard icon="📊" label="Overall Comp." value={`${overallPct}%`} accent="#e74c3c" sub />
       </div>
 
@@ -309,7 +315,7 @@ const UtilizationDashboard = () => {
             </div>
             <button className="text-gray-400 hover:text-gray-600">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+                <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
               </svg>
             </button>
           </div>
@@ -317,7 +323,7 @@ const UtilizationDashboard = () => {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-50">
-                {["EMPLOYEE","ROLE","UTILIZATION","STATUS"].map(h => (
+                {["EMPLOYEE", "ROLE", "UTILIZATION", "STATUS"].map(h => (
                   <th key={h} className="px-5 py-2 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider">{h}</th>
                 ))}
               </tr>
@@ -391,27 +397,41 @@ const UtilizationDashboard = () => {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-5">
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-50">
           <h3 className="text-[14px] font-bold text-gray-800">Assignment Overview</h3>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 flex-wrap">
             {/* search */}
             <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-1.5 bg-gray-50">
               <svg className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
               </svg>
               <input
                 type="text"
                 placeholder="Search user or project..."
                 value={search}
-                onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
-                className="text-[12px] outline-none bg-transparent w-44 text-gray-600 placeholder-gray-400"
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-36 bg-transparent border-0 outline-none ring-0 shadow-none focus:border-0 focus:outline-none focus:ring-0 focus:shadow-none text-[12px] text-gray-600 placeholder-gray-400"
               />
             </div>
+            {/* employee filter */}
+            <select
+              value={selEmployee}
+              onChange={e => { setSelEmployee(e.target.value); setCurrentPage(1); }}
+              className="border border-gray-200 rounded-lg px-3 py-1.5 text-[12px] text-gray-600 bg-white cursor-pointer outline-none"
+            >
+              <option value="">All Employees</option>
+              {employeeOptions.map(name => (
+                <option key={name} value={name}>{name}</option>
+              ))}
+            </select>
             {/* project filter */}
             <select
               value={selProject}
               onChange={e => setSelProject(e.target.value)}
               className="border border-gray-200 rounded-lg px-3 py-1.5 text-[12px] text-gray-600 bg-white cursor-pointer outline-none"
             >
-              <option value="">Filters</option>
+              <option value="">All Projects</option>
               {projects.map(p => (
                 <option key={p.id} value={p.id}>{p.project_name || p.name}</option>
               ))}
@@ -423,14 +443,14 @@ const UtilizationDashboard = () => {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-50">
-                {["USER","PROJECT","ROLE","TASK","ASSIGNED","COMPLETED","PENDING","PROGRESS"].map(h => (
+                {["USER", "PROJECT", "ROLE", "TASK", "ASSIGNED", "COMPLETED", "PENDING", "ASSIGNED HRS", "ACTUAL HRS", "PROGRESS"].map(h => (
                   <th key={h} className="px-4 py-3 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {currentRows.length === 0 ? (
-                <tr><td colSpan={8} className="px-4 py-8 text-center text-gray-300">No data available</td></tr>
+                <tr><td colSpan={10} className="px-4 py-8 text-center text-gray-300">No data available</td></tr>
               ) : currentRows.map((r, i) => {
                 const pct = r.units_assigned > 0
                   ? Math.round((r.units_completed / r.units_assigned) * 100) : 0;
@@ -447,6 +467,12 @@ const UtilizationDashboard = () => {
                     <td className="px-4 py-3 text-center font-bold"
                       style={{ color: Number(r.units_pending) > 0 ? "#e74c3c" : "#00b894" }}>
                       {r.units_pending}
+                    </td>
+                    <td className="px-4 py-3 text-center font-semibold text-indigo-600 whitespace-nowrap">
+                      {r.hours_assigned != null ? `${Number(r.hours_assigned).toLocaleString()} h` : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-center font-semibold text-violet-600 whitespace-nowrap">
+                      {r.hours_utilized != null ? `${Number(r.hours_utilized).toLocaleString()} h` : "—"}
                     </td>
                     <td className="px-4 py-3 min-w-[130px]"><ProgressBar pct={pct} /></td>
                   </tr>
