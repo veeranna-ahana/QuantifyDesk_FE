@@ -230,6 +230,7 @@ const UtilizationDashboard = () => {
   const [unitProjectSummary, setUnitProjectSummary] = useState(null);
   const [unitEmpData, setUnitEmpData] = useState(null);
   const [unitLoading, setUnitLoading] = useState(false);
+  const [unitAllTasks, setUnitAllTasks] = useState([]);  // all tasks for emp across all projects
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -298,6 +299,21 @@ const UtilizationDashboard = () => {
     };
     fetchUnitEmp();
   }, [unitEmployee, unitProject]);
+
+  // ── Fetch ALL tasks for employee across all projects (no projectId filter) ──
+  useEffect(() => {
+    if (!unitEmployee) { setUnitAllTasks([]); return; }
+    const fetchAllTasks = async () => {
+      try {
+        const res = await axios.get(
+          `${BASE_URL}/api/utilization/employee-unit-summary?empId=${unitEmployee}`,
+          { headers: getHeaders() }
+        );
+        setUnitAllTasks(res.data?.task_breakdown || []);
+      } catch (err) { setUnitAllTasks([]); }
+    };
+    fetchAllTasks();
+  }, [unitEmployee]);
 
   // ── derived ─────────────────────────────────────────────────────────────────
   const serviceDeliveryNames = serviceDeliveryEmployees.map(e => e.emp_name);
@@ -544,6 +560,37 @@ const UtilizationDashboard = () => {
                       <div className="text-xl font-extrabold" style={{ color }}>{value}</div>
                     </div>
                   ))}
+                </div>
+
+                {/* All-project task table */}
+                <div className="overflow-x-auto mt-5">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-100">
+                        {["Task", "Project", "Role", "Assigned", "Completed", "Pending", "Progress"].map(h => (
+                          <th key={h} className="px-4 py-2.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {unitAllTasks.length === 0 ? (
+                        <tr><td colSpan={7} className="py-6 text-center text-gray-300">No tasks found</td></tr>
+                      ) : unitAllTasks.map((t, i) => {
+                        const pct = t.units_assigned > 0 ? Math.round((t.units_completed / t.units_assigned) * 100) : 0;
+                        return (
+                          <tr key={i} className="border-b border-gray-50 hover:bg-gray-50/60">
+                            <td className="px-4 py-2.5 font-semibold text-gray-700 text-[12px]">{t.task_name}</td>
+                            <td className="px-4 py-2.5 text-[12px] text-gray-500">{t.project_name || "—"}</td>
+                            <td className="px-4 py-2.5"><RolePill role={t.role} /></td>
+                            <td className="px-4 py-2.5 text-center font-bold text-blue-600">{t.units_assigned}</td>
+                            <td className="px-4 py-2.5 text-center font-bold text-emerald-500">{t.units_completed}</td>
+                            <td className="px-4 py-2.5 text-center font-bold" style={{ color: t.units_pending > 0 ? "#e74c3c" : "#00b894" }}>{t.units_pending}</td>
+                            <td className="px-4 py-2.5 min-w-[130px]"><ProgressBar pct={pct} /></td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             ) : null
