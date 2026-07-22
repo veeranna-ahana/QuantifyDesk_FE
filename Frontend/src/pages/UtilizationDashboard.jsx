@@ -202,36 +202,6 @@ const CircleProgress = ({ pct, size = 80, stroke = 7, color = "#6C5CE7" }) => {
   );
 };
 
-// ── Dummy employee data (used when backend returns nothing) ───────────────────
-const makeDummyEmpData = (empName = "Employee") => ({
-  employee: { emp_name: empName, emp_id: "DEMO" },
-  project_summary: [{
-    project_id: "demo",
-    project_name: "Sample Project",
-    total_tasks: 5,
-    total_units_assigned: 40,
-    total_units_completed: 28,
-    total_units_pending: 12,
-    employee_utilization_pct: 70,
-  }],
-  task_breakdown: [
-    { task_name: "UI Design", role: "Lead", units_assigned: 10, units_completed: 10, units_pending: 0 },
-    { task_name: "API Integration", role: "Dev", units_assigned: 12, units_completed: 8, units_pending: 4 },
-    { task_name: "Unit Testing", role: "Tester", units_assigned: 8, units_completed: 5, units_pending: 3 },
-    { task_name: "Code Review", role: "TL", units_assigned: 6, units_completed: 4, units_pending: 2 },
-    { task_name: "Documentation", role: "Analyst", units_assigned: 4, units_completed: 1, units_pending: 3 },
-  ],
-  overall_summary: {
-    total_projects: 3,
-    total_tasks: 14,
-    total_units_assigned: 110,
-    total_units_completed: 72,
-    total_units_pending: 38,
-    overall_utilization_pct: 65,
-  },
-  _isDummy: true,
-});
-
 // ── MAIN COMPONENT ────────────────────────────────────────────────────────────
 const UtilizationDashboard = () => {
   const serviceDeliveryEmployees = useSelector(
@@ -310,9 +280,6 @@ const UtilizationDashboard = () => {
   // ── Fetch employee unit summary when employee or project changes ───────────
   useEffect(() => {
     if (!unitEmployee) { setUnitEmpData(null); return; }
-    // find display name for dummy fallback
-    const empRecord = serviceDeliveryEmployees.find(e => e.emp_id === unitEmployee);
-    const empDisplayName = empRecord?.emp_name || unitEmployee;
     const fetchUnitEmp = async () => {
       setUnitLoading(true);
       setUnitEmpData(null);
@@ -323,18 +290,14 @@ const UtilizationDashboard = () => {
           `${BASE_URL}/api/utilization/employee-unit-summary?${params}`,
           { headers: getHeaders() }
         );
-        // use real data if overall_summary has content, else fall back to dummy
-        const hasRealData = res.data?.overall_summary &&
-          Object.keys(res.data.overall_summary).length > 0 &&
-          Number(res.data.overall_summary.total_tasks) > 0;
-        setUnitEmpData(hasRealData ? res.data : makeDummyEmpData(empDisplayName));
+        setUnitEmpData(res.data || null);
       } catch (err) {
         console.error("❌ employee-unit-summary fetch failed:", err);
-        setUnitEmpData(makeDummyEmpData(empDisplayName)); // show dummy on error
+        setUnitEmpData(null);
       } finally { setUnitLoading(false); }
     };
     fetchUnitEmp();
-  }, [unitEmployee, unitProject, serviceDeliveryEmployees]);
+  }, [unitEmployee, unitProject]);
 
   // ── derived ─────────────────────────────────────────────────────────────────
   const serviceDeliveryNames = serviceDeliveryEmployees.map(e => e.emp_name);
@@ -432,7 +395,7 @@ const UtilizationDashboard = () => {
                 className="border border-gray-200 rounded-lg px-3 py-2 text-[13px] text-gray-700 bg-white outline-none min-w-[220px] cursor-pointer disabled:opacity-50">
                 <option value="">— Choose an employee —</option>
                 {serviceDeliveryEmployees.map(emp => (
-                  <option key={emp.emp_id} value={emp.emp_id}>{emp.emp_name}</option>
+                  <option key={emp.employee_id || emp.emp_id} value={emp.employee_id || emp.emp_id}>{emp.emp_name}</option>
                 ))}
               </select>
             </div>
@@ -557,12 +520,7 @@ const UtilizationDashboard = () => {
               <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-5">
                 <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
                   <div>
-                    <div className="flex items-center gap-2">
                       <div className="text-[15px] font-extrabold text-gray-800">Overall Employee Utilization</div>
-                      {unitEmpData._isDummy && (
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-600 font-semibold">Demo Data</span>
-                      )}
-                    </div>
                     <div className="text-[12px] text-gray-400 mt-0.5">
                       {unitEmpName} · Across all projects
                     </div>
