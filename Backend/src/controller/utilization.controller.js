@@ -680,6 +680,194 @@ const getProjectHealth = async (req, res, next) => {
   }
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// ADMIN: Project-level Unit Utilization Summary
+// GET /api/utilization/project-unit-summary?projectId=
+// ─────────────────────────────────────────────────────────────────────────────
+const getProjectUnitSummary = async (req, res, next) => {
+  try {
+    const { projectId } = req.query;
+
+    let sql = `
+      SELECT
+        p.id                                              AS project_id,
+        p.project_name,
+        p.project_code,
+        p.status,
+        COALESCE(SUM(a.units_assigned), 0)                AS total_units,
+        COALESCE(SUM(ap_totals.units_completed), 0)       AS completed_units,
+        GREATEST(
+          COALESCE(SUM(a.units_assigned), 0)
+          - COALESCE(SUM(ap_totals.units_completed), 0),
+          0
+        )                                                 AS pending_units,
+        CASE
+          WHEN COALESCE(SUM(a.units_assigned), 0) = 0 THEN 0
+          ELSE ROUND(
+            COALESCE(SUM(ap_totals.units_completed), 0) /
+            COALESCE(SUM(a.units_assigned), 0) * 100, 1
+          )
+        END                                               AS utilization_pct
+      FROM projects p
+      LEFT JOIN assignments a ON a.project_id = p.id
+      LEFT JOIN (
+        SELECT assignment_id, SUM(units_completed) AS units_completed
+        FROM assignment_progress
+        WHERE status = 'APPROVED'
+        GROUP BY assignment_id
+      ) ap_totals ON ap_totals.assignment_id = a.id
+    `;
+
+    const params = [];
+    if (projectId) {
+      sql += ` WHERE p.id = ?`;
+      params.push(projectId);
+    }
+    sql += ` GROUP BY p.id, p.project_name, p.project_code, p.status ORDER BY p.project_name`;
+
+    const rows = await query(sql, params);
+    return res.status(200).json(rows);
+  } catch (err) {
+    console.error('❌ getProjectUnitSummary error:', err);
+    return next(err);
+  }
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ADMIN: Employee-level Unit Utilization Summary
+// GET /api/utilization/employee-unit-summary?projectId=&empId=
+// Returns:
+//   - per-project breakdown for the employee
+//   - overall summary across all projects
+// ─────────────────────────────────────────────────────────────────────────────
+const getEmployeeUnitSummary = async (req, res, next) => {
+  try {
+    const { projectId, empId } = req.query;
+
+    if (!empId) {
+      return res.status(400).json({ message: 'empId is required' });
+    }
+
+    // ── 1. Per-project task breakdown for this employee ─────────────────────
+    let taskSql = `
+      SELECT
+        p.id                                              AS project_id,
+        p.project_name,
+        a.id                                              AS assignment_id,
+        a.task_name,
+        a.role,
+        a.units_assigned,
+        COALESCE(ap_totals.units_completed, 0)            AS units_completed,
+        GREATEST(
+          a.units_assigned - COALESCE(ap_totals.units_completed, 0),
+          0
+        )                                                 AS units_pending
+      FROM assignments a
+      LEFT JOIN projects p ON a.project_id = p.id
+      LEFT JOIN (
+        SELECT assignment_id, SUM(units_completed) AS units_completed
+        FROM assignment_progress
+        WHERE status = 'APPROVED'
+        GROUP BY assignment_id
+      ) ap_totals ON ap_totals.assignment_id = a.id
+      WHERE a.emp_id = ?
+    `;
+    const taskParams = [empId];
+    if (projectId) {
+      taskSql += ` AND a.project_id = ?`;
+      taskParams.push(projectId);
+    }
+    taskSql += ` ORDER BY p.project_name, a.task_name`;
+
+    const taskRows = await query(taskSql, taskParams);
+
+    // ── 2. Project-level summary for this employee in the selected project ───
+    let projectSumSql = `
+      SELECT
+        p.id                                              AS project_id,
+        p.project_name,
+        COUNT(DISTINCT a.id)                              AS total_tasks,
+        COALESCE(SUM(a.units_assigned), 0)                AS total_units_assigned,
+        COALESCE(SUM(ap_totals.units_completed), 0)       AS total_units_completed,
+        GREATEST(
+          COALESCE(SUM(a.units_assigned), 0)
+          - COALESCE(SUM(ap_totals.units_completed), 0),
+          0
+        )                                                 AS total_units_pending,
+        CASE
+          WHEN COALESCE(SUM(a.units_assigned), 0) = 0 THEN 0
+          ELSE ROUND(
+            COALESCE(SUM(ap_totals.units_completed), 0) /
+            COALESCE(SUM(a.units_assigned), 0) * 100, 1
+          )
+        END                                               AS employee_utilization_pct
+      FROM assignments a
+      LEFT JOIN projects p ON a.project_id = p.id
+      LEFT JOIN (
+        SELECT assignment_id, SUM(units_completed) AS units_completed
+        FROM assignment_progress
+        WHERE status = 'APPROVED'
+        GROUP BY assignment_id
+      ) ap_totals ON ap_totals.assignment_id = a.id
+      WHERE a.emp_id = ?
+    `;
+    const projectSumParams = [empId];
+    if (projectId) {
+      projectSumSql += ` AND a.project_id = ?`;
+      projectSumParams.push(projectId);
+    }
+    projectSumSql += ` GROUP BY p.id, p.project_name`;
+
+    const projectSummary = await query(projectSumSql, projectSumParams);
+
+    // ── 3. Overall summary for this employee across ALL projects ────────────
+    const overallSql = `
+      SELECT
+        COUNT(DISTINCT a.project_id)                      AS total_projects,
+        COUNT(DISTINCT a.id)                              AS total_tasks,
+        COALESCE(SUM(a.units_assigned), 0)                AS total_units_assigned,
+        COALESCE(SUM(ap_totals.units_completed), 0)       AS total_units_completed,
+        GREATEST(
+          COALESCE(SUM(a.units_assigned), 0)
+          - COALESCE(SUM(ap_totals.units_completed), 0),
+          0
+        )                                                 AS total_units_pending,
+        CASE
+          WHEN COALESCE(SUM(a.units_assigned), 0) = 0 THEN 0
+          ELSE ROUND(
+            COALESCE(SUM(ap_totals.units_completed), 0) /
+            COALESCE(SUM(a.units_assigned), 0) * 100, 1
+          )
+        END                                               AS overall_utilization_pct
+      FROM assignments a
+      LEFT JOIN (
+        SELECT assignment_id, SUM(units_completed) AS units_completed
+        FROM assignment_progress
+        WHERE status = 'APPROVED'
+        GROUP BY assignment_id
+      ) ap_totals ON ap_totals.assignment_id = a.id
+      WHERE a.emp_id = ?
+    `;
+    const overallRow = await query(overallSql, [empId]);
+
+    // ── 4. Fetch employee name from master ──────────────────────────────────
+    const empInfo = await masterQuery(
+      `SELECT emp_name, emp_id FROM emp WHERE emp_id = ? LIMIT 1`,
+      [empId]
+    );
+
+    return res.status(200).json({
+      employee: empInfo[0] || { emp_name: empId, emp_id: empId },
+      task_breakdown: taskRows,
+      project_summary: projectSummary,
+      overall_summary: overallRow[0] || {},
+    });
+  } catch (err) {
+    console.error('❌ getEmployeeUnitSummary error:', err);
+    return next(err);
+  }
+};
+
 module.exports = {
   getMyAssignments,
   logProgress,
@@ -689,4 +877,7 @@ module.exports = {
   getOverallUtilization,
   getProjectUtilization,
   getProjectHealth,
+  getProjectUnitSummary,
+  getEmployeeUnitSummary,
 };
+
