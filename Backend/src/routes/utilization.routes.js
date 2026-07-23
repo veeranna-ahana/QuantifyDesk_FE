@@ -11,6 +11,8 @@ const {
   getOverallUtilization,
   getProjectUtilization,
   getProjectHealth,
+  getProjectUnitSummary,
+  getEmployeeUnitSummary,
 } = require('../controller/utilization.controller');
 
 // ── Employee routes ────────────────────────────────────────────────────────
@@ -26,5 +28,9 @@ router.put ('/reject/:progressId',     authMiddleware, rejectProgress);
 router.get ('/overall',                authMiddleware, getOverallUtilization);
 router.get ('/by-project',             authMiddleware, getProjectUtilization);
 router.get ('/project-health',         authMiddleware, getProjectHealth);
+
+// ── Unit Utilization routes ──────────────────────────────────────────────────────────────────
+router.get ('/project-unit-summary',   authMiddleware, getProjectUnitSummary);
+router.get ('/employee-unit-summary',  authMiddleware, getEmployeeUnitSummary);
 
 module.exports = router;
