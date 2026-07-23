@@ -382,6 +382,10 @@ const getAssignmentsByProject = async (req, res, next) => {
           a.role,
           a.task_name,
           a.units_assigned,
+          a.estimated_days,
+          a.estimated_hours,
+
+          COALESCE(SUM(ap.units_completed), 0) AS units_completed,
 
           ee.effort_days,
           ee.effort_hrs,
@@ -403,7 +407,17 @@ const getAssignmentsByProject = async (req, res, next) => {
          ON ee.project_id = a.project_id
          AND ee.role = a.role
 
+       LEFT JOIN assignment_progress ap
+         ON ap.assignment_id = a.id
+
        WHERE a.project_id = ?
+
+       GROUP BY
+         a.id, a.project_id, p.project_name, a.user_id, a.emp_id,
+         e.emp_name, a.role, a.task_name, a.units_assigned,
+         a.estimated_days, a.estimated_hours,
+         ee.effort_days, ee.effort_hrs, ee.buffer_days,
+         ee.buffer_hrs, ee.total_hrs, ee.units, ee.unit_label
 
        ORDER BY a.role, e.emp_name`,
       [projectId]

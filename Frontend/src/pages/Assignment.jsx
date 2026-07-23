@@ -380,11 +380,10 @@ const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onUpdate, 
               <button
                 onClick={handleSubmit}
                 disabled={saving || unitsExceeded || daysExceeded || hoursExceeded || remainingUnits === 0}
-                className={`w-full py-2 rounded-xl font-bold text-xs transition-all border ${
-                  saving || unitsExceeded || daysExceeded || hoursExceeded || remainingUnits === 0
-                    ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed"
-                    : "bg-[#E6FFFA] hover:bg-[#D5FFF6] text-[#319795] border-[#319795] shadow-sm"
-                }`}
+                className={`w-full py-2 rounded-xl font-bold text-xs transition-all border ${saving || unitsExceeded || daysExceeded || hoursExceeded || remainingUnits === 0
+                  ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed"
+                  : "bg-[#E6FFFA] hover:bg-[#D5FFF6] text-[#319795] border-[#319795] shadow-sm"
+                  }`}
               >
                 {saving ? "Saving…" : "Assign"}
               </button>
@@ -488,18 +487,21 @@ const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onUpdate, 
                 <tbody className="divide-y divide-slate-100">
                   {existing.map((a) => {
                     const completed = Number(a.units_completed || 0);
-                    const pending = Math.max(Number(a.units_assigned) - completed, 0);
+                    const assigned = Number(a.units_assigned || 0);
+                    const pending = Math.max(assigned - completed, 0);
+                    const isCompleted = assigned > 0 && completed >= assigned;
                     const isEditing = !!editingRow[a.id];
                     const eRow = editingRow[a.id] || {};
                     const isSavingThis = !!savingEdit[a.id];
                     return (
-                      <tr key={a.id} className="hover:bg-slate-50/20">
+                      <tr key={a.id} className={`transition-colors ${isCompleted ? 'bg-emerald-50/40' : 'hover:bg-slate-50/20'}`}>
                         <td className="py-3 px-3">
                           <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded-full bg-violet-100 text-[#7f5feb] flex items-center justify-center text-[10px] font-bold shrink-0">
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${isCompleted ? 'bg-emerald-100 text-emerald-600' : 'bg-violet-100 text-[#7f5feb]'}`}>
                               {a.user_name?.[0]?.toUpperCase() || "?"}
                             </div>
                             <span className="font-bold text-slate-800">{a.user_name}</span>
+
                           </div>
                         </td>
                         <td className="py-3 px-3 text-center">
@@ -540,7 +542,11 @@ const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onUpdate, 
                         {!isAdmin && (
                           <td className="py-3 px-3 text-center">
                             <div className="flex gap-2 justify-center">
-                              {isEditing ? (
+                              {isCompleted ? (
+                                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-lg text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200 cursor-not-allowed select-none">
+                                  Completed
+                                </span>
+                              ) : isEditing ? (
                                 <>
                                   <button
                                     onClick={() => handleEditSave(a.id)}
@@ -1177,8 +1183,8 @@ const AssignmentScreen = () => {
                                     onClick={(e) => { e.stopPropagation(); openAssignModal(role, t); }}
                                     disabled={planned <= 0 || estimatedDays <= 0}
                                     className={`w-full py-1.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1 transition-all ${planned <= 0 || estimatedDays <= 0
-                                        ? "bg-slate-100 text-slate-400 cursor-not-allowed"
-                                        : "bg-[#7f5feb] hover:bg-[#6c4ce0] text-white shadow-sm"
+                                      ? "bg-slate-100 text-slate-400 cursor-not-allowed"
+                                      : "bg-[#7f5feb] hover:bg-[#6c4ce0] text-white shadow-sm"
                                       }`}
                                     title={planned <= 0 || estimatedDays <= 0 ? "Enter Planned Units and Est. Days first" : `Assign employees to ${t.task_name}`}
                                   >
