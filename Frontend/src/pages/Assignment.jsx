@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import axios from "axios";
 import { useSelector } from "react-redux";
@@ -611,6 +612,7 @@ const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onUpdate, 
 // MAIN SCREEN COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 const AssignmentScreen = () => {
+  const navigate = useNavigate();
   const isAdmin = getUserRole() === 'ADMIN';
   const serviceDeliveryEmployees = useSelector(
     (state) => state.auth.serviceDeliveryEmployees
@@ -625,8 +627,6 @@ const AssignmentScreen = () => {
   const [assignments, setAssignments] = useState([]);
   const [summary, setSummary] = useState({ rows: [], totals: {} });
   const [effortByRole, setEffortByRole] = useState({});
-  const [assignModal, setAssignModal] = useState(null);
-  const [assignExtraData, setAssignExtraData] = useState({});
   const [collapsedRoles, setCollapsedRoles] = useState({});
 
   const toggleRole = (role) =>
@@ -849,45 +849,26 @@ const AssignmentScreen = () => {
       }
     }
 
-    setAssignModal({
-      role,
-      task_name: task.task_name,
-      unit_type: task.unit_type,
-      planned_units: plannedUnits,
-      estimated_days: estimatedDays,
-      estimated_hours: estimatedHours,
+    const projectName = projects.find(p => String(p.id) === String(selProject))?.project_name || "";
+    navigate("/assignments/assign", {
+      state: {
+        modal: {
+          role,
+          task_name: task.task_name,
+          unit_type: task.unit_type,
+          planned_units: plannedUnits,
+          estimated_days: estimatedDays,
+          estimated_hours: estimatedHours,
+        },
+        selProject,
+        projectName,
+        assignments,
+        extraData: {},
+      },
     });
   };
 
-  const handleAddAssignment = async ({
-    user_id, role, task_name, units_assigned, estimated_days, estimated_hours
-  }) => {
-    try {
-      const res = await axios.post(
-        `${BASE_URL}/api/assignments`,
-        {
-          project_id: selProject,
-          user_id,
-          role,
-          task_name,
-          units_assigned,
-          estimated_days: estimated_days || 0,
-          estimated_hours: estimated_hours || 0,
-        },
-        { headers: getHeaders() }
-      );
-      await fetchProjectData(selProject);
-      return res.data;
-    } catch (err) {
-      throw err;
-    }
-  };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Remove this assignment?")) return;
-    await axios.delete(`${BASE_URL}/api/assignments/${id}`, { headers: getHeaders() });
-    await fetchProjectData(selProject);
-  };
 
   const summaryByKey = {};
   (summary.rows || []).forEach(r => { summaryByKey[`${r.role}||${r.task_name}`] = r; });
@@ -1231,21 +1212,7 @@ const AssignmentScreen = () => {
         </div>
       )}
 
-      {/* Assign Modal */}
-      {assignModal && (
-        <AssignModal
-          modal={assignModal}
-          users={serviceDeliveryEmployees}
-          assignments={assignments}
-          onAssign={handleAddAssignment}
-          onDelete={handleDelete}
-          onUpdate={() => fetchProjectData(selProject)}
-          onClose={() => setAssignModal(null)}
-          extraData={assignExtraData}
-          setExtraData={setAssignExtraData}
-          isAdmin={isAdmin}
-        />
-      )}
+
     </div>
   );
 };
