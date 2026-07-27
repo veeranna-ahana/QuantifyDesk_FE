@@ -15,6 +15,7 @@ import EffortEstimate from './pages/EffortEstimate';
 import Tasks from './pages/Tasks';
 import DailyUpdates from './pages/DailyUpdate';
 import AssignmentScreen from './pages/Assignment';
+import AssignEmployee from './pages/AssignEmployee';
 import MyWork from './pages/MyWork';
 import UtilizationDashboard from './pages/UtilizationDashboard';
 import Approvals from './pages/Approvals';
@@ -58,6 +59,7 @@ function App() {
           <Route path="tasks" element={<Tasks />} />
           <Route path="daily-update" element={<DailyUpdates />} />
           <Route path="assignments" element={<AssignmentScreen />} />
+          <Route path="assignments/assign" element={<AssignEmployee />} />
           <Route path="my-work" element={<MyWork />} />
           <Route path="quantificationnew" element={<UtilizationDashboard />} />
           <Route path="dailyreport" element={<DailyUpdatesReport />} />
