@@ -87,6 +87,8 @@ export default function CreateProject() {
     const e = {};
     if (!form.projectName.trim()) e.projectName = 'Project Name is required.';
     if (!form.customer.trim()) e.customer = 'Customer is required.';
+    if (!form.nbdId.trim()) e.nbdId = 'NBD ID is required.';
+    if (!form.projectCode.trim()) e.projectCode = 'Project Code is required.';
     return e;
   };
 
@@ -178,14 +180,17 @@ export default function CreateProject() {
               {/* Row 1: NBD ID, O2D ID, Project Code */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <Label>NBD ID</Label>
+                  <Label required>NBD ID</Label>  {/* Add 'required' prop */}
                   <input
                     type="text"
                     value={form.nbdId}
                     onChange={e => set('nbdId', e.target.value)}
                     placeholder="NBD-0000"
-                    className={inputClsLight}
+                    className={`${inputClsLight} ${errors.nbdId ? 'border-red-400 ring-2 ring-red-200' : ''}`}
                   />
+                  {errors.nbdId && (
+                    <p className="text-red-500 text-xs mt-1">{errors.nbdId}</p>
+                  )}
                 </div>
                 <div>
                   <Label>O2D ID</Label>
@@ -198,14 +203,17 @@ export default function CreateProject() {
                   />
                 </div>
                 <div>
-                  <Label>Project Code</Label>
+                  <Label required>Project Code</Label>  {/* Add 'required' prop */}
                   <input
                     type="text"
                     value={form.projectCode}
                     onChange={e => set('projectCode', e.target.value)}
                     placeholder="PRJ-8821"
-                    className={inputClsLight}
+                    className={`${inputClsLight} ${errors.projectCode ? 'border-red-400 ring-2 ring-red-200' : ''}`}
                   />
+                  {errors.projectCode && (
+                    <p className="text-red-500 text-xs mt-1">{errors.projectCode}</p>
+                  )}
                 </div>
               </div>
 
@@ -301,6 +309,7 @@ export default function CreateProject() {
                     className={`${inputCls} appearance-none pr-9 cursor-pointer`}
                   >
                     <option value="New">New</option>
+                    <option value="Active">Active</option>
                     <option value="On Hold">On Hold</option>
                     <option value="Completed">Completed</option>
                     <option value="New CR">New CR</option>
