@@ -221,6 +221,12 @@ const UtilizationDashboard = () => {
   const [search, setSearch] = useState("");
   const [showAllEmployees, setShowAllEmployees] = useState(false);
 
+  // ── Project Health filter state ────────────────────────────────────────────
+  const [healthSearch, setHealthSearch] = useState("");
+  const [healthStatusFilter, setHealthStatusFilter] = useState("");
+  const [showAllHealth, setShowAllHealth] = useState(false);
+  const HEALTH_PAGE_SIZE = 6;
+
   // pagination
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 6;
@@ -916,12 +922,98 @@ const UtilizationDashboard = () => {
         </div>
 
         {/* ── Project Health Overview ── */}
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-[14px] font-bold text-gray-800">Project Health Overview</h3>
-          <button className="text-[12px] font-semibold text-purple-600 hover:text-purple-800 transition-colors">View All</button>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pb-4">
-          {health.map(p => <HealthCard key={p.project_id} p={p} />)}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-5">
+          {/* Header + filters */}
+          <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-b border-gray-50">
+            <div>
+              <h3 className="text-[14px] font-bold text-gray-800">Project Health Overview</h3>
+              <p className="text-[11px] text-gray-400 mt-0.5">
+                {health.length} project{health.length !== 1 ? "s" : ""} total
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Search */}
+              <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-1.5">
+                <svg className="w-3.5 h-3.5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+                </svg>
+                <input
+                  type="text"
+                  placeholder="Search project..."
+                  value={healthSearch}
+                  onChange={e => { setHealthSearch(e.target.value); setShowAllHealth(false); }}
+                  className="w-36 bg-transparent border-0 outline-none ring-0 shadow-none focus:border-0 focus:outline-none focus:ring-0 text-[12px] text-gray-600 placeholder-gray-400"
+                  style={{ outline: 'none', border: 'none', boxShadow: 'none' }}
+                />
+              </div>
+              {/* Status filter */}
+              <select
+                value={healthStatusFilter}
+                onChange={e => { setHealthStatusFilter(e.target.value); setShowAllHealth(false); }}
+                className="border border-gray-200 rounded-lg px-3 py-1.5 text-[12px] text-gray-600 bg-white outline-none cursor-pointer hover:border-purple-400 transition-colors"
+                style={{ outline: 'none', boxShadow: 'none' }}
+              >
+                <option value="">All Statuses</option>
+                <option value="active">Active</option>
+                <option value="on-hold">On Hold</option>
+                <option value="completed">Completed</option>
+                <option value="new">New</option>
+              </select>
+              {/* Clear */}
+              {(healthSearch || healthStatusFilter) && (
+                <button
+                  onClick={() => { setHealthSearch(""); setHealthStatusFilter(""); setShowAllHealth(false); }}
+                  className="text-[11px] text-gray-400 hover:text-red-500 transition-colors px-2 py-1 rounded border border-dashed border-gray-200 hover:border-red-300"
+                >
+                  ✕ Clear
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Cards grid */}
+          {(() => {
+            const filteredHealth = health.filter(p => {
+              const q = healthSearch.toLowerCase();
+              const matchName = !q || p.project_name?.toLowerCase().includes(q) || p.project_code?.toLowerCase().includes(q);
+              const matchStatus = !healthStatusFilter || (p.status || "").toLowerCase() === healthStatusFilter;
+              return matchName && matchStatus;
+            });
+            const visibleHealth = showAllHealth ? filteredHealth : filteredHealth.slice(0, HEALTH_PAGE_SIZE);
+            const hasMore = filteredHealth.length > HEALTH_PAGE_SIZE;
+
+            return (
+              <div className="p-5">
+                {filteredHealth.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-14 text-center">
+                    <div className="text-4xl mb-3">🔍</div>
+                    <div className="text-[14px] font-semibold text-gray-400">No projects match your filters</div>
+                    <div className="text-[12px] text-gray-300 mt-1">Try adjusting the search or status filter</div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {visibleHealth.map(p => <HealthCard key={p.project_id} p={p} />)}
+                    </div>
+                    {hasMore && (
+                      <div className="flex justify-center mt-5">
+                        <button
+                          onClick={() => setShowAllHealth(prev => !prev)}
+                          className="flex items-center gap-2 px-5 py-2 rounded-xl border border-purple-200 text-[12px] font-semibold text-purple-600 hover:bg-purple-50 hover:border-purple-400 transition-all"
+                        >
+                          {showAllHealth ? (
+                            <><span>Show less</span><span>↑</span></>
+                          ) : (
+                            <><span>Show {filteredHealth.length - HEALTH_PAGE_SIZE} more project{filteredHealth.length - HEALTH_PAGE_SIZE !== 1 ? "s" : ""}</span><span>↓</span></>
+                          )}
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            );
+          })()}
         </div>
       </>)}
 
