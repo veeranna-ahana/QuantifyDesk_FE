@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import SearchableSelect from '../component/SearchableSelect';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const CUSTOMER_API_URL = 'http://104.211.117.118:8000/kam_and_customer_rating_api/customers/active-customers';
 const getHeaders = () => ({
   Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
 });
@@ -99,6 +101,33 @@ export default function EditProject() {
   });
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
+
+  // ── Customer dropdown state ────────────────────────────────────────────────
+  const [customers, setCustomers] = useState([]);
+  const [customersLoading, setCustomersLoading] = useState(false);
+  const [customersError, setCustomersError] = useState('');
+
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      setCustomersLoading(true);
+      setCustomersError('');
+      try {
+        const res = await axios.get(CUSTOMER_API_URL, { headers: getHeaders() });
+        const list = Array.isArray(res.data)
+          ? res.data
+          : Array.isArray(res.data?.data)
+            ? res.data.data
+            : [];
+        setCustomers(list);
+      } catch (err) {
+        console.error('Failed to fetch customers:', err);
+        setCustomersError('Could not load customers.');
+      } finally {
+        setCustomersLoading(false);
+      }
+    };
+    fetchCustomers();
+  }, []);
 
   const set = (field, val) => {
     setForm(prev => ({ ...prev, [field]: val }));
@@ -246,13 +275,26 @@ export default function EditProject() {
                 </div>
                 <div>
                   <Label required>Customer</Label>
-                  <input
-                    type="text"
+                  <SearchableSelect
                     value={form.customer}
-                    onChange={e => set('customer', e.target.value)}
-                    placeholder="Global Logistics Corp"
-                    className={`${inputClsLight} ${errors.customer ? 'border-red-400 ring-2 ring-red-200' : ''}`}
+                    onChange={val => set('customer', val)}
+                    placeholder={customersLoading ? 'Loading customers…' : 'Select Customer'}
+                    loading={customersLoading}
+                    error={!!errors.customer}
+                    options={[
+                      // Keep current value available even before API responds
+                      ...(form.customer && !customers.find(c =>
+                        (c.customer_name || c.name || c.company_name || c.label) === form.customer
+                      ) ? [{ value: form.customer, label: form.customer }] : []),
+                      ...customers.map((c, idx) => {
+                        const name = c.customer_name || c.name || c.company_name || c.label || String(c);
+                        return { value: name, label: name };
+                      }),
+                    ]}
                   />
+                  {customersError && !customersLoading && (
+                    <p className="text-amber-500 text-xs mt-1">{customersError}</p>
+                  )}
                   {errors.customer && (
                     <p className="text-red-500 text-xs mt-1">{errors.customer}</p>
                   )}
