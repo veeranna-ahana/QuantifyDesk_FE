@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import { useSelector } from "react-redux";
+import SearchableSelect from "../component/SearchableSelect";
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
   RadialBarChart, RadialBar
@@ -220,6 +221,12 @@ const UtilizationDashboard = () => {
   const [search, setSearch] = useState("");
   const [showAllEmployees, setShowAllEmployees] = useState(false);
 
+  // ── Project Health filter state ────────────────────────────────────────────
+  const [healthSearch, setHealthSearch] = useState("");
+  const [healthStatusFilter, setHealthStatusFilter] = useState("");
+  const [showAllHealth, setShowAllHealth] = useState(false);
+  const HEALTH_PAGE_SIZE = 6;
+
   // pagination
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 6;
@@ -398,22 +405,29 @@ const UtilizationDashboard = () => {
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-4 flex flex-wrap gap-4 items-end">
             <div className="flex flex-col gap-1">
               <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Select Project</label>
-              <select value={unitProject} onChange={e => { setUnitProject(e.target.value); setUnitEmployee(""); }}
-                className="border border-gray-200 rounded-lg px-3 py-2 text-[13px] text-gray-700 bg-white outline-none min-w-[220px] cursor-pointer">
-                <option value="">— Choose a project —</option>
-                {projects.map(p => <option key={p.id} value={p.id}>{p.project_name || p.name}</option>)}
-              </select>
+              <div className="min-w-[220px]">
+                <SearchableSelect
+                  value={unitProject}
+                  onChange={val => { setUnitProject(val); setUnitEmployee(""); }}
+                  placeholder="— Choose a project —"
+                  options={projects.map(p => ({ value: String(p.id), label: p.project_name || p.name }))}
+                />
+              </div>
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Select Employee</label>
-              <select value={unitEmployee} onChange={e => setUnitEmployee(e.target.value)}
-                disabled={!unitProject}
-                className="border border-gray-200 rounded-lg px-3 py-2 text-[13px] text-gray-700 bg-white outline-none min-w-[220px] cursor-pointer disabled:opacity-50">
-                <option value="">— Choose an employee —</option>
-                {serviceDeliveryEmployees.map(emp => (
-                  <option key={emp.employee_id || emp.emp_id} value={emp.employee_id || emp.emp_id}>{emp.emp_name}</option>
-                ))}
-              </select>
+              <div className="min-w-[220px]">
+                <SearchableSelect
+                  value={unitEmployee}
+                  onChange={setUnitEmployee}
+                  placeholder="— Choose an employee —"
+                  disabled={!unitProject}
+                  options={serviceDeliveryEmployees.map(emp => ({
+                    value: String(emp.employee_id || emp.emp_id),
+                    label: emp.emp_name,
+                  }))}
+                />
+              </div>
             </div>
           </div>
 
@@ -536,14 +550,14 @@ const UtilizationDashboard = () => {
               <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-5">
                 <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
                   <div>
-                      <div className="text-[15px] font-extrabold text-gray-800">Overall Employee Utilization</div>
+                    <div className="text-[15px] font-extrabold text-gray-800">Overall Employee Utilization</div>
                     <div className="text-[12px] text-gray-400 mt-0.5">
                       {unitEmpName} · Across all projects
                     </div>
                   </div>
                   <CircleProgress pct={Number(unitEmpOverall.overall_utilization_pct || 0)} size={76} color="#f39c12" />
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-3">
                   {[
                     { label: "Projects", value: Number(unitEmpOverall.total_projects || 0), icon: "🏗", color: "#6C5CE7" },
                     { label: "Tasks", value: Number(unitEmpOverall.total_tasks || 0), icon: "📋", color: "#3498db" },
@@ -562,36 +576,115 @@ const UtilizationDashboard = () => {
                   ))}
                 </div>
 
+                {/* Person Days KPI row — derived from tableData (has hours fields) */}
+                {(() => {
+                  const empObj = serviceDeliveryEmployees.find(
+                    e => String(e.employee_id || e.emp_id) === String(unitEmployee)
+                  );
+                  const empName = empObj?.emp_name || unitEmployee;
+                  const empRows = tableData.filter(r => r.user_name === empName);
+                  const totalHrsAssigned = empRows.reduce((s, r) => s + Number(r.hours_assigned || 0), 0);
+                  const totalHrsUtilized = empRows.reduce((s, r) => s + Number(r.hours_utilized || 0), 0);
+                  const totalPD = parseFloat((totalHrsAssigned / 8).toFixed(2));
+                  const completedPD = parseFloat((totalHrsUtilized / 8).toFixed(2));
+                  const pendingPD = parseFloat(Math.max(totalPD - completedPD, 0).toFixed(2));
+                  return (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      {[
+                        { label: "Total Person Days", value: totalPD, icon: "📅", color: "#0984e3" },
+                        { label: "Completed Person Days", value: completedPD, icon: "✅", color: "#00b894" },
+                        { label: "Pending Person Days", value: pendingPD, icon: "⏳", color: "#e74c3c" },
+                      ].map(({ label, value, icon, color }) => (
+                        <div key={label} className="rounded-xl p-4 flex flex-col gap-1" style={{ background: `${color}10`, border: `1.5px solid ${color}25` }}>
+                          <div className="flex items-center gap-1.5 mb-0.5">
+                            <span>{icon}</span>
+                            <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">{label}</span>
+                          </div>
+                          <div className="text-xl font-extrabold" style={{ color }}>{value}</div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+
+
                 {/* All-project task table */}
                 <div className="overflow-x-auto mt-5">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-gray-100">
-                        {["Task", "Project", "Role", "Assigned", "Completed", "Pending", "Progress"].map(h => (
+                      <tr className="bg-[#EFF4FF] border-b border-gray-100">
+                        {[
+                          "Employee Name", "Project Name", "Task Name",
+                          "Total Units", "Total Person Days",
+                          "Completed Units", "Completed Person Days",
+                          "Pending Units", "Pending Person Days",
+                          "Unit Utilization (%)", "Person Days Utilization (%)", "Hours Utilization (%)"
+                        ].map(h => (
                           <th key={h} className="px-4 py-2.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">{h}</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
-                      {unitAllTasks.length === 0 ? (
-                        <tr><td colSpan={7} className="py-6 text-center text-gray-300">No tasks found</td></tr>
-                      ) : unitAllTasks.map((t, i) => {
-                        const pct = t.units_assigned > 0 ? Math.round((t.units_completed / t.units_assigned) * 100) : 0;
-                        return (
-                          <tr key={i} className="border-b border-gray-50 hover:bg-gray-50/60">
-                            <td className="px-4 py-2.5 font-semibold text-gray-700 text-[12px]">{t.task_name}</td>
-                            <td className="px-4 py-2.5 text-[12px] text-gray-500">{t.project_name || "—"}</td>
-                            <td className="px-4 py-2.5"><RolePill role={t.role} /></td>
-                            <td className="px-4 py-2.5 text-center font-bold text-blue-600">{t.units_assigned}</td>
-                            <td className="px-4 py-2.5 text-center font-bold text-emerald-500">{t.units_completed}</td>
-                            <td className="px-4 py-2.5 text-center font-bold" style={{ color: t.units_pending > 0 ? "#e74c3c" : "#00b894" }}>{t.units_pending}</td>
-                            <td className="px-4 py-2.5 min-w-[130px]"><ProgressBar pct={pct} /></td>
-                          </tr>
+                      {(() => {
+                        // resolve employee name from serviceDeliveryEmployees
+                        const empObj = serviceDeliveryEmployees.find(
+                          e => String(e.employee_id || e.emp_id) === String(unitEmployee)
                         );
-                      })}
+                        const empName = empObj?.emp_name || unitEmployee;
+                        // use tableData (by-project endpoint) filtered by this employee — it has hours fields
+                        const empRows = tableData.filter(r => r.user_name === empName);
+                        if (empRows.length === 0) {
+                          return <tr><td colSpan={12} className="py-6 text-center text-gray-300">No tasks found</td></tr>;
+                        }
+                        return empRows.map((t, i) => {
+                          const assignedUnits = Number(t.units_assigned || 0);
+                          const completedUnits = Number(t.units_completed || 0);
+                          const pendingUnits = Number(t.units_pending || 0);
+                          const assignedHrs = Number(t.hours_assigned || 0);
+                          const utilizedHrs = Number(t.hours_utilized || 0);
+                          const pendingHrs = Math.max(assignedHrs - utilizedHrs, 0);
+                          // person days = hours / 8
+                          const totalPD = parseFloat((assignedHrs / 8).toFixed(2));
+                          const completedPD = parseFloat((utilizedHrs / 8).toFixed(2));
+                          const pendingPD = parseFloat((pendingHrs / 8).toFixed(2));
+                          // utilization %
+                          const unitPct = assignedUnits > 0 ? Math.round((completedUnits / assignedUnits) * 100) : 0;
+                          const pdPct = totalPD > 0 ? Math.round((completedPD / totalPD) * 100) : 0;
+                          const hrsPct = assignedHrs > 0 ? Math.round((utilizedHrs / assignedHrs) * 100) : 0;
+                          return (
+                            <tr key={i} className="border-b border-gray-50 hover:bg-gray-50/60">
+                              <td className="px-4 py-2.5 font-semibold text-gray-700 text-[12px] whitespace-nowrap">{empName}</td>
+                              <td className="px-4 py-2.5 text-[12px] text-gray-500">{t.project_name || "—"}</td>
+                              <td className="px-4 py-2.5 font-semibold text-gray-700 text-[12px]">{t.task_name}</td>
+                              <td className="px-4 py-2.5 text-center font-bold text-blue-600">{assignedUnits}</td>
+                              <td className="px-4 py-2.5 text-center font-semibold text-slate-700">{totalPD}</td>
+                              <td className="px-4 py-2.5 text-center font-bold text-emerald-500">{completedUnits}</td>
+                              <td className="px-4 py-2.5 text-center font-semibold text-emerald-400">{completedPD}</td>
+                              <td className="px-4 py-2.5 text-center font-bold" style={{ color: pendingUnits > 0 ? "#e74c3c" : "#00b894" }}>{pendingUnits}</td>
+                              <td className="px-4 py-2.5 text-center font-semibold" style={{ color: pendingPD > 0 ? "#e74c3c" : "#00b894" }}>{pendingPD}</td>
+                              <td className="px-4 py-2.5 text-center">
+                                <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${unitPct >= 100 ? 'bg-emerald-50 text-emerald-600' : unitPct >= 50 ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-rose-500'}`}>
+                                  {unitPct}%
+                                </span>
+                              </td>
+                              <td className="px-4 py-2.5 text-center">
+                                <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${pdPct >= 100 ? 'bg-emerald-50 text-emerald-600' : pdPct >= 50 ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-rose-500'}`}>
+                                  {pdPct}%
+                                </span>
+                              </td>
+                              <td className="px-4 py-2.5 text-center">
+                                <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${hrsPct >= 100 ? 'bg-emerald-50 text-emerald-600' : hrsPct >= 50 ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-rose-500'}`}>
+                                  {hrsPct}%
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        });
+                      })()}
                     </tbody>
                   </table>
                 </div>
+
               </div>
             ) : null
           )}
@@ -715,7 +808,7 @@ const UtilizationDashboard = () => {
             <h3 className="text-[14px] font-bold text-gray-800">Assignment Overview</h3>
             <div className="flex items-center gap-2 flex-wrap">
               {/* search */}
-              <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-1.5 bg-gray-50">
+              <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-1.5">
                 <svg className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                   <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
                 </svg>
@@ -728,30 +821,30 @@ const UtilizationDashboard = () => {
                     setCurrentPage(1);
                   }}
                   className="w-36 bg-transparent border-0 outline-none ring-0 shadow-none focus:border-0 focus:outline-none focus:ring-0 focus:shadow-none text-[12px] text-gray-600 placeholder-gray-400"
+                  style={{ outline: 'none', border: 'none', boxShadow: 'none', WebkitAppearance: 'none' }}
                 />
               </div>
               {/* employee filter */}
-              <select
-                value={selEmployee}
-                onChange={e => { setSelEmployee(e.target.value); setCurrentPage(1); }}
-                className="border border-gray-200 rounded-lg px-3 py-1.5 text-[12px] text-gray-600 bg-white cursor-pointer outline-none"
-              >
-                <option value="">All Employees</option>
-                {employeeOptions.map(name => (
-                  <option key={name} value={name}>{name}</option>
-                ))}
-              </select>
+              <div className="min-w-[180px]">
+                <SearchableSelect
+                  value={selEmployee}
+                  onChange={val => { setSelEmployee(val); setCurrentPage(1); }}
+                  placeholder="All Employees"
+                  options={employeeOptions.map(name => ({ value: name, label: name }))}
+                />
+              </div>
               {/* project filter */}
-              <select
-                value={selProject}
-                onChange={e => setSelProject(e.target.value)}
-                className="border border-gray-200 rounded-lg px-3 py-1.5 text-[12px] text-gray-600 bg-white cursor-pointer outline-none"
-              >
-                <option value="">All Projects</option>
-                {projects.map(p => (
-                  <option key={p.id} value={p.id}>{p.project_name || p.name}</option>
-                ))}
-              </select>
+              <div className="min-w-[180px]">
+                <SearchableSelect
+                  value={selProject}
+                  onChange={val => { setSelProject(val); setCurrentPage(1); }}
+                  placeholder="All Projects"
+                  options={projects.map(p => ({
+                    value: String(p.id),
+                    label: p.project_name || p.name,
+                  }))}
+                />
+              </div>
             </div>
           </div>
 
@@ -829,12 +922,98 @@ const UtilizationDashboard = () => {
         </div>
 
         {/* ── Project Health Overview ── */}
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-[14px] font-bold text-gray-800">Project Health Overview</h3>
-          <button className="text-[12px] font-semibold text-purple-600 hover:text-purple-800 transition-colors">View All</button>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pb-4">
-          {health.map(p => <HealthCard key={p.project_id} p={p} />)}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-5">
+          {/* Header + filters */}
+          <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-b border-gray-50">
+            <div>
+              <h3 className="text-[14px] font-bold text-gray-800">Project Health Overview</h3>
+              <p className="text-[11px] text-gray-400 mt-0.5">
+                {health.length} project{health.length !== 1 ? "s" : ""} total
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Search */}
+              <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-1.5">
+                <svg className="w-3.5 h-3.5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+                </svg>
+                <input
+                  type="text"
+                  placeholder="Search project..."
+                  value={healthSearch}
+                  onChange={e => { setHealthSearch(e.target.value); setShowAllHealth(false); }}
+                  className="w-36 bg-transparent border-0 outline-none ring-0 shadow-none focus:border-0 focus:outline-none focus:ring-0 text-[12px] text-gray-600 placeholder-gray-400"
+                  style={{ outline: 'none', border: 'none', boxShadow: 'none' }}
+                />
+              </div>
+              {/* Status filter */}
+              <select
+                value={healthStatusFilter}
+                onChange={e => { setHealthStatusFilter(e.target.value); setShowAllHealth(false); }}
+                className="border border-gray-200 rounded-lg px-3 py-1.5 text-[12px] text-gray-600 bg-white outline-none cursor-pointer hover:border-purple-400 transition-colors"
+                style={{ outline: 'none', boxShadow: 'none' }}
+              >
+                <option value="">All Statuses</option>
+                <option value="active">Active</option>
+                <option value="on-hold">On Hold</option>
+                <option value="completed">Completed</option>
+                <option value="new">New</option>
+              </select>
+              {/* Clear */}
+              {(healthSearch || healthStatusFilter) && (
+                <button
+                  onClick={() => { setHealthSearch(""); setHealthStatusFilter(""); setShowAllHealth(false); }}
+                  className="text-[11px] text-gray-400 hover:text-red-500 transition-colors px-2 py-1 rounded border border-dashed border-gray-200 hover:border-red-300"
+                >
+                  ✕ Clear
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Cards grid */}
+          {(() => {
+            const filteredHealth = health.filter(p => {
+              const q = healthSearch.toLowerCase();
+              const matchName = !q || p.project_name?.toLowerCase().includes(q) || p.project_code?.toLowerCase().includes(q);
+              const matchStatus = !healthStatusFilter || (p.status || "").toLowerCase() === healthStatusFilter;
+              return matchName && matchStatus;
+            });
+            const visibleHealth = showAllHealth ? filteredHealth : filteredHealth.slice(0, HEALTH_PAGE_SIZE);
+            const hasMore = filteredHealth.length > HEALTH_PAGE_SIZE;
+
+            return (
+              <div className="p-5">
+                {filteredHealth.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-14 text-center">
+                    <div className="text-4xl mb-3">🔍</div>
+                    <div className="text-[14px] font-semibold text-gray-400">No projects match your filters</div>
+                    <div className="text-[12px] text-gray-300 mt-1">Try adjusting the search or status filter</div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {visibleHealth.map(p => <HealthCard key={p.project_id} p={p} />)}
+                    </div>
+                    {hasMore && (
+                      <div className="flex justify-center mt-5">
+                        <button
+                          onClick={() => setShowAllHealth(prev => !prev)}
+                          className="flex items-center gap-2 px-5 py-2 rounded-xl border border-purple-200 text-[12px] font-semibold text-purple-600 hover:bg-purple-50 hover:border-purple-400 transition-all"
+                        >
+                          {showAllHealth ? (
+                            <><span>Show less</span><span>↑</span></>
+                          ) : (
+                            <><span>Show {filteredHealth.length - HEALTH_PAGE_SIZE} more project{filteredHealth.length - HEALTH_PAGE_SIZE !== 1 ? "s" : ""}</span><span>↓</span></>
+                          )}
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            );
+          })()}
         </div>
       </>)}
 

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import { Icon } from '@iconify/react';
 
 // ── Role helper ───────────────────────────────────────────────────────────────
 const getUserRole = () => {
@@ -827,14 +828,18 @@ const Projects = () => {
           <div className="flex items-center gap-3">
             {/* Effort Estimate — outlined violet */}
             <button
-              onClick={() => navigate('/projects/effort', { state: { projects, initialProjectId: '', readOnly: false } })}
-              className="flex items-center gap-2 px-4 py-2 border border-violet-500 text-violet-600 text-sm font-semibold rounded-lg hover:bg-violet-50 transition-colors"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18M9 21V9" />
-              </svg>
-              Effort Estimate
-            </button>
+  onClick={() => navigate('/projects/effort', { state: { projects, initialProjectId: '', readOnly: false } })}
+  className="flex items-center gap-2 px-4 py-2 border border-violet-500 text-violet-600 text-sm font-semibold rounded-lg hover:bg-violet-50 transition-colors"
+>
+<Icon 
+  icon="boxicons:math-filled" 
+  width="22" 
+  height="22" 
+  className="border-2 border-[#856BFF]  p-0.5"
+  style={{ color: '#856BFF' }}
+/>
+  Effort Estimate
+</button>
             {/* Create Project — filled violet */}
             <button
               onClick={() => navigate('/projects/create')}
@@ -957,7 +962,28 @@ const Projects = () => {
                             onClick={() => navigate('/projects/effort', { state: { projects, initialProjectId: p.id, readOnly: isAdmin } })}
                             className="flex items-center gap-1 text-xs font-semibold text-gray-500 hover:text-gray-700 transition-colors"
                           >
-                            {isAdmin ? '👁 View' : '📊 Effort'}
+                             {isAdmin ? (
+        <>
+          <Icon 
+            icon="lets-icons:view" 
+            width="22" 
+            height="22" 
+            className="text-gray-500"
+          />
+          View
+        </>
+      ) : (
+        <>
+          <Icon 
+  icon="boxicons:math-filled" 
+  width="22" 
+  height="22" 
+  className="border-2 border-[#856BFF]  p-0.5"
+  style={{ color: '#856BFF' }}
+/>
+          Effort
+        </>
+      )}
                           </button>
                         </div>
                       </td>

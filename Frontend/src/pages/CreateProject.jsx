@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import SearchableSelect from '../component/SearchableSelect';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const CUSTOMER_API_URL = 'http://104.211.117.118:8000/kam_and_customer_rating_api/customers/active-customers';
 const getHeaders = () => ({
   Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
 });
@@ -78,6 +80,34 @@ export default function CreateProject() {
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
 
+  // ── Customer dropdown state ────────────────────────────────────────────────
+  const [customers, setCustomers] = useState([]);
+  const [customersLoading, setCustomersLoading] = useState(false);
+  const [customersError, setCustomersError] = useState('');
+
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      setCustomersLoading(true);
+      setCustomersError('');
+      try {
+        const res = await axios.get(CUSTOMER_API_URL, { headers: getHeaders() });
+        // API may return { data: [...] } or an array directly
+        const list = Array.isArray(res.data)
+          ? res.data
+          : Array.isArray(res.data?.data)
+            ? res.data.data
+            : [];
+        setCustomers(list);
+      } catch (err) {
+        console.error('Failed to fetch customers:', err);
+        setCustomersError('Could not load customers.');
+      } finally {
+        setCustomersLoading(false);
+      }
+    };
+    fetchCustomers();
+  }, []);
+
   const set = (field, val) => {
     setForm(prev => ({ ...prev, [field]: val }));
     setErrors(prev => ({ ...prev, [field]: '' }));
@@ -87,6 +117,8 @@ export default function CreateProject() {
     const e = {};
     if (!form.projectName.trim()) e.projectName = 'Project Name is required.';
     if (!form.customer.trim()) e.customer = 'Customer is required.';
+    if (!form.nbdId.trim()) e.nbdId = 'NBD ID is required.';
+    if (!form.projectCode.trim()) e.projectCode = 'Project Code is required.';
     return e;
   };
 
@@ -178,14 +210,17 @@ export default function CreateProject() {
               {/* Row 1: NBD ID, O2D ID, Project Code */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <Label>NBD ID</Label>
+                  <Label required>NBD ID</Label>  {/* Add 'required' prop */}
                   <input
                     type="text"
                     value={form.nbdId}
                     onChange={e => set('nbdId', e.target.value)}
                     placeholder="NBD-0000"
-                    className={inputClsLight}
+                    className={`${inputClsLight} ${errors.nbdId ? 'border-red-400 ring-2 ring-red-200' : ''}`}
                   />
+                  {errors.nbdId && (
+                    <p className="text-red-500 text-xs mt-1">{errors.nbdId}</p>
+                  )}
                 </div>
                 <div>
                   <Label>O2D ID</Label>
@@ -198,14 +233,17 @@ export default function CreateProject() {
                   />
                 </div>
                 <div>
-                  <Label>Project Code</Label>
+                  <Label required>Project Code</Label>  {/* Add 'required' prop */}
                   <input
                     type="text"
                     value={form.projectCode}
                     onChange={e => set('projectCode', e.target.value)}
                     placeholder="PRJ-8821"
-                    className={inputClsLight}
+                    className={`${inputClsLight} ${errors.projectCode ? 'border-red-400 ring-2 ring-red-200' : ''}`}
                   />
+                  {errors.projectCode && (
+                    <p className="text-red-500 text-xs mt-1">{errors.projectCode}</p>
+                  )}
                 </div>
               </div>
 
@@ -223,13 +261,20 @@ export default function CreateProject() {
                 </div>
                 <div>
                   <Label required>Customer</Label>
-                  <input
-                    type="text"
+                  <SearchableSelect
                     value={form.customer}
-                    onChange={e => set('customer', e.target.value)}
-                    placeholder="Global Logistics Corp"
-                    className={`${inputClsLight} ${errors.customer ? 'border-red-400 ring-2 ring-red-200' : ''}`}
+                    onChange={val => set('customer', val)}
+                    placeholder={customersLoading ? 'Loading customers…' : 'Select Customer'}
+                    loading={customersLoading}
+                    error={!!errors.customer}
+                    options={customers.map((c, idx) => {
+                      const name = c.customer_name || c.name || c.company_name || c.label || String(c);
+                      return { value: name, label: name, key: c.id ?? c.customer_id ?? idx };
+                    })}
                   />
+                  {customersError && !customersLoading && (
+                    <p className="text-amber-500 text-xs mt-1">{customersError}</p>
+                  )}
                   {errors.customer && (
                     <p className="text-red-500 text-xs mt-1">{errors.customer}</p>
                   )}
@@ -301,6 +346,7 @@ export default function CreateProject() {
                     className={`${inputCls} appearance-none pr-9 cursor-pointer`}
                   >
                     <option value="New">New</option>
+                    <option value="Active">Active</option>
                     <option value="On Hold">On Hold</option>
                     <option value="Completed">Completed</option>
                     <option value="New CR">New CR</option>

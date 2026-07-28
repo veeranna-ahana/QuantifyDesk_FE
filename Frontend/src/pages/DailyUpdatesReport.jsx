@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import Cookies from 'js-cookie';
 import { useNavigate } from 'react-router-dom';
+import SearchableSelect from '../component/SearchableSelect';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL;
 const PAGE_SIZE = 10;
@@ -357,39 +358,36 @@ export default function DailyUpdatesReport() {
 
         {/* Project - Shows different options based on role */}
         <SelectWrapper label="Project">
-          <select
-            value={pendingProject}
-            onChange={e => setPendingProject(e.target.value)}
-            className={selectCls}
-            disabled={loadingMeta}
-          >
-            <option value="">All projects</option>
-            {meta.projects.map(p => (
-              <option key={p.id} value={p.id}>{p.project_name}</option>
-            ))}
-          </select>
-          <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" /></svg>
-          </span>
+          <div className="min-w-[220px]">
+            <SearchableSelect
+              value={pendingProject}
+              onChange={setPendingProject}
+              placeholder="All projects"
+              disabled={loadingMeta}
+              loading={loadingMeta && meta.projects.length === 0}
+              options={meta.projects.map(p => ({
+                value: String(p.id),
+                label: p.project_name,
+              }))}
+            />
+          </div>
         </SelectWrapper>
 
         {/* Employee - Only shown for Admin/Manager */}
         {isAdminOrManager && (
           <SelectWrapper label="Employee">
-            <select
-              value={pendingEmployee}
-              onChange={e => setPendingEmployee(e.target.value)}
-              disabled={employeeOptions.length === 0 || loadingMeta}
-              className={selectCls}
-            >
-              <option value="">All employees</option>
-              {employeeOptions.map(emp => (
-                <option key={emp.id} value={emp.id}>{emp.name}</option>
-              ))}
-            </select>
-            <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" /></svg>
-            </span>
+            <div className="min-w-[220px]">
+              <SearchableSelect
+                value={pendingEmployee}
+                onChange={setPendingEmployee}
+                placeholder="All employees"
+                disabled={employeeOptions.length === 0 || loadingMeta}
+                options={employeeOptions.map(emp => ({
+                  value: String(emp.id),
+                  label: emp.name,
+                }))}
+              />
+            </div>
           </SelectWrapper>
         )}
 

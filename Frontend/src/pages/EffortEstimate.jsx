@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import SearchableSelect from '../component/SearchableSelect';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const HOURS_PER_DAY = 8;
@@ -12,34 +13,34 @@ const getHeaders = () => ({
 
 // ── Role definitions (kept in sync with Projects.jsx) ─────────────────────────
 const EFFORT_ROLES = [
-  { role: 'BA',                  unitLabel: '' },
-  { role: 'Solution Architect',  unitLabel: '' },
-  { role: 'UI/UX',               unitLabel: 'No of UI Screens' },
-  { role: 'FE Dev',              unitLabel: 'No of UI Screens' },
-  { role: 'BE Dev',              unitLabel: 'No of APIs' },
-  { role: 'Tester',              unitLabel: 'No of Cases' },
-  { role: 'Deployment',          unitLabel: '' },
-  { role: 'Warranty & Support',  unitLabel: '' },
-  { role: 'Project Manager',     unitLabel: '' },
+  { role: 'BA', unitLabel: '' },
+  { role: 'Solution Architect', unitLabel: '' },
+  { role: 'UI/UX', unitLabel: 'No of UI Screens' },
+  { role: 'FE Dev', unitLabel: 'No of UI Screens' },
+  { role: 'BE Dev', unitLabel: 'No of APIs' },
+  { role: 'Tester', unitLabel: 'No of Cases' },
+  { role: 'Deployment', unitLabel: '' },
+  { role: 'Warranty & Support', unitLabel: '' },
+  { role: 'Project Manager', unitLabel: '' },
 ];
 
 const emptyRows = () =>
   EFFORT_ROLES.map(r => ({
-    role:       r.role,
-    unitLabel:  r.unitLabel,
-    days:       '',
-    hrs:        '',
+    role: r.role,
+    unitLabel: r.unitLabel,
+    days: '',
+    hrs: '',
     bufferDays: '',
-    bufferHrs:  '',
-    totalHrs:   '',
-    units:      '',
+    bufferHrs: '',
+    totalHrs: '',
+    units: '',
   }));
 
 // ── Chevron icon for select ───────────────────────────────────────────────────
 const ChevDown = () => (
   <svg className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
     fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-    <path d="M6 9l6 6 6-6"/>
+    <path d="M6 9l6 6 6-6" />
   </svg>
 );
 
@@ -63,14 +64,14 @@ const NumInput = ({ value, onChange, readOnly, placeholder = '0' }) =>
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function EffortEstimate() {
-  const navigate  = useNavigate();
-  const location  = useLocation();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   // State passed via navigation: { projects, initialProjectId, readOnly }
   const { projects = [], initialProjectId = '', readOnly = false } = location.state || {};
 
   const [selectedProject, setSelectedProject] = useState(initialProjectId);
-  const [rows,   setRows]   = useState(emptyRows());
+  const [rows, setRows] = useState(emptyRows());
   const [saving, setSaving] = useState(false);
   const [loadingRows, setLoadingRows] = useState(false);
 
@@ -83,20 +84,21 @@ export default function EffortEstimate() {
       .get(`${BASE_URL}/api/projects/${selectedProject}/effort`, { headers: getHeaders() })
       .then(res => {
         const fetched = res.data?.rows || [];
+        console.log('Fetched data:', fetched);
         if (fetched.length > 0) {
           setRows(
             EFFORT_ROLES.map(r => {
               const ex = fetched.find(fr => fr.role === r.role);
               if (!ex) return { role: r.role, unitLabel: r.unitLabel, days: '', hrs: '', bufferDays: '', bufferHrs: '', totalHrs: '', units: '' };
               return {
-                role:       r.role,
-                unitLabel:  r.unitLabel,
-                days:       ex.effort_days  != null ? String(ex.effort_days)  : '',
-                hrs:        ex.effort_hrs   != null ? String(ex.effort_hrs)   : '',
-                bufferDays: ex.buffer_days  != null ? String(ex.buffer_days)  : '',
-                bufferHrs:  ex.buffer_hrs   != null ? String(ex.buffer_hrs)   : '',
-                totalHrs:   ex.total_hrs    != null ? String(ex.total_hrs)    : '',
-                units:      ex.units        != null ? String(ex.units)        : '',
+                role: r.role,
+                unitLabel: r.unitLabel,
+                days: ex.effort_days != null ? String(ex.effort_days) : '',
+                hrs: ex.effort_hrs != null ? String(ex.effort_hrs) : '',
+                bufferDays: ex.buffer_days != null ? String(ex.buffer_days) : '',
+                bufferHrs: ex.buffer_hrs != null ? String(ex.buffer_hrs) : '',
+                totalHrs: ex.total_hrs != null ? String(ex.total_hrs) : '',
+                units: ex.units != null ? String(ex.units) : '',
               };
             })
           );
@@ -112,7 +114,7 @@ export default function EffortEstimate() {
   const handleChange = (idx, field, val) => {
     setRows(prev => {
       const next = prev.map((r, i) => i === idx ? { ...r, [field]: val } : r);
-      const row  = { ...next[idx] };
+      const row = { ...next[idx] };
 
       if (field === 'days') {
         const d = parseFloat(val);
@@ -122,7 +124,7 @@ export default function EffortEstimate() {
         const bd = parseFloat(val);
         row.bufferHrs = isNaN(bd) ? '' : String(bd * HOURS_PER_DAY);
       }
-      const h  = parseFloat(row.hrs)       || 0;
+      const h = parseFloat(row.hrs) || 0;
       const bh = parseFloat(row.bufferHrs) || 0;
       row.totalHrs = (h + bh) > 0 ? String(h + bh) : '';
 
@@ -134,22 +136,23 @@ export default function EffortEstimate() {
   // ── Totals ───────────────────────────────────────────────────────────────
   const totals = rows.reduce(
     (acc, r) => ({
-      days:       acc.days       + (parseFloat(r.days)       || 0),
+      days: acc.days + (parseFloat(r.days) || 0),
+      hrs: acc.hrs + (parseFloat(r.hrs) || 0),
       bufferDays: acc.bufferDays + (parseFloat(r.bufferDays) || 0),
-      totalHrs:   acc.totalHrs   + (parseFloat(r.totalHrs)   || 0),
-      units:      acc.units      + (parseFloat(r.units)      || 0),
+      bufferHrs: acc.bufferHrs + (parseFloat(r.bufferHrs) || 0),
+      totalHrs: acc.totalHrs + (parseFloat(r.totalHrs) || 0),
+      units: acc.units + (parseFloat(r.units) || 0),
     }),
-    { days: 0, bufferDays: 0, totalHrs: 0, units: 0 }
+    { days: 0, hrs: 0, bufferDays: 0, bufferHrs: 0, totalHrs: 0, units: 0 }
   );
-
   // ── Submit ───────────────────────────────────────────────────────────────
   const handleSubmit = async () => {
     if (!selectedProject) { toast.error('Please select a project'); return; }
 
     const missing = rows.filter(r => {
-      const hasDays   = (parseFloat(r.days)       || 0) > 0;
-      const hasBuf    = (parseFloat(r.bufferDays)  || 0) > 0;
-      const hasUnits  = r.units && parseFloat(r.units) > 0;
+      const hasDays = (parseFloat(r.days) || 0) > 0;
+      const hasBuf = (parseFloat(r.bufferDays) || 0) > 0;
+      const hasUnits = r.units && parseFloat(r.units) > 0;
       return (hasDays || hasBuf) && !hasUnits;
     });
 
@@ -164,11 +167,11 @@ export default function EffortEstimate() {
         `${BASE_URL}/api/projects/${selectedProject}/effort/bulk`,
         {
           rows: rows.map(r => ({
-            role:        r.role,
+            role: r.role,
             effort_days: r.days,
             buffer_days: r.bufferDays,
-            units:       r.units,
-            unit_label:  r.unitLabel,
+            units: r.units,
+            unit_label: r.unitLabel,
           })),
         },
         { headers: getHeaders() }
@@ -183,8 +186,36 @@ export default function EffortEstimate() {
   };
 
   // ── Column headers (matching Figma) ──────────────────────────────────────
-  const COLS = ['ROLE', 'EFFORT (DAYS)', 'IN HRS', 'BUFFER (DAYS)', 'BUFFER HRS', 'TOTAL HRS', 'UNITS', 'UNIT LABEL'];
-
+  const COLS = [
+    'ROLE',
+    <>
+      EFFORT
+      <br />
+      <span className="font-normal text-gray-400">(PERSON DAYS)</span>
+    </>,
+    <>
+      IN
+      <br />
+      <span className="font-normal text-gray-400">(PERSON HRS)</span>
+    </>,
+    <>
+      BUFFER
+      <br />
+      <span className="font-normal text-gray-400">(PERSON DAYS)</span>
+    </>,
+    <>
+      BUFFER
+      <br />
+      <span className="font-normal text-gray-400">(PERSON HRS)</span>
+    </>,
+    <>
+      TOTAL
+      <br />
+      <span className="font-normal text-gray-400">(PERSON HRS)</span>
+    </>,
+    'UNITS',
+    'UNIT LABEL'
+  ];
   return (
     <div className="min-h-screen bg-[#f0f0f8] p-6 font-sans">
 
@@ -205,20 +236,13 @@ export default function EffortEstimate() {
         <label className="block text-xs font-semibold text-gray-700 mb-1.5">
           Select Project <span className="text-red-500">*</span>
         </label>
-        <div className="relative w-72">
-          <select
+        <div className="w-72">
+          <SearchableSelect
             value={selectedProject}
-            onChange={e => setSelectedProject(e.target.value)}
-            className="w-full appearance-none bg-white border border-gray-200 rounded-lg pl-3 pr-9 py-2.5 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-400 cursor-pointer"
-          >
-            <option value="">Select Project</option>
-            {projects.map(p => (
-              <option key={p.id} value={p.id}>
-                {p.project_name || p.name}
-              </option>
-            ))}
-          </select>
-          <ChevDown />
+            onChange={setSelectedProject}
+            placeholder="Select Project"
+            options={projects.map(p => ({ value: String(p.id), label: p.project_name || p.name }))}
+          />
         </div>
       </div>
 
@@ -230,15 +254,15 @@ export default function EffortEstimate() {
           <div className="flex items-center gap-2">
             {/* Grid icon */}
             <svg className="w-5 h-5 text-violet-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
-              <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+              <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" />
+              <rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" />
             </svg>
-            <span className="text-base font-bold text-gray-900">Resource Breakdown</span>
+            <span className="text-base font-bold text-gray-900">Effort Breakdown</span>
           </div>
           <div className="flex items-center gap-1.5 text-xs text-gray-400">
             {/* Clock icon */}
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+              <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
             </svg>
             1 Day = 8 Hrs
           </div>
@@ -248,8 +272,8 @@ export default function EffortEstimate() {
         {loadingRows ? (
           <div className="flex items-center justify-center gap-2 py-16 text-gray-400">
             <svg className="animate-spin w-5 h-5 text-violet-500" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
             </svg>
             Loading effort data…
           </div>
@@ -337,11 +361,16 @@ export default function EffortEstimate() {
                   <td className="px-4 py-3 text-center text-sm font-semibold text-gray-700">
                     {totals.days > 0 ? `${totals.days} Days` : '0 Days'}
                   </td>
-                  <td className="px-4 py-3 text-center text-gray-400">—</td>
+                  <td className="px-4 py-3 text-center text-sm font-semibold text-gray-700">
+                    {totals.hrs > 0 ? `${totals.hrs} Hrs` : '0 Hrs'}
+                  </td>
                   <td className="px-4 py-3 text-center text-sm font-semibold text-gray-700">
                     {totals.bufferDays > 0 ? `${totals.bufferDays} Days` : '0 Days'}
                   </td>
-                  <td className="px-4 py-3 text-center text-gray-400">—</td>
+                  <td className="px-4 py-3 text-center text-sm font-semibold text-gray-700">
+                    {totals.bufferHrs > 0 ? `${totals.bufferHrs} Hrs` : '0 Hrs'}
+                  </td>
+
                   <td className="px-4 py-3 text-center text-sm font-bold text-emerald-500">
                     {totals.totalHrs > 0 ? `${totals.totalHrs} Hrs` : '0 Hrs'}
                   </td>
