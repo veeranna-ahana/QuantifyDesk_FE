@@ -1,6 +1,7 @@
 
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import SearchableSelect from "../component/SearchableSelect";
 //const BASE_URL  = process.env.REACT_APP_API_BASE_URL;
 const BASE_URL  = import.meta.env.VITE_API_BASE_URL;
 
@@ -226,52 +227,34 @@ console.log("updates",updates);
         <div style={formRowStyle}>
           <div style={formGroupStyle}>
             <label style={labelStyle}>Select Project</label>
-            <select
+            <SearchableSelect
               value={selectedProject}
-              onChange={(e) => setSelectedProject(e.target.value)}
-              style={selectStyle}
-            >
-              <option value="">Select Project</option>
-              {projects.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name || p.project_name}
-                </option>
-              ))}
-            </select>
+              onChange={setSelectedProject}
+              placeholder="Select Project"
+              options={projects.map(p => ({ value: String(p.id), label: p.name || p.project_name }))}
+            />
           </div>
           <div style={formGroupStyle}>
   <label style={labelStyle}>Select Role</label>
-  <select
+  <SearchableSelect
     value={selectedRole}
-    onChange={(e) => setSelectedRole(e.target.value)}
-    style={selectStyle}
+    onChange={val => { setSelectedRole(val); }}
+    placeholder="Select Role"
     disabled={!selectedProject}
-  >
-    <option value="">Select Role</option>
-    {Object.keys(roleTaskMapping).map((role) => (
-      <option key={role} value={role}>
-        {role}
-      </option>
-    ))}
-  </select>
+    options={Object.keys(roleTaskMapping).map(role => ({ value: role, label: role }))}
+  />
 </div>
 
 
           <div style={formGroupStyle}>
             <label style={labelStyle}>Select Task</label>
-            <select
-  value={selectedTask}
-  onChange={(e) => setSelectedTask(e.target.value)}
-  style={selectStyle}
-  disabled={!selectedRole}
->
-  <option value="">Select Task</option>
-  {roleTasks.map((task, index) => (
-    <option key={index} value={task}>
-      {task}
-    </option>
-  ))}
-</select>
+            <SearchableSelect
+              value={selectedTask}
+              onChange={setSelectedTask}
+              placeholder="Select Task"
+              disabled={!selectedRole}
+              options={roleTasks.map(task => ({ value: task, label: task }))}
+            />
 
           </div>
         </div>

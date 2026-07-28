@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import SearchableSelect from '../component/SearchableSelect';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const HOURS_PER_DAY = 8;
@@ -235,20 +236,13 @@ export default function EffortEstimate() {
         <label className="block text-xs font-semibold text-gray-700 mb-1.5">
           Select Project <span className="text-red-500">*</span>
         </label>
-        <div className="relative w-72">
-          <select
+        <div className="w-72">
+          <SearchableSelect
             value={selectedProject}
-            onChange={e => setSelectedProject(e.target.value)}
-            className="w-full appearance-none bg-white border border-gray-200 rounded-lg pl-3 pr-9 py-2.5 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-400 cursor-pointer"
-          >
-            <option value="">Select Project</option>
-            {projects.map(p => (
-              <option key={p.id} value={p.id}>
-                {p.project_name || p.name}
-              </option>
-            ))}
-          </select>
-          <ChevDown />
+            onChange={setSelectedProject}
+            placeholder="Select Project"
+            options={projects.map(p => ({ value: String(p.id), label: p.project_name || p.name }))}
+          />
         </div>
       </div>
 

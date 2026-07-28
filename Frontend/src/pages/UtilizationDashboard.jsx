@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import { useSelector } from "react-redux";
+import SearchableSelect from "../component/SearchableSelect";
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
   RadialBarChart, RadialBar
@@ -398,22 +399,29 @@ const UtilizationDashboard = () => {
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-4 flex flex-wrap gap-4 items-end">
             <div className="flex flex-col gap-1">
               <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Select Project</label>
-              <select value={unitProject} onChange={e => { setUnitProject(e.target.value); setUnitEmployee(""); }}
-                className="border border-gray-200 rounded-lg px-3 py-2 text-[13px] text-gray-700 bg-white outline-none min-w-[220px] cursor-pointer">
-                <option value="">— Choose a project —</option>
-                {projects.map(p => <option key={p.id} value={p.id}>{p.project_name || p.name}</option>)}
-              </select>
+              <div className="min-w-[220px]">
+                <SearchableSelect
+                  value={unitProject}
+                  onChange={val => { setUnitProject(val); setUnitEmployee(""); }}
+                  placeholder="— Choose a project —"
+                  options={projects.map(p => ({ value: String(p.id), label: p.project_name || p.name }))}
+                />
+              </div>
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Select Employee</label>
-              <select value={unitEmployee} onChange={e => setUnitEmployee(e.target.value)}
-                disabled={!unitProject}
-                className="border border-gray-200 rounded-lg px-3 py-2 text-[13px] text-gray-700 bg-white outline-none min-w-[220px] cursor-pointer disabled:opacity-50">
-                <option value="">— Choose an employee —</option>
-                {serviceDeliveryEmployees.map(emp => (
-                  <option key={emp.employee_id || emp.emp_id} value={emp.employee_id || emp.emp_id}>{emp.emp_name}</option>
-                ))}
-              </select>
+              <div className="min-w-[220px]">
+                <SearchableSelect
+                  value={unitEmployee}
+                  onChange={setUnitEmployee}
+                  placeholder="— Choose an employee —"
+                  disabled={!unitProject}
+                  options={serviceDeliveryEmployees.map(emp => ({
+                    value: String(emp.employee_id || emp.emp_id),
+                    label: emp.emp_name,
+                  }))}
+                />
+              </div>
             </div>
           </div>
 
@@ -536,7 +544,7 @@ const UtilizationDashboard = () => {
               <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-5">
                 <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
                   <div>
-                      <div className="text-[15px] font-extrabold text-gray-800">Overall Employee Utilization</div>
+                    <div className="text-[15px] font-extrabold text-gray-800">Overall Employee Utilization</div>
                     <div className="text-[12px] text-gray-400 mt-0.5">
                       {unitEmpName} · Across all projects
                     </div>
@@ -569,17 +577,17 @@ const UtilizationDashboard = () => {
                   );
                   const empName = empObj?.emp_name || unitEmployee;
                   const empRows = tableData.filter(r => r.user_name === empName);
-                  const totalHrsAssigned  = empRows.reduce((s, r) => s + Number(r.hours_assigned  || 0), 0);
-                  const totalHrsUtilized  = empRows.reduce((s, r) => s + Number(r.hours_utilized  || 0), 0);
-                  const totalPD      = parseFloat((totalHrsAssigned / 8).toFixed(2));
-                  const completedPD  = parseFloat((totalHrsUtilized / 8).toFixed(2));
-                  const pendingPD    = parseFloat(Math.max(totalPD - completedPD, 0).toFixed(2));
+                  const totalHrsAssigned = empRows.reduce((s, r) => s + Number(r.hours_assigned || 0), 0);
+                  const totalHrsUtilized = empRows.reduce((s, r) => s + Number(r.hours_utilized || 0), 0);
+                  const totalPD = parseFloat((totalHrsAssigned / 8).toFixed(2));
+                  const completedPD = parseFloat((totalHrsUtilized / 8).toFixed(2));
+                  const pendingPD = parseFloat(Math.max(totalPD - completedPD, 0).toFixed(2));
                   return (
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       {[
-                        { label: "Total Person Days",     value: totalPD,     icon: "📅", color: "#0984e3" },
-                        { label: "Completed Person Days", value: completedPD,  icon: "✅", color: "#00b894" },
-                        { label: "Pending Person Days",   value: pendingPD,    icon: "⏳", color: "#e74c3c" },
+                        { label: "Total Person Days", value: totalPD, icon: "📅", color: "#0984e3" },
+                        { label: "Completed Person Days", value: completedPD, icon: "✅", color: "#00b894" },
+                        { label: "Pending Person Days", value: pendingPD, icon: "⏳", color: "#e74c3c" },
                       ].map(({ label, value, icon, color }) => (
                         <div key={label} className="rounded-xl p-4 flex flex-col gap-1" style={{ background: `${color}10`, border: `1.5px solid ${color}25` }}>
                           <div className="flex items-center gap-1.5 mb-0.5">
@@ -623,20 +631,20 @@ const UtilizationDashboard = () => {
                           return <tr><td colSpan={12} className="py-6 text-center text-gray-300">No tasks found</td></tr>;
                         }
                         return empRows.map((t, i) => {
-                          const assignedUnits   = Number(t.units_assigned   || 0);
-                          const completedUnits  = Number(t.units_completed  || 0);
-                          const pendingUnits    = Number(t.units_pending    || 0);
-                          const assignedHrs     = Number(t.hours_assigned   || 0);
-                          const utilizedHrs     = Number(t.hours_utilized   || 0);
-                          const pendingHrs      = Math.max(assignedHrs - utilizedHrs, 0);
+                          const assignedUnits = Number(t.units_assigned || 0);
+                          const completedUnits = Number(t.units_completed || 0);
+                          const pendingUnits = Number(t.units_pending || 0);
+                          const assignedHrs = Number(t.hours_assigned || 0);
+                          const utilizedHrs = Number(t.hours_utilized || 0);
+                          const pendingHrs = Math.max(assignedHrs - utilizedHrs, 0);
                           // person days = hours / 8
-                          const totalPD         = parseFloat((assignedHrs  / 8).toFixed(2));
-                          const completedPD     = parseFloat((utilizedHrs  / 8).toFixed(2));
-                          const pendingPD       = parseFloat((pendingHrs   / 8).toFixed(2));
+                          const totalPD = parseFloat((assignedHrs / 8).toFixed(2));
+                          const completedPD = parseFloat((utilizedHrs / 8).toFixed(2));
+                          const pendingPD = parseFloat((pendingHrs / 8).toFixed(2));
                           // utilization %
-                          const unitPct         = assignedUnits > 0 ? Math.round((completedUnits / assignedUnits) * 100) : 0;
-                          const pdPct           = totalPD > 0 ? Math.round((completedPD / totalPD) * 100) : 0;
-                          const hrsPct          = assignedHrs > 0 ? Math.round((utilizedHrs / assignedHrs) * 100) : 0;
+                          const unitPct = assignedUnits > 0 ? Math.round((completedUnits / assignedUnits) * 100) : 0;
+                          const pdPct = totalPD > 0 ? Math.round((completedPD / totalPD) * 100) : 0;
+                          const hrsPct = assignedHrs > 0 ? Math.round((utilizedHrs / assignedHrs) * 100) : 0;
                           return (
                             <tr key={i} className="border-b border-gray-50 hover:bg-gray-50/60">
                               <td className="px-4 py-2.5 font-semibold text-gray-700 text-[12px] whitespace-nowrap">{empName}</td>
@@ -794,7 +802,7 @@ const UtilizationDashboard = () => {
             <h3 className="text-[14px] font-bold text-gray-800">Assignment Overview</h3>
             <div className="flex items-center gap-2 flex-wrap">
               {/* search */}
-              <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-1.5 bg-gray-50">
+              <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-1.5">
                 <svg className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                   <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
                 </svg>
@@ -807,30 +815,30 @@ const UtilizationDashboard = () => {
                     setCurrentPage(1);
                   }}
                   className="w-36 bg-transparent border-0 outline-none ring-0 shadow-none focus:border-0 focus:outline-none focus:ring-0 focus:shadow-none text-[12px] text-gray-600 placeholder-gray-400"
+                  style={{ outline: 'none', border: 'none', boxShadow: 'none', WebkitAppearance: 'none' }}
                 />
               </div>
               {/* employee filter */}
-              <select
-                value={selEmployee}
-                onChange={e => { setSelEmployee(e.target.value); setCurrentPage(1); }}
-                className="border border-gray-200 rounded-lg px-3 py-1.5 text-[12px] text-gray-600 bg-white cursor-pointer outline-none"
-              >
-                <option value="">All Employees</option>
-                {employeeOptions.map(name => (
-                  <option key={name} value={name}>{name}</option>
-                ))}
-              </select>
+              <div className="min-w-[180px]">
+                <SearchableSelect
+                  value={selEmployee}
+                  onChange={val => { setSelEmployee(val); setCurrentPage(1); }}
+                  placeholder="All Employees"
+                  options={employeeOptions.map(name => ({ value: name, label: name }))}
+                />
+              </div>
               {/* project filter */}
-              <select
-                value={selProject}
-                onChange={e => setSelProject(e.target.value)}
-                className="border border-gray-200 rounded-lg px-3 py-1.5 text-[12px] text-gray-600 bg-white cursor-pointer outline-none"
-              >
-                <option value="">All Projects</option>
-                {projects.map(p => (
-                  <option key={p.id} value={p.id}>{p.project_name || p.name}</option>
-                ))}
-              </select>
+              <div className="min-w-[180px]">
+                <SearchableSelect
+                  value={selProject}
+                  onChange={val => { setSelProject(val); setCurrentPage(1); }}
+                  placeholder="All Projects"
+                  options={projects.map(p => ({
+                    value: String(p.id),
+                    label: p.project_name || p.name,
+                  }))}
+                />
+              </div>
             </div>
           </div>
 

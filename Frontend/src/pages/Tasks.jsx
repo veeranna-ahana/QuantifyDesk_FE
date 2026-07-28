@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
+import SearchableSelect from '../component/SearchableSelect';
 //const BASE_URL  = process.env.REACT_APP_API_BASE_URL;
 const BASE_URL  = import.meta.env.VITE_API_BASE_URL;
 
@@ -143,34 +144,22 @@ const Tasks = () => {
 
           <div style={formGroupStyle}>
             <label style={labelStyle}>Select Project</label>
-            <select
+            <SearchableSelect
               value={selectedProject}
-              onChange={(e) => setSelectedProject(e.target.value)}
-              style={selectStyle}
-            >
-              <option value="">Select Project</option>
-              {projects.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name || p.project_name}
-                </option>
-              ))}
-            </select>
+              onChange={setSelectedProject}
+              placeholder="Select Project"
+              options={projects.map(p => ({ value: String(p.id), label: p.name || p.project_name }))}
+            />
           </div>
 
           <div style={formGroupStyle}>
             <label style={labelStyle}>Select User</label>
-            <select
+            <SearchableSelect
               value={selectedUserId}
-              onChange={(e) => setSelectedUserId(e.target.value)}
-              style={selectStyle}
-            >
-              <option value="">Select User</option>
-              {serviceDeliveryEmployees.map((emp) => (
-                <option key={emp.employee_id} value={emp.employee_id}>
-                  {emp.emp_name}
-                </option>
-              ))}
-            </select>
+              onChange={setSelectedUserId}
+              placeholder="Select User"
+              options={serviceDeliveryEmployees.map(emp => ({ value: String(emp.employee_id), label: emp.emp_name }))}
+            />
           </div>
         </div>
 
