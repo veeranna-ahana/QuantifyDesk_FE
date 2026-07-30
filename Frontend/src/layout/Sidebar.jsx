@@ -75,7 +75,7 @@ const SubMenu = ({ label, icon, children }) => {
       <button
         onClick={() => setOpen(o => !o)}
         className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-colors
-          ${isActive ? "bg-purple-50 text-purple-700" : "text-gray-500 hover:bg-gray-50 hover:text-gray-800"}`}
+          ${isActive ? "bg-purple-50 text-[#856BFF]" : "text-gray-500 hover:bg-gray-50 hover:text-gray-800"}`}
       >
         <Icon d={Icons[icon]} size={16} />
         <span className="flex-1 text-left">{label}</span>
@@ -87,7 +87,7 @@ const SubMenu = ({ label, icon, children }) => {
             <NavLink key={c.to} to={c.to}
               className={({ isActive }) =>
                 `flex items-center gap-2.5 px-2 py-2 rounded-lg text-[12px] font-medium transition-colors
-                ${isActive ? "text-purple-700 bg-purple-50" : "text-gray-400 hover:text-gray-700 hover:bg-gray-50"}`
+                ${isActive ? "text-white bg-[#856BFF]" : "text-gray-400 hover:text-gray-700 hover:bg-gray-50"}`
               }
             >
               <Icon d={Icons[c.icon]} size={14} />
@@ -168,7 +168,7 @@ const Sidebar = () => {
             className={({ isActive }) =>
               `flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all
               ${isActive
-                ? "bg-purple-600 text-white shadow-sm"
+                ? "bg-[#856BFF] text-white shadow-sm"
                 : "text-gray-500 hover:bg-gray-50 hover:text-gray-800"
               }
               ${collapsed ? "justify-center px-0" : ""}`

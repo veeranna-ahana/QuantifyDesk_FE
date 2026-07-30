@@ -829,7 +829,7 @@ const Projects = () => {
             {/* Effort Estimate — outlined violet */}
             <button
   onClick={() => navigate('/projects/effort', { state: { projects, initialProjectId: '', readOnly: false } })}
-  className="flex items-center gap-2 px-4 py-2 border border-violet-500 text-violet-600 text-sm font-semibold rounded-lg hover:bg-violet-50 transition-colors"
+  className="flex items-center gap-2 px-4 py-2 border border-[#9984f5] text-[#856BFF] text-sm font-semibold rounded-lg hover:bg-violet-50 transition-colors"
 >
 <Icon 
   icon="boxicons:math-filled" 
@@ -843,7 +843,7 @@ const Projects = () => {
             {/* Create Project — filled violet */}
             <button
               onClick={() => navigate('/projects/create')}
-              className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold rounded-lg shadow-sm transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-[#856BFF] hover:bg-[#7354fd] text-white text-sm font-semibold rounded-lg shadow-sm transition-colors"
             >
               + Create Project
             </button>
@@ -855,7 +855,7 @@ const Projects = () => {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center gap-2 py-20 text-gray-400">
-            <svg className="animate-spin w-5 h-5 text-violet-500" fill="none" viewBox="0 0 24 24">
+            <svg className="animate-spin w-5 h-5 text-[#9e88ff]" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
             </svg>
@@ -873,9 +873,9 @@ const Projects = () => {
             <div className="overflow-x-auto">
               <table className="w-full text-sm border-collapse min-w-[900px]">
                 <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50 bg-[#EFF4FF]">
+                  <tr className="border-b border-gray-100 bg-gray-50 bg-[#EFF4FF]" style={{ backgroundColor: '#EFF4FF' }}>
                     {COLS.map(c => (
-                      <th key={c.label} className={`text-left px-4 py-3 text-[11px] font-bold text-slate-500 tracking-wide uppercase whitespace-nowrap ${c.w}`}>
+                      <th key={c.label} className={`text-left px-4 py-3 text-[11px] font-bold text-[#434654] tracking-wide uppercase whitespace-nowrap ${c.w}`}>
                         {c.label}
                       </th>
                     ))}
@@ -931,13 +931,13 @@ const Projects = () => {
                       </td>
 
                       {/* Status */}
-                      <td className="px-4 py-4">
+                      <td className="px-4 py-4 text-nowrap">
                         <StatusBadge status={p.status} />
                       </td>
 
                       {/* Effort Hrs / Days */}
                       <td className="px-4 py-4">
-                        <div className="text-violet-600 font-bold text-sm">
+                        <div className="text-[#856BFF] font-bold text-sm">
                           {Number(p.total_effort_hours ?? 0).toFixed(2)}
                           <span className="text-[11px] font-semibold ml-0.5"> Hrs</span>
                         </div>
@@ -952,7 +952,7 @@ const Projects = () => {
                           {!isAdmin && (
                             <button
                               onClick={() => navigate('/projects/edit', { state: { project: p } })}
-                              className="flex items-center gap-1 text-violet-600 hover:text-violet-800 text-xs font-semibold transition-colors"
+                              className="flex items-center gap-1 text-[#856BFF] hover:text-[#7252ff] text-xs font-semibold transition-colors"
                             >
                               <EditIcon />
                               Edit
@@ -1011,7 +1011,7 @@ const Projects = () => {
                     key={n}
                     onClick={() => setPage(n)}
                     className={`w-8 h-8 flex items-center justify-center rounded-md text-sm font-medium transition-colors ${n === page
-                      ? 'bg-violet-600 text-white shadow-sm'
+                      ? 'bg-[#856BFF] text-white shadow-sm'
                       : 'text-gray-500 hover:bg-gray-100'
                       }`}
                   >

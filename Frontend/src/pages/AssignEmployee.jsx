@@ -5,6 +5,7 @@ import axios from "axios";
 import { useSelector } from "react-redux";
 import Cookies from "js-cookie";
 import SearchableSelect from "../component/SearchableSelect";
+import { Icon } from '@iconify/react';
 
 const getUserRole = () => {
   try {
@@ -184,36 +185,37 @@ const AssignEmployee = () => {
   const roleInitials = modal.role.split(/\s+/).map(w => w[0]).join("").slice(0, 2).toUpperCase();
 
   return (
-    <div className="p-6 bg-slate-50 min-h-full font-sans">
+    <div className="p-6 bg-gray-50 min-h-full font-sans">
       {/* Page Header */}
-      <div className="mb-6 flex items-center gap-4">
+      <div className="mb-6 flex items-center gap-4 flex-wrap">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-slate-500 hover:text-slate-800 font-semibold text-sm transition-colors"
+          className="flex items-center gap-2 text-gray-500 hover:text-gray-800 font-semibold text-sm transition-colors"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
+          <Icon icon="material-symbols:arrow-back" width="18" height="18" color="#64748b" />
           Back to Assignments
         </button>
-        <span className="text-slate-300">|</span>
-        <div className="flex items-center gap-2">
+        <span className="text-gray-300">|</span>
+        <div className="flex items-center gap-2 flex-wrap">
           <span className="px-2 py-0.5 rounded text-[10px] font-bold text-white uppercase" style={{ backgroundColor: rs.border }}>
             {roleInitials}
           </span>
-          <h2 className="text-xl font-extrabold text-slate-800">
+          <h2 className="text-xl font-extrabold text-gray-800">
             {isAdmin ? 'View Assignments' : 'Assign Employee'}
           </h2>
-          <span className="text-slate-400">·</span>
-          <span className="text-slate-600 font-semibold">{modal.task_name}</span>
-          {modal.unit_type && <span className="text-slate-400 text-xs font-semibold">({modal.unit_type})</span>}
+          <span className="text-gray-400">·</span>
+          <span className="text-gray-600 font-semibold">{modal.task_name}</span>
+          {modal.unit_type && <span className="text-gray-400 text-xs font-semibold">({modal.unit_type})</span>}
           {isAdmin && (
-            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-100">🔒 VIEW ONLY</span>
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-100">
+              <Icon icon="material-symbols:lock" width="12" height="12" color="#e11d48" />
+              VIEW ONLY
+            </span>
           )}
         </div>
       </div>
 
-      {/* KPI Cards */}
+      {/* KPI Cards - Updated to match app style */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
         {[
           { label: "PLANNED UNITS", value: modal.planned_units ?? 0 },
@@ -221,37 +223,37 @@ const AssignEmployee = () => {
           { label: "EST. HOURS", value: modal.estimated_hours ?? 0 },
           { label: "ASSIGNED UNITS", value: totalAssignedUnits, highlight: true },
         ].map(({ label, value, highlight }) => (
-          <div key={label} className={`rounded-xl p-4 flex flex-col items-center justify-center min-h-[80px] ${highlight ? 'bg-[#f0f4ff] border-b-[3px] border-[#0052cc]' : 'bg-[#f5f6ff]'}`}>
-            <span className={`text-[9px] font-extrabold tracking-wider uppercase mb-1 ${highlight ? 'text-[#0052cc]' : 'text-slate-400'}`}>{label}</span>
-            <span className={`text-2xl font-extrabold ${highlight ? 'text-[#0052cc]' : 'text-slate-800'}`}>{value}</span>
+          <div key={label} className={`bg-white border border-gray-100 rounded-xl p-4 flex flex-col items-center justify-center min-h-[80px] shadow-sm ${highlight ? 'border-l-4 border-l-[#856BFF]' : ''}`}>
+            <span className={`text-[9px] font-extrabold tracking-wider uppercase mb-1 ${highlight ? 'text-[#856BFF]' : 'text-gray-400'}`}>{label}</span>
+            <span className={`text-2xl font-extrabold ${highlight ? 'text-[#856BFF]' : 'text-gray-800'}`}>{value}</span>
           </div>
         ))}
       </div>
 
-      {/* Remaining Balance Strip */}
-      <div className="bg-white border border-blue-100 rounded-xl p-4 flex justify-around items-center text-center mb-6">
+      {/* Remaining Balance Strip - Updated colors */}
+      <div className="bg-[#F5F3FF] border border-[#856BFF]/20 rounded-xl p-4 flex justify-around items-center text-center mb-6">
         {[
           { label: "REMAINING UNITS", value: remainingUnits },
           { label: "REMAINING DAYS", value: remainingDays },
           { label: "REMAINING HOURS", value: remainingHours },
         ].map(({ label, value }, i) => (
           <React.Fragment key={label}>
-            {i > 0 && <div className="w-[1px] h-8 bg-slate-200" />}
+            {i > 0 && <div className="w-[1px] h-8 bg-gray-200" />}
             <div className="flex-1">
-              <div className="text-[9px] font-bold text-[#0052cc] tracking-wider uppercase mb-1">{label}</div>
-              <div className="text-lg font-bold text-emerald-600">{value}</div>
+              <div className="text-[9px] font-bold text-[#856BFF] tracking-wider uppercase mb-1">{label}</div>
+              <div className="text-lg font-bold text-[#856BFF]">{value}</div>
             </div>
           </React.Fragment>
         ))}
       </div>
 
-      {/* New Assignment Form */}
+      {/* New Assignment Form - Updated button colors */}
       {!isAdmin && (
-        <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 mb-6">
-          <h3 className="text-[11px] font-extrabold text-slate-500 tracking-wider uppercase mb-4">New Assignment</h3>
+        <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6 mb-6">
+          <h3 className="text-[11px] font-extrabold text-gray-500 tracking-wider uppercase mb-4">New Assignment</h3>
           <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
             <div className="md:col-span-2">
-              <label className="block text-[10px] font-semibold text-slate-400 mb-1">Employee</label>
+              <label className="block text-[10px] font-semibold text-gray-400 mb-1">Employee</label>
               <SearchableSelect
                 value={selUser}
                 onChange={setSelUser}
@@ -260,7 +262,7 @@ const AssignEmployee = () => {
                   value: String(emp.employee_id || emp.id),
                   label: emp.emp_name || emp.name,
                 }))}
-                className="rounded-xl text-xs font-semibold text-slate-700 border-slate-200"
+                className="rounded-xl text-xs font-semibold text-gray-700 border-gray-200"
               />
             </div>
             {[
@@ -269,11 +271,11 @@ const AssignEmployee = () => {
               { label: "Hours", val: hours, onChange: handleHoursChange, exceeded: hoursExceeded, step: "0.5" },
             ].map(({ label, val, onChange, exceeded, step }) => (
               <div key={label}>
-                <label className="block text-[10px] font-semibold text-slate-400 mb-1">{label}</label>
+                <label className="block text-[10px] font-semibold text-gray-400 mb-1">{label}</label>
                 <input
                   type="number" min="0" step={step || "1"} placeholder="0"
                   value={val} onChange={e => onChange(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-white border rounded-xl text-xs font-semibold text-center text-slate-700 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+                  className="w-full px-3 py-2.5 bg-white border rounded-xl text-xs font-semibold text-center text-gray-700 outline-none focus:border-[#856BFF] focus:ring-1 focus:ring-[#856BFF]"
                   style={{ borderColor: exceeded ? "#f43f5e" : "#e2e8f0" }}
                 />
               </div>
@@ -281,68 +283,75 @@ const AssignEmployee = () => {
             <button
               onClick={handleSubmit}
               disabled={saving || unitsExceeded || daysExceeded || hoursExceeded || remainingUnits === 0}
-              className={`w-full py-2.5 rounded-xl font-bold text-xs transition-all border ${saving || unitsExceeded || daysExceeded || hoursExceeded || remainingUnits === 0
-                ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed"
-                : "bg-[#E6FFFA] hover:bg-[#D5FFF6] text-[#319795] border-[#319795] shadow-sm"}`}
+              className={`w-full py-2.5 rounded-xl font-bold text-xs transition-all ${
+                saving || unitsExceeded || daysExceeded || hoursExceeded || remainingUnits === 0
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "bg-[#856BFF] hover:bg-[#7259e6] text-white shadow-sm"
+              }`}
             >
               {saving ? "Saving…" : "Assign"}
             </button>
           </div>
           {(unitsExceeded || daysExceeded || hoursExceeded) && (
-            <p className="text-rose-500 text-[11px] font-semibold mt-2">⚠️ Values exceed remaining limits. Please adjust.</p>
+            <p className="text-rose-500 text-[11px] font-semibold mt-2 flex items-center gap-1">
+              <Icon icon="material-symbols:warning" width="14" height="14" color="#f43f5e" />
+              Values exceed remaining limits. Please adjust.
+            </p>
           )}
         </div>
       )}
 
-      {/* Employee Workload — Accordion Card */}
+      {/* Employee Workload — Accordion Card - Updated colors */}
       {selUser && (
-        <div className="bg-white border border-slate-100 rounded-2xl shadow-sm mb-6 overflow-hidden">
+        <div className="bg-white border border-gray-100 rounded-2xl shadow-sm mb-6 overflow-hidden">
           {/* Card Header — toggles the whole card */}
           <button
             onClick={() => setWorkloadOpen(o => !o)}
-            className="w-full flex items-center justify-between px-6 py-4 hover:bg-slate-50/60 transition-colors select-none"
+            className="w-full flex items-center justify-between px-6 py-4 hover:bg-gray-50/60 transition-colors select-none"
           >
-            <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">💼 Current Workload</span>
-            <svg
-              className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${workloadOpen ? 'rotate-0' : '-rotate-90'}`}
-              fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
+            <span className="text-xs font-bold text-gray-700 flex items-center gap-1.5">
+              <Icon icon="material-symbols:work" width="16" height="16" color="#856BFF" />
+              Current Workload
+            </span>
+            <Icon
+              icon={`material-symbols:${workloadOpen ? 'expand-less' : 'expand-more'}`}
+              width="20" height="20" color="#856BFF"
+            />
           </button>
 
           {workloadOpen && (
             <div className="px-6 pb-6">
               {loadingWorkload ? (
-                <p className="text-xs text-slate-400 italic py-2">Loading workload...</p>
+                <p className="text-xs text-gray-400 italic py-2">Loading workload...</p>
               ) : workload?.tasks?.length > 0 ? (
                 <div className="flex flex-col gap-4">
                   {workload.tasks.map(proj => {
                     const isProjCollapsed = !!collapsedProjects[proj.project_id];
                     return (
-                      <div key={proj.project_id} className="border border-slate-200/60 rounded-xl overflow-hidden">
+                      <div key={proj.project_id} className="border border-gray-200/60 rounded-xl overflow-hidden">
                         {/* Per-project accordion header */}
                         <button
                           onClick={() => toggleProject(proj.project_id)}
                           className="w-full flex items-center justify-between px-4 py-2.5 bg-[#EFF4FF] hover:bg-[#e4ecff] transition-colors select-none"
                         >
-                          <span className="text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
-                            📁 {proj.project_name}
-                            <span className="ml-1 px-1.5 py-0.5 bg-slate-200 text-slate-500 rounded-full text-[9px] font-bold">
+                          <span className="text-[11px] font-bold text-gray-700 flex items-center gap-1.5">
+                            <Icon icon="material-symbols:folder" width="14" height="14" color="#856BFF" />
+                            {proj.project_name}
+                            <span className="ml-1 px-1.5 py-0.5 bg-gray-200 text-gray-500 rounded-full text-[9px] font-bold">
                               {proj.tasks.length} task{proj.tasks.length !== 1 ? 's' : ''}
                             </span>
                           </span>
-                          <svg
-                            className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${isProjCollapsed ? '-rotate-90' : 'rotate-0'}`}
-                            fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                          </svg>
+                          <Icon
+                            icon={`material-symbols:${isProjCollapsed ? 'chevron-right' : 'expand-more'}`}
+                            width="18" height="18" color="#94a3b8"
+                          />
                         </button>
 
                         {!isProjCollapsed && (
                           <div className="overflow-x-auto">
                             <table className="w-full text-left text-[11px] border-collapse">
                               <thead>
-                                <tr className="bg-slate-50 border-b border-slate-100 text-slate-400 font-bold text-[10px] uppercase">
+                                <tr className="bg-gray-50 border-b border-gray-100 text-gray-400 font-bold text-[10px] uppercase">
                                   <th className="py-2 px-3 min-w-[110px]">Employee Name</th>
                                   <th className="py-2 px-3 min-w-[110px]">Project Name</th>
                                   <th className="py-2 px-3 min-w-[110px]">Task Name</th>
@@ -354,28 +363,25 @@ const AssignEmployee = () => {
                                   <th className="py-2 px-3 text-center min-w-[100px]">Pending Person Days</th>
                                 </tr>
                               </thead>
-                              <tbody className="divide-y divide-slate-50">
+                              <tbody className="divide-y divide-gray-50">
                                 {proj.tasks.map(task => {
                                   const assignedUnits = Number(task.units_assigned || 0);
                                   const completedUnits = Number(task.units_completed || 0);
                                   const pendingUnits = Number(task.units_pending || 0);
-                                  // API returns estimated_hours, completed_hours, pending_hours
-                                  // Person days = hours / 8
                                   const assignedDays = parseFloat((Number(task.estimated_hours || 0) / 8).toFixed(2));
                                   const completedDays = parseFloat((Number(task.completed_hours || 0) / 8).toFixed(2));
                                   const pendingDays = parseFloat((Number(task.pending_hours || 0) / 8).toFixed(2));
-                                  // resolve employee display name from serviceDeliveryEmployees
                                   const empObj = serviceDeliveryEmployees.find(
                                     e => String(e.employee_id || e.id) === String(selUser)
                                   );
                                   const empName = empObj?.emp_name || empObj?.name || selUser;
                                   return (
-                                    <tr key={task.task_id} className="hover:bg-slate-50/60 transition-colors">
-                                      <td className="py-2 px-3 font-semibold text-slate-700">{empName}</td>
-                                      <td className="py-2 px-3 text-slate-600 font-medium">{proj.project_name}</td>
-                                      <td className="py-2 px-3 font-semibold text-slate-700">{task.task_name}</td>
-                                      <td className="py-2 px-3 text-center font-bold text-blue-600">{assignedUnits}</td>
-                                      <td className="py-2 px-3 text-center font-semibold text-slate-700">{assignedDays}</td>
+                                    <tr key={task.task_id} className="hover:bg-gray-50/60 transition-colors">
+                                      <td className="py-2 px-3 font-semibold text-gray-700">{empName}</td>
+                                      <td className="py-2 px-3 text-gray-600 font-medium">{proj.project_name}</td>
+                                      <td className="py-2 px-3 font-semibold text-gray-700">{task.task_name}</td>
+                                      <td className="py-2 px-3 text-center font-bold text-[#856BFF]">{assignedUnits}</td>
+                                      <td className="py-2 px-3 text-center font-semibold text-gray-700">{assignedDays}</td>
                                       <td className="py-2 px-3 text-center font-bold text-emerald-600">{completedUnits}</td>
                                       <td className="py-2 px-3 text-center font-semibold text-emerald-500">{completedDays}</td>
                                       <td className="py-2 px-3 text-center font-bold text-rose-500">{pendingUnits}</td>
@@ -383,7 +389,6 @@ const AssignEmployee = () => {
                                     </tr>
                                   );
                                 })}
-
                               </tbody>
                             </table>
                           </div>
@@ -393,23 +398,23 @@ const AssignEmployee = () => {
                   })}
                 </div>
               ) : (
-                <p className="text-xs text-slate-400 text-center py-4 border border-dashed border-slate-200 rounded-xl">No active project assignments found.</p>
+                <p className="text-xs text-gray-400 text-center py-4 border border-dashed border-gray-200 rounded-xl">No active project assignments found.</p>
               )}
             </div>
           )}
         </div>
       )}
 
-      {/* Current Assignments Table */}
-      <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6">
+      {/* Current Assignments Table - Updated header and colors */}
+      <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
         <div className="flex justify-between items-center mb-4">
-          <span className="text-[11px] font-bold text-slate-500 tracking-wider uppercase">Current Assignments ({existing.length})</span>
+          <span className="text-[11px] font-bold text-gray-500 tracking-wider uppercase">Current Assignments ({existing.length})</span>
         </div>
         {existing.length > 0 ? (
-          <div className="overflow-x-auto border border-slate-100 rounded-xl">
+          <div className="overflow-x-auto border border-gray-100 rounded-xl">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="bg-[#EFF4FF] border-b border-slate-100 text-slate-500 font-bold text-[10px] uppercase">
+                <tr className="border-b border-gray-100 text-gray-500 font-bold text-[10px] uppercase" style={{ backgroundColor: '#EFF4FF' }}>
                   <th className="py-2.5 px-3 min-w-[130px]">Employee Name</th>
                   <th className="py-2.5 px-3 min-w-[130px]">Project Name</th>
                   <th className="py-2.5 px-3 min-w-[130px]">Task Name</th>
@@ -422,13 +427,12 @@ const AssignEmployee = () => {
                   {!isAdmin && <th className="py-2.5 px-3 text-center min-w-[120px]">Action</th>}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-gray-100">
                 {existing.map(a => {
                   const completedUnits = Number(a.units_completed || 0);
                   const assignedUnits = Number(a.units_assigned || 0);
                   const assignedDays = Number(a.estimated_days || 0);
                   const pendingUnits = Math.max(assignedUnits - completedUnits, 0);
-                  // Person days: proportional to units completed/pending
                   const completedDays = assignedUnits > 0
                     ? parseFloat(((completedUnits / assignedUnits) * assignedDays).toFixed(2))
                     : 0;
@@ -438,58 +442,52 @@ const AssignEmployee = () => {
                   const eRow = editingRow[a.id] || {};
                   const isSavingThis = !!savingEdit[a.id];
                   return (
-                    <tr key={a.id} className={`transition-colors ${isCompleted ? 'bg-emerald-50/40' : 'hover:bg-slate-50/20'}`}>
-                      {/* Employee Name */}
+                    <tr key={a.id} className={`transition-colors ${isCompleted ? 'bg-emerald-50/40' : 'hover:bg-gray-50/20'}`}>
                       <td className="py-3 px-3">
                         <div className="flex items-center gap-2">
-                          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${isCompleted ? 'bg-emerald-100 text-emerald-600' : 'bg-violet-100 text-[#7f5feb]'}`}>
+                          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${isCompleted ? 'bg-emerald-100 text-emerald-600' : 'bg-[#856BFF]/10 text-[#856BFF]'}`}>
                             {a.user_name?.[0]?.toUpperCase() || "?"}
                           </div>
-                          <span className="font-bold text-slate-800">{a.user_name}</span>
+                          <span className="font-bold text-gray-800">{a.user_name}</span>
                         </div>
                       </td>
-                      {/* Project Name */}
-                      <td className="py-3 px-3 text-slate-600 font-semibold">{projectName || "—"}</td>
-                      {/* Task Name */}
-                      <td className="py-3 px-3 text-slate-700 font-semibold">{modal.task_name}</td>
-                      {/* Total Assigned Units */}
+                      <td className="py-3 px-3 text-gray-600 font-semibold">{projectName || "—"}</td>
+                      <td className="py-3 px-3 text-gray-700 font-semibold">{modal.task_name}</td>
                       <td className="py-3 px-3 text-center">
                         {isEditing ? (
                           <input type="number" min="1" value={eRow.units} onChange={e => handleEditField(a.id, 'units', e.target.value)}
-                            className="w-14 px-1 py-0.5 border border-violet-500 rounded text-center font-semibold text-xs outline-none" />
-                        ) : <span className="font-bold text-blue-600">{assignedUnits}</span>}
+                            className="w-14 px-1 py-0.5 border border-[#856BFF] rounded text-center font-semibold text-xs outline-none" />
+                        ) : <span className="font-bold text-[#856BFF]">{assignedUnits}</span>}
                       </td>
-                      {/* Total Assigned Person Days */}
                       <td className="py-3 px-3 text-center">
                         {isEditing ? (
                           <input type="number" min="0" step="0.5" value={eRow.days} onChange={e => handleEditField(a.id, 'days', e.target.value)}
-                            className="w-14 px-1 py-0.5 border border-violet-500 rounded text-center font-semibold text-xs outline-none" />
-                        ) : <span className="font-semibold text-slate-700">{assignedDays}</span>}
+                            className="w-14 px-1 py-0.5 border border-[#856BFF] rounded text-center font-semibold text-xs outline-none" />
+                        ) : <span className="font-semibold text-gray-700">{assignedDays}</span>}
                       </td>
-                      {/* Completed Units */}
                       <td className="py-3 px-3 text-center font-bold text-emerald-600">{completedUnits}</td>
-                      {/* Completed Person Days */}
                       <td className="py-3 px-3 text-center font-semibold text-emerald-500">{completedDays}</td>
-                      {/* Pending Units */}
                       <td className="py-3 px-3 text-center font-bold text-rose-500">{pendingUnits}</td>
-                      {/* Pending Person Days */}
                       <td className="py-3 px-3 text-center font-semibold text-rose-400">{pendingDays}</td>
                       {!isAdmin && (
                         <td className="py-3 px-3 text-center">
                           <div className="flex gap-2 justify-center">
                             {isCompleted ? (
-                              <span className="inline-flex items-center px-3 py-1 rounded-lg text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200 cursor-not-allowed">Completed</span>
+                              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-lg text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200 cursor-not-allowed select-none">
+                                <Icon icon="material-symbols:check-circle" width="12" height="12" color="#22c55e" />
+                                Completed
+                              </span>
                             ) : isEditing ? (
                               <>
                                 <button onClick={() => handleEditSave(a.id)} disabled={isSavingThis}
-                                  className="border border-emerald-500 text-emerald-600 hover:bg-emerald-50 font-bold px-2 py-0.5 rounded-lg text-[10px]">Save</button>
+                                  className="border border-emerald-500 text-emerald-600 hover:bg-emerald-50 font-bold px-2 py-0.5 rounded-lg text-[10px] transition-all">Save</button>
                                 <button onClick={() => cancelEdit(a.id)} disabled={isSavingThis}
-                                  className="border border-slate-300 text-slate-500 hover:bg-slate-50 font-bold px-2 py-0.5 rounded-lg text-[10px]">Cancel</button>
+                                  className="border border-gray-300 text-gray-500 hover:bg-gray-50 font-bold px-2 py-0.5 rounded-lg text-[10px] transition-all">Cancel</button>
                               </>
                             ) : (
                               <>
                                 <button onClick={() => startEdit(a)}
-                                  className="border border-violet-500 text-violet-500 hover:bg-violet-50 font-bold px-3 py-1 rounded-lg transition-all">Edit</button>
+                                  className="border border-[#856BFF] text-[#856BFF] hover:bg-[#856BFF]/10 font-bold px-3 py-1 rounded-lg transition-all">Edit</button>
                                 <button onClick={() => handleDelete(a.id)}
                                   className="border border-rose-500 text-rose-500 hover:bg-rose-50 font-bold px-3 py-1 rounded-lg transition-all">Remove</button>
                               </>
@@ -504,7 +502,7 @@ const AssignEmployee = () => {
             </table>
           </div>
         ) : (
-          <div className="p-6 border border-dashed border-slate-200 bg-slate-50/50 rounded-xl text-center text-xs text-slate-400">
+          <div className="p-6 border border-dashed border-gray-200 bg-gray-50/50 rounded-xl text-center text-xs text-gray-400">
             No employees assigned yet.
           </div>
         )}
@@ -513,7 +511,7 @@ const AssignEmployee = () => {
       {/* Footer */}
       <div className="flex justify-end mt-6 pb-10">
         <button onClick={() => navigate(-1)}
-          className="bg-[#7f5feb] hover:bg-[#6c4ce0] text-white font-bold text-sm py-2.5 px-8 rounded-xl transition-all shadow-sm">
+          className="bg-[#856BFF] hover:bg-[#7259e6] text-white font-bold text-sm py-2.5 px-8 rounded-xl transition-all shadow-sm">
           Done
         </button>
       </div>

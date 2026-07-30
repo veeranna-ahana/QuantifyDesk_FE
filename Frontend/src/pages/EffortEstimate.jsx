@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import SearchableSelect from '../component/SearchableSelect';
+import { Icon } from '@iconify/react';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const HOURS_PER_DAY = 8;
@@ -38,7 +39,7 @@ const emptyRows = () =>
 
 // ── Chevron icon for select ───────────────────────────────────────────────────
 const ChevDown = () => (
-  <svg className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
+  <svg className="w-4 h-4 #434655 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
     fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
     <path d="M6 9l6 6 6-6" />
   </svg>
@@ -191,27 +192,27 @@ export default function EffortEstimate() {
     <>
       EFFORT
       <br />
-      <span className="font-normal text-gray-400">(PERSON DAYS)</span>
+      <span className="font-normal #434655">(PERSON DAYS)</span>
     </>,
     <>
       IN
       <br />
-      <span className="font-normal text-gray-400">(PERSON HRS)</span>
+      <span className="font-normal #434655">(PERSON HRS)</span>
     </>,
     <>
       BUFFER
       <br />
-      <span className="font-normal text-gray-400">(PERSON DAYS)</span>
+      <span className="font-normal #434655">(PERSON DAYS)</span>
     </>,
     <>
       BUFFER
       <br />
-      <span className="font-normal text-gray-400">(PERSON HRS)</span>
+      <span className="font-normal #434655">(PERSON HRS)</span>
     </>,
     <>
       TOTAL
       <br />
-      <span className="font-normal text-gray-400">(PERSON HRS)</span>
+      <span className="font-normal #434655">(PERSON HRS)</span>
     </>,
     'UNITS',
     'UNIT LABEL'
@@ -224,7 +225,7 @@ export default function EffortEstimate() {
         <h1 className="text-2xl font-bold text-gray-900">
           {readOnly ? 'View Effort Estimate' : 'Effort Estimate & Utilization'}
         </h1>
-        <p className="text-sm text-gray-400 mt-0.5">
+        <p className="text-sm #434655 mt-0.5">
           {readOnly
             ? 'Viewing effort estimates for this project (read-only).'
             : 'Configure project resources and track total capacity alignment.'}
@@ -253,13 +254,10 @@ export default function EffortEstimate() {
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <div className="flex items-center gap-2">
             {/* Grid icon */}
-            <svg className="w-5 h-5 text-violet-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" />
-              <rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" />
-            </svg>
+            <Icon icon="material-symbols:grid-view" width="20" height="20" color="#856BFF" />
             <span className="text-base font-bold text-gray-900">Effort Breakdown</span>
           </div>
-          <div className="flex items-center gap-1.5 text-xs text-gray-400">
+          <div className="flex items-center gap-1.5 text-xs #434655">
             {/* Clock icon */}
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
@@ -270,8 +268,8 @@ export default function EffortEstimate() {
 
         {/* Table */}
         {loadingRows ? (
-          <div className="flex items-center justify-center gap-2 py-16 text-gray-400">
-            <svg className="animate-spin w-5 h-5 text-violet-500" fill="none" viewBox="0 0 24 24">
+          <div className="flex items-center justify-center gap-2 py-16 #434655">
+            <svg className="animate-spin w-5 h-5 text-[#856BFF]" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
             </svg>
@@ -282,10 +280,10 @@ export default function EffortEstimate() {
             <table className="w-full text-sm border-collapse">
               {/* Head */}
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-100">
+                <tr className="bg-gray-50 border-b border-gray-100" style={{ backgroundColor: '#EFF4FF' }}>
                   {COLS.map(col => (
                     <th key={col}
-                      className="px-4 py-3 text-[11px] font-semibold text-gray-400 tracking-widest uppercase text-left whitespace-nowrap">
+                      className="px-4 py-3 text-[11px] font-semibold text-[#434655] tracking-widest uppercase text-left whitespace-nowrap">
                       {col}
                     </th>
                   ))}
@@ -312,7 +310,7 @@ export default function EffortEstimate() {
                     </td>
 
                     {/* In Hrs (calc) */}
-                    <td className="px-4 py-4 text-center text-gray-400 text-sm">
+                    <td className="px-4 py-4 text-center #434655 text-sm">
                       {r.hrs || '—'}
                     </td>
 
@@ -326,7 +324,7 @@ export default function EffortEstimate() {
                     </td>
 
                     {/* Buffer Hrs (calc) */}
-                    <td className="px-4 py-4 text-center text-gray-400 text-sm">
+                    <td className="px-4 py-4 text-center #434655 text-sm">
                       {r.bufferHrs || '—'}
                     </td>
 
@@ -345,7 +343,7 @@ export default function EffortEstimate() {
                     </td>
 
                     {/* Unit Label */}
-                    <td className="px-4 py-4 text-gray-400 text-xs whitespace-nowrap">
+                    <td className="px-4 py-4 #434655 text-xs whitespace-nowrap">
                       {r.unitLabel || '—'}
                     </td>
                   </tr>
@@ -355,7 +353,7 @@ export default function EffortEstimate() {
               {/* Totals footer */}
               <tfoot>
                 <tr className="bg-gray-50 border-t border-gray-200">
-                  <td className="px-5 py-3 text-xs font-bold text-violet-600 uppercase tracking-wider">
+                  <td className="px-5 py-3 text-xs font-bold text-[#856BFF] uppercase tracking-wider">
                     TOTAL
                   </td>
                   <td className="px-4 py-3 text-center text-sm font-semibold text-gray-700">
@@ -396,7 +394,7 @@ export default function EffortEstimate() {
             <button
               onClick={handleSubmit}
               disabled={saving}
-              className="px-6 py-2.5 bg-violet-600 hover:bg-violet-700 active:bg-violet-800 text-white text-sm font-semibold rounded-lg shadow-sm transition-colors disabled:opacity-60"
+              className="px-6 py-2.5 bg-[#856BFF] hover:bg-[#7e62fd] active:bg-[#856BFF] text-white text-sm font-semibold rounded-lg shadow-sm transition-colors disabled:opacity-60"
             >
               {saving ? 'Saving…' : 'Save Estimate'}
             </button>
