@@ -1,5 +1,6 @@
 const { query, masterQuery } = require("../config/db");
 const { createNotification } = require("./notification.controller");
+const XLSX = require("xlsx");
 
 const resolveLocalUserId = async (empId, empName, empEmail) => {
   // 1. Try to match by emp_id in local users
@@ -868,6 +869,205 @@ const getEmployeeUnitSummary = async (req, res, next) => {
   }
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// EXPORT: Employee Utilization — within Project to Excel
+// GET /api/utilization/export/employee-project-unit?projectId=&empId=
+// ─────────────────────────────────────────────────────────────────────────────
+const exportEmployeeProjectUnit = async (req, res, next) => {
+  try {
+    const { projectId, empId } = req.query;
+    if (!empId) {
+      return res.status(400).json({ message: "empId is required for export" });
+    }
+
+    // Resolve employee name
+    const empInfo = await masterQuery(
+      `SELECT emp_name FROM emp WHERE emp_id = ? LIMIT 1`,
+      [empId]
+    );
+    const empName = empInfo[0]?.emp_name || empId;
+
+    let sql = `
+      SELECT
+        p.project_name,
+        a.task_name,
+        a.units_assigned,
+        a.estimated_hours                                 AS hours_assigned,
+        COALESCE(ap_totals.units_completed, 0)            AS units_completed,
+        GREATEST(a.units_assigned - COALESCE(ap_totals.units_completed, 0), 0) AS units_pending,
+        COALESCE(ap_totals.total_time_needed, 0)          AS hours_utilized
+      FROM assignments a
+      LEFT JOIN projects p ON a.project_id = p.id
+      LEFT JOIN (
+        SELECT 
+          assignment_id, 
+          SUM(units_completed) AS units_completed,
+          SUM(CAST(total_time_needed AS DECIMAL(10,2))) AS total_time_needed
+        FROM assignment_progress
+        WHERE status = 'APPROVED'
+        GROUP BY assignment_id
+      ) ap_totals ON a.id = ap_totals.assignment_id
+      WHERE a.emp_id = ?
+    `;
+    const params = [empId];
+    if (projectId) {
+      sql += ` AND a.project_id = ?`;
+      params.push(projectId);
+    }
+    sql += ` ORDER BY p.project_name, a.task_name`;
+
+    const rows = await query(sql, params);
+
+    const excelRows = rows.map(r => {
+      const assignedUnits = Number(r.units_assigned || 0);
+      const completedUnits = Number(r.units_completed || 0);
+      const pendingUnits = Number(r.units_pending || 0);
+      const assignedHrs = Number(r.hours_assigned || 0);
+      const utilizedHrs = Number(r.hours_utilized || 0);
+      const pendingHrs = Math.max(assignedHrs - utilizedHrs, 0);
+
+      const totalPD = Number((assignedHrs / 8).toFixed(2));
+      const completedPD = Number((utilizedHrs / 8).toFixed(2));
+      const pendingPD = Number((pendingHrs / 8).toFixed(2));
+
+      const unitPct = assignedUnits > 0 ? Math.round((completedUnits / assignedUnits) * 100) : 0;
+      const pdPct = totalPD > 0 ? Math.round((completedPD / totalPD) * 100) : 0;
+      const hrsPct = assignedHrs > 0 ? Math.round((utilizedHrs / assignedHrs) * 100) : 0;
+
+      return {
+        "Employee Name": empName,
+        "Project Name": r.project_name || "—",
+        "Task Name": r.task_name || "—",
+        "Total Units": assignedUnits,
+        "Total Person Days": totalPD,
+        "Completed Units": completedUnits,
+        "Completed Person Days": completedPD,
+        "Pending Units": pendingUnits,
+        "Pending Person Days": pendingPD,
+        "Unit Utilization (%)": `${unitPct}%`,
+        "Person Days Utilization (%)": `${pdPct}%`,
+        "Hours Utilization (%)": `${hrsPct}%`
+      };
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(excelRows);
+    worksheet["!cols"] = [
+      { wch: 22 }, { wch: 26 }, { wch: 24 }, { wch: 14 },
+      { wch: 18 }, { wch: 16 }, { wch: 22 }, { wch: 14 },
+      { wch: 20 }, { wch: 20 }, { wch: 24 }, { wch: 20 }
+    ];
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Project Employee Utilization");
+
+    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "buffer" });
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.setHeader("Content-Disposition", 'attachment; filename="Employee_Utilization_Project.xlsx"');
+    return res.send(excelBuffer);
+
+  } catch (err) {
+    console.error("❌ exportEmployeeProjectUnit error:", err);
+    return next(err);
+  }
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EXPORT: Overall Employee Utilization (Across All Projects) to Excel
+// GET /api/utilization/export/employee-overall-unit?empId=
+// ─────────────────────────────────────────────────────────────────────────────
+const exportEmployeeOverallUnit = async (req, res, next) => {
+  try {
+    const { empId } = req.query;
+    if (!empId) {
+      return res.status(400).json({ message: "empId is required for export" });
+    }
+
+    // Resolve employee name
+    const empInfo = await masterQuery(
+      `SELECT emp_name FROM emp WHERE emp_id = ? LIMIT 1`,
+      [empId]
+    );
+    const empName = empInfo[0]?.emp_name || empId;
+
+    const sql = `
+      SELECT
+        p.project_name,
+        a.task_name,
+        a.units_assigned,
+        a.estimated_hours                                 AS hours_assigned,
+        COALESCE(ap_totals.units_completed, 0)            AS units_completed,
+        GREATEST(a.units_assigned - COALESCE(ap_totals.units_completed, 0), 0) AS units_pending,
+        COALESCE(ap_totals.total_time_needed, 0)          AS hours_utilized
+      FROM assignments a
+      LEFT JOIN projects p ON a.project_id = p.id
+      LEFT JOIN (
+        SELECT 
+          assignment_id, 
+          SUM(units_completed) AS units_completed,
+          SUM(CAST(total_time_needed AS DECIMAL(10,2))) AS total_time_needed
+        FROM assignment_progress
+        WHERE status = 'APPROVED'
+        GROUP BY assignment_id
+      ) ap_totals ON a.id = ap_totals.assignment_id
+      WHERE a.emp_id = ?
+      ORDER BY p.project_name, a.task_name
+    `;
+
+    const rows = await query(sql, [empId]);
+
+    const excelRows = rows.map(r => {
+      const assignedUnits = Number(r.units_assigned || 0);
+      const completedUnits = Number(r.units_completed || 0);
+      const pendingUnits = Number(r.units_pending || 0);
+      const assignedHrs = Number(r.hours_assigned || 0);
+      const utilizedHrs = Number(r.hours_utilized || 0);
+      const pendingHrs = Math.max(assignedHrs - utilizedHrs, 0);
+
+      const totalPD = Number((assignedHrs / 8).toFixed(2));
+      const completedPD = Number((utilizedHrs / 8).toFixed(2));
+      const pendingPD = Number((pendingHrs / 8).toFixed(2));
+
+      const unitPct = assignedUnits > 0 ? Math.round((completedUnits / assignedUnits) * 100) : 0;
+      const pdPct = totalPD > 0 ? Math.round((completedPD / totalPD) * 100) : 0;
+      const hrsPct = assignedHrs > 0 ? Math.round((utilizedHrs / assignedHrs) * 100) : 0;
+
+      return {
+        "Employee Name": empName,
+        "Project Name": r.project_name || "—",
+        "Task Name": r.task_name || "—",
+        "Total Units": assignedUnits,
+        "Total Person Days": totalPD,
+        "Completed Units": completedUnits,
+        "Completed Person Days": completedPD,
+        "Pending Units": pendingUnits,
+        "Pending Person Days": pendingPD,
+        "Unit Utilization (%)": `${unitPct}%`,
+        "Person Days Utilization (%)": `${pdPct}%`,
+        "Hours Utilization (%)": `${hrsPct}%`
+      };
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(excelRows);
+    worksheet["!cols"] = [
+      { wch: 22 }, { wch: 26 }, { wch: 24 }, { wch: 14 },
+      { wch: 18 }, { wch: 16 }, { wch: 22 }, { wch: 14 },
+      { wch: 20 }, { wch: 20 }, { wch: 24 }, { wch: 20 }
+    ];
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Overall Employee Utilization");
+
+    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "buffer" });
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.setHeader("Content-Disposition", 'attachment; filename="Employee_Overall_Utilization.xlsx"');
+    return res.send(excelBuffer);
+
+  } catch (err) {
+    console.error("❌ exportEmployeeOverallUnit error:", err);
+    return next(err);
+  }
+};
+
 module.exports = {
   getMyAssignments,
   logProgress,
@@ -879,5 +1079,7 @@ module.exports = {
   getProjectHealth,
   getProjectUnitSummary,
   getEmployeeUnitSummary,
+  exportEmployeeProjectUnit,
+  exportEmployeeOverallUnit,
 };
 
