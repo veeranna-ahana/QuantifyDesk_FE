@@ -188,7 +188,7 @@ const AssignEmployee = () => {
       {/* Page Header */}
       <div className="mb-6 flex items-center gap-4">
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => navigate("/assignments", { state: { selProject } })}
           className="flex items-center gap-2 text-slate-500 hover:text-slate-800 font-semibold text-sm transition-colors"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
@@ -512,7 +512,7 @@ const AssignEmployee = () => {
 
       {/* Footer */}
       <div className="flex justify-end mt-6 pb-10">
-        <button onClick={() => navigate(-1)}
+        <button onClick={() => navigate("/assignments", { state: { selProject } })}
           className="bg-[#7f5feb] hover:bg-[#6c4ce0] text-white font-bold text-sm py-2.5 px-8 rounded-xl transition-all shadow-sm">
           Done
         </button>

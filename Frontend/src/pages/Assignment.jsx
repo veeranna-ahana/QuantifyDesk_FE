@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
 import axios from "axios";
 import { useSelector } from "react-redux";
@@ -605,13 +605,28 @@ const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onUpdate, 
 // ─────────────────────────────────────────────────────────────────────────────
 const AssignmentScreen = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const isAdmin = getUserRole() === 'ADMIN';
   const serviceDeliveryEmployees = useSelector(
     (state) => state.auth.serviceDeliveryEmployees
   );
   const [projects, setProjects] = useState([]);
   const [catalog, setCatalog] = useState({});
-  const [selProject, setSelProject] = useState("");
+  const [selProject, setSelProject] = useState(() => {
+    return location.state?.selProject || sessionStorage.getItem("selectedAssignmentProject") || "";
+  });
+
+  useEffect(() => {
+    if (location.state?.selProject) {
+      setSelProject(location.state.selProject);
+    }
+  }, [location.state?.selProject]);
+
+  useEffect(() => {
+    if (selProject) {
+      sessionStorage.setItem("selectedAssignmentProject", selProject);
+    }
+  }, [selProject]);
   const [loadDraft, setLoadDraft] = useState({});
   const [totalLoad, setTotalLoad] = useState(0);
   const [savingLoad, setSavingLoad] = useState(false);
@@ -1165,7 +1180,10 @@ const AssignmentScreen = () => {
           {selProject && (
             <div className="flex justify-end gap-3 mt-6 pb-12">
               <button
-                onClick={() => setSelProject("")}
+                onClick={() => {
+                  setSelProject("");
+                  sessionStorage.removeItem("selectedAssignmentProject");
+                }}
                 className="border border-slate-200 hover:bg-slate-50 text-slate-600 font-bold text-sm py-2.5 px-6 rounded-xl transition-all"
               >
                 Cancel
