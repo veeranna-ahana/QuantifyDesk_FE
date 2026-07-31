@@ -7,6 +7,7 @@ import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
   RadialBarChart, RadialBar
 } from "recharts";
+import { Icon } from '@iconify/react';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const getHeaders = () => ({
@@ -71,12 +72,12 @@ const DonutLabel = ({ cx, cy, total }) => (
 // ── KPI Card (matches Figma: icon box + label + value) ──────────────────────
 const KpiCard = ({ icon, label, value, accent, sub }) => (
   <div className="bg-white rounded-xl shadow-sm flex-1 min-w-[130px] overflow-hidden"
-    style={{ border: "1px solid #f0f0f0", borderLeft: `3px solid ${accent}` }}>
+    style={{ border: "1px solid #f0f0f0", borderLeft: `4px solid ${accent}` }}>
     <div className="px-4 py-4">
       <div className="flex items-center gap-2.5 mb-3">
         <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 text-base"
-          style={{ background: `${accent}18` }}>
-          <span>{icon}</span>
+          style={{ background: '#856BFF1A' }}>
+          <Icon icon={icon} width="22" height="22" color="#856BFF" />
         </div>
         <span className="text-[10px] font-bold tracking-widest text-gray-400 uppercase leading-tight">{label}</span>
       </div>
@@ -170,29 +171,34 @@ const fmt = (d) => {
 
 // ── Metric chip (health card) ─────────────────────────────────────────────────
 const MetricChip = ({ label, value, color }) => (
-  <div className="text-center">
+  <div className="flex-1 rounded-lg py-2 text-center" style={{ background: `${color}14` }}>
     <div className="text-[13px] font-bold" style={{ color }}>{value}</div>
-    <div className="text-[10px] text-gray-400">{label}</div>
+    <div className="text-[10px] text-gray-400 mt-0.5">{label}</div>
   </div>
 );
 
-// ── Health Card ───────────────────────────────────────────────────────────────
-const HealthCard = ({ p }) => {
+// ── Health card top-border accents (cycled by card index) ────────────────────
+const HEALTH_ACCENTS = ["#BA1A1A", "#006C49", "#856BFF", "#653E00"];
+
+const HealthCard = ({ p, index = 0 }) => {
   const pct = Number(p.completion_pct);
   const col = PCT_COLOR(pct);
   const load = Number(p.total_load);
   const unassigned = Number(load - p.total_assigned);
   const isZero = pct === 0;
+  const topAccent = HEALTH_ACCENTS[index % HEALTH_ACCENTS.length];
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex flex-col gap-3">
-      {/* top row */}
+    <div
+      className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex flex-col gap-3"
+      style={{ borderTop: `4px solid ${topAccent}` }}
+    >
       <div className="flex items-start justify-between gap-2">
         <div>
           <div className="text-[13px] font-bold text-gray-800 leading-tight">{p.project_name}</div>
-          <div className="text-[10px] text-gray-400 mt-0.5 uppercase tracking-wide">
+          {/* <div className="text-[10px] text-gray-400 mt-0.5 uppercase tracking-wide">
             CODE: {p.project_code || "—"}
-          </div>
+          </div> */}
         </div>
         <div className="text-right shrink-0">
           <div className="text-xl font-extrabold" style={{ color: isZero ? "#e74c3c" : col }}>{pct}%</div>
@@ -206,13 +212,13 @@ const HealthCard = ({ p }) => {
           style={{ width: `${Math.min(pct, 100)}%`, background: isZero ? "#e74c3c" : col }} />
       </div>
 
-      {/* metrics */}
-      <div className="flex justify-between">
-        <MetricChip label="Effort" value={load} color="#9b59b6" />
-        <MetricChip label="Asgn" value={p.total_assigned} color="#3498db" />
-        <MetricChip label="Done" value={p.total_completed} color="#00b894" />
-        <MetricChip label="Pend" value={p.total_pending} color="#e74c3c" />
-        <MetricChip label="Unassg" value={unassigned} color="#e74c3c" />
+     {/* metrics */}
+      <div className="flex gap-1.5">
+        <MetricChip label="Effort" value={load} color="#856BFF" />
+        <MetricChip label="Assigned" value={p.total_assigned} color="#856BFF" />
+        <MetricChip label="Done" value={p.total_completed} color="#856BFF" />
+        <MetricChip label="Pending" value={p.total_pending} color="#856BFF" />
+        <MetricChip label="Unasgined" value={unassigned} color="#BA1A1A" />
       </div>
 
       {/* footer */}
@@ -410,7 +416,7 @@ const UtilizationDashboard = () => {
   if (loading) return (
     <div className="flex items-center justify-center h-64 text-gray-400">
       <div className="text-center">
-        <div className="animate-spin w-8 h-8 border-4 border-purple-200 border-t-purple-600 rounded-full mx-auto mb-3" />
+        <div className="animate-spin w-8 h-8 border-4 border-purple-200 border-t-[#856BFF] rounded-full mx-auto mb-3" />
         Loading dashboard…
       </div>
     </div>
@@ -434,10 +440,14 @@ const UtilizationDashboard = () => {
         <div className="flex gap-1 bg-white border border-gray-200 rounded-xl p-1 shadow-sm">
           {[["overview", "📊 Overview"], ["unit", "🎯 Unit Utilization"]].map(([key, label]) => (
             <button key={key} onClick={() => setActiveTab(key)}
-              className={`px-4 py-1.5 rounded-lg text-[13px] font-semibold transition-all ${activeTab === key
-                ? "bg-purple-600 text-white shadow"
+              className={`px-4 py-1.5 rounded-lg text-[13px] font-semibold transition-all flex items-center gap-1.5 ${activeTab === key
+                ? "bg-[#856BFF] text-white shadow"
                 : "text-gray-500 hover:text-gray-700"
-                }`}>{label}</button>
+                }`}>
+              <Icon icon={key === "overview" ? "material-symbols:dashboard" : "material-symbols:target"}
+                width="22" height="22" color={activeTab === key ? "#ffffff" : "#856BFF"} />
+              {label.replace(/[^\w\s]/g, '').trim()}
+            </button>
           ))}
         </div>
       </div>
@@ -488,14 +498,14 @@ const UtilizationDashboard = () => {
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {[
-                  { label: "Total Units", value: Number(unitProjectSummary.total_units), icon: "📦", color: "#6C5CE7" },
-                  { label: "Completed Units", value: Number(unitProjectSummary.completed_units), icon: "✅", color: "#00b894" },
-                  { label: "Pending Units", value: Number(unitProjectSummary.pending_units), icon: "⏳", color: "#e74c3c" },
-                  { label: "Utilization %", value: `${unitProjectSummary.utilization_pct}%`, icon: "📊", color: "#f39c12" },
+                  { label: "Total Units", value: Number(unitProjectSummary.total_units), icon: "material-symbols:inventory-2", color: "#6C5CE7" },
+                  { label: "Completed Units", value: Number(unitProjectSummary.completed_units), icon: "material-symbols:check-circle", color: "#00b894" },
+                  { label: "Pending Units", value: Number(unitProjectSummary.pending_units), icon: "material-symbols:pending", color: "#e74c3c" },
+                  { label: "Utilization %", value: `${unitProjectSummary.utilization_pct}%`, icon: "material-symbols:trending-up", color: "#f39c12" },
                 ].map(({ label, value, icon, color }) => (
                   <div key={label} className="rounded-xl p-4 flex flex-col gap-1" style={{ background: `${color}10`, border: `1.5px solid ${color}25` }}>
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-base">{icon}</span>
+                      <Icon icon={icon} width="22" height="22" color="#856BFF" />
                       <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{label}</span>
                     </div>
                     <div className="text-2xl font-extrabold" style={{ color }}>{value}</div>
@@ -538,15 +548,15 @@ const UtilizationDashboard = () => {
                 <>
                   <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-3">
                     {[
-                      { label: "Total Tasks", value: Number(unitEmpProjectSummary.total_tasks), icon: "📋", color: "#6C5CE7" },
-                      { label: "Units Assigned", value: Number(unitEmpProjectSummary.total_units_assigned), icon: "📦", color: "#3498db" },
-                      { label: "Completed", value: Number(unitEmpProjectSummary.total_units_completed), icon: "✅", color: "#00b894" },
-                      { label: "Pending", value: Number(unitEmpProjectSummary.total_units_pending), icon: "⏳", color: "#e74c3c" },
-                      { label: "Utilization %", value: `${unitEmpProjectSummary.employee_utilization_pct}%`, icon: "📊", color: "#f39c12" },
+                      { label: "Total Tasks", value: Number(unitEmpProjectSummary.total_tasks), icon: "material-symbols:task", color: "#6C5CE7" },
+                      { label: "Units Assigned", value: Number(unitEmpProjectSummary.total_units_assigned), icon: "material-symbols:assignment", color: "#3498db" },
+                      { label: "Completed", value: Number(unitEmpProjectSummary.total_units_completed), icon: "material-symbols:check-circle", color: "#00b894" },
+                      { label: "Pending", value: Number(unitEmpProjectSummary.total_units_pending), icon: "material-symbols:pending", color: "#e74c3c" },
+                      { label: "Utilization %", value: `${unitEmpProjectSummary.employee_utilization_pct}%`, icon: "material-symbols:trending-up", color: "#f39c12" },
                     ].map(({ label, value, icon, color }) => (
                       <div key={label} className="rounded-xl p-4 flex flex-col gap-1" style={{ background: `${color}10`, border: `1.5px solid ${color}25` }}>
                         <div className="flex items-center gap-1.5 mb-0.5">
-                          <span>{icon}</span>
+                          <Icon icon={icon} width="14" height="14" color="#856BFF" />
                           <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">{label}</span>
                         </div>
                         <div className="text-xl font-extrabold" style={{ color }}>{value}</div>
@@ -725,16 +735,16 @@ const UtilizationDashboard = () => {
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-3">
                   {[
-                    { label: "Projects", value: Number(unitEmpOverall.total_projects || 0), icon: "🏗", color: "#6C5CE7" },
-                    { label: "Tasks", value: Number(unitEmpOverall.total_tasks || 0), icon: "📋", color: "#3498db" },
-                    { label: "Units Assigned", value: Number(unitEmpOverall.total_units_assigned || 0), icon: "📦", color: "#9b59b6" },
-                    { label: "Completed", value: Number(unitEmpOverall.total_units_completed || 0), icon: "✅", color: "#00b894" },
-                    { label: "Pending", value: Number(unitEmpOverall.total_units_pending || 0), icon: "⏳", color: "#e74c3c" },
-                    { label: "Utilization %", value: `${unitEmpOverall.overall_utilization_pct || 0}%`, icon: "📊", color: "#f39c12" },
+                    { label: "Projects", value: Number(unitEmpOverall.total_projects || 0), icon: "material-symbols:project", color: "#6C5CE7" },
+                    { label: "Tasks", value: Number(unitEmpOverall.total_tasks || 0), icon: "material-symbols:task", color: "#3498db" },
+                    { label: "Units Assigned", value: Number(unitEmpOverall.total_units_assigned || 0), icon: "material-symbols:assignment", color: "#9b59b6" },
+                    { label: "Completed", value: Number(unitEmpOverall.total_units_completed || 0), icon: "material-symbols:check-circle", color: "#00b894" },
+                    { label: "Pending", value: Number(unitEmpOverall.total_units_pending || 0), icon: "material-symbols:pending", color: "#e74c3c" },
+                    { label: "Utilization %", value: `${unitEmpOverall.overall_utilization_pct || 0}%`, icon: "material-symbols:trending-up", color: "#f39c12" },
                   ].map(({ label, value, icon, color }) => (
                     <div key={label} className="rounded-xl p-4 flex flex-col gap-1" style={{ background: `${color}10`, border: `1.5px solid ${color}25` }}>
                       <div className="flex items-center gap-1.5 mb-0.5">
-                        <span>{icon}</span>
+                        <Icon icon={icon} width="14" height="14" color="#856BFF" />
                         <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">{label}</span>
                       </div>
                       <div className="text-xl font-extrabold" style={{ color }}>{value}</div>
@@ -757,13 +767,13 @@ const UtilizationDashboard = () => {
                   return (
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       {[
-                        { label: "Total Person Days", value: totalPD, icon: "📅", color: "#0984e3" },
-                        { label: "Completed Person Days", value: completedPD, icon: "✅", color: "#00b894" },
-                        { label: "Pending Person Days", value: pendingPD, icon: "⏳", color: "#e74c3c" },
+                        { label: "Total Person Days", value: totalPD, icon: "material-symbols:calendar-month", color: "#0984e3" },
+                        { label: "Completed Person Days", value: completedPD, icon: "material-symbols:check-circle", color: "#00b894" },
+                        { label: "Pending Person Days", value: pendingPD, icon: "material-symbols:pending", color: "#e74c3c" },
                       ].map(({ label, value, icon, color }) => (
                         <div key={label} className="rounded-xl p-4 flex flex-col gap-1" style={{ background: `${color}10`, border: `1.5px solid ${color}25` }}>
                           <div className="flex items-center gap-1.5 mb-0.5">
-                            <span>{icon}</span>
+                            <Icon icon={icon} width="14" height="14" color="#856BFF" />
                             <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">{label}</span>
                           </div>
                           <div className="text-xl font-extrabold" style={{ color }}>{value}</div>
@@ -778,7 +788,7 @@ const UtilizationDashboard = () => {
                 <div className="overflow-x-auto mt-5">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="bg-[#EFF4FF] border-b border-gray-100">
+                      <tr className="bg-[#EFF4FF] border-b border-gray-100" style={{ backgroundColor: '#EFF4FF' }} >
                         {[
                           "Employee Name", "Project Name", "Task Name",
                           "Total Units", "Total Person Days",
@@ -786,7 +796,7 @@ const UtilizationDashboard = () => {
                           "Pending Units", "Pending Person Days",
                           "Unit Utilization (%)", "Person Days Utilization (%)", "Hours Utilization (%)"
                         ].map(h => (
-                          <th key={h} className="px-4 py-2.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">{h}</th>
+                          <th key={h} className="px-4 py-2.5 text-left text-[10px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">{h}</th>
                         ))}
                       </tr>
                     </thead>
@@ -858,8 +868,8 @@ const UtilizationDashboard = () => {
           {/* Empty state */}
           {!unitProject && (
             <div className="bg-white rounded-xl border border-dashed border-gray-200 shadow-sm px-5 py-16 text-center">
-              <div className="text-4xl mb-3">🎯</div>
-              <div className="text-[15px] font-bold text-gray-400">Select a project to view Unit Utilization</div>
+              {/* <Icon icon="material-symbols:target" width="48" height="48" color="#856BFF" /> */}
+              <div className="text-[15px] font-bold text-gray-400 mt-3">Select a project to view Unit Utilization</div>
               <div className="text-[12px] text-gray-300 mt-1">Then optionally select an employee for detailed breakdown</div>
             </div>
           )}
@@ -870,13 +880,13 @@ const UtilizationDashboard = () => {
       {activeTab === "overview" && (<>
 
         {/* ── KPI Strip ── */}
-        <div className="flex gap-3 flex-wrap mb-6">
-          <KpiCard icon="👥" label="Employees" value={serviceDeliveryEmployees.length} accent="#6C5CE7" />
-          <KpiCard icon="⏱" label="Effort (Hrs)" value={totalLoad} accent="#f39c12" />
-          <KpiCard icon="📋" label="Assigned" value={totalAssigned} accent="#3498db" />
-          <KpiCard icon="✅" label="Completed" value={totalCompleted} accent="#00b894" />
-          <KpiCard icon="📊" label="Overall Comp." value={`${overallPct}%`} accent="#e74c3c" sub />
-        </div>
+<div className="flex gap-3 flex-wrap mb-6">
+  <KpiCard icon="material-symbols:group" label="Employees" value={serviceDeliveryEmployees.length} accent="#856BFF" />
+  <KpiCard icon="material-symbols:timer" label="Effort (Hrs)" value={totalLoad} accent="#006C49" />
+  <KpiCard icon="material-symbols:assignment" label="Assigned" value={totalAssigned} accent="#784B00" />
+  <KpiCard icon="material-symbols:check-circle" label="Completed" value={totalCompleted} accent="#00714D" />
+  <KpiCard icon="material-symbols:trending-up" label="Overall Comp." value={`${overallPct}%`} accent="#BA1A1A" sub />
+</div>
 
         {/* ── Middle row: Employee Utilization + Work Distribution ── */}
         <div className="flex gap-4 mb-5 flex-wrap">
@@ -889,17 +899,15 @@ const UtilizationDashboard = () => {
                 <div className="text-[11px] text-gray-400">Capacity and current load across teams</div>
               </div>
               <button className="text-gray-400 hover:text-gray-600">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
-                </svg>
+                <Icon icon="material-symbols:more-horiz" width="22" height="22" color="#856BFF" />
               </button>
             </div>
 
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-50">
+                <tr className="border-b border-gray-50" style={{ backgroundColor: '#EFF4FF' }}>
                   {["EMPLOYEE", "ROLE", "UTILIZATION", "STATUS"].map(h => (
-                    <th key={h} className="px-5 py-2 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider">{h}</th>
+                    <th key={h} className="px-5 py-2 text-left text-[10px] font-bold text-[#434654] uppercase tracking-wider">{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -920,7 +928,7 @@ const UtilizationDashboard = () => {
             <div className="px-5 py-3 text-right">
               <button
                 onClick={() => setShowAllEmployees(prev => !prev)}
-                className="text-[12px] font-semibold text-purple-600 hover:text-purple-800 transition-colors"
+                className="text-[12px] font-semibold text-[#856BFF] hover:text-purple-800 transition-colors"
               >
                 {showAllEmployees
                   ? "Show less"
@@ -974,21 +982,21 @@ const UtilizationDashboard = () => {
             <h3 className="text-[14px] font-bold text-gray-800">Assignment Overview</h3>
             <div className="flex items-center gap-2 flex-wrap">
               {/* search */}
-              <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-1.5">
-                <svg className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                  <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
-                </svg>
-                <input
-                  type="text"
-                  placeholder="Search user or project..."
-                  value={search}
-                  onChange={(e) => {
-                    setSearch(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  className="w-36 bg-transparent border-0 outline-none ring-0 shadow-none focus:border-0 focus:outline-none focus:ring-0 focus:shadow-none text-[12px] text-gray-600 placeholder-gray-400"
-                  style={{ outline: 'none', border: 'none', boxShadow: 'none', WebkitAppearance: 'none' }}
-                />
+              <div className="min-w-[180px]">
+                <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-1.5 h-[38px]">
+                  <Icon icon="material-symbols:search" width="16" height="16" color="#856BFF" />
+                  <input
+                    type="text"
+                    placeholder="Search user or project..."
+                    value={search}
+                    onChange={(e) => {
+                      setSearch(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    className="w-full bg-transparent border-0 outline-none ring-0 shadow-none focus:border-0 focus:outline-none focus:ring-0 focus:shadow-none text-[13px] text-gray-600 placeholder-gray-400"
+                    style={{ outline: 'none', border: 'none', boxShadow: 'none', WebkitAppearance: 'none' }}
+                  />
+                </div>
               </div>
               {/* employee filter */}
               <div className="min-w-[180px]">
@@ -1017,9 +1025,9 @@ const UtilizationDashboard = () => {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-50">
+                <tr className="border-b border-gray-50" style={{ backgroundColor: '#EFF4FF' }}>
                   {["USER", "PROJECT", "ROLE", "TASK", "ASSIGNED", "COMPLETED", "PENDING", "ASSIGNED HRS", "ACTUAL HRS", "PROGRESS"].map(h => (
-                    <th key={h} className="px-4 py-3 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">{h}</th>
+                    <th key={h} className="px-4 py-3 text-left text-[10px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -1058,8 +1066,8 @@ const UtilizationDashboard = () => {
           </div>
 
           {/* Pagination */}
-          <div className="flex items-center justify-between px-5 py-3 border-t border-gray-50">
-            <span className="text-[11px] text-gray-400">
+          <div className="flex items-center justify-between px-5 py-3 border-t border-gray-50" style={{ backgroundColor: '#EFF4FF' }}>
+            <span className="text-[11px] text-[#434654]">
               Showing {filtered.length === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1} to {Math.min(currentPage * rowsPerPage, filtered.length)} of {filtered.length} entries
             </span>
             <div className="flex items-center gap-1">
@@ -1073,7 +1081,7 @@ const UtilizationDashboard = () => {
                   onClick={() => setCurrentPage(n)}
                   className={`w-7 h-7 flex items-center justify-center rounded text-[12px] font-semibold border transition-colors
                   ${currentPage === n
-                      ? "bg-purple-600 text-white border-purple-600"
+                      ? "bg-[#856BFF] text-white border-[#856BFF]"
                       : "border-gray-200 text-gray-500 hover:bg-gray-50"}`}
                 >{n}</button>
               ))}
@@ -1100,9 +1108,7 @@ const UtilizationDashboard = () => {
             <div className="flex flex-wrap items-center gap-2">
               {/* Search */}
               <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-1.5">
-                <svg className="w-3.5 h-3.5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                  <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
-                </svg>
+                <Icon icon="material-symbols:search" width="14" height="14" color="#856BFF" />
                 <input
                   type="text"
                   placeholder="Search project..."
@@ -1152,25 +1158,25 @@ const UtilizationDashboard = () => {
               <div className="p-5">
                 {filteredHealth.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-14 text-center">
-                    <div className="text-4xl mb-3">🔍</div>
-                    <div className="text-[14px] font-semibold text-gray-400">No projects match your filters</div>
+                    <Icon icon="material-symbols:search-off" width="48" height="48" color="#856BFF" />
+                    <div className="text-[14px] font-semibold text-gray-400 mt-3">No projects match your filters</div>
                     <div className="text-[12px] text-gray-300 mt-1">Try adjusting the search or status filter</div>
                   </div>
                 ) : (
                   <>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {visibleHealth.map(p => <HealthCard key={p.project_id} p={p} />)}
+                      {visibleHealth.map((p, i) => <HealthCard key={p.project_id} p={p} index={i} />)}
                     </div>
                     {hasMore && (
                       <div className="flex justify-center mt-5">
                         <button
                           onClick={() => setShowAllHealth(prev => !prev)}
-                          className="flex items-center gap-2 px-5 py-2 rounded-xl border border-purple-200 text-[12px] font-semibold text-purple-600 hover:bg-purple-50 hover:border-purple-400 transition-all"
+                          className="flex items-center gap-2 px-5 py-2 rounded-xl border border-purple-200 text-[12px] font-semibold text-[#856BFF] hover:bg-purple-50 hover:border-purple-400 transition-all"
                         >
                           {showAllHealth ? (
-                            <><span>Show less</span><span>↑</span></>
+                            <><span>Show less</span><Icon icon="material-symbols:arrow-upward" width="22" height="22" color="#856BFF" /></>
                           ) : (
-                            <><span>Show {filteredHealth.length - HEALTH_PAGE_SIZE} more project{filteredHealth.length - HEALTH_PAGE_SIZE !== 1 ? "s" : ""}</span><span>↓</span></>
+                            <><span>Show {filteredHealth.length - HEALTH_PAGE_SIZE} more project{filteredHealth.length - HEALTH_PAGE_SIZE !== 1 ? "s" : ""}</span><Icon icon="material-symbols:arrow-downward" width="22" height="22" color="#856BFF" /></>
                           )}
                         </button>
                       </div>

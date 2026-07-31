@@ -212,7 +212,7 @@ const ReconciliationUpload = ({ onUploadSuccess }) => {
                     <CheckCircleOutlined /> Validated
                 </span>
             ) : (
-                <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-red-500">
+                <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#BA1A1A]">
                     <CloseCircleOutlined /> Not Found — Create
                 </span>
             ),
@@ -275,16 +275,16 @@ const expandedRowRender = (record) => {
     }
     return (
         <div className="bg-[#F5F5FA] rounded-lg p-4">
-            <div className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+            <div className="text-xs font-bold text-[#434654]uppercase tracking-wide mb-3 flex items-center gap-1.5">
                 <TeamOutlined /> Employee Breakdown
             </div>
             <div className="bg-white rounded-lg border border-gray-100 overflow-hidden">
                 <table className="w-full border-collapse">
                     <thead>
-                        <tr className="bg-[#EEF0FC]">
-                            <th className="text-left text-[11px] font-bold text-gray-500 uppercase px-4 py-2.5">Employee Code</th>
-                            <th className="text-left text-[11px] font-bold text-gray-500 uppercase px-4 py-2.5">Employee Name</th>
-                            <th className="text-right text-[11px] font-bold text-gray-500 uppercase px-4 py-2.5">Hours</th>
+                         <tr style={{ backgroundColor: '#EFF4FF' }}>
+                            <th className="text-left text-[11px] font-bold text-[#434654]uppercase px-4 py-2.5">Employee Code</th>
+                            <th className="text-left text-[11px] font-bold text-[#434654]uppercase px-4 py-2.5">Employee Name</th>
+                            <th className="text-right text-[11px] font-bold text-[#434654]uppercase px-4 py-2.5">Hours</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -317,7 +317,7 @@ const expandedRowRender = (record) => {
           {/* ── Page Header ── */}
 <div className="mb-6">
     <h1 className="text-2xl font-bold text-gray-900 m-0">Timesheet Upload</h1>
-    <p className="text-sm text-gray-500 mt-1">
+    <p className="text-sm text-[#434654]mt-1">
         Upload and review timesheet data against active projects in the system
     </p>
 </div>
@@ -427,12 +427,12 @@ const expandedRowRender = (record) => {
 {/* ── Project Not Found alert ── */}
 {notFoundProjects > 0 && (
     <div className="flex items-start gap-3 bg-orange-50 border border-orange-100 rounded-xl px-5 py-4 mb-5">
-        <WarningOutlined className="text-orange-500 text-lg mt-0.5" />
+        <WarningOutlined className="text-[#BA1A1A] text-lg mt-0.5" />
         <div>
-            <div className="text-sm font-semibold text-orange-800">
+            <div className="text-sm font-semibold text-[#BA1A1A]">
                 {notFoundProjects} project{notFoundProjects > 1 ? 's' : ''} not found in the system
             </div>
-            <div className="text-xs text-orange-600 mt-0.5">
+            <div className="text-xs text-[#BA1A1A] mt-0.5">
                 These entries cannot be reconciled automatically. Create the missing projects or map them to existing entities before running the reconciliation report.
             </div>
         </div>
@@ -501,7 +501,7 @@ const expandedRowRender = (record) => {
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-50 text-green-600 text-xs font-semibold">
                 <CheckCircleOutlined /> {foundProjects} Found
             </span>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-50 text-red-500 text-xs font-semibold">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-50 text-[#BA1A1A] text-xs font-semibold">
                 <CloseCircleOutlined /> {notFoundProjects} Missing
             </span>
         </div>
@@ -541,8 +541,8 @@ const expandedRowRender = (record) => {
             {/* Table look & feel overrides */}
            <style>{`
     .ant-table-thead > tr > th {
-        background: #EEF0FC !important;
-        color: #6b7280 !important;
+        background: #EFF4FF !important;
+        color: #434654 !important;
         font-size: 11px !important;
         font-weight: 700 !important;
         text-transform: uppercase !important;
