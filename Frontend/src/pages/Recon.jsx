@@ -5,8 +5,11 @@ import {
   getProjectLevelRecon,
   getEmployeeLevelRecon,
   getProjectDetail,
+  exportProjectLevelExcel,
+  exportEmployeeLevelExcel,
 } from "../api/recon.api";
 import { Icon } from '@iconify/react';
+import { DownloadOutlined } from "@ant-design/icons";
 
 // ─── Status colors (shared by pill + text variants) ─────────────
 const STATUS_STYLES = {
@@ -1046,6 +1049,13 @@ const ReconPage = () => {
                           className="w-56 pl-9 pr-3.5 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#856BFF]/30"
                         />
                       </div>
+                      <button
+                        onClick={() => exportProjectLevelExcel(filters)}
+                        className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-colors"
+                      >
+                        <DownloadOutlined />
+                        <span>Export Excel</span>
+                      </button>
                       <span className="text-xs font-medium text-gray-400">{filteredProjects.length} projects</span>
                     </div>
                   </div>
@@ -1198,6 +1208,13 @@ const ReconPage = () => {
                           className="w-56 pl-9 pr-3.5 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#856BFF]/30"
                         />
                       </div>
+                      <button
+                        onClick={() => exportEmployeeLevelExcel(filters)}
+                        className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-colors"
+                      >
+                        <DownloadOutlined />
+                        <span>Export Excel</span>
+                      </button>
                       <span className="text-xs font-medium text-gray-400">Showing {filteredEmployees.length} assignments</span>
                     </div>
                   </div>

@@ -13,6 +13,8 @@ const {
   getProjectHealth,
   getProjectUnitSummary,
   getEmployeeUnitSummary,
+  exportEmployeeProjectUnit,
+  exportEmployeeOverallUnit,
 } = require('../controller/utilization.controller');
 
 // ── Employee routes ────────────────────────────────────────────────────────
@@ -32,6 +34,10 @@ router.get ('/project-health',         authMiddleware, getProjectHealth);
 // ── Unit Utilization routes ──────────────────────────────────────────────────────────────────
 router.get ('/project-unit-summary',   authMiddleware, getProjectUnitSummary);
 router.get ('/employee-unit-summary',  authMiddleware, getEmployeeUnitSummary);
+
+// ── Unit Utilization Excel Export routes ──────────────────────────────────────────────────────
+router.get ('/export/employee-project-unit', authMiddleware, exportEmployeeProjectUnit);
+router.get ('/export/employee-overall-unit', authMiddleware, exportEmployeeOverallUnit);
 
 module.exports = router;
 

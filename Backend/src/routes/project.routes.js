@@ -9,7 +9,11 @@ const {
   upsertEffortEstimate,
   deleteEffortEstimate,
   updateProject,
+  getCustomers,
 } = require('../controller/project.controller');
+
+// ── Customer List ─────────────────────────────────────────────
+router.get('/customers', authMiddleware, getCustomers);
 
 // ── Project CRUD ──────────────────────────────────────────────
 router.post('/', authMiddleware,  createProject);

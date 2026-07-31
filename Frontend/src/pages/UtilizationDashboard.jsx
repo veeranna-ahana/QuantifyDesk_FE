@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import { useSelector } from "react-redux";
 import SearchableSelect from "../component/SearchableSelect";
+import { DownloadOutlined, FileExcelOutlined } from "@ant-design/icons";
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
   RadialBarChart, RadialBar
@@ -12,6 +13,50 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const getHeaders = () => ({
   Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
 });
+
+const exportEmployeeProjectUnitExcel = async (projectId, empId) => {
+  try {
+    const res = await axios.get(
+      `${BASE_URL}/api/utilization/export/employee-project-unit?projectId=${projectId}&empId=${empId}`,
+      {
+        headers: getHeaders(),
+        responseType: "blob",
+      }
+    );
+    const url = window.URL.createObjectURL(new Blob([res.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "Employee_Utilization_Project.xlsx");
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error("Export error:", err);
+  }
+};
+
+const exportEmployeeOverallUnitExcel = async (empId) => {
+  try {
+    const res = await axios.get(
+      `${BASE_URL}/api/utilization/export/employee-overall-unit?empId=${empId}`,
+      {
+        headers: getHeaders(),
+        responseType: "blob",
+      }
+    );
+    const url = window.URL.createObjectURL(new Blob([res.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "Employee_Overall_Utilization.xlsx");
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error("Export error:", err);
+  }
+};
 
 const PCT_COLOR = (pct) =>
   pct >= 80 ? "#00b894" : pct >= 40 ? "#f39c12" : "#e74c3c";
@@ -482,16 +527,26 @@ const UtilizationDashboard = () => {
                     {unitEmpName} · {unitProjectSummary?.project_name || ""}
                   </div>
                 </div>
-                {unitEmpProjectSummary && (
-                  <CircleProgress pct={Number(unitEmpProjectSummary.employee_utilization_pct)} size={76} color="#00b894" />
-                )}
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => exportEmployeeProjectUnitExcel(unitProject, unitEmployee)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[12px] font-semibold transition-all shadow-sm active:scale-95"
+                    title="Export Employee Utilization (within Project) to Excel"
+                  >
+                    <DownloadOutlined />
+                    <span>Export Excel</span>
+                  </button>
+                  {unitEmpProjectSummary && (
+                    <CircleProgress pct={Number(unitEmpProjectSummary.employee_utilization_pct)} size={76} color="#00b894" />
+                  )}
+                </div>
               </div>
 
               {unitLoading ? (
                 <div className="text-center py-6 text-gray-300">Loading…</div>
               ) : unitEmpProjectSummary ? (
                 <>
-                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-5">
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-3">
                     {[
                       { label: "Total Tasks", value: Number(unitEmpProjectSummary.total_tasks), icon: "material-symbols:task", color: "#6C5CE7" },
                       { label: "Units Assigned", value: Number(unitEmpProjectSummary.total_units_assigned), icon: "material-symbols:assignment", color: "#3498db" },
@@ -499,7 +554,7 @@ const UtilizationDashboard = () => {
                       { label: "Pending", value: Number(unitEmpProjectSummary.total_units_pending), icon: "material-symbols:pending", color: "#e74c3c" },
                       { label: "Utilization %", value: `${unitEmpProjectSummary.employee_utilization_pct}%`, icon: "material-symbols:trending-up", color: "#f39c12" },
                     ].map(({ label, value, icon, color }) => (
-                      <div key={label} className="rounded-xl p-3 flex flex-col gap-1" style={{ background: `${color}10`, border: `1.5px solid ${color}25` }}>
+                      <div key={label} className="rounded-xl p-4 flex flex-col gap-1" style={{ background: `${color}10`, border: `1.5px solid ${color}25` }}>
                         <div className="flex items-center gap-1.5 mb-0.5">
                           <Icon icon={icon} width="14" height="14" color="#856BFF" />
                           <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">{label}</span>
@@ -509,32 +564,133 @@ const UtilizationDashboard = () => {
                     ))}
                   </div>
 
-                  {/* Task breakdown table */}
+                  {/* Person Days KPI row for within Project */}
+                  {(() => {
+                    const empObj = serviceDeliveryEmployees.find(
+                      e => String(e.employee_id || e.emp_id) === String(unitEmployee)
+                    );
+                    const empName = empObj?.emp_name || unitEmployee;
+                    const empProjectRows = tableData.filter(r => {
+                      const matchEmp = r.user_name === empName;
+                      const matchProj = String(r.project_id) === String(unitProject) || 
+                                        r.project_name === unitProjectSummary?.project_name;
+                      return matchEmp && matchProj;
+                    });
+                    const totalHrsAssigned = empProjectRows.reduce((s, r) => s + Number(r.hours_assigned || 0), 0);
+                    const totalHrsUtilized = empProjectRows.reduce((s, r) => s + Number(r.hours_utilized || 0), 0);
+                    const totalPD = parseFloat((totalHrsAssigned / 8).toFixed(2));
+                    const completedPD = parseFloat((totalHrsUtilized / 8).toFixed(2));
+                    const pendingPD = parseFloat(Math.max(totalPD - completedPD, 0).toFixed(2));
+                    return (
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
+                        {[
+                          { label: "Total Person Days", value: totalPD, icon: "📅", color: "#0984e3" },
+                          { label: "Completed Person Days", value: completedPD, icon: "✅", color: "#00b894" },
+                          { label: "Pending Person Days", value: pendingPD, icon: "⏳", color: "#e74c3c" },
+                        ].map(({ label, value, icon, color }) => (
+                          <div key={label} className="rounded-xl p-4 flex flex-col gap-1" style={{ background: `${color}10`, border: `1.5px solid ${color}25` }}>
+                            <div className="flex items-center gap-1.5 mb-0.5">
+                              <span>{icon}</span>
+                              <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">{label}</span>
+                            </div>
+                            <div className="text-xl font-extrabold" style={{ color }}>{value}</div>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
+
+                  {/* Task breakdown table with 12 detailed columns */}
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="border-b border-gray-100 style={{ backgroundColor: '#EFF4FF' }}">
-                          {["Task", "Role", "Assigned", "Completed", "Pending", "Progress"].map(h => (
-                            <th key={h} className="px-4 py-2.5 text-left text-[10px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">{h}</th>
+                        <tr className="bg-[#EFF4FF] border-b border-gray-100">
+                          {[
+                            "Employee Name", "Project Name", "Task Name",
+                            "Total Units", "Total Person Days",
+                            "Completed Units", "Completed Person Days",
+                            "Pending Units", "Pending Person Days",
+                            "Unit Utilization (%)", "Person Days Utilization (%)", "Hours Utilization (%)"
+                          ].map(h => (
+                            <th key={h} className="px-4 py-2.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">{h}</th>
                           ))}
                         </tr>
                       </thead>
                       <tbody>
-                        {unitEmpTasks.length === 0 ? (
-                          <tr><td colSpan={6} className="py-6 text-center text-gray-300">No tasks found</td></tr>
-                        ) : unitEmpTasks.map((t, i) => {
-                          const pct = t.units_assigned > 0 ? Math.round((t.units_completed / t.units_assigned) * 100) : 0;
-                          return (
-                            <tr key={i} className="border-b border-gray-50 hover:bg-gray-50/60">
-                              <td className="px-4 py-2.5 font-semibold text-gray-700 text-[12px]">{t.task_name}</td>
-                              <td className="px-4 py-2.5"><RolePill role={t.role} /></td>
-                              <td className="px-4 py-2.5 text-center font-bold text-blue-600">{t.units_assigned}</td>
-                              <td className="px-4 py-2.5 text-center font-bold text-emerald-500">{t.units_completed}</td>
-                              <td className="px-4 py-2.5 text-center font-bold" style={{ color: t.units_pending > 0 ? "#e74c3c" : "#00b894" }}>{t.units_pending}</td>
-                              <td className="px-4 py-2.5 min-w-[130px]"><ProgressBar pct={pct} /></td>
-                            </tr>
+                        {(() => {
+                          const empObj = serviceDeliveryEmployees.find(
+                            e => String(e.employee_id || e.emp_id) === String(unitEmployee)
                           );
-                        })}
+                          const empName = empObj?.emp_name || unitEmployee;
+                          const empProjectRows = tableData.filter(r => {
+                            const matchEmp = r.user_name === empName;
+                            const matchProj = String(r.project_id) === String(unitProject) || 
+                                              r.project_name === unitProjectSummary?.project_name;
+                            return matchEmp && matchProj;
+                          });
+
+                          const displayRows = empProjectRows.length > 0 
+                            ? empProjectRows 
+                            : unitEmpTasks.map(t => ({
+                                user_name: empName,
+                                project_name: unitProjectSummary?.project_name || "—",
+                                task_name: t.task_name,
+                                units_assigned: t.units_assigned,
+                                units_completed: t.units_completed,
+                                units_pending: t.units_pending,
+                                hours_assigned: 0,
+                                hours_utilized: 0
+                              }));
+
+                          if (displayRows.length === 0) {
+                            return <tr><td colSpan={12} className="py-6 text-center text-gray-300">No tasks found</td></tr>;
+                          }
+
+                          return displayRows.map((t, i) => {
+                            const assignedUnits = Number(t.units_assigned || 0);
+                            const completedUnits = Number(t.units_completed || 0);
+                            const pendingUnits = Number(t.units_pending || 0);
+                            const assignedHrs = Number(t.hours_assigned || 0);
+                            const utilizedHrs = Number(t.hours_utilized || 0);
+                            const pendingHrs = Math.max(assignedHrs - utilizedHrs, 0);
+                            const totalPD = parseFloat((assignedHrs / 8).toFixed(2));
+                            const completedPD = parseFloat((utilizedHrs / 8).toFixed(2));
+                            const pendingPD = parseFloat((pendingHrs / 8).toFixed(2));
+
+                            const unitPct = assignedUnits > 0 ? Math.round((completedUnits / assignedUnits) * 100) : 0;
+                            const pdPct = totalPD > 0 ? Math.round((completedPD / totalPD) * 100) : 0;
+                            const hrsPct = assignedHrs > 0 ? Math.round((utilizedHrs / assignedHrs) * 100) : 0;
+
+                            return (
+                              <tr key={i} className="border-b border-gray-50 hover:bg-gray-50/60">
+                                <td className="px-4 py-2.5 font-semibold text-gray-700 text-[12px] whitespace-nowrap">{empName}</td>
+                                <td className="px-4 py-2.5 text-[12px] text-gray-500">{t.project_name || unitProjectSummary?.project_name || "—"}</td>
+                                <td className="px-4 py-2.5 font-semibold text-gray-700 text-[12px]">{t.task_name}</td>
+                                <td className="px-4 py-2.5 text-center font-bold text-blue-600">{assignedUnits}</td>
+                                <td className="px-4 py-2.5 text-center font-semibold text-slate-700">{totalPD}</td>
+                                <td className="px-4 py-2.5 text-center font-bold text-emerald-500">{completedUnits}</td>
+                                <td className="px-4 py-2.5 text-center font-semibold text-emerald-400">{completedPD}</td>
+                                <td className="px-4 py-2.5 text-center font-bold" style={{ color: pendingUnits > 0 ? "#e74c3c" : "#00b894" }}>{pendingUnits}</td>
+                                <td className="px-4 py-2.5 text-center font-semibold" style={{ color: pendingPD > 0 ? "#e74c3c" : "#00b894" }}>{pendingPD}</td>
+                                <td className="px-4 py-2.5 text-center">
+                                  <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${unitPct >= 100 ? 'bg-emerald-50 text-emerald-600' : unitPct >= 50 ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-rose-500'}`}>
+                                    {unitPct}%
+                                  </span>
+                                </td>
+                                <td className="px-4 py-2.5 text-center">
+                                  <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${pdPct >= 100 ? 'bg-emerald-50 text-emerald-600' : pdPct >= 50 ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-rose-500'}`}>
+                                    {pdPct}%
+                                  </span>
+                                </td>
+                                <td className="px-4 py-2.5 text-center">
+                                  <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${hrsPct >= 100 ? 'bg-emerald-50 text-emerald-600' : hrsPct >= 50 ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-rose-500'}`}>
+                                    {hrsPct}%
+                                  </span>
+                                </td>
+                              </tr>
+                            );
+                          });
+                        })()}
                       </tbody>
                     </table>
                   </div>
@@ -565,7 +721,17 @@ const UtilizationDashboard = () => {
                       {unitEmpName} · Across all projects
                     </div>
                   </div>
-                  <CircleProgress pct={Number(unitEmpOverall.overall_utilization_pct || 0)} size={76} color="#f39c12" />
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => exportEmployeeOverallUnitExcel(unitEmployee)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[12px] font-semibold transition-all shadow-sm active:scale-95"
+                      title="Export Overall Employee Utilization to Excel"
+                    >
+                      <DownloadOutlined />
+                      <span>Export Excel</span>
+                    </button>
+                    <CircleProgress pct={Number(unitEmpOverall.overall_utilization_pct || 0)} size={76} color="#f39c12" />
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-3">
                   {[
