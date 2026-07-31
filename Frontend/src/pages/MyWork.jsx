@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useSelector } from "react-redux";
+import { Icon } from '@iconify/react';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const getHeaders = () => ({
@@ -287,6 +288,9 @@ const MyWork = () => {
   const totalAwaiting = assignments.reduce((s, a) => s + Number(a.units_awaiting || 0), 0);
   const totalPending = assignments.reduce((s, a) => s + Number(a.units_pending), 0);
   const overallPct = totalAssigned > 0 ? Math.round((totalCompleted / totalAssigned) * 100) : 0;
+  
+  // Calculate total projects
+  const totalProjects = Object.keys(byProject).length;
 
   // ── Full-page Progress Update view (replaces the assignment list while active) ──
   if (logModal) {
@@ -366,10 +370,7 @@ const MyWork = () => {
           <div className="mb-4">
             <label className="block text-xs font-semibold text-gray-600 mb-1.5">Total Estimated Time (HH:MM)</label>
             <div className="relative">
-              <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-[#856BFF]" width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.7" />
-                <path d="M12 7v5l3.5 2" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <Icon icon="material-symbols:schedule" width="16" height="16" color="#856BFF" className="absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={totalTimeNeeded}
@@ -409,11 +410,7 @@ const MyWork = () => {
                 placeholder="List any technical debt or resource dependencies causing delays…"
                 className="w-full px-3 py-2 pr-9 border border-gray-200 rounded-md text-sm min-h-[80px] resize-y focus:outline-none focus:ring-2 focus:ring-[#856BFF]/40"
               />
-              <svg className="absolute right-3 top-3 text-red-400" width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <path d="M12 3l10 18H2L12 3z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-                <path d="M12 10v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                <circle cx="12" cy="17" r="0.8" fill="currentColor" />
-              </svg>
+              <Icon icon="material-symbols:warning" width="16" height="16" color="#ef4444" className="absolute right-3 top-3" />
             </div>
           </div>
 
@@ -475,27 +472,28 @@ const MyWork = () => {
           onClick={() => setManualModalOpen(true)}
           className="flex items-center gap-1.5 px-4 py-2 bg-[#856BFF] hover:bg-[#7259e6] text-white rounded-lg text-sm font-bold shadow-sm transition-colors"
         >
-          + Create Task
+          <Icon icon="material-symbols:add" width="18" height="18" color="#ffffff" />
+          Create Task
         </button>
       </div>
 
       {/* ── Summary strip ── */}
-      {!loading && assignments.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6 items-stretch">
-          <StatCard label="Total Assigned" value={totalAssigned} suffix="Units" />
-          <StatCard label="Pending" value={totalPending} suffix="Units" />
-          <StatCard label="Approved" value={totalCompleted} suffix="Units" />
-          {totalAwaiting > 0 && <StatCard label="Awaiting Approval" value={totalAwaiting} suffix="Units" />}
-          <div className="bg-white rounded-lg shadow-sm border-l-4 border-[#856BFF] px-5 py-4 flex items-center justify-between gap-4 min-w-[180px]">
-            <div>
-              <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Overall Progress</div>
-              <div className="text-2xl font-extrabold text-gray-900 mt-1">{overallPct}%</div>
-            </div>
-            <Ring pct={overallPct} size={54} />
-          </div>
-        </div>
-      )}
-
+{!loading && assignments.length > 0 && (
+  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+    <StatCard label="Total Projects" value={totalProjects} suffix="Projects" />
+    <StatCard label="Total Assigned" value={totalAssigned} suffix="Units" />
+    <StatCard label="Completed Units" value={totalCompleted} suffix="Units" />
+    <StatCard label="Pending" value={totalPending} suffix="Units" />
+    {/* {totalAwaiting > 0 && <StatCard label="Awaiting Approval" value={totalAwaiting} suffix="Units" />} */}
+    <div className="bg-white rounded-lg shadow-sm border-l-4 border-[#856BFF] px-5 py-4 flex items-center justify-between gap-4">
+      <div>
+        <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Overall Progress</div>
+        <div className="text-2xl font-extrabold text-gray-900 mt-1">{overallPct}%</div>
+      </div>
+      <Ring pct={overallPct} size={54} />
+    </div>
+  </div>
+)}
       {loading && <p className="text-gray-400 py-8 text-center">Loading your assignments…</p>}
 
       {!loading && assignments.length === 0 && (
@@ -504,9 +502,10 @@ const MyWork = () => {
           <p className="text-sm text-gray-300">Your manager will assign tasks soon.</p>
           <button
             onClick={() => setManualModalOpen(true)}
-            className="mt-4 px-6 py-3 bg-[#856BFF] hover:bg-[#7259e6] text-white rounded-lg text-sm font-bold shadow-sm transition-colors"
+            className="flex items-center gap-2 mt-4 px-6 py-3 bg-[#856BFF] hover:bg-[#7259e6] text-white rounded-lg text-sm font-bold shadow-sm transition-colors"
           >
-            + Create a Manual Task
+            <Icon icon="material-symbols:add" width="18" height="18" color="#ffffff" />
+            Create a Manual Task
           </button>
         </div>
       )}
@@ -536,13 +535,13 @@ const MyWork = () => {
             {/* Table */}
             <table className="w-full border-collapse">
               <thead>
-                <tr className="bg-[#EEF0FC]">
-                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 text-left">Role</th>
-                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 text-left">Task</th>
-                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 text-left">Assigned</th>
-                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 text-left">Pending</th>
-                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 text-left">Progress</th>
-                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 text-left">Action</th>
+                <tr className="bg-[#EFF4FF]">
+                  <th className="px-6 py-3 text-xs font-semibold text-[#434654] text-left">Role</th>
+                  <th className="px-6 py-3 text-xs font-semibold text-[#434654]text-left">Task</th>
+                  <th className="px-6 py-3 text-xs font-semibold text-[#434654] text-left">Assigned</th>
+                  <th className="px-6 py-3 text-xs font-semibold text-[#434654] text-left">Pending</th>
+                  <th className="px-6 py-3 text-xs font-semibold text-[#434654] text-left">Progress</th>
+                  <th className="px-6 py-3 text-xs font-semibold text-[#434654]text-left">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -584,24 +583,23 @@ const MyWork = () => {
                       <td className="px-6 py-4">
                         {fullyDone ? (
                           <span className="inline-flex items-center gap-1.5 text-green-600 font-semibold text-sm">
-                            <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
-                              <circle cx="10" cy="10" r="9" stroke="currentColor" strokeWidth="1.5" />
-                              <path d="M6 10.5l2.5 2.5L14 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
+                            <Icon icon="material-symbols:check-circle" width="20" height="20" color="#22c55e" />
                             Done
                           </span>
                         ) : awaiting > 0 && effectivePend === 0 ? (
-                          <span className="inline-block px-3 py-1 rounded-full bg-amber-50 text-amber-700 text-xs font-semibold">
-                            ⏳ Awaiting
-                          </span>
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-700 text-xs font-semibold">
+                              <Icon icon="material-symbols:pending" width="14" height="14" color="#d97706" />
+                              Awaiting
+                            </span>
                         ) : (
-                          <button
-                            onClick={() => openLog(a)}
-                            disabled={effectivePend === 0}
-                            className="px-4 py-1.5 bg-[#7B61FF] hover:bg-[#6a52e0] disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg text-xs font-semibold transition-colors"
-                          >
-                            Update
-                          </button>
+                              <button
+                                onClick={() => openLog(a)}
+                                disabled={effectivePend === 0}
+                                className="flex items-center gap-1.5 px-4 py-1.5 bg-[#856BFF] hover:bg-[#7254fa] disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg text-xs font-semibold transition-colors"
+                              >
+                                <Icon icon="boxicons:edit" width="20" height="20" color="#ffffff" />
+                                Update
+                              </button>
                         )}
                       </td>
                     </tr>

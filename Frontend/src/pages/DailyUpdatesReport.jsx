@@ -9,8 +9,8 @@ const PAGE_SIZE = 10;
 
 // ── Status badge colours (matching Figma) ─────────────────────────────────────
 const STATUS_CONFIG = {
-  'in-progress': { bg: 'bg-violet-100', text: 'text-violet-700', label: 'IN-PROGRESS' },
-  'in_progress': { bg: 'bg-violet-100', text: 'text-violet-700', label: 'IN-PROGRESS' },
+  'in-progress': { bg: 'bg-violet-100', text: 'text-[#856BFF]', label: 'IN-PROGRESS' },
+  'in_progress': { bg: 'bg-violet-100', text: 'text-[#856BFF]', label: 'IN-PROGRESS' },
   completed: { bg: 'bg-green-100', text: 'text-green-700', label: 'COMPLETED' },
   blocked: { bg: 'bg-red-100', text: 'text-red-600', label: 'BLOCKED' },
   practicing: { bg: 'bg-pink-100', text: 'text-pink-700', label: 'PRACTICING' },
@@ -316,7 +316,7 @@ export default function DailyUpdatesReport() {
           <p className="text-gray-500 mb-6">Your session has expired. Please login again to continue.</p>
           <button
             onClick={handleLogout}
-            className="px-6 py-2.5 bg-violet-600 hover:bg-violet-700 text-white font-semibold rounded-lg transition-colors"
+            className="px-6 py-2.5 bg-[#856BFF] hover:bg-[#7b5efd] text-white font-semibold rounded-lg transition-colors"
           >
             Login Again
           </button>
@@ -395,7 +395,7 @@ export default function DailyUpdatesReport() {
         <button
           onClick={handleFilter}
           disabled={loadingMeta || loadingRows}
-          className="self-end px-6 py-2.5 bg-violet-600 hover:bg-violet-700 active:bg-violet-800 text-white text-sm font-semibold rounded-lg shadow-sm transition-colors disabled:opacity-50"
+          className="self-end px-6 py-2.5 bg-[#856BFF] hover:bg-[#7f62ff] active:bg-[#856BFF] text-white text-sm font-semibold rounded-lg shadow-sm transition-colors disabled:opacity-50"
         >
           {loadingMeta ? 'Loading...' : 'Filter Results'}
         </button>
@@ -427,7 +427,7 @@ export default function DailyUpdatesReport() {
                 <tr>
                   <td colSpan={COLS.length} className="py-16 text-center">
                     <div className="flex items-center justify-center gap-2 text-gray-400">
-                      <svg className="animate-spin w-5 h-5 text-violet-500" fill="none" viewBox="0 0 24 24">
+                      <svg className="animate-spin w-5 h-5 text-[#856BFF]" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
                       </svg>
@@ -559,7 +559,7 @@ export default function DailyUpdatesReport() {
                   key={n}
                   onClick={() => setPage(n)}
                   className={`w-8 h-8 flex items-center justify-center rounded-md text-sm font-medium transition-colors ${n === page
-                    ? 'bg-violet-600 text-white shadow-sm'
+                    ? 'bg-[#856BFF] text-white shadow-sm'
                     : 'text-gray-500 hover:bg-gray-100'
                     }`}
                 >
