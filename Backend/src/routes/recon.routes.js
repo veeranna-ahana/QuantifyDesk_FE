@@ -6,7 +6,9 @@ const {
     getReconDashboard,
     getProjectLevelRecon,
     getEmployeeLevelRecon,
-    getProjectDetail
+    getProjectDetail,
+    exportProjectLevelRecon,
+    exportEmployeeLevelRecon
 } = require('../controller/recon.controller');
 
 // ─── Routes ──────────────────────────────────────────────────────
@@ -18,6 +20,10 @@ router.get('/filters', authMiddleware, getReconFilters);
 router.get('/dashboard', authMiddleware, getReconDashboard);
 router.get('/project-level', authMiddleware, getProjectLevelRecon);
 router.get('/employee-level', authMiddleware, getEmployeeLevelRecon);
+
+// Export Excel Routes
+router.get('/export/project-level', authMiddleware, exportProjectLevelRecon);
+router.get('/export/employee-level', authMiddleware, exportEmployeeLevelRecon);
 
 // Project Detail
 router.get('/project-detail/:projectId', authMiddleware, getProjectDetail);

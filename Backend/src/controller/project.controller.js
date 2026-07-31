@@ -1,4 +1,4 @@
-const { query } = require('../config/db');
+const { query, projectCodeQuery } = require('../config/db');
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/projects
@@ -344,6 +344,94 @@ const updateProject = async (req, res, next) => {
   }
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/projects/customers (or /api/customers)
+// Returns deduplicated list of customers from project_codes table (or projects fallback)
+// ─────────────────────────────────────────────────────────────────────────────
+const getCustomers = async (req, res, next) => {
+  try {
+    let rows = [];
+
+    // Attempt 1: Query projectCodePool for project_codes_import table
+    try {
+      rows = await projectCodeQuery(
+        `SELECT DISTINCT customer_name 
+         FROM project_codes_import 
+         WHERE customer_name IS NOT NULL AND TRIM(customer_name) != '' 
+         ORDER BY customer_name ASC`
+      );
+    } catch (e1) {
+      // Attempt 2: Query projectCodePool for project_codes table
+      try {
+        rows = await projectCodeQuery(
+          `SELECT DISTINCT customer_name 
+           FROM project_codes 
+           WHERE customer_name IS NOT NULL AND TRIM(customer_name) != '' 
+           ORDER BY customer_name ASC`
+        );
+      } catch (e2) {
+        // Attempt 3: Query quantifyPool for project_codes_db.project_codes_import
+        try {
+          rows = await query(
+            `SELECT DISTINCT customer_name 
+             FROM project_codes_db.project_codes_import 
+             WHERE customer_name IS NOT NULL AND TRIM(customer_name) != '' 
+             ORDER BY customer_name ASC`
+          );
+        } catch (e3) {
+          // Attempt 4: Query quantifyPool for project_codes_db.project_codes
+          try {
+            rows = await query(
+              `SELECT DISTINCT customer_name 
+               FROM project_codes_db.project_codes 
+               WHERE customer_name IS NOT NULL AND TRIM(customer_name) != '' 
+               ORDER BY customer_name ASC`
+            );
+          } catch (e4) {
+            // Attempt 5: Query quantifyPool for project_codes_import
+            try {
+              rows = await query(
+                `SELECT DISTINCT customer_name 
+                 FROM project_codes_import 
+                 WHERE customer_name IS NOT NULL AND TRIM(customer_name) != '' 
+                 ORDER BY customer_name ASC`
+              );
+            } catch (e5) {
+              // Attempt 6: Query quantifyPool projects table client_name as fallback
+              try {
+                rows = await query(
+                  `SELECT DISTINCT client_name AS customer_name 
+                   FROM projects 
+                   WHERE client_name IS NOT NULL AND TRIM(client_name) != '' 
+                   ORDER BY client_name ASC`
+                );
+              } catch (e6) {
+                console.error("All customer fetch queries failed:", e6.message);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    const customerNames = (rows || [])
+      .map(r => r.customer_name || r.client_name)
+      .filter(name => name && name.trim());
+      
+    const uniqueCustomers = [...new Set(customerNames)].sort();
+
+    const formatted = uniqueCustomers.map((name, idx) => ({
+      id: idx + 1,
+      customer_name: name,
+      name: name,
+    }));
+
+    return res.status(200).json(formatted);
+  } catch (err) {
+    return next(err);
+  }
+};
+
 module.exports = {
   createProject,
   getAllProjects,
@@ -351,4 +439,5 @@ module.exports = {
   upsertEffortEstimate,
   deleteEffortEstimate,
   updateProject,
+  getCustomers,
 };

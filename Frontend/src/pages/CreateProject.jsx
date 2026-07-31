@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import SearchableSelect from '../component/SearchableSelect';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
-const CUSTOMER_API_URL = 'http://104.211.117.118:8000/kam_and_customer_rating_api/customers/active-customers';
+const CUSTOMER_API_URL = `${BASE_URL}/api/projects/customers`;
 const getHeaders = () => ({
   Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
 });

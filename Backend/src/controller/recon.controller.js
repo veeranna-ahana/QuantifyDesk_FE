@@ -1,4 +1,5 @@
 const { query, masterQuery } = require("../config/db");
+const XLSX = require("xlsx");
 
 // ──────────────────────────────────────────────────────────────
 // 1. GET FILTER OPTIONS (UPDATED - Uses master.emp)
@@ -1140,10 +1141,126 @@ const getProjectDetail = async (req, res, next) => {
     }
 };
 
+// ──────────────────────────────────────────────────────────────
+// EXPORT PROJECT LEVEL RECON TO EXCEL
+// ──────────────────────────────────────────────────────────────
+const exportProjectLevelRecon = async (req, res, next) => {
+    try {
+        let capturedData = null;
+        const fakeRes = {
+            json: (data) => { capturedData = data; },
+            status: () => fakeRes,
+        };
+
+        await getProjectLevelRecon(req, fakeRes, next);
+
+        if (!capturedData || !Array.isArray(capturedData)) {
+            return res.status(500).json({ message: "Failed to generate reconciliation data" });
+        }
+
+        const rows = capturedData.map((item) => ({
+            "Project Code": item.project_code || "—",
+            "Project Name": item.project_name || "—",
+            "Client Name": item.client_name || "—",
+            "Estimated Hours": Number(item.estimated_hours || 0),
+            "Estimated Days": Number(item.estimated_days || 0),
+            "Actual Hours": Number(item.actual_hours || 0),
+            "Actual Days": Number(item.actual_days || 0),
+            "Variance Hours": Number(item.variance_hours || 0),
+            "Variance %": Number(item.variance_pct || 0),
+            "Status": item.status || "—",
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(rows);
+        worksheet["!cols"] = [
+            { wch: 18 },
+            { wch: 30 },
+            { wch: 25 },
+            { wch: 18 },
+            { wch: 16 },
+            { wch: 15 },
+            { wch: 14 },
+            { wch: 16 },
+            { wch: 12 },
+            { wch: 18 },
+        ];
+
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Project Reconciliation");
+
+        const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "buffer" });
+
+        res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        res.setHeader("Content-Disposition", 'attachment; filename="Project_Level_Reconciliation.xlsx"');
+        return res.send(excelBuffer);
+    } catch (err) {
+        next(err);
+    }
+};
+
+// ──────────────────────────────────────────────────────────────
+// EXPORT EMPLOYEE LEVEL RECON TO EXCEL
+// ──────────────────────────────────────────────────────────────
+const exportEmployeeLevelRecon = async (req, res, next) => {
+    try {
+        let capturedData = null;
+        const fakeRes = {
+            json: (data) => { capturedData = data; },
+            status: () => fakeRes,
+        };
+
+        await getEmployeeLevelRecon(req, fakeRes, next);
+
+        if (!capturedData || !Array.isArray(capturedData)) {
+            return res.status(500).json({ message: "Failed to generate employee reconciliation data" });
+        }
+
+        const rows = capturedData.map((item) => ({
+            "Employee Code": item.employee_code || "—",
+            "Employee Name": item.employee_name || "—",
+            "Reporting Manager": item.reporting_manager || "—",
+            "Project Code": item.project_code || "—",
+            "Project Name": item.project_name || "—",
+            "Assigned Hours": Number(item.assigned_hours || 0),
+            "Actual Hours": Number(item.actual_hours || 0),
+            "Variance Hours": Number(item.variance_hours || 0),
+            "Variance %": Number(item.variance_pct || 0),
+            "Status": item.status || "—",
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(rows);
+        worksheet["!cols"] = [
+            { wch: 16 },
+            { wch: 26 },
+            { wch: 24 },
+            { wch: 18 },
+            { wch: 28 },
+            { wch: 16 },
+            { wch: 14 },
+            { wch: 16 },
+            { wch: 12 },
+            { wch: 18 },
+        ];
+
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Employee Reconciliation");
+
+        const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "buffer" });
+
+        res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        res.setHeader("Content-Disposition", 'attachment; filename="Employee_Level_Reconciliation.xlsx"');
+        return res.send(excelBuffer);
+    } catch (err) {
+        next(err);
+    }
+};
+
 module.exports = {
     getReconFilters,
     getReconDashboard,
     getProjectLevelRecon,
     getEmployeeLevelRecon,
-    getProjectDetail
+    getProjectDetail,
+    exportProjectLevelRecon,
+    exportEmployeeLevelRecon
 };
