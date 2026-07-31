@@ -8,6 +8,7 @@ import {
   exportProjectLevelExcel,
   exportEmployeeLevelExcel,
 } from "../api/recon.api";
+import { DownloadOutlined } from "@ant-design/icons";
 
 // ─── Status colors (shared by pill + text variants) ─────────────
 const STATUS_STYLES = {
@@ -1045,7 +1046,8 @@ const ReconPage = () => {
                         onClick={() => exportProjectLevelExcel(filters)}
                         className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-colors"
                       >
-                        📥 Export Excel
+                        <DownloadOutlined />
+                        <span>Export Excel</span>
                       </button>
                       <span className="text-xs font-medium text-gray-400">{filteredProjects.length} projects</span>
                     </div>
@@ -1202,7 +1204,8 @@ const ReconPage = () => {
                         onClick={() => exportEmployeeLevelExcel(filters)}
                         className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-colors"
                       >
-                        📥 Export Excel
+                        <DownloadOutlined />
+                        <span>Export Excel</span>
                       </button>
                       <span className="text-xs font-medium text-gray-400">Showing {filteredEmployees.length} assignments</span>
                     </div>
