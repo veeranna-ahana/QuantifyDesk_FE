@@ -518,3 +518,4 @@ const AssignEmployee = () => {
   );
 };
 
+export default AssignEmployee;
