@@ -34,12 +34,16 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString()
   });
 });
+const { getCustomers } = require("./controller/project.controller");
+const { authMiddleware } = require("./middleware/auth.middleware");
+
 app.use(cors());
 app.use(express.json());
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use("/api/auth",          authRoutes);
 app.use("/api/users",         userRoutes);
 app.use("/api/projects",      projectRoutes);
+app.use("/api/customers",     authMiddleware, getCustomers);
 app.use("/api/tasks",         taskRoutes);
 app.use("/api/daily-updates", dailyUpdateRoutes);
 app.use("/api/utilization",   utilizationRoutes);
