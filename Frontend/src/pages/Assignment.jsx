@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
 import axios from "axios";
 import { useSelector } from "react-redux";
@@ -465,15 +465,14 @@ const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onUpdate, 
                   hoursExceeded ||
                   remainingUnits === 0
                 }
-                className={`w-full py-2 rounded-xl font-bold text-xs transition-all border ${
-                  saving ||
+                className={`w-full py-2 rounded-xl font-bold text-xs transition-all border ${saving ||
                   unitsExceeded ||
                   daysExceeded ||
                   hoursExceeded ||
                   remainingUnits === 0
-                    ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed"
-                    : "bg-[#E6FFFA] hover:bg-[#D5FFF6] text-[#319795] border-[#319795] shadow-sm"
-                }`}
+                  ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed"
+                  : "bg-[#E6FFFA] hover:bg-[#D5FFF6] text-[#319795] border-[#319795] shadow-sm"
+                  }`}
               >
                 {saving ? "Saving…" : "Assign"}
               </button>
@@ -769,13 +768,28 @@ const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onUpdate, 
 // ─────────────────────────────────────────────────────────────────────────────
 const AssignmentScreen = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const isAdmin = getUserRole() === 'ADMIN';
   const serviceDeliveryEmployees = useSelector(
     (state) => state.auth.serviceDeliveryEmployees
   );
   const [projects, setProjects] = useState([]);
   const [catalog, setCatalog] = useState({});
-  const [selProject, setSelProject] = useState("");
+  const [selProject, setSelProject] = useState(() => {
+    return location.state?.selProject || sessionStorage.getItem("selectedAssignmentProject") || "";
+  });
+
+  useEffect(() => {
+    if (location.state?.selProject) {
+      setSelProject(location.state.selProject);
+    }
+  }, [location.state?.selProject]);
+
+  useEffect(() => {
+    if (selProject) {
+      sessionStorage.setItem("selectedAssignmentProject", selProject);
+    }
+  }, [selProject]);
   const [loadDraft, setLoadDraft] = useState({});
   const [totalLoad, setTotalLoad] = useState(0);
   const [savingLoad, setSavingLoad] = useState(false);
@@ -1085,7 +1099,7 @@ const AssignmentScreen = () => {
               <KPI
                 label="Total Effort"
                 value={total_planned + " units"}
-                color="text-vio-violet-500"let-600 border-l
+                color="text-vio-violet-500" let-600 border-l
               />
               <KPI
                 label="Total Days"
@@ -1239,7 +1253,7 @@ const AssignmentScreen = () => {
                   s +
                   Number(
                     summaryByKey[`${role}||${t.task_name}`]?.total_assigned ||
-                      0,
+                    0,
                   ),
                 0,
               );
@@ -1528,11 +1542,10 @@ const AssignmentScreen = () => {
                                     disabled={
                                       planned <= 0 || estimatedDays <= 0
                                     }
-                                    className={`w-full py-1.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all ${
-                                      planned <= 0 || estimatedDays <= 0
-                                        ? "bg-slate-100 text-slate-400 cursor-not-allowed"
-                                        : "bg-[#856BFF] hover:bg-[#7b5efd] text-white shadow-sm"
-                                    }`}
+                                    className={`w-full py-1.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all ${planned <= 0 || estimatedDays <= 0
+                                      ? "bg-slate-100 text-slate-400 cursor-not-allowed"
+                                      : "bg-[#856BFF] hover:bg-[#7b5efd] text-white shadow-sm"
+                                      }`}
                                     title={
                                       planned <= 0 || estimatedDays <= 0
                                         ? "Enter Planned Units and Est. Days first"
@@ -1572,7 +1585,10 @@ const AssignmentScreen = () => {
           {selProject && (
             <div className="flex justify-end gap-3 mt-6 pb-12">
               <button
-                onClick={() => setSelProject("")}
+                onClick={() => {
+                  setSelProject("");
+                  sessionStorage.removeItem("selectedAssignmentProject");
+                }}
                 className="flex items-center gap-2 border border-slate-200 hover:bg-slate-50 text-slate-600 font-bold text-sm py-2.5 px-6 rounded-xl transition-all"
               >
                 <Icon icon="material-symbols:close" width="18" height="18" color="#64748b" />

@@ -189,7 +189,7 @@ const AssignEmployee = () => {
       {/* Page Header */}
       <div className="mb-6 flex items-center gap-4 flex-wrap">
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => navigate("/assignments", { state: { selProject } })}
           className="flex items-center gap-2 text-gray-500 hover:text-gray-800 font-semibold text-sm transition-colors"
         >
           <Icon icon="material-symbols:arrow-back" width="18" height="18" color="#64748b" />
@@ -283,11 +283,10 @@ const AssignEmployee = () => {
             <button
               onClick={handleSubmit}
               disabled={saving || unitsExceeded || daysExceeded || hoursExceeded || remainingUnits === 0}
-              className={`w-full py-2.5 rounded-xl font-bold text-xs transition-all ${
-                saving || unitsExceeded || daysExceeded || hoursExceeded || remainingUnits === 0
-                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  : "bg-[#856BFF] hover:bg-[#7259e6] text-white shadow-sm"
-              }`}
+              className={`w-full py-2.5 rounded-xl font-bold text-xs transition-all ${saving || unitsExceeded || daysExceeded || hoursExceeded || remainingUnits === 0
+                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                : "bg-[#856BFF] hover:bg-[#7259e6] text-white shadow-sm"
+                }`}
             >
               {saving ? "Saving…" : "Assign"}
             </button>
@@ -510,7 +509,7 @@ const AssignEmployee = () => {
 
       {/* Footer */}
       <div className="flex justify-end mt-6 pb-10">
-        <button onClick={() => navigate(-1)}
+        <button onClick={() => navigate("/assignments", { state: { selProject } })}
           className="bg-[#856BFF] hover:bg-[#7259e6] text-white font-bold text-sm py-2.5 px-8 rounded-xl transition-all shadow-sm">
           Done
         </button>
