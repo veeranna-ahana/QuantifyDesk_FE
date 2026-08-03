@@ -261,24 +261,30 @@ export default function CreateProject() {
                 </div>
                 <div>
                   <Label required>Customer</Label>
-                  <SearchableSelect
+                  <input
+                    type="text"
                     value={form.customer}
-                    onChange={val => set('customer', val)}
-                    placeholder={customersLoading ? 'Loading customers…' : 'Select Customer'}
-                    loading={customersLoading}
-                    error={!!errors.customer}
-                    options={customers.map((c, idx) => {
-                      const name = c.customer_name || c.name || c.company_name || c.label || String(c);
-                      return { value: name, label: name, key: c.id ?? c.customer_id ?? idx };
-                    })}
+                    onChange={e => set('customer', e.target.value)}
+                    placeholder="e.g. Acme Corp"
+                    className={`${inputClsLight} ${errors.customer ? 'border-red-400 ring-2 ring-red-200' : ''}`}
                   />
-                  {customersError && !customersLoading && (
-                    <p className="text-amber-500 text-xs mt-1">{customersError}</p>
-                  )}
                   {errors.customer && (
                     <p className="text-red-500 text-xs mt-1">{errors.customer}</p>
                   )}
                 </div>
+                {/* 
+                <SearchableSelect
+                  value={form.customer}
+                  onChange={val => set('customer', val)}
+                  placeholder={customersLoading ? 'Loading customers…' : 'Select Customer'}
+                  loading={customersLoading}
+                  error={!!errors.customer}
+                  options={customers.map((c, idx) => {
+                    const name = c.customer_name || c.name || c.company_name || c.label || String(c);
+                    return { value: name, label: name, key: c.id ?? c.customer_id ?? idx };
+                  })}
+                />
+                */}
                 <div>
                   <Label>Team Lead</Label>
                   <input
