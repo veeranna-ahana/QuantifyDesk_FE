@@ -48,7 +48,12 @@ const authSlice = createSlice({
         association_id: userResult?.association_id,
         status: userResult?.status,
         u_id: userResult?.u_id,  // ✅ Store u_id from master.emp
+        roles: Array.isArray(data.result) ? data.result : [userResult],
       };
+
+      if (user.role) {
+        localStorage.setItem("role", user.role);
+      }
 
       if (data.accessToken) {
         localStorage.setItem("token", data.accessToken);
