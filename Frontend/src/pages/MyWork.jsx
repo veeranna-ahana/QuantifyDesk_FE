@@ -93,6 +93,7 @@ const MyWork = () => {
   const [risks, setRisks] = useState("");
   const [dependency, setDependency] = useState("");
   const [logError, setLogError] = useState("");
+  const [logErrors, setLogErrors] = useState({});
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState(null);
 
@@ -111,6 +112,7 @@ const MyWork = () => {
   const [manualTotalTimeNeeded, setManualTotalTimeNeeded] = useState("");
   const [manualAvailability, setManualAvailability] = useState("");
   const [manualError, setManualError] = useState("");
+  const [manualErrors, setManualErrors] = useState({});
   const [manualSaving, setManualSaving] = useState(false);
 
   const showToast = (msg, type = "success") => {
@@ -174,22 +176,32 @@ const MyWork = () => {
     setRisks("");
     setDependency("");
     setLogError("");
+    setLogErrors({});
   };
 
   const submitLog = async () => {
-    if (!logDate) { setLogError("Date is required."); return; }
-    if (!todaysTasks || !todaysTasks.trim()) { setLogError("Today's Tasks are required."); return; }
-    if (!totalTimeNeeded || !totalTimeNeeded.trim()) { setLogError("Total Time Needed is required."); return; }
-
-    if (logUnits && Number(logUnits) > 0) {
+    const errors = {};
+    if (!logDate) { errors.logDate = "Update Date is required."; }
+    if (logUnits === "" || logUnits === null || logUnits === undefined) {
+      errors.logUnits = "Units Completed is required.";
+    } else if (Number(logUnits) <= 0) {
+      errors.logUnits = "Units Completed must be greater than 0.";
+    } else {
       const effective = logModal.units_pending - (Number(logModal.units_awaiting) || 0);
       if (Number(logUnits) > effective) {
-        setLogError(`Max ${effective} units available to log (${logModal.units_awaiting} awaiting approval)`);
-        return;
+        errors.logUnits = `Max ${effective} units available to log (${logModal.units_awaiting || 0} awaiting approval)`;
       }
-    } else if (logUnits && Number(logUnits) < 0) {
-      setLogError("Units cannot be negative."); return;
     }
+    if (!totalTimeNeeded || !totalTimeNeeded.trim()) { errors.totalTimeNeeded = "Total Estimated Time is required."; }
+    if (!todaysTasks || !todaysTasks.trim()) { errors.todaysTasks = "Today's Progress & Tasks are required."; }
+
+    if (Object.keys(errors).length > 0) {
+      setLogErrors(errors);
+      return;
+    }
+
+    setLogErrors({});
+    setLogError("");
     setSaving(true);
     try {
       await axios.post(
@@ -223,15 +235,22 @@ const MyWork = () => {
   };
 
   const submitManualTask = async () => {
-    if (!manualProjectId) { setManualError("Project is required."); return; }
-    if (!manualRole) { setManualError("Role is required."); return; }
-    if (!manualTaskName || !manualTaskName.trim()) { setManualError("Task name/title is required."); return; }
-    if (!manualDate) { setManualError("Date is required."); return; }
-    if (!manualTodaysPlan || !manualTodaysPlan.trim()) { setManualError("Today's Tasks are required."); return; }
-    if (!manualTotalTimeNeeded || !manualTotalTimeNeeded.trim()) { setManualError("Total Time Needed is required."); return; }
+    const errors = {};
+    if (!manualProjectId) { errors.manualProjectId = "Project is required."; }
+    if (!manualRole) { errors.manualRole = "Role is required."; }
+    if (!manualTaskName || !manualTaskName.trim()) { errors.manualTaskName = "Task name is required."; }
+    if (!manualDate) { errors.manualDate = "Date is required."; }
+    if (!manualTodaysPlan || !manualTodaysPlan.trim()) { errors.manualTodaysPlan = "Today's Tasks are required."; }
+    if (!manualTotalTimeNeeded || !manualTotalTimeNeeded.trim()) { errors.manualTotalTimeNeeded = "Total Time Needed is required."; }
 
-    setManualSaving(true);
+    if (Object.keys(errors).length > 0) {
+      setManualErrors(errors);
+      return;
+    }
+
+    setManualErrors({});
     setManualError("");
+    setManualSaving(true);
     try {
       await axios.post(
         `${BASE_URL}/api/utilization/log-progress`,
@@ -265,6 +284,7 @@ const MyWork = () => {
       setManualRisks("");
       setManualTotalTimeNeeded("");
       setManualAvailability("");
+      setManualErrors({});
       fetchAssignments();
     } catch (err) {
       const errMsg = err.response?.data?.message || "Failed to create manual task";
@@ -341,54 +361,64 @@ const MyWork = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
             <div className="mb-4">
-              <label className="block text-xs font-semibold text-gray-600 mb-1.5">Update Date</label>
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">
+                Update Date <span className="text-red-500">*</span>
+              </label>
               <div className="relative">
                 <input
                   type="date"
                   value={logDate}
-                  onChange={e => setLogDate(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#856BFF]/40"
+                  onChange={e => { setLogDate(e.target.value); setLogErrors(prev => ({ ...prev, logDate: "" })); }}
+                  className={`w-full px-3 py-2 border ${logErrors.logDate ? "border-red-500 focus:ring-red-200" : "border-gray-200 focus:ring-[#856BFF]/40"} rounded-md text-sm focus:outline-none focus:ring-2`}
                 />
               </div>
+              {logErrors.logDate && <p className="text-red-500 text-xs mt-1 font-medium">{logErrors.logDate}</p>}
             </div>
             <div className="mb-4">
               <label className="block text-xs font-semibold text-gray-600 mb-1.5">
-                Units Completed  (Max {pendingVal})
+                Units Completed <span className="text-red-500">*</span> (Max {pendingVal})
               </label>
               <input
                 type="number"
                 value={logUnits}
                 min="1"
                 max={pendingVal}
-                onChange={e => { setLogUnits(e.target.value); setLogError(""); }}
+                onChange={e => { setLogUnits(e.target.value); setLogErrors(prev => ({ ...prev, logUnits: "" })); }}
                 placeholder="0.0"
-                className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#856BFF]/40"
+                className={`w-full px-3 py-2 border ${logErrors.logUnits ? "border-red-500 focus:ring-red-200" : "border-gray-200 focus:ring-[#856BFF]/40"} rounded-md text-sm focus:outline-none focus:ring-2`}
               />
+              {logErrors.logUnits && <p className="text-red-500 text-xs mt-1 font-medium">{logErrors.logUnits}</p>}
             </div>
           </div>
 
           <div className="mb-4">
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Total Estimated Time (HH:MM)</label>
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5">
+              Total Estimated Time (HH:MM) <span className="text-red-500">*</span>
+            </label>
             <div className="relative">
               <Icon icon="material-symbols:schedule" width="16" height="16" color="#856BFF" className="absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={totalTimeNeeded}
-                onChange={e => { setTotalTimeNeeded(e.target.value); setLogError(""); }}
+                onChange={e => { setTotalTimeNeeded(e.target.value); setLogErrors(prev => ({ ...prev, totalTimeNeeded: "" })); }}
                 placeholder="e.g. 12:30"
-                className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#856BFF]/40"
+                className={`w-full pl-9 pr-3 py-2 border ${logErrors.totalTimeNeeded ? "border-red-500 focus:ring-red-200" : "border-gray-200 focus:ring-[#856BFF]/40"} rounded-md text-sm focus:outline-none focus:ring-2`}
               />
             </div>
+            {logErrors.totalTimeNeeded && <p className="text-red-500 text-xs mt-1 font-medium">{logErrors.totalTimeNeeded}</p>}
           </div>
 
           <div className="mb-4">
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Today's Progress &amp; Tasks</label>
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5">
+              Today's Progress &amp; Tasks <span className="text-red-500">*</span>
+            </label>
             <textarea
               value={todaysTasks}
-              onChange={e => { setTodaysTasks(e.target.value); setLogError(""); }}
+              onChange={e => { setTodaysTasks(e.target.value); setLogErrors(prev => ({ ...prev, todaysTasks: "" })); }}
               placeholder="Detail the work completed during this session…"
-              className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm min-h-[80px] resize-y focus:outline-none focus:ring-2 focus:ring-[#856BFF]/40"
+              className={`w-full px-3 py-2 border ${logErrors.todaysTasks ? "border-red-500 focus:ring-red-200" : "border-gray-200 focus:ring-[#856BFF]/40"} rounded-md text-sm min-h-[80px] resize-y focus:outline-none focus:ring-2`}
             />
+            {logErrors.todaysTasks && <p className="text-red-500 text-xs mt-1 font-medium">{logErrors.todaysTasks}</p>}
           </div>
 
           <div className="mb-4">
@@ -624,14 +654,15 @@ const MyWork = () => {
               </label>
               <select
                 value={manualProjectId}
-                onChange={e => setManualProjectId(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#856BFF]/40"
+                onChange={e => { setManualProjectId(e.target.value); setManualErrors(prev => ({ ...prev, manualProjectId: "" })); }}
+                className={`w-full px-3 py-2 border ${manualErrors.manualProjectId ? "border-red-500 focus:ring-red-200" : "border-gray-200 focus:ring-[#856BFF]/40"} rounded-md text-sm focus:outline-none focus:ring-2`}
               >
                 <option value="">-- Select Project --</option>
                 {projects.map(p => (
                   <option key={p.id} value={p.id}>{p.project_name}</option>
                 ))}
               </select>
+              {manualErrors.manualProjectId && <p className="text-red-500 text-xs mt-1 font-medium">{manualErrors.manualProjectId}</p>}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
@@ -645,14 +676,16 @@ const MyWork = () => {
                     setManualRole(e.target.value);
                     setManualTaskName("");
                     setIsCustomTask(false);
+                    setManualErrors(prev => ({ ...prev, manualRole: "", manualTaskName: "" }));
                   }}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#856BFF]/40"
+                  className={`w-full px-3 py-2 border ${manualErrors.manualRole ? "border-red-500 focus:ring-red-200" : "border-gray-200 focus:ring-[#856BFF]/40"} rounded-md text-sm focus:outline-none focus:ring-2`}
                 >
                   <option value="">-- Select Role --</option>
                   {Object.keys(roleTaskMapping).map(r => (
                     <option key={r} value={r}>{r}</option>
                   ))}
                 </select>
+                {manualErrors.manualRole && <p className="text-red-500 text-xs mt-1 font-medium">{manualErrors.manualRole}</p>}
               </div>
 
               <div className="mb-3.5">
@@ -664,9 +697,9 @@ const MyWork = () => {
                     <input
                       type="text"
                       value={manualTaskName}
-                      onChange={e => setManualTaskName(e.target.value)}
+                      onChange={e => { setManualTaskName(e.target.value); setManualErrors(prev => ({ ...prev, manualTaskName: "" })); }}
                       placeholder="Enter task name"
-                      className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#856BFF]/40"
+                      className={`w-full px-3 py-2 border ${manualErrors.manualTaskName ? "border-red-500 focus:ring-red-200" : "border-gray-200 focus:ring-[#856BFF]/40"} rounded-md text-sm focus:outline-none focus:ring-2`}
                     />
                     <button
                       onClick={() => { setIsCustomTask(false); setManualTaskName(""); }}
@@ -685,9 +718,10 @@ const MyWork = () => {
                       } else {
                         setManualTaskName(e.target.value);
                       }
+                      setManualErrors(prev => ({ ...prev, manualTaskName: "" }));
                     }}
                     disabled={!manualRole}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm disabled:bg-gray-50 disabled:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#856BFF]/40"
+                    className={`w-full px-3 py-2 border ${manualErrors.manualTaskName ? "border-red-500 focus:ring-red-200" : "border-gray-200 focus:ring-[#856BFF]/40"} rounded-md text-sm disabled:bg-gray-50 disabled:text-gray-400 focus:outline-none focus:ring-2`}
                   >
                     <option value="">-- Select Task --</option>
                     {manualRole && roleTaskMapping[manualRole]?.map(t => (
@@ -696,6 +730,7 @@ const MyWork = () => {
                     {manualRole && <option value="CUSTOM">-- Custom Task --</option>}
                   </select>
                 )}
+                {manualErrors.manualTaskName && <p className="text-red-500 text-xs mt-1 font-medium">{manualErrors.manualTaskName}</p>}
               </div>
             </div>
 
@@ -716,9 +751,10 @@ const MyWork = () => {
               <input
                 type="date"
                 value={manualDate}
-                onChange={e => setManualDate(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#856BFF]/40"
+                onChange={e => { setManualDate(e.target.value); setManualErrors(prev => ({ ...prev, manualDate: "" })); }}
+                className={`w-full px-3 py-2 border ${manualErrors.manualDate ? "border-red-500 focus:ring-red-200" : "border-gray-200 focus:ring-[#856BFF]/40"} rounded-md text-sm focus:outline-none focus:ring-2`}
               />
+              {manualErrors.manualDate && <p className="text-red-500 text-xs mt-1 font-medium">{manualErrors.manualDate}</p>}
             </div>
 
             <div className="mb-3.5">
@@ -737,10 +773,11 @@ const MyWork = () => {
               </label>
               <textarea
                 value={manualTodaysPlan}
-                onChange={e => setManualTodaysPlan(e.target.value)}
+                onChange={e => { setManualTodaysPlan(e.target.value); setManualErrors(prev => ({ ...prev, manualTodaysPlan: "" })); }}
                 placeholder="What is your plan for this task today?"
-                className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm min-h-[70px] resize-y focus:outline-none focus:ring-2 focus:ring-[#856BFF]/40"
+                className={`w-full px-3 py-2 border ${manualErrors.manualTodaysPlan ? "border-red-500 focus:ring-red-200" : "border-gray-200 focus:ring-[#856BFF]/40"} rounded-md text-sm min-h-[70px] resize-y focus:outline-none focus:ring-2`}
               />
+              {manualErrors.manualTodaysPlan && <p className="text-red-500 text-xs mt-1 font-medium">{manualErrors.manualTodaysPlan}</p>}
             </div>
 
             <div className="mb-3.5">
@@ -763,10 +800,11 @@ const MyWork = () => {
                   step="0.5"
                   min="0"
                   value={manualTotalTimeNeeded}
-                  onChange={e => setManualTotalTimeNeeded(e.target.value)}
+                  onChange={e => { setManualTotalTimeNeeded(e.target.value); setManualErrors(prev => ({ ...prev, manualTotalTimeNeeded: "" })); }}
                   placeholder="e.g. 4"
-                  className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#856BFF]/40"
+                  className={`w-full px-3 py-2 border ${manualErrors.manualTotalTimeNeeded ? "border-red-500 focus:ring-red-200" : "border-gray-200 focus:ring-[#856BFF]/40"} rounded-md text-sm focus:outline-none focus:ring-2`}
                 />
+                {manualErrors.manualTotalTimeNeeded && <p className="text-red-500 text-xs mt-1 font-medium">{manualErrors.manualTotalTimeNeeded}</p>}
               </div>
 
               <div className="mb-3.5">
