@@ -301,10 +301,10 @@ export default function DailyUpdatesReport() {
 
   // Table column headers
   const COLS = [
-    'EMPLOYEE NAME', 'PROJECT', 'TASK NAME', 'WORKING STATUS',
-    'DONE YESTERDAY', "TODAY'S PLAN", 'RISKS', 'DEPENDENCIES',
-    'TOTAL TIME NEEDED', 'AVAILABILITY', 'UTILIZATION (%)',
-  ];
+  'EMPLOYEE NAME', 'PROJECT', 'TASK NAME', 'WORKING STATUS',
+  'DONE YESTERDAY', "TODAY'S PLAN", 'RISKS', 'DEPENDENCIES',
+  'ESTIMATED TIME', 'TOTAL TIME NEEDED', 'AVAILABILITY', 'UTILIZATION (%)',
+];
 
   // ── Show authentication error state ──
   if (authError) {
@@ -459,6 +459,7 @@ export default function DailyUpdatesReport() {
               {/* Data rows */}
               {!loadingRows && !error && pageRows.map((row, idx) => {
                 const totalTimeNeeded = Number(row.total_time_needed) || 0;
+                const estimatedHours = Number(row.estimated_hours) || 0;
                 const hasStoredAvailability =
                   row.availability !== null &&
                   row.availability !== undefined &&
@@ -513,6 +514,11 @@ export default function DailyUpdatesReport() {
                     {/* Dependencies */}
                     <td className="px-4 py-4 text-gray-600 max-w-[120px]">
                       <span className="block leading-snug break-words">{row.dependencies || '—'}</span>
+                    </td>
+
+                    {/* ✅ ESTIMATED TIME - NEW COLUMN */}
+                    <td className="px-4 py-4 text-gray-700 font-medium whitespace-nowrap">
+                      {estimatedHours > 0 ? `${estimatedHours}h` : '—'}
                     </td>
 
                     {/* Total Time Needed */}

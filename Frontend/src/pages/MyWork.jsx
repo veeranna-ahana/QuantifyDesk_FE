@@ -94,6 +94,9 @@ const MyWork = () => {
   const [dependency, setDependency] = useState("");
   const [logError, setLogError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [exceedWarning, setExceedWarning] = useState(false);
+  const [showExceedConfirm, setShowExceedConfirm] = useState(false);
+  const [exceedData, setExceedData] = useState(null);
   const [toast, setToast] = useState(null);
 
   // Manual Task State
@@ -112,6 +115,36 @@ const MyWork = () => {
   const [manualAvailability, setManualAvailability] = useState("");
   const [manualError, setManualError] = useState("");
   const [manualSaving, setManualSaving] = useState(false);
+
+  // ── Time comparison helper ──────────────────────────────────────────────────
+  const parseTime = (timeStr) => {
+    if (!timeStr) return 0;
+    // Handle HH:MM format
+    if (timeStr.includes(':')) {
+      const parts = timeStr.split(':');
+      return parseInt(parts[0]) + (parseInt(parts[1]) / 60);
+    }
+    // Handle decimal format
+    return parseFloat(timeStr) || 0;
+  };
+
+  const formatTime = (hours) => {
+    if (!hours || isNaN(hours)) return '0:00';
+    const h = Math.floor(hours);
+    const m = Math.round((hours - h) * 60);
+    return `${h}:${m.toString().padStart(2, '0')}`;
+  };
+
+  const checkTimeExceed = (spentTimeStr) => {
+    const estimated = parseTime(logModal?.estimated_hours);
+    const spent = parseTime(spentTimeStr);
+    
+    if (estimated > 0 && spent > estimated) {
+      setExceedWarning(true);
+    } else {
+      setExceedWarning(false);
+    }
+  };
 
   const showToast = (msg, type = "success") => {
     setToast({ msg, type });
@@ -174,22 +207,66 @@ const MyWork = () => {
     setRisks("");
     setDependency("");
     setLogError("");
+    setExceedWarning(false);
   };
 
-  const submitLog = async () => {
-    if (!logDate) { setLogError("Date is required."); return; }
-    if (!todaysTasks || !todaysTasks.trim()) { setLogError("Today's Tasks are required."); return; }
-    if (!totalTimeNeeded || !totalTimeNeeded.trim()) { setLogError("Total Time Needed is required."); return; }
+  // ── Custom Confirmation Modal ──────────────────────────────────────────────
+  const ExceedConfirmModal = ({ estimated, spent, onConfirm, onCancel }) => {
+    const exceeded = spent - estimated;
+    
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[1000] p-5">
+        <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-2xl animate-in fade-in zoom-in duration-200">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center">
+              <Icon icon="material-symbols:warning" width="28" height="28" color="#d97706" />
+            </div>
+            <div>
+              <h3 className="text-lg font-extrabold text-gray-900">Time Exceeded!</h3>
+              <p className="text-sm text-gray-500">You've exceeded the estimated time</p>
+            </div>
+          </div>
+          
+          <div className="bg-amber-50 rounded-lg p-4 mb-4 space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600">Estimated Time:</span>
+              <span className="font-semibold text-gray-900">{formatTime(estimated)}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600">Time Spent:</span>
+              <span className="font-semibold text-amber-600">{formatTime(spent)}</span>
+            </div>
+            <div className="flex justify-between text-sm border-t border-amber-200 pt-2">
+              <span className="text-gray-600">Exceeded by:</span>
+              <span className="font-bold text-red-600">{formatTime(exceeded)}</span>
+            </div>
+          </div>
+          
+          <p className="text-sm text-gray-600 mb-4">
+            Are you sure you want to submit with exceeded time?
+          </p>
+          
+          <div className="flex justify-end gap-2.5">
+            <button
+              onClick={onCancel}
+              className="px-5 py-2 bg-gray-100 hover:bg-gray-200 rounded-md font-semibold text-sm transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onConfirm}
+              className="px-5 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-md font-bold text-sm transition-colors"
+            >
+              Submit Anyway
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
-    if (logUnits && Number(logUnits) > 0) {
-      const effective = logModal.units_pending - (Number(logModal.units_awaiting) || 0);
-      if (Number(logUnits) > effective) {
-        setLogError(`Max ${effective} units available to log (${logModal.units_awaiting} awaiting approval)`);
-        return;
-      }
-    } else if (logUnits && Number(logUnits) < 0) {
-      setLogError("Units cannot be negative."); return;
-    }
+  // ── Submit functions ──────────────────────────────────────────────────────
+  const doSubmitLog = async () => {
     setSaving(true);
     try {
       await axios.post(
@@ -200,7 +277,7 @@ const MyWork = () => {
           date: logDate,
           todays_tasks: todaysTasks,
           total_time_needed: totalTimeNeeded,
-          units_completed: Number(logUnits),
+          units_completed: Number(logUnits) || 0,
           yesterdays_tasks: yesterdaysTasks,
           risks: risks,
           dependency: dependency,
@@ -211,6 +288,9 @@ const MyWork = () => {
         { headers: getHeaders() }
       );
       setLogModal(null);
+      setShowExceedConfirm(false);
+      setExceedData(null);
+      setExceedWarning(false);
       showToast("Progress logged successfully!");
       fetchAssignments();
     } catch (err) {
@@ -220,6 +300,47 @@ const MyWork = () => {
     } finally {
       setSaving(false);
     }
+  };
+
+  const submitLog = async () => {
+    if (!logDate) { setLogError("Date is required."); return; }
+    if (!todaysTasks || !todaysTasks.trim()) { setLogError("Today's Tasks are required."); return; }
+    if (!totalTimeNeeded || !totalTimeNeeded.trim()) { setLogError("Total Time Spent is required."); return; }
+
+    if (logUnits && Number(logUnits) > 0) {
+      const effective = logModal.units_pending - (Number(logModal.units_awaiting) || 0);
+      if (Number(logUnits) > effective) {
+        setLogError(`Max ${effective} units available to log `);
+        return;
+      }
+    } else if (logUnits && Number(logUnits) < 0) {
+      setLogError("Units cannot be negative."); return;
+    }
+
+    // ✅ Check if time exceeds estimated
+    const estimated = parseTime(logModal?.estimated_hours);
+    const spent = parseTime(totalTimeNeeded);
+    
+    // Only show warning if estimated > 0 AND spent > estimated
+    if (estimated > 0 && spent > estimated) {
+      setExceedData({ estimated, spent });
+      setShowExceedConfirm(true);
+      return;
+    }
+
+    // If no exceed, proceed with submission
+    await doSubmitLog();
+  };
+
+  const handleExceedConfirm = () => {
+    setShowExceedConfirm(false);
+    setExceedData(null);
+    doSubmitLog();
+  };
+
+  const handleExceedCancel = () => {
+    setShowExceedConfirm(false);
+    setExceedData(null);
   };
 
   const submitManualTask = async () => {
@@ -292,13 +413,13 @@ const MyWork = () => {
   // Calculate total projects
   const totalProjects = Object.keys(byProject).length;
 
-  // ── Full-page Progress Update view (replaces the assignment list while active) ──
+  // ── Full-page Progress Update view ──
   if (logModal) {
     const assignedVal = logModal.units_assigned;
     const pendingVal = Math.max(logModal.units_pending - Number(logModal.units_awaiting || 0), 0);
 
     return (
-      <div className=" mx-auto p-5 font-sans">
+      <div className="mx-auto p-5 font-sans">
         {toast && (
           <div
             className={`fixed top-5 right-5 z-[9999] text-white px-5 py-3 rounded-lg font-bold text-sm shadow-lg ${toast.type === "error" ? "bg-red-500" : toast.type === "warn" ? "bg-amber-500" : "bg-green-600"
@@ -306,6 +427,16 @@ const MyWork = () => {
           >
             {toast.msg}
           </div>
+        )}
+
+        {/* Exceed Time Confirmation Modal */}
+        {showExceedConfirm && exceedData && (
+          <ExceedConfirmModal
+            estimated={exceedData.estimated}
+            spent={exceedData.spent}
+            onConfirm={handleExceedConfirm}
+            onCancel={handleExceedCancel}
+          />
         )}
 
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
@@ -353,31 +484,62 @@ const MyWork = () => {
             </div>
             <div className="mb-4">
               <label className="block text-xs font-semibold text-gray-600 mb-1.5">
-                Units Completed  (Max {pendingVal})
+                Units Completed (Max {pendingVal})
               </label>
               <input
                 type="number"
                 value={logUnits}
-                min="1"
+                min="0"
                 max={pendingVal}
                 onChange={e => { setLogUnits(e.target.value); setLogError(""); }}
-                placeholder="0.0"
+                placeholder="0"
                 className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#856BFF]/40"
               />
             </div>
           </div>
 
-          <div className="mb-4">
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Total Estimated Time (HH:MM)</label>
-            <div className="relative">
-              <Icon icon="material-symbols:schedule" width="16" height="16" color="#856BFF" className="absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={totalTimeNeeded}
-                onChange={e => { setTotalTimeNeeded(e.target.value); setLogError(""); }}
-                placeholder="e.g. 12:30"
-                className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#856BFF]/40"
-              />
+          {/* Estimated Time (read-only) + Total Time Spent */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+            <div className="mb-4">
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">Estimated Time (HH:MM)</label>
+              <div className="relative">
+                <Icon icon="material-symbols:schedule" width="16" height="16" color="#856BFF" className="absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={logModal.estimated_hours ? formatTime(parseTime(logModal.estimated_hours)) : "0:00"}
+                  readOnly
+                  disabled
+                  className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-md text-sm bg-gray-50 text-gray-500 cursor-not-allowed"
+                />
+              </div>
+            </div>
+            
+            <div className="mb-4">
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">
+                Total Time Needed (HH:MM) <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <Icon icon="material-symbols:schedule" width="16" height="16" color="#856BFF" className="absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={totalTimeNeeded}
+                  onChange={e => { 
+                    setTotalTimeNeeded(e.target.value); 
+                    setLogError("");
+                    checkTimeExceed(e.target.value);
+                  }}
+                  placeholder="e.g. 12:30"
+                  className={`w-full pl-9 pr-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#856BFF]/40 ${
+                    exceedWarning ? 'border-amber-500 ring-2 ring-amber-200' : 'border-gray-200'
+                  }`}
+                />
+              </div>
+              {exceedWarning && (
+                <p className="text-amber-600 text-xs mt-1 flex items-center gap-1">
+                  <Icon icon="material-symbols:warning" width="14" height="14" color="#d97706" />
+                  This exceeds the estimated time
+                </p>
+              )}
             </div>
           </div>
 
@@ -437,7 +599,7 @@ const MyWork = () => {
             </button>
             <button
               onClick={submitLog}
-              disabled={saving}
+              disabled={saving || showExceedConfirm}
               className="px-5 py-2 bg-[#856BFF] hover:bg-[#7259e6] disabled:opacity-60 text-white rounded-md font-bold text-sm transition-colors"
             >
               {saving ? "Submitting…" : "Submit Update"}
@@ -449,7 +611,7 @@ const MyWork = () => {
   }
 
   return (
-    <div className=" mx-auto p-5 font-sans">
+    <div className="mx-auto p-5 font-sans">
       {/* Toast */}
       {toast && (
         <div
@@ -478,22 +640,22 @@ const MyWork = () => {
       </div>
 
       {/* ── Summary strip ── */}
-{!loading && assignments.length > 0 && (
-  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
-    <StatCard label="Total Projects" value={totalProjects} suffix="Projects" />
-    <StatCard label="Total Assigned" value={totalAssigned} suffix="Units" />
-    <StatCard label="Completed Units" value={totalCompleted} suffix="Units" />
-    <StatCard label="Pending" value={totalPending} suffix="Units" />
-    {/* {totalAwaiting > 0 && <StatCard label="Awaiting Approval" value={totalAwaiting} suffix="Units" />} */}
-    <div className="bg-white rounded-lg shadow-sm border-l-4 border-[#856BFF] px-5 py-4 flex items-center justify-between gap-4">
-      <div>
-        <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Overall Progress</div>
-        <div className="text-2xl font-extrabold text-gray-900 mt-1">{overallPct}%</div>
-      </div>
-      <Ring pct={overallPct} size={54} />
-    </div>
-  </div>
-)}
+      {!loading && assignments.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+          <StatCard label="Total Projects" value={totalProjects} suffix="Projects" />
+          <StatCard label="Total Assigned" value={totalAssigned} suffix="Units" />
+          <StatCard label="Completed Units" value={totalCompleted} suffix="Units" />
+          <StatCard label="Pending" value={totalPending} suffix="Units" />
+          <div className="bg-white rounded-lg shadow-sm border-l-4 border-[#856BFF] px-5 py-4 flex items-center justify-between gap-4">
+            <div>
+              <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Overall Progress</div>
+              <div className="text-2xl font-extrabold text-gray-900 mt-1">{overallPct}%</div>
+            </div>
+            <Ring pct={overallPct} size={54} />
+          </div>
+        </div>
+      )}
+      
       {loading && <p className="text-gray-400 py-8 text-center">Loading your assignments…</p>}
 
       {!loading && assignments.length === 0 && (
@@ -537,11 +699,11 @@ const MyWork = () => {
               <thead>
                 <tr className="bg-[#EFF4FF]">
                   <th className="px-6 py-3 text-xs font-semibold text-[#434654] text-left">Role</th>
-                  <th className="px-6 py-3 text-xs font-semibold text-[#434654]text-left">Task</th>
+                  <th className="px-6 py-3 text-xs font-semibold text-[#434654] text-left">Task</th>
                   <th className="px-6 py-3 text-xs font-semibold text-[#434654] text-left">Assigned</th>
                   <th className="px-6 py-3 text-xs font-semibold text-[#434654] text-left">Pending</th>
                   <th className="px-6 py-3 text-xs font-semibold text-[#434654] text-left">Progress</th>
-                  <th className="px-6 py-3 text-xs font-semibold text-[#434654]text-left">Action</th>
+                  <th className="px-6 py-3 text-xs font-semibold text-[#434654] text-left">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -587,19 +749,19 @@ const MyWork = () => {
                             Done
                           </span>
                         ) : awaiting > 0 && effectivePend === 0 ? (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-700 text-xs font-semibold">
-                              <Icon icon="material-symbols:pending" width="14" height="14" color="#d97706" />
-                              Awaiting
-                            </span>
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-700 text-xs font-semibold">
+                            <Icon icon="material-symbols:pending" width="14" height="14" color="#d97706" />
+                            Awaiting
+                          </span>
                         ) : (
-                              <button
-                                onClick={() => openLog(a)}
-                                disabled={effectivePend === 0}
-                                className="flex items-center gap-1.5 px-4 py-1.5 bg-[#856BFF] hover:bg-[#7254fa] disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg text-xs font-semibold transition-colors"
-                              >
-                                <Icon icon="boxicons:edit" width="20" height="20" color="#ffffff" />
-                                Update
-                              </button>
+                          <button
+                            onClick={() => openLog(a)}
+                            disabled={effectivePend === 0}
+                            className="flex items-center gap-1.5 px-4 py-1.5 bg-[#856BFF] hover:bg-[#7254fa] disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg text-xs font-semibold transition-colors"
+                          >
+                            <Icon icon="boxicons:edit" width="20" height="20" color="#ffffff" />
+                            Update
+                          </button>
                         )}
                       </td>
                     </tr>
@@ -812,37 +974,6 @@ const roleColors = {
   BA: "#8e44ad", UI: "#2980b9", TL: "#16a085",
   "FE Dev": "#d35400", "BE Dev": "#c0392b",
   "Mobile/IOS Dev": "#1abc9c", Tester: "#f39c12",
-};
-
-const RoleBadge = ({ role }) => (
-  <span
-    className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold text-white whitespace-nowrap"
-    style={{ backgroundColor: roleColors[role] || "#555" }}
-  >
-    {role}
-  </span>
-);
-
-// Dual-segment bar: green (approved) + orange (awaiting)
-const ProgressBar = ({ pct, awaiting, assigned }) => {
-  const color = pct >= 100 ? "#2ecc71" : pct > 50 ? "#f39c12" : "#e74c3c";
-  const awaitingPct = assigned > 0 ? Math.min((awaiting / assigned) * 100, 100 - pct) : 0;
-  return (
-    <div className="bg-gray-100 rounded-full h-2 overflow-hidden flex">
-      {/* approved segment */}
-      <div
-        className="h-full transition-all duration-500 ease-out"
-        style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: color }}
-      />
-      {/* awaiting segment */}
-      {awaitingPct > 0 && (
-        <div
-          className="h-full opacity-50"
-          style={{ width: `${awaitingPct}%`, backgroundColor: "#f39c12" }}
-        />
-      )}
-    </div>
-  );
 };
 
 const StatCard = ({ label, value, suffix }) => (

@@ -19,7 +19,7 @@ const createProject = async (req, res, next) => {
       endDate,
       status,
       projectType,
-      teamLead,  // New field
+      teamLead,
     } = req.body;
 
     if (!name || !clientName) {
@@ -28,6 +28,63 @@ const createProject = async (req, res, next) => {
       });
     }
 
+    // ─── Check for duplicates BEFORE insert ──────────────────────────────
+    const duplicateErrors = [];
+    const duplicateDetails = [];
+
+    // Check project_name
+    const nameCheck = await query(
+      'SELECT id, project_name FROM projects WHERE project_name = ?',
+      [name]
+    );
+    if (nameCheck.length > 0) {
+      duplicateErrors.push(`Project name "${name}" is already in use`);
+      duplicateDetails.push({
+        id: nameCheck[0].id,
+        project_name: nameCheck[0].project_name,
+      });
+    }
+
+    // Check nbd_id (if provided)
+    if (nbdId) {
+      const nbdCheck = await query(
+        'SELECT id, nbd_id FROM projects WHERE nbd_id = ?',
+        [nbdId]
+      );
+      if (nbdCheck.length > 0) {
+        duplicateErrors.push(`NBD ID "${nbdId}" is already in use`);
+        duplicateDetails.push({
+          id: nbdCheck[0].id,
+          nbd_id: nbdCheck[0].nbd_id,
+        });
+      }
+    }
+
+    // Check project_code (if provided)
+    if (projectCode) {
+      const codeCheck = await query(
+        'SELECT id, project_code FROM projects WHERE project_code = ?',
+        [projectCode]
+      );
+      if (codeCheck.length > 0) {
+        duplicateErrors.push(`Project code "${projectCode}" is already in use`);
+        duplicateDetails.push({
+          id: codeCheck[0].id,
+          project_code: codeCheck[0].project_code,
+        });
+      }
+    }
+
+    // If any duplicates found, return error
+    if (duplicateErrors.length > 0) {
+      return res.status(409).json({
+        message: 'Duplicate entry found',
+        errors: duplicateErrors,
+        details: duplicateDetails,
+      });
+    }
+
+    // ─── Insert new project ────────────────────────────────────────────────
     const sql = `
       INSERT INTO projects
         (project_name, client_name, description, nbd_id, o2d_id,
@@ -38,16 +95,16 @@ const createProject = async (req, res, next) => {
     const params = [
       name,
       clientName,
-      description   || null,
-      nbdId         || null,
-      o2dId         || null,
-      projectCode   || null,
-      subCategory   || null,
-      startDate     || null,
-      endDate       || null,
-      status        || 'New',
-      projectType   || null,
-      teamLead      || null,  // New parameter
+      description || null,
+      nbdId || null,
+      o2dId || null,
+      projectCode || null,
+      subCategory || null,
+      startDate || null,
+      endDate || null,
+      status || 'New',
+      projectType || null,
+      teamLead || null,
     ];
 
     const result = await query(sql, params);
@@ -62,6 +119,15 @@ const createProject = async (req, res, next) => {
 
     return res.status(201).json(rows[0]);
   } catch (err) {
+    // Handle any unexpected MySQL errors
+    if (err.code === 'ER_DUP_ENTRY') {
+      // This is a fallback in case the unique constraint catches something
+      return res.status(409).json({
+        message: 'Duplicate entry found',
+        errors: ['A project with this name, NBD ID, or project code already exists'],
+        details: [],
+      });
+    }
     return next(err);
   }
 };
@@ -269,7 +335,7 @@ const updateProject = async (req, res, next) => {
       status,
       projectType,
       teamLead,
-      createCr,  
+      createCr,
     } = req.body;
 
     // Check if project exists
@@ -280,6 +346,7 @@ const updateProject = async (req, res, next) => {
 
     const current = (await query('SELECT * FROM projects WHERE id = ?', [id]))[0];
 
+    // Prepare updated values
     const updatedName = name !== undefined ? name : current.project_name;
     const updatedClientName = clientName !== undefined ? clientName : current.client_name;
     const updatedDescription = description !== undefined ? description : current.description;
@@ -292,8 +359,67 @@ const updateProject = async (req, res, next) => {
     const updatedStatus = status !== undefined ? status : current.status;
     const updatedProjectType = projectType !== undefined ? projectType : current.project_type;
     const updatedTeamLead = teamLead !== undefined ? teamLead : current.team_lead;
-    const updatedCreateCr = createCr !== undefined ? createCr : current.create_cr;  
+    const updatedCreateCr = createCr !== undefined ? createCr : current.create_cr;
 
+    // ─── Check for duplicates (excluding current project) ────────────────
+    const duplicateErrors = [];
+    const duplicateDetails = [];
+
+    // Check project_name
+    if (updatedName && updatedName !== current.project_name) {
+      const nameCheck = await query(
+        'SELECT id, project_name FROM projects WHERE project_name = ? AND id != ?',
+        [updatedName, id]
+      );
+      if (nameCheck.length > 0) {
+        duplicateErrors.push(`Project name "${updatedName}" is already in use`);
+        duplicateDetails.push({
+          id: nameCheck[0].id,
+          project_name: nameCheck[0].project_name,
+        });
+      }
+    }
+
+    // Check nbd_id
+    if (updatedNbdId && updatedNbdId !== current.nbd_id) {
+      const nbdCheck = await query(
+        'SELECT id, nbd_id FROM projects WHERE nbd_id = ? AND id != ?',
+        [updatedNbdId, id]
+      );
+      if (nbdCheck.length > 0) {
+        duplicateErrors.push(`NBD ID "${updatedNbdId}" is already in use`);
+        duplicateDetails.push({
+          id: nbdCheck[0].id,
+          nbd_id: nbdCheck[0].nbd_id,
+        });
+      }
+    }
+
+    // Check project_code
+    if (updatedProjectCode && updatedProjectCode !== current.project_code) {
+      const codeCheck = await query(
+        'SELECT id, project_code FROM projects WHERE project_code = ? AND id != ?',
+        [updatedProjectCode, id]
+      );
+      if (codeCheck.length > 0) {
+        duplicateErrors.push(`Project code "${updatedProjectCode}" is already in use`);
+        duplicateDetails.push({
+          id: codeCheck[0].id,
+          project_code: codeCheck[0].project_code,
+        });
+      }
+    }
+
+    // If any duplicates found, return error
+    if (duplicateErrors.length > 0) {
+      return res.status(409).json({
+        message: 'Duplicate entry found',
+        errors: duplicateErrors,
+        details: duplicateDetails,
+      });
+    }
+
+    // ─── Update project ────────────────────────────────────────────────────
     const updateSql = `
       UPDATE projects
       SET
@@ -326,7 +452,7 @@ const updateProject = async (req, res, next) => {
       updatedStatus,
       updatedProjectType,
       updatedTeamLead,
-      updatedCreateCr,  
+      updatedCreateCr,
       id,
     ]);
 
@@ -340,10 +466,17 @@ const updateProject = async (req, res, next) => {
 
     return res.status(200).json(updatedRows[0]);
   } catch (err) {
+    // Handle any unexpected MySQL errors
+    if (err.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({
+        message: 'Duplicate entry found',
+        errors: ['A project with this name, NBD ID, or project code already exists'],
+        details: [],
+      });
+    }
     return next(err);
   }
 };
-
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /api/projects/customers (or /api/customers)
 // Returns deduplicated list of customers from project_codes table (or projects fallback)
