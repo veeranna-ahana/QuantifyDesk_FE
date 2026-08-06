@@ -411,7 +411,7 @@ export default function EditProject() {
             >
               {saving ? 'Saving…' : (
                 <>
-                  Edit Project
+                  Update Project
                   <ArrowRightIcon />
                 </>
               )}
