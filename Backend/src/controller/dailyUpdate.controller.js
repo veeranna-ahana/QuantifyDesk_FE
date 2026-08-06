@@ -309,7 +309,6 @@ async function getDailyUpdates(req, res) {
   }
 
   if (user_id) {
-    // ✅ Filter using emp_id - NO users table
     conditions.push("ap.emp_id = ?");
     params.push(user_id);
   }
@@ -318,7 +317,7 @@ async function getDailyUpdates(req, res) {
     ? `WHERE ${conditions.join(" AND ")}`
     : "";
 
-  // ✅ Query with previous day's plan
+  // ✅ Updated query with estimated_hours from assignments
   const sql = `
     SELECT
       ap.id,
@@ -341,6 +340,16 @@ async function getDailyUpdates(req, res) {
       ap.units_completed,
       ap.total_time_needed,
 
+      -- ✅ Get estimated_hours from assignments table
+      (
+        SELECT estimated_hours 
+        FROM assignments a
+        WHERE a.emp_id = ap.emp_id
+          AND a.project_id = ap.project_id
+          AND a.task_name = ap.task_name
+        LIMIT 1
+      ) AS estimated_hours,
+
       ap.yesterdays_tasks AS done_yesterday,
       ap.todays_tasks,
 
@@ -348,7 +357,7 @@ async function getDailyUpdates(req, res) {
       ap.remarks,
       ap.availability,
 
-      -- ✅ Get previous day's todays_tasks as previousDayPlan
+      -- Get previous day's todays_tasks as previousDayPlan
       (
         SELECT todays_tasks 
         FROM assignment_progress ap_prev
@@ -361,7 +370,6 @@ async function getDailyUpdates(req, res) {
 
     FROM assignment_progress ap
 
-    -- ✅ Only join with master.emp
     LEFT JOIN master.emp e
       ON e.emp_id = ap.emp_id
 

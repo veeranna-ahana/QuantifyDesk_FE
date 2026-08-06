@@ -12,17 +12,17 @@ const getHeaders = () => ({
 
 // ── Icon helpers ──────────────────────────────────────────────────────────────
 const InfoIcon = () => (
-  <svg className="w-5 h-5 text-violet-600 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+  <svg className="w-5 h-5 text-[#856BFF] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
     <circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" />
   </svg>
 );
 const FingerprintIcon = () => (
-  <svg className="w-5 h-5 text-violet-600 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+  <svg className="w-5 h-5 text-[#856BFF] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
     <path d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 0 0 8 11a4 4 0 1 1 8 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0 0 15.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 0 0 8 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4" />
   </svg>
 );
 const CalendarIcon = () => (
-  <svg className="w-5 h-5 text-violet-600 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+  <svg className="w-5 h-5 text-[#856BFF] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
     <rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
   </svg>
 );
@@ -45,8 +45,8 @@ const Label = ({ children, required }) => (
   </label>
 );
 
-const inputCls = 'w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 placeholder-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent transition-shadow';
-const inputClsLight = 'w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 placeholder-gray-300 bg-white/70 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent transition-shadow';
+const inputCls = 'w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 placeholder-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-[#856BFF] focus:border-transparent transition-shadow';
+const inputClsLight = 'w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 placeholder-gray-300 bg-white/70 focus:outline-none focus:ring-2 focus:ring-[#856BFF] focus:border-transparent transition-shadow';
 
 // ── Section wrapper ───────────────────────────────────────────────────────────
 const Section = ({ icon, title, bg, children }) => (
@@ -75,7 +75,7 @@ export default function EditProject() {
           <p className="text-gray-400 text-sm mb-4">No project data found.</p>
           <button
             onClick={() => navigate('/projects')}
-            className="px-5 py-2 bg-violet-600 text-white text-sm font-semibold rounded-lg"
+            className="px-5 py-2 bg-[#856BFF] text-white text-sm font-semibold rounded-lg"
           >
             Back to Projects
           </button>
@@ -188,7 +188,7 @@ export default function EditProject() {
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
 
         {/* Violet top accent bar */}
-        <div className="h-1.5 bg-gradient-to-r from-violet-600 to-violet-400" />
+        <div className="h-1.5 bg-gradient-to-r from-[#856BFF] to-[#af9efc]" />
 
         <div className="p-6 space-y-6">
 
@@ -372,9 +372,10 @@ export default function EditProject() {
                     className={`${inputCls} appearance-none pr-9 cursor-pointer`}
                   >
                     <option value="New">New</option>
-                    <option value="On Hold">On Hold</option>
+                    <option value="Active">Active</option>
+                    <option value="On Hold"> Hold</option>
                     <option value="Completed">Completed</option>
-                    <option value="New CR">New CR</option>
+                    
                   </select>
                   <ChevDownIcon />
                 </div>
@@ -407,7 +408,7 @@ export default function EditProject() {
             <button
               onClick={handleSubmit}
               disabled={saving}
-              className="flex items-center gap-2 px-6 py-2.5 bg-violet-600 hover:bg-violet-700 active:bg-violet-800 text-white text-sm font-semibold rounded-lg shadow-sm transition-colors disabled:opacity-60"
+              className="flex items-center gap-2 px-6 py-2.5 bg-[#856BFF] hover:bg-[#856BFF] active:bg-[#856BFF] text-white text-sm font-semibold rounded-lg shadow-sm transition-colors disabled:opacity-60"
             >
               {saving ? 'Saving…' : (
                 <>

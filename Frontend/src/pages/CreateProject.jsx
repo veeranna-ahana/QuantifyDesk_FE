@@ -91,7 +91,6 @@ export default function CreateProject() {
       setCustomersError('');
       try {
         const res = await axios.get(CUSTOMER_API_URL, { headers: getHeaders() });
-        // API may return { data: [...] } or an array directly
         const list = Array.isArray(res.data)
           ? res.data
           : Array.isArray(res.data?.data)
@@ -123,37 +122,72 @@ export default function CreateProject() {
   };
 
   const handleSubmit = async () => {
-    const e = validate();
-    if (Object.keys(e).length) { setErrors(e); return; }
+  const e = validate();
+  if (Object.keys(e).length) { setErrors(e); return; }
 
-    setSaving(true);
-    try {
-      await axios.post(
-        `${BASE_URL}/api/projects`,
-        {
-          name: form.projectName.trim(),
-          clientName: form.customer.trim(),
-          description: form.description.trim(),
-          nbdId: form.nbdId.trim(),
-          o2dId: form.o2dId.trim(),
-          projectCode: form.projectCode.trim(),
-          subCategory: form.subCategory.trim(),
-          teamLead: form.teamLead.trim() || null,
-          startDate: form.startDate || null,
-          endDate: form.endDate || null,
-          status: form.status,
-          projectType: form.projectType,
-        },
-        { headers: getHeaders() }
-      );
-      toast.success('Project created successfully!');
-      navigate('/projects');
-    } catch (err) {
+  setSaving(true);
+  try {
+    await axios.post(
+      `${BASE_URL}/api/projects`,
+      {
+        name: form.projectName.trim(),
+        clientName: form.customer.trim(),
+        description: form.description.trim(),
+        nbdId: form.nbdId.trim(),
+        o2dId: form.o2dId.trim(),
+        projectCode: form.projectCode.trim(),
+        subCategory: form.subCategory.trim(),
+        teamLead: form.teamLead.trim() || null,
+        startDate: form.startDate || null,
+        endDate: form.endDate || null,
+        status: form.status,
+        projectType: form.projectType,
+      },
+      { headers: getHeaders() }
+    );
+    toast.success('Project created successfully!');
+    navigate('/projects');
+  } catch (err) {
+    console.log('Error response:', err.response); // Debug log
+    
+    // Handle duplicate entry errors (409 Conflict)
+    if (err.response?.status === 409) {
+      const { message, errors: errorMessages, details } = err.response.data;
+      
+      // Show all error messages from the backend
+      if (errorMessages && errorMessages.length > 0) {
+        // Show each error as a separate toast
+        errorMessages.forEach(errorMsg => {
+          toast.error(errorMsg);
+        });
+      } else {
+        toast.error(message || 'Duplicate entry found');
+      }
+      
+      // Set field-specific errors for highlighting
+      const fieldErrors = {};
+      if (details && details.length > 0) {
+        details.forEach(detail => {
+          if (detail.project_name === form.projectName.trim()) {
+            fieldErrors.projectName = 'This project name is already in use';
+          }
+          if (detail.nbd_id === form.nbdId.trim()) {
+            fieldErrors.nbdId = 'This NBD ID is already in use';
+          }
+          if (detail.project_code === form.projectCode.trim()) {
+            fieldErrors.projectCode = 'This project code is already in use';
+          }
+        });
+      }
+      setErrors(fieldErrors);
+    } else {
+      // Handle other errors
       toast.error(err?.response?.data?.message || 'Failed to create project.');
-    } finally {
-      setSaving(false);
     }
-  };
+  } finally {
+    setSaving(false);
+  }
+};
 
   return (
     <div className="min-h-screen bg-[#f0f0f8] p-6 font-sans">
@@ -181,7 +215,10 @@ export default function CreateProject() {
                 <input
                   type="text"
                   value={form.projectName}
-                  onChange={e => set('projectName', e.target.value)}
+                  onChange={e => {
+                    set('projectName', e.target.value);
+                    if (errors.projectName) setErrors(prev => ({ ...prev, projectName: '' }));
+                  }}
                   placeholder="e.g., Q3 Infrastructure Optimization"
                   className={`${inputCls} ${errors.projectName ? 'border-red-400 ring-2 ring-red-200' : ''}`}
                 />
@@ -210,11 +247,14 @@ export default function CreateProject() {
               {/* Row 1: NBD ID, O2D ID, Project Code */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <Label required>NBD ID</Label>  {/* Add 'required' prop */}
+                  <Label required>NBD ID</Label>
                   <input
                     type="text"
                     value={form.nbdId}
-                    onChange={e => set('nbdId', e.target.value)}
+                    onChange={e => {
+                      set('nbdId', e.target.value);
+                      if (errors.nbdId) setErrors(prev => ({ ...prev, nbdId: '' }));
+                    }}
                     placeholder="NBD-0000"
                     className={`${inputClsLight} ${errors.nbdId ? 'border-red-400 ring-2 ring-red-200' : ''}`}
                   />
@@ -233,11 +273,14 @@ export default function CreateProject() {
                   />
                 </div>
                 <div>
-                  <Label required>Project Code</Label>  {/* Add 'required' prop */}
+                  <Label required>Project Code</Label>
                   <input
                     type="text"
                     value={form.projectCode}
-                    onChange={e => set('projectCode', e.target.value)}
+                    onChange={e => {
+                      set('projectCode', e.target.value);
+                      if (errors.projectCode) setErrors(prev => ({ ...prev, projectCode: '' }));
+                    }}
                     placeholder="PRJ-8821"
                     className={`${inputClsLight} ${errors.projectCode ? 'border-red-400 ring-2 ring-red-200' : ''}`}
                   />
@@ -353,9 +396,9 @@ export default function CreateProject() {
                   >
                     <option value="New">New</option>
                     <option value="Active">Active</option>
-                    <option value="On Hold">On Hold</option>
+                    <option value="On Hold">Hold</option>
                     <option value="Completed">Completed</option>
-                    <option value="New CR">New CR</option>
+                    
                   </select>
                   <ChevDownIcon />
                 </div>
