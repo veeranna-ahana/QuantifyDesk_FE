@@ -1,8 +1,19 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
+import { useEffect, useRef } from "react";
 import Sidebar from "../layout/Sidebar";   // adjust path if yours differs
 import Header  from "../layout/Header";    // ← NEW
 
 const MainLayout = () => {
+  const { pathname } = useLocation();
+  const contentRef = useRef(null);
+
+  useEffect(() => {
+    if (contentRef.current) {
+      contentRef.current.scrollTop = 0;
+    }
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
   return (
     <div style={styles.shell}>
       {/* ── Left: collapsible sidebar ── */}
@@ -11,7 +22,7 @@ const MainLayout = () => {
       {/* ── Right: header + page content ── */}
       <div style={styles.main}>
         <Header />
-        <div style={styles.content}>
+        <div id="main-content-scroll" ref={contentRef} style={styles.content}>
           <Outlet />
         </div>
       </div>

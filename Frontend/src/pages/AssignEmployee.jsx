@@ -52,8 +52,24 @@ const AssignEmployee = () => {
   const [editingRow, setEditingRow] = useState({});
   const [savingEdit, setSavingEdit] = useState({});
   const [workloadOpen, setWorkloadOpen] = useState(true);
+  const [showExitModal, setShowExitModal] = useState(false);
   const [collapsedProjects, setCollapsedProjects] = useState({});
   const toggleProject = (pid) => setCollapsedProjects(prev => ({ ...prev, [pid]: !prev[pid] }));
+
+  const scrollToTop = () => {
+    const scrollContainer = document.getElementById("main-content-scroll");
+    if (scrollContainer) {
+      scrollContainer.scrollTop = 0;
+    }
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  };
+
+  // Ensure view scrolls to top when navigating into AssignEmployee
+  useEffect(() => {
+    scrollToTop();
+  }, []);
 
   // Redirect if navigated directly without state
   useEffect(() => {
@@ -117,7 +133,16 @@ const AssignEmployee = () => {
     setDays(val === "" || isNaN(Number(val)) ? "" : String(Number(val) / 8));
   };
 
-  const handleSubmit = async () => {
+  const handleDoneOrBack = () => {
+    const hasUnsavedInputs = Boolean(selUser || units || days || hours);
+    if (hasUnsavedInputs) {
+      setShowExitModal(true);
+    } else {
+      navigate("/assignments", { state: { selProject } });
+    }
+  };
+
+  const handleSubmit = async (shouldNavigateOnSuccess = false) => {
     if (!selUser) return toast.error("Please select an employee.");
     if (!units || Number(units) <= 0) return toast.error("Enter units > 0.");
     const reqUnits = Number(units), reqDays = days ? Number(days) : 0, reqHours = hours ? Number(hours) : 0;
@@ -138,6 +163,10 @@ const AssignEmployee = () => {
       setSelUser(""); setUnits(""); setDays(""); setHours("");
       toast.success("Employee assigned successfully!");
       await refreshAssignments();
+      scrollToTop();
+      if (shouldNavigateOnSuccess) {
+        navigate("/assignments", { state: { selProject } });
+      }
     } catch (e) {
       toast.error(e?.response?.data?.message || "Failed to assign.");
     } finally { setSaving(false); }
@@ -189,7 +218,7 @@ const AssignEmployee = () => {
       {/* Page Header */}
       <div className="mb-6 flex items-center gap-4 flex-wrap">
         <button
-          onClick={() => navigate("/assignments", { state: { selProject } })}
+          onClick={handleDoneOrBack}
           className="flex items-center gap-2 text-gray-500 hover:text-gray-800 font-semibold text-sm transition-colors"
         >
           <Icon icon="material-symbols:arrow-back" width="18" height="18" color="#64748b" />
@@ -509,11 +538,60 @@ const AssignEmployee = () => {
 
       {/* Footer */}
       <div className="flex justify-end mt-6 pb-10">
-        <button onClick={() => navigate("/assignments", { state: { selProject } })}
+        <button onClick={handleDoneOrBack}
           className="bg-[#856BFF] hover:bg-[#7259e6] text-white font-bold text-sm py-2.5 px-8 rounded-xl transition-all shadow-sm">
           Done
         </button>
       </div>
+
+      {/* Unsaved Changes Confirmation Modal */}
+      {showExitModal && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[1000] p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border border-gray-100">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+                <Icon icon="material-symbols:warning-rounded" width="24" height="24" color="#d97706" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-gray-900">Unsaved Assignment Details</h3>
+                <p className="text-xs text-gray-500 mt-0.5">You have filled out employee assignment details that haven't been assigned yet.</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-gray-600 mb-6 bg-amber-50/60 border border-amber-100 p-3 rounded-xl">
+              Would you like to save this assignment before leaving, or close without assigning?
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-2 justify-end">
+              <button
+                onClick={() => setShowExitModal(false)}
+                className="px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-xl transition-colors order-3 sm:order-1"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setShowExitModal(false);
+                  navigate("/assignments", { state: { selProject } });
+                }}
+                className="px-4 py-2 text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-xl transition-colors order-2"
+              >
+                Discard &amp; Leave
+              </button>
+              <button
+                onClick={async () => {
+                  setShowExitModal(false);
+                  await handleSubmit(true);
+                }}
+                disabled={saving}
+                className="px-4 py-2 text-xs font-bold text-white bg-[#856BFF] hover:bg-[#7259e6] rounded-xl transition-colors shadow-sm order-1 sm:order-3"
+              >
+                Assign &amp; Leave
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
