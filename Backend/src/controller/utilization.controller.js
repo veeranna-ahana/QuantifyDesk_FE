@@ -104,7 +104,7 @@ const getMyAssignments = async (req, res, next) => {
       });
     }
 
-    // ✅ Query using emp_id from assignments table
+    // ✅ Query with estimated_hours and total_time_needed (utilized hours)
     const sql = `
       SELECT
         a.id                                                          AS assignment_id,
@@ -113,6 +113,7 @@ const getMyAssignments = async (req, res, next) => {
         a.role,
         a.task_name,
         a.units_assigned,
+        a.estimated_hours                                             AS estimated_hours,
         COALESCE(SUM(CASE WHEN ap.status = 'APPROVED' THEN ap.units_completed ELSE 0 END), 0)
                                                                       AS units_completed,
         GREATEST(
@@ -121,12 +122,27 @@ const getMyAssignments = async (req, res, next) => {
           0
         )                                                             AS units_pending,
         COALESCE(SUM(CASE WHEN ap.status = 'PENDING' THEN ap.units_completed ELSE 0 END), 0)
-                                                                      AS units_awaiting
+                                                                      AS units_awaiting,
+        COALESCE(SUM(CASE WHEN ap.status = 'APPROVED' THEN CAST(ap.total_time_needed AS DECIMAL(10,2)) ELSE 0 END), 0)
+                                                                      AS utilized_hours,
+        GREATEST(
+          a.estimated_hours
+          - COALESCE(SUM(CASE WHEN ap.status = 'APPROVED' THEN CAST(ap.total_time_needed AS DECIMAL(10,2)) ELSE 0 END), 0),
+          0
+        )                                                             AS hours_pending,
+        CASE
+          WHEN a.estimated_hours > 0 THEN
+            ROUND(
+              (COALESCE(SUM(CASE WHEN ap.status = 'APPROVED' THEN CAST(ap.total_time_needed AS DECIMAL(10,2)) ELSE 0 END), 0) / a.estimated_hours) * 100,
+              1
+            )
+          ELSE 0
+        END                                                           AS hours_utilization_pct
       FROM assignments a
       LEFT JOIN projects p              ON a.project_id = p.id
       LEFT JOIN assignment_progress ap  ON a.id         = ap.assignment_id
       WHERE a.emp_id = ?                -- ✅ Filter by emp_id instead of user_id
-      GROUP BY a.id, a.project_id, p.project_name, a.role, a.task_name, a.units_assigned
+      GROUP BY a.id, a.project_id, p.project_name, a.role, a.task_name, a.units_assigned, a.estimated_hours
       ORDER BY p.project_name, a.role
     `;
 
@@ -138,6 +154,7 @@ const getMyAssignments = async (req, res, next) => {
     return next(err);
   }
 };
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // EMP: Log progress on an assignment

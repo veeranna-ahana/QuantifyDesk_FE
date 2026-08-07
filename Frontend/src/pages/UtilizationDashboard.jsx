@@ -111,16 +111,30 @@ const RolePill = ({ role }) => {
 };
 
 // ── Utilization bar ───────────────────────────────────────────────────────────
-const UtilBar = ({ pct }) => {
+const UtilBar = ({ pct, totalUnits = 0, utilizedUnits = 0, employeeName = "" }) => {
   const color = pct >= 80 ? "#6C5CE7" : pct >= 40 ? "#6C5CE7" : "#6C5CE7";
   const bg = "#E8E6FF";
+  
+  // Calculate actual percentage from units to ensure consistency
+  const actualPct = totalUnits > 0 ? Math.round((utilizedUnits / totalUnits) * 100) : 0;
+  const displayPct = pct || actualPct;
+  
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 group relative">
       <div className="flex-1 h-1.5 rounded-full" style={{ background: bg }}>
         <div className="h-full rounded-full transition-all duration-500"
-          style={{ width: `${Math.min(pct, 100)}%`, background: color }} />
+          style={{ width: `${Math.min(displayPct, 100)}%`, background: color }} />
       </div>
-      <span className="text-[11px] font-semibold text-gray-500 w-8">{pct}%</span>
+      <span className="text-[11px] font-semibold text-gray-500 w-8">{displayPct}%</span>
+      
+      {/* Tooltip - show only if we have data */}
+      {totalUnits > 0 && (
+        <div className="absolute bottom-full left-0 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-10 shadow-lg pointer-events-none">
+          <div className="font-medium">{utilizedUnits} / {totalUnits} units utilized</div>
+          <div className="text-gray-300 text-[10px] mt-0.5">{displayPct}% completion</div>
+          <div className="absolute -bottom-1 left-4 w-2 h-2 bg-gray-800 rotate-45"></div>
+        </div>
+      )}
     </div>
   );
 };
@@ -146,12 +160,18 @@ const ProgressBar = ({ pct }) => {
 };
 
 // ── Status badge (health card) ────────────────────────────────────────────────
+// ── Status badge (health card) ────────────────────────────────────────────────
 const StatusBadge = ({ status }) => {
   const map = {
     active: { bg: "#D1FAE5", text: "#065F46", label: "ACTIVE" },
+    "in progress": { bg: "#DBEAFE", text: "#1E40AF", label: "IN PROGRESS" },
     completed: { bg: "#DBEAFE", text: "#1E40AF", label: "COMPLETED" },
-    "on-hold": { bg: "#FEF3C7", text: "#92400E", label: "ON HOLD" },
+    "on hold": { bg: "#FEF3C7", text: "#92400E", label: "HOLD" },
     new: { bg: "#F3F4F6", text: "#374151", label: "NEW" },
+    "not started": { bg: "#F3F4F6", text: "#6B7280", label: "NOT STARTED" },
+    abandoned: { bg: "#FEE2E2", text: "#DC2626", label: "ABANDONED" },
+    cr: { bg: "#FEF3C7", text: "#D97706", label: "CR" },
+    "new cr": { bg: "#FEF3C7", text: "#D97706", label: "NEW CR" },
   };
   const s = map[(status || "").toLowerCase()] || map.new;
   return (
@@ -235,8 +255,18 @@ const HealthCard = ({ p, index = 0 }) => {
 };
 
 // ── DONUT LEGEND ──────────────────────────────────────────────────────────────
-const DONUT_COLORS = ["#f39c12", "#6C5CE7", "#00b894"];
-const DONUT_LABELS = ["UI UX Design", "Development", "Testing"];
+const DONUT_COLORS = [
+  "#f39c12", // Orange
+  "#6C5CE7", // Purple
+  "#00b894", // Green
+  "#e74c3c", // Red
+  "#3498db", // Blue
+  "#e67e22", // Dark Orange
+  "#1abc9c", // Teal
+  "#e84393", // Pink
+  "#fd79a8", // Light Pink
+];
+// const DONUT_LABELS = ["UI UX Design", "Development", "Testing"];
 
 // ── Circular progress ring ────────────────────────────────────────────────────
 const CircleProgress = ({ pct, size = 80, stroke = 7, color = "#6C5CE7" }) => {
@@ -268,9 +298,11 @@ const UtilizationDashboard = () => {
   const [selProject, setSelProject] = useState("");
   const [selEmployee, setSelEmployee] = useState("");
   const [tableData, setTableData] = useState([]);
+  const [pieData, setPieData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [showAllEmployees, setShowAllEmployees] = useState(false);
+ 
 
   // ── Project Health filter state ────────────────────────────────────────────
   const [healthSearch, setHealthSearch] = useState("");
@@ -320,6 +352,29 @@ const UtilizationDashboard = () => {
     };
     fetchTable();
   }, [selProject]);
+
+  // Calculate pie chart data from tableData using role as category
+useEffect(() => {
+  if (tableData.length === 0) {
+    setPieData([]);
+    return;
+  }
+  
+  const categoryMap = {};
+  tableData.forEach(row => {
+    // role IS the work category - use it directly
+    const category = row.role || 'Uncategorized';
+    const units = Number(row.units_assigned) || 0;
+    categoryMap[category] = (categoryMap[category] || 0) + units;
+  });
+  
+  const newPieData = Object.entries(categoryMap)
+    .filter(([_, value]) => value > 0)
+    .sort((a, b) => b[1] - a[1])
+    .map(([name, value]) => ({ name, value }));
+  
+  setPieData(newPieData);
+}, [tableData]);
 
   // ── Fetch project unit summary when unitProject changes ────────────────────
   useEffect(() => {
@@ -381,22 +436,38 @@ const UtilizationDashboard = () => {
   const totalAssigned = health.reduce((s, p) => s + Number(p.total_assigned), 0);
   const totalCompleted = health.reduce((s, p) => s + Number(p.total_completed), 0);
 
-  const pieData = [
-    { name: "UI UX Design", value: Math.round(totalAssigned * 0.10) },
-    { name: "Development", value: Math.round(totalAssigned * 0.70) },
-    { name: "Testing", value: Math.round(totalAssigned * 0.20) },
-  ];
+  // const pieData = [
+  //   { name: "UI UX Design", value: Math.round(totalAssigned * 0.10) },
+  //   { name: "Development", value: Math.round(totalAssigned * 0.70) },
+  //   { name: "Testing", value: Math.round(totalAssigned * 0.20) },
+  // ];
   const donutTotal = totalAssigned || 0;
 
   const overallPct = totalAssigned > 0
     ? Math.round((totalCompleted / totalAssigned) * 100) : 0;
 
-  // employee utilization (top-4 or all)
-  const empRows = (showAllEmployees ? filteredOverall : filteredOverall.slice(0, 4)).map(u => ({
-    name: u.user_name.replace(/^(Mr\.|Ms\.|Mrs\.)\s*/i, ""),
-    role: u.role || "—",
-    pct: Number(u.utilization_pct) || 0,
-  }));
+ 
+// employee utilization - show ALL service delivery employees
+const empRows = (showAllEmployees ? serviceDeliveryEmployees : serviceDeliveryEmployees.slice(0, 5)).map(emp => {
+  // Get all assignments for this employee from tableData
+  const empAssignments = tableData.filter(row => row.user_name === emp.emp_name);
+  
+  // Calculate totals from assignments
+  const totalUnits = empAssignments.reduce((sum, row) => sum + Number(row.units_assigned || 0), 0);
+  const utilizedUnits = empAssignments.reduce((sum, row) => sum + Number(row.units_completed || 0), 0);
+  
+  // Calculate percentage from actual data
+  const actualPct = totalUnits > 0 ? Math.round((utilizedUnits / totalUnits) * 100) : 0;
+  
+  return {
+    name: emp.emp_name.replace(/^(Mr\.|Ms\.|Mrs\.)\s*/i, ""),
+    fullName: emp.emp_name,
+    role: emp.role || "—",
+    pct: actualPct,
+    totalUnits: totalUnits,
+    utilizedUnits: utilizedUnits,
+  };
+});
 
   // unique employee names for filter dropdown
   const employeeOptions = [...new Set(tableData.map(r => r.user_name).filter(Boolean))].sort();
@@ -918,7 +989,13 @@ const UtilizationDashboard = () => {
                   <tr key={i} className="border-b border-gray-50 last:border-0">
                     <td className="px-5 py-3 font-semibold text-gray-700 text-[13px]">{r.name}</td>
                     <td className="px-5 py-3"><RolePill role={r.role} /></td>
-                    <td className="px-5 py-3 min-w-[140px]"><UtilBar pct={r.pct} /></td>
+                    <td className="px-5 py-3 min-w-[140px]">
+                      <UtilBar
+                        pct={r.pct}
+                        totalUnits={r.totalUnits}
+                        utilizedUnits={r.utilizedUnits}
+                      />
+                    </td>
                     <td className="px-5 py-3"><StatusDot pct={r.pct} /></td>
                   </tr>
                 ))}
@@ -937,43 +1014,61 @@ const UtilizationDashboard = () => {
             </div>
           </div>
 
-          {/* Work Distribution Donut */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 w-64 px-5 py-4 shrink-0">
-            <div className="text-[13px] font-bold text-gray-700 mb-3">Work Distribution</div>
-            <ResponsiveContainer width="100%" height={180}>
-              <PieChart>
-                <Pie
-                  data={pieData}
-                  cx="50%" cy="50%"
-                  innerRadius={58} outerRadius={82}
-                  dataKey="value"
-                  strokeWidth={2}
-                >
-                  {pieData.map((_, i) => (
-                    <Cell key={i} fill={DONUT_COLORS[i]} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(v) => [v, "units"]} contentStyle={{ fontSize: "12px", borderRadius: "8px" }} />
-                <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle">
-                  <tspan x="50%" dy="-6" fontSize="20" fontWeight="800" fill="#2d3436">{donutTotal}</tspan>
-                  <tspan x="50%" dy="18" fontSize="11" fill="#aaa">Units</tspan>
-                </text>
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="flex flex-col gap-1.5 mt-2">
-              {DONUT_LABELS.map((l, i) => (
-                <div key={l} className="flex items-center justify-between text-[11px]">
-                  <div className="flex items-center gap-1.5">
-                    <span className="inline-block w-2 h-2 rounded-full" style={{ background: DONUT_COLORS[i] }} />
-                    <span className="text-gray-600">{l}</span>
-                  </div>
-                  <span className="font-semibold text-gray-500">
-                    {donutTotal > 0 ? Math.round((pieData[i].value / donutTotal) * 100) : 0}%
-                  </span>
-                </div>
-              ))}
+         {/* Work Distribution Donut */}
+<div className="bg-white rounded-xl shadow-sm border border-gray-100 w-64 px-5 py-4 shrink-0">
+  <div className="text-[13px] font-bold text-gray-700 mb-3">Work Distribution</div>
+  {pieData.length > 0 ? (
+    <>
+      <ResponsiveContainer width="100%" height={180}>
+        <PieChart>
+          <Pie
+            data={pieData}
+            cx="50%" cy="50%"
+            innerRadius={58} outerRadius={82}
+            dataKey="value"
+            strokeWidth={2}
+          >
+            {pieData.map((_, i) => (
+              <Cell key={i} fill={DONUT_COLORS[i % DONUT_COLORS.length]} />
+            ))}
+          </Pie>
+          <Tooltip 
+  formatter={(value, name, props) => {
+    const total = pieData.reduce((sum, item) => sum + item.value, 0);
+    const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+    return [`${value} units (${percentage}%)`, props.payload.name];
+  }}
+  contentStyle={{ fontSize: "12px", borderRadius: "8px" }}
+/>
+          <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle">
+            <tspan x="50%" dy="-6" fontSize="20" fontWeight="800" fill="#2d3436">
+              {pieData.reduce((sum, item) => sum + item.value, 0)}
+            </tspan>
+            <tspan x="50%" dy="18" fontSize="11" fill="#aaa">Units</tspan>
+          </text>
+        </PieChart>
+      </ResponsiveContainer>
+      <div className="flex flex-col gap-1.5 mt-2">
+        {pieData.map((item, i) => {
+          const total = pieData.reduce((sum, d) => sum + d.value, 0);
+          const percentage = total > 0 ? Math.round((item.value / total) * 100) : 0;
+          return (
+            <div key={item.name} className="flex items-center justify-between text-[11px]">
+              <div className="flex items-center gap-1.5">
+                <span className="inline-block w-2 h-2 rounded-full" 
+                      style={{ background: DONUT_COLORS[i % DONUT_COLORS.length] }} />
+                <span className="text-gray-600">{item.name}</span>
+              </div>
+              <span className="font-semibold text-gray-500">{percentage}%</span>
             </div>
-          </div>
+          );
+        })}
+      </div>
+    </>
+  ) : (
+    <div className="text-center text-gray-400 py-8">No work distribution data</div>
+  )}
+</div>
         </div>
 
         {/* ── Assignment Overview ── */}
@@ -1140,18 +1235,19 @@ const UtilizationDashboard = () => {
                 )}
               </div>
               {/* Status filter */}
-              <select
-                value={healthStatusFilter}
-                onChange={e => { setHealthStatusFilter(e.target.value); setShowAllHealth(false); }}
-                className="border border-gray-200 rounded-lg px-3 py-1.5 text-[12px] text-gray-600 bg-white outline-none cursor-pointer hover:border-purple-400 transition-colors"
-                style={{ outline: 'none', boxShadow: 'none' }}
-              >
-                <option value="">All Statuses</option>
-                <option value="active">Active</option>
-                <option value="on-hold">On Hold</option>
-                <option value="completed">Completed</option>
-                <option value="new">New</option>
-              </select>
+             <select
+  value={healthStatusFilter}
+  onChange={e => { setHealthStatusFilter(e.target.value); setShowAllHealth(false); }}
+  className="border border-gray-200 rounded-lg px-3 py-1.5 text-[12px] text-gray-600 bg-white outline-none cursor-pointer hover:border-purple-400 transition-colors"
+  style={{ outline: 'none', boxShadow: 'none' }}
+>
+  <option value="">All Statuses</option>
+  <option value="Active">Active</option>
+  <option value="On Hold">Hold</option>
+  <option value="Completed">Completed</option>
+  <option value="New">New</option>
+  
+</select>
               {/* Clear */}
               {(healthSearch || healthStatusFilter) && (
                 <button
@@ -1167,13 +1263,14 @@ const UtilizationDashboard = () => {
           {/* Cards grid */}
           {(() => {
             const filteredHealth = health.filter(p => {
-              const q = healthSearch.toLowerCase();
-              const matchName = !q || p.project_name?.toLowerCase().includes(q) || p.project_code?.toLowerCase().includes(q);
-              const matchStatus = !healthStatusFilter || (p.status || "").toLowerCase() === healthStatusFilter;
-              return matchName && matchStatus;
-            });
-            const visibleHealth = showAllHealth ? filteredHealth : filteredHealth.slice(0, HEALTH_PAGE_SIZE);
-            const hasMore = filteredHealth.length > HEALTH_PAGE_SIZE;
+    const q = healthSearch.toLowerCase();
+    const matchName = !q || p.project_name?.toLowerCase().includes(q) || p.project_code?.toLowerCase().includes(q);
+    // ✅ Fix: lowercase both values for comparison
+    const matchStatus = !healthStatusFilter || (p.status || "").toLowerCase() === healthStatusFilter.toLowerCase();
+    return matchName && matchStatus;
+  });
+  const visibleHealth = showAllHealth ? filteredHealth : filteredHealth.slice(0, HEALTH_PAGE_SIZE);
+  const hasMore = filteredHealth.length > HEALTH_PAGE_SIZE
 
             return (
               <div className="p-5">

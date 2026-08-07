@@ -262,26 +262,26 @@ const getProjectLevelRecon = async (req, res, next) => {
     try {
         const { month, year, clientName, projectCode, projectName, employeeName, department, reportingManager } = req.query;
         
-        // ─── Build date conditions ──────────────────────────────────
+        console.log('📊 Project Level Recon Filters:', { month, year, clientName, projectCode, projectName, employeeName, department, reportingManager });
+        
+        // ─── Get System Projects that have timesheet entries for the selected period ──
+        let systemWhere = [];
+        let systemParams = [];
+        
+        // ✅ Join with timesheet_entries to filter by date
         let dateConditions = [];
         let dateParams = [];
         
-        if (month) {
+        if (month && year) {
+            dateConditions.push('YEAR(te.entry_date) = ? AND MONTH(te.entry_date) = ?');
+            dateParams.push(parseInt(year), parseInt(month));
+        } else if (month) {
             dateConditions.push('MONTH(te.entry_date) = ?');
             dateParams.push(parseInt(month));
-        }
-        if (year) {
+        } else if (year) {
             dateConditions.push('YEAR(te.entry_date) = ?');
             dateParams.push(parseInt(year));
         }
-        
-        const dateWhereClause = dateConditions.length > 0 
-            ? `AND ${dateConditions.join(' AND ')}` 
-            : '';
-        
-        // ─── Get System Projects ──────────────────────────────────
-        let systemWhere = [];
-        let systemParams = [];
         
         if (clientName) {
             systemWhere.push('p.client_name LIKE ?');
@@ -305,25 +305,50 @@ const getProjectLevelRecon = async (req, res, next) => {
         }
         
         const systemWhereClause = systemWhere.length > 0 
-            ? `WHERE ${systemWhere.join(' AND ')}` 
-            : 'WHERE 1=1';
+            ? `AND ${systemWhere.join(' AND ')}` 
+            : '';
         
-        // ─── Get System Projects (without timesheet subqueries) ──
-        const systemProjects = await query(`
-            SELECT 
-                p.id as project_id,
-                p.project_code,
-                p.project_name,
-                p.client_name,
-                COALESCE((SELECT SUM(total_hrs) FROM effort_estimates WHERE project_id = p.id), 0) as estimated_hours,
-                1 as in_system,
-                CASE WHEN EXISTS (SELECT 1 FROM effort_estimates WHERE project_id = p.id) THEN 1 ELSE 0 END as has_estimate
-            FROM projects p
-            ${systemWhereClause}
-            GROUP BY p.id
-        `, systemParams);
+        const dateWhereClause = dateConditions.length > 0 
+            ? `AND ${dateConditions.join(' AND ')}` 
+            : '';
         
-        // ─── Get timesheet data separately with date filters ──────
+        // ─── Get System Projects that have timesheet entries ──────────────────
+        let systemProjects = [];
+        
+        if (dateConditions.length > 0) {
+            // If date filters are applied, only get projects with timesheet entries
+            systemProjects = await query(`
+                SELECT DISTINCT
+                    p.id as project_id,
+                    p.project_code,
+                    p.project_name,
+                    p.client_name,
+                    COALESCE((SELECT SUM(total_hrs) FROM effort_estimates WHERE project_id = p.id), 0) as estimated_hours,
+                    1 as in_system,
+                    CASE WHEN EXISTS (SELECT 1 FROM effort_estimates WHERE project_id = p.id) THEN 1 ELSE 0 END as has_estimate
+                FROM projects p
+                INNER JOIN timesheet_entries te ON te.project_id = p.id
+                WHERE 1=1 ${systemWhereClause} ${dateWhereClause}
+                GROUP BY p.id
+            `, [...systemParams, ...dateParams]);
+        } else {
+            // If no date filters, get all projects
+            systemProjects = await query(`
+                SELECT 
+                    p.id as project_id,
+                    p.project_code,
+                    p.project_name,
+                    p.client_name,
+                    COALESCE((SELECT SUM(total_hrs) FROM effort_estimates WHERE project_id = p.id), 0) as estimated_hours,
+                    1 as in_system,
+                    CASE WHEN EXISTS (SELECT 1 FROM effort_estimates WHERE project_id = p.id) THEN 1 ELSE 0 END as has_estimate
+                FROM projects p
+                WHERE 1=1 ${systemWhereClause}
+                GROUP BY p.id
+            `, systemParams);
+        }
+        
+        // ─── Get timesheet data with date filters ──────────────────
         let timesheetSubquery = `
             SELECT 
                 te.project_id,
@@ -335,16 +360,17 @@ const getProjectLevelRecon = async (req, res, next) => {
         
         let timesheetSubqueryParams = [];
         
-        if (month) {
+        if (month && year) {
+            timesheetSubquery += ` AND YEAR(te.entry_date) = ? AND MONTH(te.entry_date) = ?`;
+            timesheetSubqueryParams.push(parseInt(year), parseInt(month));
+        } else if (month) {
             timesheetSubquery += ` AND MONTH(te.entry_date) = ?`;
             timesheetSubqueryParams.push(parseInt(month));
-        }
-        if (year) {
+        } else if (year) {
             timesheetSubquery += ` AND YEAR(te.entry_date) = ?`;
             timesheetSubqueryParams.push(parseInt(year));
         }
         
-        // Apply clientName filter to timesheet data if provided
         if (clientName) {
             timesheetSubquery += ` AND te.original_client_name LIKE ?`;
             timesheetSubqueryParams.push(`%${clientName}%`);
@@ -362,7 +388,6 @@ const getProjectLevelRecon = async (req, res, next) => {
         
         const timesheetData = await query(timesheetSubquery, timesheetSubqueryParams);
         
-        // Create a map of project_id to timesheet data
         const timesheetMap = {};
         timesheetData.forEach(row => {
             timesheetMap[row.project_id] = {
@@ -381,16 +406,29 @@ const getProjectLevelRecon = async (req, res, next) => {
             };
         });
         
-        // ─── Apply employee filter for system projects ──────────
+        // ─── Apply employee filter ────────────────────────────────────
         if (employeeName) {
-            const empProjectIds = await query(`
+            let empProjectQuery = `
                 SELECT DISTINCT te.project_id 
                 FROM timesheet_entries te
                 LEFT JOIN master.emp e ON te.emp_id = e.emp_id
                 WHERE e.emp_name LIKE ?
                 AND te.project_id IS NOT NULL
-            `, [`%${employeeName}%`]);
+            `;
+            let empParams = [`%${employeeName}%`];
             
+            if (month && year) {
+                empProjectQuery += ` AND YEAR(te.entry_date) = ? AND MONTH(te.entry_date) = ?`;
+                empParams.push(parseInt(year), parseInt(month));
+            } else if (month) {
+                empProjectQuery += ` AND MONTH(te.entry_date) = ?`;
+                empParams.push(parseInt(month));
+            } else if (year) {
+                empProjectQuery += ` AND YEAR(te.entry_date) = ?`;
+                empParams.push(parseInt(year));
+            }
+            
+            const empProjectIds = await query(empProjectQuery, empParams);
             const empProjectIdSet = new Set(empProjectIds.map(r => r.project_id));
             
             filteredSystemProjects = filteredSystemProjects.filter(p => {
@@ -415,11 +453,13 @@ const getProjectLevelRecon = async (req, res, next) => {
             timesheetWhere.push('te.original_client_name LIKE ?');
             timesheetParams.push(`%${clientName}%`);
         }
-        if (month) {
+        if (month && year) {
+            timesheetWhere.push('YEAR(te.entry_date) = ? AND MONTH(te.entry_date) = ?');
+            timesheetParams.push(parseInt(year), parseInt(month));
+        } else if (month) {
             timesheetWhere.push('MONTH(te.entry_date) = ?');
             timesheetParams.push(parseInt(month));
-        }
-        if (year) {
+        } else if (year) {
             timesheetWhere.push('YEAR(te.entry_date) = ?');
             timesheetParams.push(parseInt(year));
         }
@@ -457,7 +497,7 @@ const getProjectLevelRecon = async (req, res, next) => {
         
         const timesheetProjects = await query(timesheetQuery, timesheetParams);
         
-        // ─── Combine results using Map to deduplicate ──────────────
+        // ─── Combine results ──────────────────────────────────────────
         const projectMap = new Map();
         
         filteredSystemProjects.forEach(p => {
@@ -481,7 +521,7 @@ const getProjectLevelRecon = async (req, res, next) => {
             }
         });
         
-        // ─── Reporting Manager filter (post-filter) ──────────────
+        // ─── Reporting Manager filter ──────────────────────────────
         let allProjects = Array.from(projectMap.values());
         
         if (reportingManager) {
@@ -553,48 +593,28 @@ const getEmployeeLevelRecon = async (req, res, next) => {
     try {
         const { month, year, clientName, projectCode, projectName, employeeName, department, reportingManager } = req.query;
         
-        // ─── Build WHERE conditions ──────────────────────────────────
-        let whereConditions = [];
-        let params = [];
+        console.log('📊 Employee Level Recon Filters:', { month, year, clientName, projectCode, projectName, employeeName, department, reportingManager });
         
-        if (month) {
-            whereConditions.push('MONTH(te.entry_date) = ?');
-            params.push(parseInt(month));
-        }
-        if (year) {
-            whereConditions.push('YEAR(te.entry_date) = ?');
-            params.push(parseInt(year));
-        }
-        if (clientName) {
-            whereConditions.push('(p.client_name LIKE ? OR te.original_client_name LIKE ?)');
-            params.push(`%${clientName}%`, `%${clientName}%`);
-        }
-        if (projectCode) {
-            whereConditions.push('(p.project_code LIKE ? OR te.original_project_code LIKE ?)');
-            params.push(`%${projectCode}%`, `%${projectCode}%`);
-        }
-        if (projectName) {
-            whereConditions.push('(p.project_name LIKE ? OR te.original_project_name LIKE ?)');
-            params.push(`%${projectName}%`, `%${projectName}%`);
-        }
-        if (employeeName) {
-            whereConditions.push('e.emp_name LIKE ?');
-            params.push(`%${employeeName}%`);
-        }
-        if (department) {
-            whereConditions.push('(p.sub_category LIKE ? OR te.original_project_name LIKE ?)');
-            params.push(`%${department}%`, `%${department}%`);
-        }
-        if (reportingManager) {
-            whereConditions.push('p.project_manager LIKE ?');
-            params.push(`%${reportingManager}%`);
+        // ─── Build date conditions ──────────────────────────────────
+        let dateConditions = [];
+        let dateParams = [];
+        
+        if (month && year) {
+            dateConditions.push('YEAR(te.entry_date) = ? AND MONTH(te.entry_date) = ?');
+            dateParams.push(parseInt(year), parseInt(month));
+        } else if (month) {
+            dateConditions.push('MONTH(te.entry_date) = ?');
+            dateParams.push(parseInt(month));
+        } else if (year) {
+            dateConditions.push('YEAR(te.entry_date) = ?');
+            dateParams.push(parseInt(year));
         }
         
-        const whereClause = whereConditions.length > 0 
-            ? `WHERE ${whereConditions.join(' AND ')}` 
+        const dateWhereClause = dateConditions.length > 0 
+            ? `AND ${dateConditions.join(' AND ')}` 
             : '';
         
-        // ─── Query 1: Get ALL assignments using emp_id ──────────────
+        // ─── Query 1: Get assignments for employees who have timesheet entries ──
         let assignWhere = [];
         let assignParams = [];
         
@@ -618,39 +638,73 @@ const getEmployeeLevelRecon = async (req, res, next) => {
             assignWhere.push('p.project_manager LIKE ?');
             assignParams.push(`%${reportingManager}%`);
         }
+        if (employeeName) {
+            assignWhere.push('e.emp_name LIKE ?');
+            assignParams.push(`%${employeeName}%`);
+        }
         
         const assignWhereClause = assignWhere.length > 0 
             ? `AND ${assignWhere.join(' AND ')}` 
             : '';
         
-        const assignmentsData = await query(`
-            SELECT 
-                a.emp_id,
-                e.emp_name as employee_name,
-                a.project_id,
-                p.project_code,
-                p.project_name,
-                p.client_name,
-                SUM(a.units_assigned) as assigned_units,
-                SUM(a.estimated_days) as assigned_days,
-                SUM(a.estimated_hours) as assigned_hours,
-                GROUP_CONCAT(DISTINCT a.role) as roles
-            FROM assignments a
-            LEFT JOIN master.emp e ON a.emp_id = e.emp_id
-            LEFT JOIN projects p ON a.project_id = p.id
-            WHERE 1=1 ${assignWhereClause}
-            GROUP BY a.emp_id, a.project_id, e.emp_name, p.project_code, p.project_name, p.client_name
-        `, assignParams);
+        // ─── Get assignments for employees with timesheet entries ──
+        let assignmentsData = [];
         
-        // ─── Query 2: Get ALL timesheet hours using emp_id ──────────
+        if (dateConditions.length > 0) {
+            // If date filters are applied, only get employees with timesheet entries
+            assignmentsData = await query(`
+                SELECT 
+                    a.emp_id,
+                    e.emp_name as employee_name,
+                    a.project_id,
+                    p.project_code,
+                    p.project_name,
+                    p.client_name,
+                    SUM(a.units_assigned) as assigned_units,
+                    SUM(a.estimated_days) as assigned_days,
+                    SUM(a.estimated_hours) as assigned_hours,
+                    GROUP_CONCAT(DISTINCT a.role) as roles
+                FROM assignments a
+                LEFT JOIN master.emp e ON a.emp_id = e.emp_id
+                LEFT JOIN projects p ON a.project_id = p.id
+                INNER JOIN timesheet_entries te ON te.emp_id = a.emp_id AND te.project_id = a.project_id
+                WHERE 1=1 ${assignWhereClause} ${dateWhereClause}
+                GROUP BY a.emp_id, a.project_id, e.emp_name, p.project_code, p.project_name, p.client_name
+            `, [...assignParams, ...dateParams]);
+        } else {
+            // If no date filters, get all assignments
+            assignmentsData = await query(`
+                SELECT 
+                    a.emp_id,
+                    e.emp_name as employee_name,
+                    a.project_id,
+                    p.project_code,
+                    p.project_name,
+                    p.client_name,
+                    SUM(a.units_assigned) as assigned_units,
+                    SUM(a.estimated_days) as assigned_days,
+                    SUM(a.estimated_hours) as assigned_hours,
+                    GROUP_CONCAT(DISTINCT a.role) as roles
+                FROM assignments a
+                LEFT JOIN master.emp e ON a.emp_id = e.emp_id
+                LEFT JOIN projects p ON a.project_id = p.id
+                WHERE 1=1 ${assignWhereClause}
+                GROUP BY a.emp_id, a.project_id, e.emp_name, p.project_code, p.project_name, p.client_name
+            `, assignParams);
+        }
+        
+        // ─── Get timesheet hours with date filters ──────────────────
         let timesheetWhere = [];
         let timesheetParams = [];
         
-        if (month) {
+        // ✅ Date filters applied here
+        if (month && year) {
+            timesheetWhere.push('YEAR(te.entry_date) = ? AND MONTH(te.entry_date) = ?');
+            timesheetParams.push(parseInt(year), parseInt(month));
+        } else if (month) {
             timesheetWhere.push('MONTH(te.entry_date) = ?');
             timesheetParams.push(parseInt(month));
-        }
-        if (year) {
+        } else if (year) {
             timesheetWhere.push('YEAR(te.entry_date) = ?');
             timesheetParams.push(parseInt(year));
         }
@@ -679,7 +733,7 @@ const getEmployeeLevelRecon = async (req, res, next) => {
             ? `AND ${timesheetWhere.join(' AND ')}` 
             : '';
         
-        const timesheetData = await query(`
+        const timesheetQuery = `
             SELECT 
                 te.emp_id,
                 e.emp_name as employee_name,
@@ -695,7 +749,12 @@ const getEmployeeLevelRecon = async (req, res, next) => {
             WHERE 1=1 ${timesheetWhereClause}
             GROUP BY te.emp_id, e.emp_name, te.project_id, p.id, p.project_code, p.project_name, 
                      p.client_name, te.original_project_code, te.original_project_name, te.original_client_name
-        `, timesheetParams);
+        `;
+        
+        console.log('📊 Timesheet Query:', timesheetQuery);
+        console.log('📊 Timesheet Params:', timesheetParams);
+        
+        const timesheetData = await query(timesheetQuery, timesheetParams);
         
         // ─── Combine both queries ──────────────────────────────────────
         const employeeMap = new Map();
@@ -733,6 +792,8 @@ const getEmployeeLevelRecon = async (req, res, next) => {
                 existing.project_exists = t.project_exists === 1;
                 employeeMap.set(key, existing);
             } else {
+                // ✅ Only add timesheet entries without assignments if date filters are applied
+                // or if there are no assignments at all
                 employeeMap.set(key, {
                     emp_id: t.emp_id,
                     employee_name: t.employee_name || 'Unknown',
@@ -750,17 +811,45 @@ const getEmployeeLevelRecon = async (req, res, next) => {
             }
         });
         
-        const allEmployees = Array.from(employeeMap.values());
+        // ─── Apply additional filters ──────────────────────────────────
+        let allEmployees = Array.from(employeeMap.values());
         
-        // ─── Apply reportingManager filter (post-filter) ──────────
-        let filteredEmployees = allEmployees;
+        // Filter by employee name (if not already in query)
+        if (employeeName && !dateConditions.length) {
+            allEmployees = allEmployees.filter(e => 
+                e.employee_name && e.employee_name.toLowerCase().includes(employeeName.toLowerCase())
+            );
+        }
+        
+        // Filter by client name (if not already in query)
+        if (clientName && !dateConditions.length) {
+            allEmployees = allEmployees.filter(e => 
+                e.client_name && e.client_name.toLowerCase().includes(clientName.toLowerCase())
+            );
+        }
+        
+        // Filter by project code (if not already in query)
+        if (projectCode && !dateConditions.length) {
+            allEmployees = allEmployees.filter(e => 
+                e.project_code && e.project_code.toLowerCase().includes(projectCode.toLowerCase())
+            );
+        }
+        
+        // Filter by project name (if not already in query)
+        if (projectName && !dateConditions.length) {
+            allEmployees = allEmployees.filter(e => 
+                e.project_name && e.project_name.toLowerCase().includes(projectName.toLowerCase())
+            );
+        }
+        
+        // ─── Apply reportingManager filter ──────────────────────────
         if (reportingManager) {
-            filteredEmployees = filteredEmployees.filter(e => 
+            allEmployees = allEmployees.filter(e => 
                 e.client_name && e.client_name.toLowerCase().includes(reportingManager.toLowerCase())
             );
         }
         
-        const result = filteredEmployees.map(e => {
+        const result = allEmployees.map(e => {
             const assignedUnits = e.assigned_units;
             const assignedDays = e.assigned_days;
             const assignedHours = e.assigned_hours;
@@ -829,6 +918,7 @@ const getEmployeeLevelRecon = async (req, res, next) => {
             };
         });
         
+        // Sort by employee name
         result.sort((a, b) => {
             const aName = a?.employee_name || '';
             const bName = b?.employee_name || '';
