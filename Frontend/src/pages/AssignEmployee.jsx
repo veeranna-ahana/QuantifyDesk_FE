@@ -198,13 +198,29 @@ const AssignEmployee = () => {
     const row = editingRow[id];
     if (!row) return;
     const unitsVal = Number(row.units);
+    const daysVal = Number(row.days) || 0;
+    const hoursVal = Number(row.hours) || 0;
     if (!unitsVal || unitsVal <= 0) return toast.error('Units must be > 0.');
+
+    // Remaining capacity = total task limits minus what OTHER assignments use
+    const otherAssignments = existing.filter(a => a.id !== id);
+    const otherUnits = otherAssignments.reduce((s, a) => s + Number(a.units_assigned), 0);
+    const otherDays  = otherAssignments.reduce((s, a) => s + Number(a.estimated_days || 0), 0);
+    const otherHours = otherAssignments.reduce((s, a) => s + Number(a.estimated_hours || 0), 0);
+    const maxUnits = (modal.planned_units  || 0) - otherUnits;
+    const maxDays  = (modal.estimated_days  || 0) - otherDays;
+    const maxHours = (modal.estimated_hours || 0) - otherHours;
+
+    if (unitsVal > maxUnits) return toast.error(`Only ${maxUnits} units remaining for this task.`);
+    if (daysVal  > maxDays)  return toast.error(`Only ${maxDays} days remaining for this task.`);
+    if (hoursVal > maxHours) return toast.error(`Only ${maxHours} hours remaining for this task.`);
+
     setSavingEdit(prev => ({ ...prev, [id]: true }));
     try {
       await axios.put(`${BASE_URL}/api/assignments/${id}`, {
-        units_assigned: unitsVal, estimated_days: Number(row.days) || 0, estimated_hours: Number(row.hours) || 0,
+        units_assigned: unitsVal, estimated_days: daysVal, estimated_hours: hoursVal,
       }, { headers: getHeaders() });
-      setExtraData(prev => ({ ...prev, [id]: { estimated_days: Number(row.days) || 0, estimated_hours: Number(row.hours) || 0, units_assigned: unitsVal } }));
+      setExtraData(prev => ({ ...prev, [id]: { estimated_days: daysVal, estimated_hours: hoursVal, units_assigned: unitsVal } }));
       cancelEdit(id);
       toast.success('Assignment updated!');
       await refreshAssignments();
@@ -495,6 +511,16 @@ const AssignEmployee = () => {
                   const isEditing = !!editingRow[a.id];
                   const eRow = editingRow[a.id] || {};
                   const isSavingThis = !!savingEdit[a.id];
+
+                  // Per-row remaining capacity (exclude this assignment from totals)
+                  const otherRows = existing.filter(x => x.id !== a.id);
+                  const otherUnits = otherRows.reduce((s, x) => s + Number(x.units_assigned), 0);
+                  const otherDays  = otherRows.reduce((s, x) => s + Number(x.estimated_days || 0), 0);
+                  const editMaxUnits = (modal.planned_units  || 0) - otherUnits;
+                  const editMaxDays  = (modal.estimated_days  || 0) - otherDays;
+                  const editUnitsExceeded = isEditing && eRow.units !== '' && Number(eRow.units) > editMaxUnits;
+                  const editDaysExceeded  = isEditing && eRow.days  !== '' && Number(eRow.days)  > editMaxDays;
+                  const editAnyExceeded   = editUnitsExceeded || editDaysExceeded;
                   return (
                     <tr key={a.id} className={`transition-colors ${isCompleted ? 'bg-emerald-50/40' : 'hover:bg-gray-50/20'}`}>
                       <td className="py-3 px-3">
@@ -509,14 +535,22 @@ const AssignEmployee = () => {
                       <td className="py-3 px-3 text-gray-700 font-semibold">{modal.task_name}</td>
                       <td className="py-3 px-3 text-center">
                         {isEditing ? (
-                          <input type="number" min="1" value={eRow.units} onChange={e => handleEditField(a.id, 'units', e.target.value)}
-                            className="w-14 px-1 py-0.5 border border-[#856BFF] rounded text-center font-semibold text-xs outline-none" />
+                          <div className="flex flex-col items-center gap-0.5">
+                            <input type="number" min="1" value={eRow.units} onChange={e => handleEditField(a.id, 'units', e.target.value)}
+                              className="w-14 px-1 py-0.5 border rounded text-center font-semibold text-xs outline-none"
+                              style={{ borderColor: editUnitsExceeded ? '#f43f5e' : '#856BFF' }} />
+                            {editUnitsExceeded && <span className="text-[9px] text-rose-500 font-bold">Max {editMaxUnits}</span>}
+                          </div>
                         ) : <span className="font-bold text-[#856BFF]">{assignedUnits}</span>}
                       </td>
                       <td className="py-3 px-3 text-center">
                         {isEditing ? (
-                          <input type="number" min="0" step="0.5" value={eRow.days} onChange={e => handleEditField(a.id, 'days', e.target.value)}
-                            className="w-14 px-1 py-0.5 border border-[#856BFF] rounded text-center font-semibold text-xs outline-none" />
+                          <div className="flex flex-col items-center gap-0.5">
+                            <input type="number" min="0" step="0.5" value={eRow.days} onChange={e => handleEditField(a.id, 'days', e.target.value)}
+                              className="w-14 px-1 py-0.5 border rounded text-center font-semibold text-xs outline-none"
+                              style={{ borderColor: editDaysExceeded ? '#f43f5e' : '#856BFF' }} />
+                            {editDaysExceeded && <span className="text-[9px] text-rose-500 font-bold">Max {editMaxDays}</span>}
+                          </div>
                         ) : <span className="font-semibold text-gray-700">{assignedDays}</span>}
                       </td>
                       <td className="py-3 px-3 text-center font-bold text-emerald-600">{completedUnits}</td>
@@ -533,8 +567,8 @@ const AssignEmployee = () => {
                               </span>
                             ) : isEditing ? (
                               <>
-                                <button onClick={() => handleEditSave(a.id)} disabled={isSavingThis}
-                                  className="border border-emerald-500 text-emerald-600 hover:bg-emerald-50 font-bold px-2 py-0.5 rounded-lg text-[10px] transition-all">Save</button>
+                                <button onClick={() => handleEditSave(a.id)} disabled={isSavingThis || editAnyExceeded}
+                                  className={`font-bold px-2 py-0.5 rounded-lg text-[10px] transition-all border ${isSavingThis || editAnyExceeded ? 'border-gray-200 text-gray-400 cursor-not-allowed bg-gray-50' : 'border-emerald-500 text-emerald-600 hover:bg-emerald-50'}`}>Save</button>
                                 <button onClick={() => cancelEdit(a.id)} disabled={isSavingThis}
                                   className="border border-gray-300 text-gray-500 hover:bg-gray-50 font-bold px-2 py-0.5 rounded-lg text-[10px] transition-all">Cancel</button>
                               </>
