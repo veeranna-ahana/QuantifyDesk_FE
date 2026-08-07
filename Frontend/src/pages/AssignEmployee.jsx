@@ -52,8 +52,26 @@ const AssignEmployee = () => {
   const [editingRow, setEditingRow] = useState({});
   const [savingEdit, setSavingEdit] = useState({});
   const [workloadOpen, setWorkloadOpen] = useState(true);
+  const [showExitModal, setShowExitModal] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null); // { id, user_name, task_name }
+  const [deleting, setDeleting] = useState(false);
   const [collapsedProjects, setCollapsedProjects] = useState({});
   const toggleProject = (pid) => setCollapsedProjects(prev => ({ ...prev, [pid]: !prev[pid] }));
+
+  const scrollToTop = () => {
+    const scrollContainer = document.getElementById("main-content-scroll");
+    if (scrollContainer) {
+      scrollContainer.scrollTop = 0;
+    }
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  };
+
+  // Ensure view scrolls to top when navigating into AssignEmployee
+  useEffect(() => {
+    scrollToTop();
+  }, []);
 
   // Redirect if navigated directly without state
   useEffect(() => {
@@ -61,6 +79,22 @@ const AssignEmployee = () => {
       navigate("/assignments", { replace: true });
     }
   }, [modal, selProject, navigate]);
+
+  // Always fetch fresh assignments from server on mount (fixes stale data after delete + browser refresh)
+  const refreshAssignments = async () => {
+    if (!selProject) return;
+    try {
+      const res = await axios.get(`${BASE_URL}/api/assignments?projectId=${selProject}`, { headers: getHeaders() });
+      setAssignments(res.data || []);
+      setExtraData({});
+    } catch { /* ignore */ }
+  };
+
+  useEffect(() => {
+    if (selProject) {
+      refreshAssignments();
+    }
+  }, [selProject]);
 
   // Fetch employee workload when user selected
   useEffect(() => {
@@ -80,13 +114,6 @@ const AssignEmployee = () => {
   }, [selUser]);
 
   if (!modal || !selProject) return null;
-
-  const refreshAssignments = async () => {
-    try {
-      const res = await axios.get(`${BASE_URL}/api/assignments?projectId=${selProject}`, { headers: getHeaders() });
-      setAssignments(res.data || []);
-    } catch { /* ignore */ }
-  };
 
   const existing = assignments
     .filter(a => a.role === modal.role && a.task_name === modal.task_name)
@@ -117,10 +144,20 @@ const AssignEmployee = () => {
     setDays(val === "" || isNaN(Number(val)) ? "" : String(Number(val) / 8));
   };
 
-  const handleSubmit = async () => {
+  const handleDoneOrBack = () => {
+    const hasUnsavedInputs = Boolean(selUser || units || days || hours);
+    if (hasUnsavedInputs) {
+      setShowExitModal(true);
+    } else {
+      navigate("/assignments", { state: { selProject } });
+    }
+  };
+
+  const handleSubmit = async (shouldNavigateOnSuccess = false) => {
     if (!selUser) return toast.error("Please select an employee.");
     if (!units || Number(units) <= 0) return toast.error("Enter units > 0.");
-    const reqUnits = Number(units), reqDays = days ? Number(days) : 0, reqHours = hours ? Number(hours) : 0;
+    if (!days || Number(days) <= 0) return toast.error("Enter days > 0 before assigning.");
+    const reqUnits = Number(units), reqDays = Number(days), reqHours = hours ? Number(hours) : 0;
     if (reqUnits > remainingUnits) return toast.error(`Only ${remainingUnits} units remaining.`);
     if (reqDays > remainingDays) return toast.error(`Only ${remainingDays} days remaining.`);
     if (reqHours > remainingHours) return toast.error(`Only ${remainingHours} hours remaining.`);
@@ -138,6 +175,10 @@ const AssignEmployee = () => {
       setSelUser(""); setUnits(""); setDays(""); setHours("");
       toast.success("Employee assigned successfully!");
       await refreshAssignments();
+      scrollToTop();
+      if (shouldNavigateOnSuccess) {
+        navigate("/assignments", { state: { selProject } });
+      }
     } catch (e) {
       toast.error(e?.response?.data?.message || "Failed to assign.");
     } finally { setSaving(false); }
@@ -157,13 +198,29 @@ const AssignEmployee = () => {
     const row = editingRow[id];
     if (!row) return;
     const unitsVal = Number(row.units);
+    const daysVal = Number(row.days) || 0;
+    const hoursVal = Number(row.hours) || 0;
     if (!unitsVal || unitsVal <= 0) return toast.error('Units must be > 0.');
+
+    // Remaining capacity = total task limits minus what OTHER assignments use
+    const otherAssignments = existing.filter(a => a.id !== id);
+    const otherUnits = otherAssignments.reduce((s, a) => s + Number(a.units_assigned), 0);
+    const otherDays  = otherAssignments.reduce((s, a) => s + Number(a.estimated_days || 0), 0);
+    const otherHours = otherAssignments.reduce((s, a) => s + Number(a.estimated_hours || 0), 0);
+    const maxUnits = (modal.planned_units  || 0) - otherUnits;
+    const maxDays  = (modal.estimated_days  || 0) - otherDays;
+    const maxHours = (modal.estimated_hours || 0) - otherHours;
+
+    if (unitsVal > maxUnits) return toast.error(`Only ${maxUnits} units remaining for this task.`);
+    if (daysVal  > maxDays)  return toast.error(`Only ${maxDays} days remaining for this task.`);
+    if (hoursVal > maxHours) return toast.error(`Only ${maxHours} hours remaining for this task.`);
+
     setSavingEdit(prev => ({ ...prev, [id]: true }));
     try {
       await axios.put(`${BASE_URL}/api/assignments/${id}`, {
-        units_assigned: unitsVal, estimated_days: Number(row.days) || 0, estimated_hours: Number(row.hours) || 0,
+        units_assigned: unitsVal, estimated_days: daysVal, estimated_hours: hoursVal,
       }, { headers: getHeaders() });
-      setExtraData(prev => ({ ...prev, [id]: { estimated_days: Number(row.days) || 0, estimated_hours: Number(row.hours) || 0, units_assigned: unitsVal } }));
+      setExtraData(prev => ({ ...prev, [id]: { estimated_days: daysVal, estimated_hours: hoursVal, units_assigned: unitsVal } }));
       cancelEdit(id);
       toast.success('Assignment updated!');
       await refreshAssignments();
@@ -172,13 +229,27 @@ const AssignEmployee = () => {
     } finally { setSavingEdit(prev => ({ ...prev, [id]: false })); }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Remove this assignment?")) return;
+  const handleDelete = (id, user_name, task_name) => {
+    setDeleteTarget({ id, user_name, task_name });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
     try {
-      await axios.delete(`${BASE_URL}/api/assignments/${id}`, { headers: getHeaders() });
+      await axios.delete(`${BASE_URL}/api/assignments/${deleteTarget.id}`, { headers: getHeaders() });
+      // Instant UI update — remove row without waiting for server round-trip
+      setAssignments(prev => prev.filter(a => a.id !== deleteTarget.id));
+      setExtraData(prev => { const n = { ...prev }; delete n[deleteTarget.id]; return n; });
+      setDeleteTarget(null);
       toast.success("Assignment removed.");
+      // Re-sync from server to guarantee the list is accurate
       await refreshAssignments();
-    } catch { toast.error("Failed to remove assignment."); }
+    } catch {
+      toast.error("Failed to remove assignment.");
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const rs = roleStyle(modal.role);
@@ -189,7 +260,7 @@ const AssignEmployee = () => {
       {/* Page Header */}
       <div className="mb-6 flex items-center gap-4 flex-wrap">
         <button
-          onClick={() => navigate("/assignments", { state: { selProject } })}
+          onClick={handleDoneOrBack}
           className="flex items-center gap-2 text-gray-500 hover:text-gray-800 font-semibold text-sm transition-colors"
         >
           <Icon icon="material-symbols:arrow-back" width="18" height="18" color="#64748b" />
@@ -440,6 +511,16 @@ const AssignEmployee = () => {
                   const isEditing = !!editingRow[a.id];
                   const eRow = editingRow[a.id] || {};
                   const isSavingThis = !!savingEdit[a.id];
+
+                  // Per-row remaining capacity (exclude this assignment from totals)
+                  const otherRows = existing.filter(x => x.id !== a.id);
+                  const otherUnits = otherRows.reduce((s, x) => s + Number(x.units_assigned), 0);
+                  const otherDays  = otherRows.reduce((s, x) => s + Number(x.estimated_days || 0), 0);
+                  const editMaxUnits = (modal.planned_units  || 0) - otherUnits;
+                  const editMaxDays  = (modal.estimated_days  || 0) - otherDays;
+                  const editUnitsExceeded = isEditing && eRow.units !== '' && Number(eRow.units) > editMaxUnits;
+                  const editDaysExceeded  = isEditing && eRow.days  !== '' && Number(eRow.days)  > editMaxDays;
+                  const editAnyExceeded   = editUnitsExceeded || editDaysExceeded;
                   return (
                     <tr key={a.id} className={`transition-colors ${isCompleted ? 'bg-emerald-50/40' : 'hover:bg-gray-50/20'}`}>
                       <td className="py-3 px-3">
@@ -454,14 +535,22 @@ const AssignEmployee = () => {
                       <td className="py-3 px-3 text-gray-700 font-semibold">{modal.task_name}</td>
                       <td className="py-3 px-3 text-center">
                         {isEditing ? (
-                          <input type="number" min="1" value={eRow.units} onChange={e => handleEditField(a.id, 'units', e.target.value)}
-                            className="w-14 px-1 py-0.5 border border-[#856BFF] rounded text-center font-semibold text-xs outline-none" />
+                          <div className="flex flex-col items-center gap-0.5">
+                            <input type="number" min="1" value={eRow.units} onChange={e => handleEditField(a.id, 'units', e.target.value)}
+                              className="w-14 px-1 py-0.5 border rounded text-center font-semibold text-xs outline-none"
+                              style={{ borderColor: editUnitsExceeded ? '#f43f5e' : '#856BFF' }} />
+                            {editUnitsExceeded && <span className="text-[9px] text-rose-500 font-bold">Max {editMaxUnits}</span>}
+                          </div>
                         ) : <span className="font-bold text-[#856BFF]">{assignedUnits}</span>}
                       </td>
                       <td className="py-3 px-3 text-center">
                         {isEditing ? (
-                          <input type="number" min="0" step="0.5" value={eRow.days} onChange={e => handleEditField(a.id, 'days', e.target.value)}
-                            className="w-14 px-1 py-0.5 border border-[#856BFF] rounded text-center font-semibold text-xs outline-none" />
+                          <div className="flex flex-col items-center gap-0.5">
+                            <input type="number" min="0" step="0.5" value={eRow.days} onChange={e => handleEditField(a.id, 'days', e.target.value)}
+                              className="w-14 px-1 py-0.5 border rounded text-center font-semibold text-xs outline-none"
+                              style={{ borderColor: editDaysExceeded ? '#f43f5e' : '#856BFF' }} />
+                            {editDaysExceeded && <span className="text-[9px] text-rose-500 font-bold">Max {editMaxDays}</span>}
+                          </div>
                         ) : <span className="font-semibold text-gray-700">{assignedDays}</span>}
                       </td>
                       <td className="py-3 px-3 text-center font-bold text-emerald-600">{completedUnits}</td>
@@ -478,8 +567,8 @@ const AssignEmployee = () => {
                               </span>
                             ) : isEditing ? (
                               <>
-                                <button onClick={() => handleEditSave(a.id)} disabled={isSavingThis}
-                                  className="border border-emerald-500 text-emerald-600 hover:bg-emerald-50 font-bold px-2 py-0.5 rounded-lg text-[10px] transition-all">Save</button>
+                                <button onClick={() => handleEditSave(a.id)} disabled={isSavingThis || editAnyExceeded}
+                                  className={`font-bold px-2 py-0.5 rounded-lg text-[10px] transition-all border ${isSavingThis || editAnyExceeded ? 'border-gray-200 text-gray-400 cursor-not-allowed bg-gray-50' : 'border-emerald-500 text-emerald-600 hover:bg-emerald-50'}`}>Save</button>
                                 <button onClick={() => cancelEdit(a.id)} disabled={isSavingThis}
                                   className="border border-gray-300 text-gray-500 hover:bg-gray-50 font-bold px-2 py-0.5 rounded-lg text-[10px] transition-all">Cancel</button>
                               </>
@@ -487,7 +576,7 @@ const AssignEmployee = () => {
                               <>
                                 <button onClick={() => startEdit(a)}
                                   className="border border-[#856BFF] text-[#856BFF] hover:bg-[#856BFF]/10 font-bold px-3 py-1 rounded-lg transition-all">Edit</button>
-                                <button onClick={() => handleDelete(a.id)}
+                                <button onClick={() => handleDelete(a.id, a.user_name, modal.task_name)}
                                   className="border border-rose-500 text-rose-500 hover:bg-rose-50 font-bold px-3 py-1 rounded-lg transition-all">Remove</button>
                               </>
                             )}
@@ -509,11 +598,123 @@ const AssignEmployee = () => {
 
       {/* Footer */}
       <div className="flex justify-end mt-6 pb-10">
-        <button onClick={() => navigate("/assignments", { state: { selProject } })}
+        <button onClick={handleDoneOrBack}
           className="bg-[#856BFF] hover:bg-[#7259e6] text-white font-bold text-sm py-2.5 px-8 rounded-xl transition-all shadow-sm">
           Done
         </button>
       </div>
+
+      {/* Unsaved Changes Confirmation Modal */}
+      {showExitModal && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[1000] p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border border-gray-100">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+                <Icon icon="material-symbols:warning-rounded" width="24" height="24" color="#d97706" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-gray-900">Unsaved Assignment Details</h3>
+                <p className="text-xs text-gray-500 mt-0.5">You have filled out employee assignment details that haven't been assigned yet.</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-gray-600 mb-6 bg-amber-50/60 border border-amber-100 p-3 rounded-xl">
+              Would you like to save this assignment before leaving, or close without assigning?
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-2 justify-end">
+              <button
+                onClick={() => setShowExitModal(false)}
+                className="px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-xl transition-colors order-3 sm:order-1"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setShowExitModal(false);
+                  navigate("/assignments", { state: { selProject } });
+                }}
+                className="px-4 py-2 text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-xl transition-colors order-2"
+              >
+                Discard &amp; Leave
+              </button>
+              <button
+                onClick={async () => {
+                  setShowExitModal(false);
+                  await handleSubmit(true);
+                }}
+                disabled={saving}
+                className="px-4 py-2 text-xs font-bold text-white bg-[#856BFF] hover:bg-[#7259e6] rounded-xl transition-colors shadow-sm order-1 sm:order-3"
+              >
+                Assign &amp; Leave
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ── Delete Confirmation Modal ── */}
+      {deleteTarget && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[1100] p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border border-gray-100 animate-in fade-in zoom-in-95 duration-150">
+            {/* Icon + Title */}
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-11 h-11 rounded-full bg-rose-100 flex items-center justify-center shrink-0">
+                <Icon icon="material-symbols:person-remove" width="22" height="22" color="#e11d48" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-gray-900">Remove Assignment</h3>
+                <p className="text-xs text-gray-400 mt-0.5">This action cannot be undone.</p>
+              </div>
+            </div>
+
+            {/* Detail pill */}
+            <div className="bg-rose-50 border border-rose-100 rounded-xl p-3.5 mb-5 flex flex-col gap-1.5">
+              <div className="flex items-center gap-2 text-[11px] text-rose-700">
+                <Icon icon="material-symbols:person" width="14" height="14" />
+                <span className="font-semibold">{deleteTarget.user_name}</span>
+              </div>
+              <div className="flex items-center gap-2 text-[11px] text-rose-600">
+                <Icon icon="material-symbols:task" width="14" height="14" />
+                <span>{deleteTarget.task_name}</span>
+              </div>
+            </div>
+
+            <p className="text-xs text-gray-500 mb-6">
+              Are you sure you want to remove this employee from the task? Their assignment record will be permanently deleted.
+            </p>
+
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setDeleteTarget(null)}
+                disabled={deleting}
+                className="px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-xl transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                disabled={deleting}
+                className="px-5 py-2 text-xs font-bold text-white bg-rose-500 hover:bg-rose-600 active:bg-rose-700 rounded-xl transition-colors shadow-sm disabled:opacity-50 flex items-center gap-1.5"
+              >
+                {deleting ? (
+                  <>
+                    <svg className="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                    </svg>
+                    Removing…
+                  </>
+                ) : (
+                  <>
+                    <Icon icon="material-symbols:delete" width="14" height="14" />
+                    Remove
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

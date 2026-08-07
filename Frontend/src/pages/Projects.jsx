@@ -62,6 +62,9 @@ const CreateProjectModal = ({ onClose, onCreated }) => {
   const handleSubmit = async () => {
     if (!form.projectName.trim()) return setError('Project Name is required.');
     if (!form.customer.trim()) return setError('Customer is required.');
+    if (form.startDate && form.endDate && form.endDate < form.startDate) {
+      return setError('End Date cannot be earlier than Start Date.');
+    }
     setSaving(true);
     try {
       await axios.post(
@@ -149,6 +152,7 @@ const CreateProjectModal = ({ onClose, onCreated }) => {
             <input
               type="date"
               value={form.startDate}
+              max={form.endDate || undefined}
               onChange={e => handleChange('startDate', e.target.value)}
               style={O.input}
             />
@@ -160,6 +164,7 @@ const CreateProjectModal = ({ onClose, onCreated }) => {
             <input
               type="date"
               value={form.endDate}
+              min={form.startDate || undefined}
               onChange={e => handleChange('endDate', e.target.value)}
               style={O.input}
             />
@@ -236,6 +241,9 @@ const EditProjectModal = ({ project, onClose, onUpdated }) => {
   const handleSubmit = async () => {
     if (!form.projectName.trim()) return setError('Project Name is required.');
     if (!form.customer.trim()) return setError('Customer is required.');
+    if (form.startDate && form.endDate && form.endDate < form.startDate) {
+      return setError('End Date cannot be earlier than Start Date.');
+    }
     setSaving(true);
     try {
       await axios.put(
@@ -323,6 +331,7 @@ const EditProjectModal = ({ project, onClose, onUpdated }) => {
             <input
               type="date"
               value={form.startDate}
+              max={form.endDate || undefined}
               onChange={e => handleChange('startDate', e.target.value)}
               style={O.input}
             />
@@ -334,6 +343,7 @@ const EditProjectModal = ({ project, onClose, onUpdated }) => {
             <input
               type="date"
               value={form.endDate}
+              min={form.startDate || undefined}
               onChange={e => handleChange('endDate', e.target.value)}
               style={O.input}
             />

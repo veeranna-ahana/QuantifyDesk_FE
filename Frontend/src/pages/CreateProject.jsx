@@ -109,7 +109,11 @@ export default function CreateProject() {
 
   const set = (field, val) => {
     setForm(prev => ({ ...prev, [field]: val }));
-    setErrors(prev => ({ ...prev, [field]: '' }));
+    setErrors(prev => ({
+      ...prev,
+      [field]: '',
+      ...(field === 'startDate' || field === 'endDate' ? { endDate: '' } : {})
+    }));
   };
 
   const validate = () => {
@@ -118,6 +122,9 @@ export default function CreateProject() {
     if (!form.customer.trim()) e.customer = 'Customer is required.';
     if (!form.nbdId.trim()) e.nbdId = 'NBD ID is required.';
     if (!form.projectCode.trim()) e.projectCode = 'Project Code is required.';
+    if (form.startDate && form.endDate && form.endDate < form.startDate) {
+      e.endDate = 'End Date cannot be earlier than Start Date.';
+    }
     return e;
   };
 
@@ -351,6 +358,7 @@ export default function CreateProject() {
                 <input
                   type="date"
                   value={form.startDate}
+                  max={form.endDate || undefined}
                   onChange={e => set('startDate', e.target.value)}
                   className={inputCls}
                 />
@@ -362,9 +370,13 @@ export default function CreateProject() {
                 <input
                   type="date"
                   value={form.endDate}
+                  min={form.startDate || undefined}
                   onChange={e => set('endDate', e.target.value)}
-                  className={inputCls}
+                  className={`${inputCls} ${errors.endDate ? 'border-red-400 ring-2 ring-red-200' : ''}`}
                 />
+                {errors.endDate && (
+                  <p className="text-red-500 text-xs mt-1">{errors.endDate}</p>
+                )}
               </div>
 
               {/* Project Type */}

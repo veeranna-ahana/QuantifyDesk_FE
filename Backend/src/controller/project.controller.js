@@ -28,6 +28,12 @@ const createProject = async (req, res, next) => {
       });
     }
 
+    if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
+      return res.status(400).json({
+        message: 'End date cannot be earlier than start date',
+      });
+    }
+
     // ─── Check for duplicates BEFORE insert ──────────────────────────────
     const duplicateErrors = [];
     const duplicateDetails = [];
@@ -360,6 +366,12 @@ const updateProject = async (req, res, next) => {
     const updatedProjectType = projectType !== undefined ? projectType : current.project_type;
     const updatedTeamLead = teamLead !== undefined ? teamLead : current.team_lead;
     const updatedCreateCr = createCr !== undefined ? createCr : current.create_cr;
+
+    if (updatedStartDate && updatedEndDate && new Date(updatedEndDate) < new Date(updatedStartDate)) {
+      return res.status(400).json({
+        message: 'End date cannot be earlier than start date',
+      });
+    }
 
     // ─── Check for duplicates (excluding current project) ────────────────
     const duplicateErrors = [];

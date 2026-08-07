@@ -94,12 +94,12 @@ export default function EffortEstimate() {
               return {
                 role: r.role,
                 unitLabel: r.unitLabel,
-                days: ex.effort_days != null ? String(ex.effort_days) : '',
-                hrs: ex.effort_hrs != null ? String(ex.effort_hrs) : '',
-                bufferDays: ex.buffer_days != null ? String(ex.buffer_days) : '',
-                bufferHrs: ex.buffer_hrs != null ? String(ex.buffer_hrs) : '',
-                totalHrs: ex.total_hrs != null ? String(ex.total_hrs) : '',
-                units: ex.units != null ? String(ex.units) : '',
+                days: ex.effort_days ? String(ex.effort_days) : '',
+                hrs: ex.effort_hrs ? String(ex.effort_hrs) : '',
+                bufferDays: ex.buffer_days ? String(ex.buffer_days) : '',
+                bufferHrs: ex.buffer_hrs ? String(ex.buffer_hrs) : '',
+                totalHrs: ex.total_hrs ? String(ex.total_hrs) : '',
+                units: ex.units ? String(ex.units) : '',
               };
             })
           );
@@ -154,11 +154,22 @@ export default function EffortEstimate() {
       const hasDays = (parseFloat(r.days) || 0) > 0;
       const hasBuf = (parseFloat(r.bufferDays) || 0) > 0;
       const hasUnits = r.units && parseFloat(r.units) > 0;
-      return (hasDays || hasBuf) && !hasUnits;
+      // Block if units are present but no effort days (or buffer)
+      // Block if effort days/buffer present but units are missing
+      return ((hasDays || hasBuf) && !hasUnits) || (hasUnits && !hasDays);
     });
 
     if (missing.length) {
-      toast.error(`Units required for: ${missing.map(r => r.role).join(', ')}`);
+      const withUnitsNoEffort = missing.filter(r => {
+        const hasDays = (parseFloat(r.days) || 0) > 0;
+        const hasUnits = r.units && parseFloat(r.units) > 0;
+        return hasUnits && !hasDays;
+      });
+      if (withUnitsNoEffort.length) {
+        toast.error(`Effort Days required for: ${withUnitsNoEffort.map(r => r.role).join(', ')}`);
+      } else {
+        toast.error(`Units required for: ${missing.map(r => r.role).join(', ')}`);
+      }
       return;
     }
 

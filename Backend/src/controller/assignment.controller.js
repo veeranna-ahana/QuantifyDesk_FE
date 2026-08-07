@@ -951,17 +951,16 @@ const updateAssignment = async (req, res, next) => {
       });
     }
 
-    // ─── Check project status (additional safety) ──────────────
-    const allowedProjectStatuses = ['Not started', null, ''];
+    // ─── Check project status: block only completed/abandoned projects ────
     const projectStatus = currentAssignment.project_status || 'Not started';
-    
-    if (!allowedProjectStatuses.includes(projectStatus)) {
+    const blockedStatuses = ['Completed', 'Abandoned'];
+
+    if (blockedStatuses.includes(projectStatus)) {
       return res.status(403).json({
         success: false,
-        message: 'Cannot update assignment. Project is already in progress, completed, or abandoned',
+        message: `Cannot update assignment. Project is ${projectStatus}.`,
         details: {
           project_status: projectStatus,
-          allowed_status: 'Not started',
           project_id: currentAssignment.project_id
         }
       });
