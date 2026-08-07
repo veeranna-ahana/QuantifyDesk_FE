@@ -305,19 +305,35 @@ const MyWork = () => {
   };
 
   const submitLog = async () => {
-    if (!logDate) { setLogError("Date is required."); return; }
-    if (!todaysTasks || !todaysTasks.trim()) { setLogError("Today's Tasks are required."); return; }
-    if (!totalTimeNeeded || !totalTimeNeeded.trim()) { setLogError("Total Time Spent is required."); return; }
-
-    if (logUnits && Number(logUnits) > 0) {
+    const errors = {};
+    if (!logDate) {
+      errors.logDate = "Update Date is required.";
+    }
+    if (logUnits === "" || logUnits === null || logUnits === undefined) {
+      errors.logUnits = "Units Completed is required.";
+    } else if (Number(logUnits) < 0) {
+      errors.logUnits = "Units Completed cannot be negative.";
+    } else {
       const effective = logModal.units_pending - (Number(logModal.units_awaiting) || 0);
       if (Number(logUnits) > effective) {
-        setLogError(`Max ${effective} units available to log `);
-        return;
+        errors.logUnits = `Max ${effective} units available to log`;
       }
-    } else if (logUnits && Number(logUnits) < 0) {
-      setLogError("Units cannot be negative."); return;
     }
+    if (!totalTimeNeeded || !totalTimeNeeded.trim()) {
+      errors.totalTimeNeeded = "Total Estimated Time is required.";
+    }
+    if (!todaysTasks || !todaysTasks.trim()) {
+      errors.todaysTasks = "Today's Progress & Tasks are required.";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setLogErrors(errors);
+      setLogError("Please fill in all mandatory fields.");
+      return;
+    }
+
+    setLogErrors({});
+    setLogError("");
 
     // ✅ Check if time exceeds estimated
     const estimated = parseTime(logModal?.estimated_hours);
@@ -497,16 +513,16 @@ const MyWork = () => {
             </div>
             <div className="mb-4">
               <label className="block text-xs font-semibold text-gray-600 mb-1.5">
-                Units Completed (Max {pendingVal})
+                Units Completed <span className="text-red-500">*</span> (Max {pendingVal})
               </label>
               <input
                 type="number"
                 value={logUnits}
                 min="0"
                 max={pendingVal}
-                onChange={e => { setLogUnits(e.target.value); setLogError(""); }}
+                onChange={e => { setLogUnits(e.target.value); setLogErrors(prev => ({ ...prev, logUnits: "" })); setLogError(""); }}
                 placeholder="0"
-                className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#856BFF]/40"
+                className={`w-full px-3 py-2 border ${logErrors.logUnits ? "border-red-500 focus:ring-red-200" : "border-gray-200 focus:ring-[#856BFF]/40"} rounded-md text-sm focus:outline-none focus:ring-2`}
               />
               {logErrors.logUnits && <p className="text-red-500 text-xs mt-1 font-medium">{logErrors.logUnits}</p>}
             </div>
@@ -530,7 +546,7 @@ const MyWork = () => {
 
             <div className="mb-4">
               <label className="block text-xs font-semibold text-gray-600 mb-1.5">
-                Total Time Needed (HH:MM) <span className="text-red-500">*</span>
+                Total Estimated Time (HH:MM) <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <Icon icon="material-symbols:schedule" width="16" height="16" color="#856BFF" className="absolute left-3 top-1/2 -translate-y-1/2" />
@@ -539,12 +555,12 @@ const MyWork = () => {
                   value={totalTimeNeeded}
                   onChange={e => {
                     setTotalTimeNeeded(e.target.value);
+                    setLogErrors(prev => ({ ...prev, totalTimeNeeded: "" }));
                     setLogError("");
                     checkTimeExceed(e.target.value);
                   }}
                   placeholder="e.g. 12:30"
-                  className={`w-full pl-9 pr-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#856BFF]/40 ${exceedWarning ? 'border-amber-500 ring-2 ring-amber-200' : 'border-gray-200'
-                    }`}
+                  className={`w-full pl-9 pr-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 ${logErrors.totalTimeNeeded ? "border-red-500 focus:ring-red-200" : exceedWarning ? 'border-amber-500 ring-2 ring-amber-200' : 'border-gray-200 focus:ring-[#856BFF]/40'}`}
                 />
               </div>
               {exceedWarning && (
@@ -553,8 +569,8 @@ const MyWork = () => {
                   This exceeds the estimated time
                 </p>
               )}
+              {logErrors.totalTimeNeeded && <p className="text-red-500 text-xs mt-1 font-medium">{logErrors.totalTimeNeeded}</p>}
             </div>
-            {logErrors.totalTimeNeeded && <p className="text-red-500 text-xs mt-1 font-medium">{logErrors.totalTimeNeeded}</p>}
           </div>
 
           <div className="mb-4">
