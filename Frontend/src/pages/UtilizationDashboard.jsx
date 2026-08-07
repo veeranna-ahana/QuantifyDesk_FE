@@ -212,7 +212,7 @@ const HealthCard = ({ p, index = 0 }) => {
           style={{ width: `${Math.min(pct, 100)}%`, background: isZero ? "#e74c3c" : col }} />
       </div>
 
-     {/* metrics */}
+      {/* metrics */}
       <div className="flex gap-1.5">
         <MetricChip label="Effort" value={load} color="#856BFF" />
         <MetricChip label="Assigned" value={p.total_assigned} color="#856BFF" />
@@ -572,8 +572,8 @@ const UtilizationDashboard = () => {
                     const empName = empObj?.emp_name || unitEmployee;
                     const empProjectRows = tableData.filter(r => {
                       const matchEmp = r.user_name === empName;
-                      const matchProj = String(r.project_id) === String(unitProject) || 
-                                        r.project_name === unitProjectSummary?.project_name;
+                      const matchProj = String(r.project_id) === String(unitProject) ||
+                        r.project_name === unitProjectSummary?.project_name;
                       return matchEmp && matchProj;
                     });
                     const totalHrsAssigned = empProjectRows.reduce((s, r) => s + Number(r.hours_assigned || 0), 0);
@@ -624,23 +624,23 @@ const UtilizationDashboard = () => {
                           const empName = empObj?.emp_name || unitEmployee;
                           const empProjectRows = tableData.filter(r => {
                             const matchEmp = r.user_name === empName;
-                            const matchProj = String(r.project_id) === String(unitProject) || 
-                                              r.project_name === unitProjectSummary?.project_name;
+                            const matchProj = String(r.project_id) === String(unitProject) ||
+                              r.project_name === unitProjectSummary?.project_name;
                             return matchEmp && matchProj;
                           });
 
-                          const displayRows = empProjectRows.length > 0 
-                            ? empProjectRows 
+                          const displayRows = empProjectRows.length > 0
+                            ? empProjectRows
                             : unitEmpTasks.map(t => ({
-                                user_name: empName,
-                                project_name: unitProjectSummary?.project_name || "—",
-                                task_name: t.task_name,
-                                units_assigned: t.units_assigned,
-                                units_completed: t.units_completed,
-                                units_pending: t.units_pending,
-                                hours_assigned: 0,
-                                hours_utilized: 0
-                              }));
+                              user_name: empName,
+                              project_name: unitProjectSummary?.project_name || "—",
+                              task_name: t.task_name,
+                              units_assigned: t.units_assigned,
+                              units_completed: t.units_completed,
+                              units_pending: t.units_pending,
+                              hours_assigned: 0,
+                              hours_utilized: 0
+                            }));
 
                           if (displayRows.length === 0) {
                             return <tr><td colSpan={12} className="py-6 text-center text-gray-300">No tasks found</td></tr>;
@@ -880,13 +880,13 @@ const UtilizationDashboard = () => {
       {activeTab === "overview" && (<>
 
         {/* ── KPI Strip ── */}
-<div className="flex gap-3 flex-wrap mb-6">
-  <KpiCard icon="material-symbols:group" label="Employees" value={serviceDeliveryEmployees.length} accent="#856BFF" />
-  <KpiCard icon="material-symbols:timer" label="Effort (Hrs)" value={totalLoad} accent="#006C49" />
-  <KpiCard icon="material-symbols:assignment" label="Assigned" value={totalAssigned} accent="#784B00" />
-  <KpiCard icon="material-symbols:check-circle" label="Completed" value={totalCompleted} accent="#00714D" />
-  <KpiCard icon="material-symbols:trending-up" label="Overall Comp." value={`${overallPct}%`} accent="#BA1A1A" sub />
-</div>
+        <div className="flex gap-3 flex-wrap mb-6">
+          <KpiCard icon="material-symbols:group" label="Employees" value={serviceDeliveryEmployees.length} accent="#856BFF" />
+          <KpiCard icon="material-symbols:timer" label="Effort (Hrs)" value={totalLoad} accent="#006C49" />
+          <KpiCard icon="material-symbols:assignment" label="Assigned" value={totalAssigned} accent="#784B00" />
+          <KpiCard icon="material-symbols:check-circle" label="Completed" value={totalCompleted} accent="#00714D" />
+          <KpiCard icon="material-symbols:trending-up" label="Overall Comp." value={`${overallPct}%`} accent="#BA1A1A" sub />
+        </div>
 
         {/* ── Middle row: Employee Utilization + Work Distribution ── */}
         <div className="flex gap-4 mb-5 flex-wrap">
@@ -983,7 +983,7 @@ const UtilizationDashboard = () => {
             <div className="flex items-center gap-2 flex-wrap">
               {/* search */}
               <div className="min-w-[180px]">
-                <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-1.5 h-[38px]">
+                <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-1.5 h-[38px] bg-white focus-within:border-purple-400 transition-colors">
                   <Icon icon="material-symbols:search" width="16" height="16" color="#856BFF" />
                   <input
                     type="text"
@@ -996,6 +996,18 @@ const UtilizationDashboard = () => {
                     className="w-full bg-transparent border-0 outline-none ring-0 shadow-none focus:border-0 focus:outline-none focus:ring-0 focus:shadow-none text-[13px] text-gray-600 placeholder-gray-400"
                     style={{ outline: 'none', border: 'none', boxShadow: 'none', WebkitAppearance: 'none' }}
                   />
+                  {search && (
+                    <button
+                      onClick={() => {
+                        setSearch('');
+                        setCurrentPage(1);
+                      }}
+                      className="text-gray-400 hover:text-gray-600 transition-colors shrink-0 p-0.5"
+                      title="Clear search"
+                    >
+                      <Icon icon="material-symbols:close" width="16" height="16" />
+                    </button>
+                  )}
                 </div>
               </div>
               {/* employee filter */}
@@ -1107,7 +1119,7 @@ const UtilizationDashboard = () => {
             </div>
             <div className="flex flex-wrap items-center gap-2">
               {/* Search */}
-              <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-1.5">
+              <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-1.5 bg-white focus-within:border-purple-400 transition-colors">
                 <Icon icon="material-symbols:search" width="14" height="14" color="#856BFF" />
                 <input
                   type="text"
@@ -1117,6 +1129,15 @@ const UtilizationDashboard = () => {
                   className="w-36 bg-transparent border-0 outline-none ring-0 shadow-none focus:border-0 focus:outline-none focus:ring-0 text-[12px] text-gray-600 placeholder-gray-400"
                   style={{ outline: 'none', border: 'none', boxShadow: 'none' }}
                 />
+                {healthSearch && (
+                  <button
+                    onClick={() => { setHealthSearch(""); setShowAllHealth(false); }}
+                    className="text-gray-400 hover:text-gray-600 transition-colors shrink-0 p-0.5"
+                    title="Clear search"
+                  >
+                    <Icon icon="material-symbols:close" width="14" height="14" />
+                  </button>
+                )}
               </div>
               {/* Status filter */}
               <select

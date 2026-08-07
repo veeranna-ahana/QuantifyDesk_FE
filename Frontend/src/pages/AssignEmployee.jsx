@@ -53,6 +53,8 @@ const AssignEmployee = () => {
   const [savingEdit, setSavingEdit] = useState({});
   const [workloadOpen, setWorkloadOpen] = useState(true);
   const [showExitModal, setShowExitModal] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null); // { id, user_name, task_name }
+  const [deleting, setDeleting] = useState(false);
   const [collapsedProjects, setCollapsedProjects] = useState({});
   const toggleProject = (pid) => setCollapsedProjects(prev => ({ ...prev, [pid]: !prev[pid] }));
 
@@ -78,6 +80,22 @@ const AssignEmployee = () => {
     }
   }, [modal, selProject, navigate]);
 
+  // Always fetch fresh assignments from server on mount (fixes stale data after delete + browser refresh)
+  const refreshAssignments = async () => {
+    if (!selProject) return;
+    try {
+      const res = await axios.get(`${BASE_URL}/api/assignments?projectId=${selProject}`, { headers: getHeaders() });
+      setAssignments(res.data || []);
+      setExtraData({});
+    } catch { /* ignore */ }
+  };
+
+  useEffect(() => {
+    if (selProject) {
+      refreshAssignments();
+    }
+  }, [selProject]);
+
   // Fetch employee workload when user selected
   useEffect(() => {
     if (!selUser) { setWorkload(null); return; }
@@ -96,13 +114,6 @@ const AssignEmployee = () => {
   }, [selUser]);
 
   if (!modal || !selProject) return null;
-
-  const refreshAssignments = async () => {
-    try {
-      const res = await axios.get(`${BASE_URL}/api/assignments?projectId=${selProject}`, { headers: getHeaders() });
-      setAssignments(res.data || []);
-    } catch { /* ignore */ }
-  };
 
   const existing = assignments
     .filter(a => a.role === modal.role && a.task_name === modal.task_name)
@@ -145,7 +156,8 @@ const AssignEmployee = () => {
   const handleSubmit = async (shouldNavigateOnSuccess = false) => {
     if (!selUser) return toast.error("Please select an employee.");
     if (!units || Number(units) <= 0) return toast.error("Enter units > 0.");
-    const reqUnits = Number(units), reqDays = days ? Number(days) : 0, reqHours = hours ? Number(hours) : 0;
+    if (!days || Number(days) <= 0) return toast.error("Enter days > 0 before assigning.");
+    const reqUnits = Number(units), reqDays = Number(days), reqHours = hours ? Number(hours) : 0;
     if (reqUnits > remainingUnits) return toast.error(`Only ${remainingUnits} units remaining.`);
     if (reqDays > remainingDays) return toast.error(`Only ${remainingDays} days remaining.`);
     if (reqHours > remainingHours) return toast.error(`Only ${remainingHours} hours remaining.`);
@@ -201,13 +213,27 @@ const AssignEmployee = () => {
     } finally { setSavingEdit(prev => ({ ...prev, [id]: false })); }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Remove this assignment?")) return;
+  const handleDelete = (id, user_name, task_name) => {
+    setDeleteTarget({ id, user_name, task_name });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
     try {
-      await axios.delete(`${BASE_URL}/api/assignments/${id}`, { headers: getHeaders() });
+      await axios.delete(`${BASE_URL}/api/assignments/${deleteTarget.id}`, { headers: getHeaders() });
+      // Instant UI update — remove row without waiting for server round-trip
+      setAssignments(prev => prev.filter(a => a.id !== deleteTarget.id));
+      setExtraData(prev => { const n = { ...prev }; delete n[deleteTarget.id]; return n; });
+      setDeleteTarget(null);
       toast.success("Assignment removed.");
+      // Re-sync from server to guarantee the list is accurate
       await refreshAssignments();
-    } catch { toast.error("Failed to remove assignment."); }
+    } catch {
+      toast.error("Failed to remove assignment.");
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const rs = roleStyle(modal.role);
@@ -516,7 +542,7 @@ const AssignEmployee = () => {
                               <>
                                 <button onClick={() => startEdit(a)}
                                   className="border border-[#856BFF] text-[#856BFF] hover:bg-[#856BFF]/10 font-bold px-3 py-1 rounded-lg transition-all">Edit</button>
-                                <button onClick={() => handleDelete(a.id)}
+                                <button onClick={() => handleDelete(a.id, a.user_name, modal.task_name)}
                                   className="border border-rose-500 text-rose-500 hover:bg-rose-50 font-bold px-3 py-1 rounded-lg transition-all">Remove</button>
                               </>
                             )}
@@ -587,6 +613,69 @@ const AssignEmployee = () => {
                 className="px-4 py-2 text-xs font-bold text-white bg-[#856BFF] hover:bg-[#7259e6] rounded-xl transition-colors shadow-sm order-1 sm:order-3"
               >
                 Assign &amp; Leave
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ── Delete Confirmation Modal ── */}
+      {deleteTarget && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[1100] p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border border-gray-100 animate-in fade-in zoom-in-95 duration-150">
+            {/* Icon + Title */}
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-11 h-11 rounded-full bg-rose-100 flex items-center justify-center shrink-0">
+                <Icon icon="material-symbols:person-remove" width="22" height="22" color="#e11d48" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-gray-900">Remove Assignment</h3>
+                <p className="text-xs text-gray-400 mt-0.5">This action cannot be undone.</p>
+              </div>
+            </div>
+
+            {/* Detail pill */}
+            <div className="bg-rose-50 border border-rose-100 rounded-xl p-3.5 mb-5 flex flex-col gap-1.5">
+              <div className="flex items-center gap-2 text-[11px] text-rose-700">
+                <Icon icon="material-symbols:person" width="14" height="14" />
+                <span className="font-semibold">{deleteTarget.user_name}</span>
+              </div>
+              <div className="flex items-center gap-2 text-[11px] text-rose-600">
+                <Icon icon="material-symbols:task" width="14" height="14" />
+                <span>{deleteTarget.task_name}</span>
+              </div>
+            </div>
+
+            <p className="text-xs text-gray-500 mb-6">
+              Are you sure you want to remove this employee from the task? Their assignment record will be permanently deleted.
+            </p>
+
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setDeleteTarget(null)}
+                disabled={deleting}
+                className="px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-xl transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                disabled={deleting}
+                className="px-5 py-2 text-xs font-bold text-white bg-rose-500 hover:bg-rose-600 active:bg-rose-700 rounded-xl transition-colors shadow-sm disabled:opacity-50 flex items-center gap-1.5"
+              >
+                {deleting ? (
+                  <>
+                    <svg className="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                    </svg>
+                    Removing…
+                  </>
+                ) : (
+                  <>
+                    <Icon icon="material-symbols:delete" width="14" height="14" />
+                    Remove
+                  </>
+                )}
               </button>
             </div>
           </div>

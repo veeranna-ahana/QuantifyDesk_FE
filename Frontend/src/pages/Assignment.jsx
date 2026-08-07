@@ -775,19 +775,27 @@ const AssignmentScreen = () => {
   );
   const [projects, setProjects] = useState([]);
   const [catalog, setCatalog] = useState({});
-  const [selProject, setSelProject] = useState(() => {
-    return location.state?.selProject || sessionStorage.getItem("selectedAssignmentProject") || "";
-  });
+  // Only restore a previous project when navigating *back* from AssignEmployee.
+  // A fresh sidebar click has no location.state, so always start blank.
+  const [selProject, setSelProject] = useState(
+    () => location.state?.selProject || ""
+  );
 
   useEffect(() => {
     if (location.state?.selProject) {
       setSelProject(location.state.selProject);
+    } else {
+      // Fresh navigation (sidebar click) — clear any stale stored value
+      sessionStorage.removeItem("selectedAssignmentProject");
+      setSelProject("");
     }
-  }, [location.state?.selProject]);
+  }, [location.key]);
 
   useEffect(() => {
     if (selProject) {
       sessionStorage.setItem("selectedAssignmentProject", selProject);
+    } else {
+      sessionStorage.removeItem("selectedAssignmentProject");
     }
   }, [selProject]);
   const [loadDraft, setLoadDraft] = useState({});
