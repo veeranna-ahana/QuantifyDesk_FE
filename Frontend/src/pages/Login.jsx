@@ -67,40 +67,46 @@ export default function Login() {
   console.log("userdata", userData);
   console.log("authReady", authReady);
 
+  /* ─── Determine landing page from a role string ────────────────────── */
+  const getRoleBasedRedirect = (role) => {
+    const r = (role || '').toUpperCase();
+    if (r === 'ADMIN' || r === 'MANAGER') return '/quantificationnew';
+    return '/my-work'; // EMPLOYEE and any other role
+  };
+
   /* ─── Helper to handle login response and check for multiple roles ─── */
-  const processLoginResult = (response, redirectPath) => {
+  const processLoginResult = (response) => {
     const rawResult = response.result;
     const rolesList = Array.isArray(rawResult) ? rawResult : (rawResult ? [rawResult] : []);
 
     if (rolesList.length > 1) {
-      setPendingLogin({ response, redirectPath });
+      // Store only the response; redirect is computed after user picks a role
+      setPendingLogin({ response });
       setShowRoleModal(true);
       setLoading(false);
     } else {
       dispatch(loginUser(response));
-      navigate(redirectPath);
+      navigate(getRoleBasedRedirect(rolesList[0]?.role));
     }
   };
 
-  /* ─── Role modal selection handler ─── */
+  /* ─── Role modal selection handler ────────────────────────────── */
   const handleSelectRole = (selectedRoleObj) => {
     if (!pendingLogin) return;
-    const { response, redirectPath } = pendingLogin;
+    const { response } = pendingLogin;
 
     const rawResult = response.result;
     const allRoles = Array.isArray(rawResult) ? rawResult : [rawResult];
     const otherRoles = allRoles.filter((r) => r !== selectedRoleObj);
     const reorderedResult = [selectedRoleObj, ...otherRoles];
 
-    const updatedResponse = {
-      ...response,
-      result: reorderedResult,
-    };
+    const updatedResponse = { ...response, result: reorderedResult };
 
     dispatch(loginUser(updatedResponse));
     setShowRoleModal(false);
     setPendingLogin(null);
-    navigate(redirectPath);
+    // Navigate based on the role the user actually chose in the modal
+    navigate(getRoleBasedRedirect(selectedRoleObj?.role));
   };
 
   /* ─── Auto login when MyAhana token received ─── */
@@ -122,7 +128,7 @@ export default function Login() {
         console.log("login response", response);
 
         if (response.status === "success") {
-          processLoginResult(response, "/quantificationnew");
+          processLoginResult(response);
         } else {
           setError("Login failed. Please try again.");
           setLoading(false);
@@ -155,7 +161,7 @@ export default function Login() {
       });
 
       if (response.status === "success") {
-        processLoginResult(response, "/quantification");
+        processLoginResult(response);
       } else {
         setError(response.message || "Login failed");
         setLoading(false);

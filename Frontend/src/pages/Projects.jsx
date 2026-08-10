@@ -491,7 +491,8 @@ const EffortEstimateModal = ({ projects, onClose, onSaved, initialProjectId, rea
   const handleChange = (idx, field, val) => {
     setRows(prev => {
       const next = [...prev];
-      next[idx] = { ...next[idx], [field]: val };
+      const sanitizedVal = field === 'units' ? (val === '' ? '' : val.replace(/\D/g, '')) : val;
+      next[idx] = { ...next[idx], [field]: sanitizedVal };
 
       // Auto-calculate hrs from days
       if (field === 'days') {
@@ -535,7 +536,7 @@ const EffortEstimateModal = ({ projects, onClose, onSaved, initialProjectId, rea
       const days = parseFloat(r.days) || 0;
       const bufferDays = parseFloat(r.bufferDays) || 0;
       const hasEffort = days > 0 || bufferDays > 0;
-      const hasUnits = r.units && parseFloat(r.units) > 0;
+      const hasUnits = r.units && parseInt(r.units, 10) > 0;
       return hasEffort && !hasUnits;
     });
 
@@ -702,9 +703,10 @@ const EffortEstimateModal = ({ projects, onClose, onSaved, initialProjectId, rea
                       <span style={E.readOnlyVal}>{r.units || '—'}</span>
                     ) : (
                       <input
-                        type="number" min="0"
+                        type="number" min="0" step="1"
                         value={r.units} placeholder="0"
-                        onChange={e => handleChange(i, 'units', e.target.value)}
+                        onKeyDown={(e) => { if (e.key === '.' || e.key === 'e' || e.key === 'E' || e.key === '+' || e.key === '-') e.preventDefault(); }}
+                        onChange={e => handleChange(i, 'units', e.target.value.replace(/\D/g, ''))}
                         style={E.numInput}
                       />
                     )}

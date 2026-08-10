@@ -79,9 +79,13 @@ const handleEdit = (update) => {
 
 const handleUpdate = async () => {
   try {
+    const cleanData = {
+      ...editData,
+      units_completed: parseInt(editData.units_completed, 10) || 0,
+    };
     await axios.put(
       `${BASE_URL}/api/daily-updates/${editId}`,
-      editData,
+      cleanData,
       { headers: getAuthHeaders() }
     );
 
@@ -177,7 +181,7 @@ const handleUpdate = async () => {
           task_name: selectedTask,
           user_id: id,
           date,
-          units_completed: unitsCompleted || 0,
+          units_completed: parseInt(unitsCompleted, 10) || 0,
           hours_spent: hoursSpent || 0,
           remarks: remarks || ""
         },
@@ -276,9 +280,11 @@ console.log("updates",updates);
               type="number"
               placeholder="Units Completed"
               value={unitsCompleted}
-              onChange={(e) => setUnitsCompleted(e.target.value)}
-              style={inputStyle}
               min="0"
+              step="1"
+              onKeyDown={(e) => { if (e.key === '.' || e.key === 'e' || e.key === 'E' || e.key === '+' || e.key === '-') e.preventDefault(); }}
+              onChange={(e) => setUnitsCompleted(e.target.value.replace(/\D/g, ''))}
+              style={inputStyle}
             />
           </div>
 
@@ -399,9 +405,12 @@ console.log("updates",updates);
                       {editId === u.id ? (
                         <input
                           type="number"
+                          min="0"
+                          step="1"
                           value={editData.units_completed}
+                          onKeyDown={(e) => { if (e.key === '.' || e.key === 'e' || e.key === 'E' || e.key === '+' || e.key === '-') e.preventDefault(); }}
                           onChange={(e) =>
-                            setEditData({ ...editData, units_completed: e.target.value })
+                            setEditData({ ...editData, units_completed: e.target.value.replace(/\D/g, '') })
                           }
                           style={inputStyle}
                         />

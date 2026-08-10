@@ -155,9 +155,10 @@ const AssignEmployee = () => {
 
   const handleSubmit = async (shouldNavigateOnSuccess = false) => {
     if (!selUser) return toast.error("Please select an employee.");
-    if (!units || Number(units) <= 0) return toast.error("Enter units > 0.");
+    const reqUnits = parseInt(units, 10);
+    if (!units || isNaN(reqUnits) || reqUnits <= 0) return toast.error("Enter units > 0.");
     if (!days || Number(days) <= 0) return toast.error("Enter days > 0 before assigning.");
-    const reqUnits = Number(units), reqDays = Number(days), reqHours = hours ? Number(hours) : 0;
+    const reqDays = Number(days), reqHours = hours ? Number(hours) : 0;
     if (reqUnits > remainingUnits) return toast.error(`Only ${remainingUnits} units remaining.`);
     if (reqDays > remainingDays) return toast.error(`Only ${remainingDays} days remaining.`);
     if (reqHours > remainingHours) return toast.error(`Only ${remainingHours} hours remaining.`);
@@ -188,7 +189,8 @@ const AssignEmployee = () => {
   const cancelEdit = (id) => setEditingRow(prev => { const n = { ...prev }; delete n[id]; return n; });
   const handleEditField = (id, field, val) => {
     setEditingRow(prev => {
-      const row = { ...prev[id], [field]: val };
+      const sanitizedVal = field === 'units' ? (val === '' ? '' : val.replace(/\D/g, '')) : val;
+      const row = { ...prev[id], [field]: sanitizedVal };
       if (field === 'days') row.hours = val === '' || isNaN(Number(val)) ? '' : String(Number(val) * 8);
       if (field === 'hours') row.days = val === '' || isNaN(Number(val)) ? '' : String(Number(val) / 8);
       return { ...prev, [id]: row };
@@ -197,10 +199,10 @@ const AssignEmployee = () => {
   const handleEditSave = async (id) => {
     const row = editingRow[id];
     if (!row) return;
-    const unitsVal = Number(row.units);
+    const unitsVal = parseInt(row.units, 10);
     const daysVal = Number(row.days) || 0;
     const hoursVal = Number(row.hours) || 0;
-    if (!unitsVal || unitsVal <= 0) return toast.error('Units must be > 0.');
+    if (!unitsVal || isNaN(unitsVal) || unitsVal <= 0) return toast.error('Units must be > 0.');
 
     // Remaining capacity = total task limits minus what OTHER assignments use
     const otherAssignments = existing.filter(a => a.id !== id);
@@ -337,15 +339,17 @@ const AssignEmployee = () => {
               />
             </div>
             {[
-              { label: "Units", val: units, onChange: setUnits, exceeded: unitsExceeded },
+              { label: "Units", val: units, onChange: val => setUnits(val.replace(/\D/g, '')), exceeded: unitsExceeded, step: "1", integerOnly: true },
               { label: "Days", val: days, onChange: handleDaysChange, exceeded: daysExceeded, step: "0.5" },
               { label: "Hours", val: hours, onChange: handleHoursChange, exceeded: hoursExceeded, step: "0.5" },
-            ].map(({ label, val, onChange, exceeded, step }) => (
+            ].map(({ label, val, onChange, exceeded, step, integerOnly }) => (
               <div key={label}>
                 <label className="block text-[10px] font-semibold text-gray-400 mb-1">{label}</label>
                 <input
                   type="number" min="0" step={step || "1"} placeholder="0"
-                  value={val} onChange={e => onChange(e.target.value)}
+                  value={val}
+                  onKeyDown={integerOnly ? (e) => { if (e.key === '.' || e.key === 'e' || e.key === 'E' || e.key === '+' || e.key === '-') e.preventDefault(); } : undefined}
+                  onChange={e => onChange(e.target.value)}
                   className="w-full px-3 py-2.5 bg-white border rounded-xl text-xs font-semibold text-center text-gray-700 outline-none focus:border-[#856BFF] focus:ring-1 focus:ring-[#856BFF]"
                   style={{ borderColor: exceeded ? "#f43f5e" : "#e2e8f0" }}
                 />
@@ -536,9 +540,14 @@ const AssignEmployee = () => {
                       <td className="py-3 px-3 text-center">
                         {isEditing ? (
                           <div className="flex flex-col items-center gap-0.5">
-                            <input type="number" min="1" value={eRow.units} onChange={e => handleEditField(a.id, 'units', e.target.value)}
+                            <input
+                              type="number" min="1" step="1"
+                              value={eRow.units}
+                              onKeyDown={(e) => { if (e.key === '.' || e.key === 'e' || e.key === 'E' || e.key === '+' || e.key === '-') e.preventDefault(); }}
+                              onChange={e => handleEditField(a.id, 'units', e.target.value.replace(/\D/g, ''))}
                               className="w-14 px-1 py-0.5 border rounded text-center font-semibold text-xs outline-none"
-                              style={{ borderColor: editUnitsExceeded ? '#f43f5e' : '#856BFF' }} />
+                              style={{ borderColor: editUnitsExceeded ? '#f43f5e' : '#856BFF' }}
+                            />
                             {editUnitsExceeded && <span className="text-[9px] text-rose-500 font-bold">Max {editMaxUnits}</span>}
                           </div>
                         ) : <span className="font-bold text-[#856BFF]">{assignedUnits}</span>}

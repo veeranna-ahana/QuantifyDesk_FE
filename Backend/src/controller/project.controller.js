@@ -275,7 +275,7 @@ const upsertEffortEstimate = async (req, res, next) => {
           bufferDays,
           bufferHrs,
           totalHrs,
-          r.units     || null,
+          (r.units !== undefined && r.units !== null && r.units !== '' && !isNaN(parseInt(r.units, 10))) ? parseInt(r.units, 10) : null,
           r.unit_label || null,
         ]
       );

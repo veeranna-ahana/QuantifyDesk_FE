@@ -214,7 +214,7 @@ const bulkUpsertTaskLoads = async (req, res, next) => {
     project_id,
     load.role,
     load.task_name,
-    load.planned_units || 0,
+    load.planned_units !== undefined && load.planned_units !== null && load.planned_units !== '' ? parseInt(load.planned_units, 10) : 0,
     load.estimated_days || 0,
     load.estimated_hours || 0
   ]
@@ -719,7 +719,7 @@ const addAssignment = async (req, res, next) => {
     const currentDays = Number(assignedTotals[0]?.total_days || 0);
     const currentHours = Number(assignedTotals[0]?.total_hours || 0);
 
-    const newUnits = Number(units_assigned || 0);
+    const newUnits = parseInt(units_assigned, 10) || 0;
     const newDays = Number(estimated_days || 0);
     const newHours = Number(estimated_hours || 0);
 
@@ -1005,7 +1005,7 @@ const updateAssignment = async (req, res, next) => {
     const currentHours = Number(assignedTotals[0]?.total_hours || 0);
 
     // Determine new values (use existing if not provided)
-    const newUnits = units_assigned !== undefined ? Number(units_assigned) : Number(currentAssignment.units_assigned);
+    const newUnits = units_assigned !== undefined ? (parseInt(units_assigned, 10) || 0) : Number(currentAssignment.units_assigned);
     const newDays = estimated_days !== undefined ? Number(estimated_days) : Number(currentAssignment.estimated_days);
     const newHours = estimated_hours !== undefined ? Number(estimated_hours) : Number(currentAssignment.estimated_hours);
 

@@ -43,7 +43,7 @@ const addDailyUpdate = async (req, res, next) => {
 
     const insertParams = [
       project_id, role, task_name, user_id, date,
-      units_completed || 0,
+      parseInt(units_completed, 10) || 0,
       hours_spent || 0,
       remarks || null,
       todays_task || null,
@@ -186,7 +186,7 @@ const updateDailyUpdate = async (req, res, next) => {
 
     await query(sql, [
       project_id, role, task_name, date,
-      units_completed, hours_spent, remarks,
+      parseInt(units_completed, 10) || 0, hours_spent, remarks,
       todays_task || null,
       tomorrows_plan || null,
       risk_level || null,
