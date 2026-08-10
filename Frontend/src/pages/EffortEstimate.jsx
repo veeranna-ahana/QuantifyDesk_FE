@@ -46,7 +46,7 @@ const ChevDown = () => (
 );
 
 // ── Compact number input ──────────────────────────────────────────────────────
-const NumInput = ({ value, onChange, readOnly, placeholder = '0' }) =>
+const NumInput = ({ value, onChange, readOnly, placeholder = '0', step = '0.5', integerOnly = false }) =>
   readOnly ? (
     <span className="inline-block w-16 text-center text-sm font-semibold text-gray-700">
       {value || '—'}
@@ -55,10 +55,17 @@ const NumInput = ({ value, onChange, readOnly, placeholder = '0' }) =>
     <input
       type="number"
       min="0"
-      step="0.5"
+      step={step}
       value={value}
       placeholder={placeholder}
-      onChange={e => onChange(e.target.value)}
+      onKeyDown={integerOnly ? (e) => { if (e.key === '.' || e.key === 'e' || e.key === 'E' || e.key === '+' || e.key === '-') e.preventDefault(); } : undefined}
+      onChange={e => {
+        let val = e.target.value;
+        if (integerOnly && val !== '') {
+          val = val.replace(/\D/g, '');
+        }
+        onChange(val);
+      }}
       className="w-16 text-center border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white"
     />
   );
@@ -114,7 +121,8 @@ export default function EffortEstimate() {
   // ── Cell change handler with auto-calculations ───────────────────────────
   const handleChange = (idx, field, val) => {
     setRows(prev => {
-      const next = prev.map((r, i) => i === idx ? { ...r, [field]: val } : r);
+      const sanitizedVal = field === 'units' ? (val === '' ? '' : val.replace(/\D/g, '')) : val;
+      const next = prev.map((r, i) => i === idx ? { ...r, [field]: sanitizedVal } : r);
       const row = { ...next[idx] };
 
       if (field === 'days') {
@@ -153,7 +161,7 @@ export default function EffortEstimate() {
     const missing = rows.filter(r => {
       const hasDays = (parseFloat(r.days) || 0) > 0;
       const hasBuf = (parseFloat(r.bufferDays) || 0) > 0;
-      const hasUnits = r.units && parseFloat(r.units) > 0;
+      const hasUnits = r.units && parseInt(r.units, 10) > 0;
       // Block if units are present but no effort days (or buffer)
       // Block if effort days/buffer present but units are missing
       return ((hasDays || hasBuf) && !hasUnits) || (hasUnits && !hasDays);
@@ -162,7 +170,7 @@ export default function EffortEstimate() {
     if (missing.length) {
       const withUnitsNoEffort = missing.filter(r => {
         const hasDays = (parseFloat(r.days) || 0) > 0;
-        const hasUnits = r.units && parseFloat(r.units) > 0;
+        const hasUnits = r.units && parseInt(r.units, 10) > 0;
         return hasUnits && !hasDays;
       });
       if (withUnitsNoEffort.length) {
@@ -349,6 +357,8 @@ export default function EffortEstimate() {
                       <NumInput
                         value={r.units}
                         readOnly={readOnly}
+                        step="1"
+                        integerOnly={true}
                         onChange={val => handleChange(i, 'units', val)}
                       />
                     </td>

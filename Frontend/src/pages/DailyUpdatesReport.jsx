@@ -301,10 +301,10 @@ export default function DailyUpdatesReport() {
 
   // Table column headers
   const COLS = [
-  'EMPLOYEE NAME', 'PROJECT', 'TASK NAME', 'WORKING STATUS',
-  'DONE YESTERDAY', "TODAY'S PLAN", 'RISKS', 'DEPENDENCIES',
-  'ESTIMATED TIME', 'TOTAL TIME NEEDED', 'AVAILABILITY', 'UTILIZATION (%)',
-];
+    'EMPLOYEE NAME', 'PROJECT', 'TASK NAME', 'WORKING STATUS',
+    'DONE YESTERDAY', "TODAY'S PLAN", 'RISKS', 'DEPENDENCIES',
+    'ESTIMATED TIME', 'TOTAL TIME UTILIZED', 'AVAILABILITY', 'UTILIZATION (%)',
+  ];
 
   // ── Show authentication error state ──
   if (authError) {

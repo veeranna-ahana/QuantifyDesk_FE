@@ -286,7 +286,7 @@ const logProgress = async (req, res, next) => {
       );
 
       const currentCompleted = parseFloat(completedSoFar[0]?.total_completed || 0);
-      const newUnits = parseFloat(units_completed || 0);
+      const newUnits = parseInt(units_completed, 10) || 0;
 
       // ✅ Check if logging would exceed assigned units
       if (newUnits > 0 && (currentCompleted + newUnits) > totalAssigned) {
@@ -315,7 +315,7 @@ const logProgress = async (req, res, next) => {
          project_id, role, task_name, remarks, status, availability
        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'APPROVED', ?)`,
       [
-        assignment_id || null, finalUserId, finalEmpId, date, units_completed || 0, 
+        assignment_id || null, finalUserId, finalEmpId, date, parseInt(units_completed, 10) || 0, 
         todays_tasks || null, total_time_needed || null, yesterdays_tasks || null, risks || null,
         project_id || null, role || null, task_name || null, remarks || null, availability || null
       ]

@@ -147,7 +147,8 @@ const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onUpdate, 
 
   const handleEditField = (id, field, val) => {
     setEditingRow(prev => {
-      const row = { ...prev[id], [field]: val };
+      const sanitizedVal = field === 'units' ? (val === '' ? '' : val.replace(/\D/g, '')) : val;
+      const row = { ...prev[id], [field]: sanitizedVal };
       if (field === 'days') row.hours = val === '' || isNaN(Number(val)) ? '' : String(Number(val) * 8);
       if (field === 'hours') row.days = val === '' || isNaN(Number(val)) ? '' : String(Number(val) / 8);
       return { ...prev, [id]: row };
@@ -157,8 +158,8 @@ const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onUpdate, 
   const handleEditSave = async (id) => {
     const row = editingRow[id];
     if (!row) return;
-    const unitsVal = Number(row.units);
-    if (!unitsVal || unitsVal <= 0) return toast.error('Units must be > 0.');
+    const unitsVal = parseInt(row.units, 10);
+    if (!unitsVal || isNaN(unitsVal) || unitsVal <= 0) return toast.error('Units must be > 0.');
     setSavingEdit(prev => ({ ...prev, [id]: true }));
     try {
       await axios.put(
@@ -211,30 +212,30 @@ const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onUpdate, 
 
   const handleSubmit = async () => {
     if (!selUser) return toast.error("Please select an employee.");
-    if (!units || Number(units) <= 0) return toast.error("Enter units > 0.");
+    const requestedUnits = parseInt(units, 10);
+    if (!units || isNaN(requestedUnits) || requestedUnits <= 0) return toast.error("Enter units > 0.");
 
-    const requestedUnits = Number(units);
     const requestedDays = days ? Number(days) : 0;
     const requestedHours = hours ? Number(hours) : 0;
-  // Build a list of all exceedance errors
-  const errors = [];
-  if (requestedUnits > remainingUnits) {
-    errors.push(`Units: ${requestedUnits} exceeds remaining ${remainingUnits}`);
-  }
-  if (requestedDays > remainingDays) {
-    errors.push(`Days: ${requestedDays} exceeds remaining ${remainingDays}`);
-  }
-  if (requestedHours > remainingHours) {
-    errors.push(`Hours: ${requestedHours} exceeds remaining ${remainingHours}`);
-  }
+    // Build a list of all exceedance errors
+    const errors = [];
+    if (requestedUnits > remainingUnits) {
+      errors.push(`Units: ${requestedUnits} exceeds remaining ${remainingUnits}`);
+    }
+    if (requestedDays > remainingDays) {
+      errors.push(`Days: ${requestedDays} exceeds remaining ${remainingDays}`);
+    }
+    if (requestedHours > remainingHours) {
+      errors.push(`Hours: ${requestedHours} exceeds remaining ${remainingHours}`);
+    }
 
-  // If any errors exist, show them all in a single toast
-  if (errors.length > 0) {
-    toast.error(
-      `❌ Assignment blocked:\n${errors.join('\n')}`
-    );
-    return;
-  }
+    // If any errors exist, show them all in a single toast
+    if (errors.length > 0) {
+      toast.error(
+        `❌ Assignment blocked:\n${errors.join('\n')}`
+      );
+      return;
+    }
     setSaving(true);
     try {
       const newAssignment = await onAssign({
@@ -424,9 +425,11 @@ const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onUpdate, 
                 <input
                   type="number"
                   min="0"
+                  step="1"
                   placeholder="0"
                   value={units}
-                  onChange={(e) => setUnits(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === '.' || e.key === 'e' || e.key === 'E' || e.key === '+' || e.key === '-') e.preventDefault(); }}
+                  onChange={(e) => setUnits(e.target.value.replace(/\D/g, ''))}
                   className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-center text-slate-700 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
                   style={{ borderColor: unitsExceeded ? "#f43f5e" : "#e2e8f0" }}
                 />
@@ -482,13 +485,13 @@ const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onUpdate, 
                 {saving ? "Saving…" : "Assign"}
               </button>
             </div>
-           {(unitsExceeded || daysExceeded || hoursExceeded) && (
-  <div className="text-rose-500 text-[11px] font-semibold mt-1 flex flex-wrap gap-1">
-    {unitsExceeded && <span>⚠️ Units exceed remaining ({remainingUnits})</span>}
-    {daysExceeded && <span>⚠️ Days exceed remaining ({remainingDays})</span>}
-    {hoursExceeded && <span>⚠️ Hours exceed remaining ({remainingHours})</span>}
-  </div>
-)}       </div>
+            {(unitsExceeded || daysExceeded || hoursExceeded) && (
+              <div className="text-rose-500 text-[11px] font-semibold mt-1 flex flex-wrap gap-1">
+                {unitsExceeded && <span>⚠️ Units exceed remaining ({remainingUnits})</span>}
+                {daysExceeded && <span>⚠️ Days exceed remaining ({remainingDays})</span>}
+                {hoursExceeded && <span>⚠️ Hours exceed remaining ({remainingHours})</span>}
+              </div>
+            )}       </div>
         )}
 
         {/* Employee's Current Workload */}
@@ -649,9 +652,11 @@ const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onUpdate, 
                             <input
                               type="number"
                               min="1"
+                              step="1"
                               value={eRow.units}
+                              onKeyDown={(e) => { if (e.key === '.' || e.key === 'e' || e.key === 'E' || e.key === '+' || e.key === '-') e.preventDefault(); }}
                               onChange={(e) =>
-                                handleEditField(a.id, "units", e.target.value)
+                                handleEditField(a.id, "units", e.target.value.replace(/\D/g, ''))
                               }
                               className="w-14 px-1 py-0.5 border border-violet-500 rounded text-center font-semibold text-xs outline-none"
                             />
@@ -787,15 +792,7 @@ const AssignmentScreen = () => {
     () => location.state?.selProject || ""
   );
 
-  useEffect(() => {
-    if (location.state?.selProject) {
-      setSelProject(location.state.selProject);
-    } else {
-      // Fresh navigation (sidebar click) — clear any stale stored value
-      sessionStorage.removeItem("selectedAssignmentProject");
-      setSelProject("");
-    }
-  }, [location.key]);
+
 
   useEffect(() => {
     if (selProject) {
@@ -885,11 +882,31 @@ const AssignmentScreen = () => {
     if (selProject) fetchProjectData(selProject);
   }, [selProject, fetchProjectData]);
 
+  useEffect(() => {
+    if (location.state?.selProject) {
+      setSelProject(location.state.selProject);
+      fetchProjectData(location.state.selProject);
+    } else {
+      // Fresh navigation (sidebar click) — clear any stale stored value
+      sessionStorage.removeItem("selectedAssignmentProject");
+      setSelProject("");
+    }
+  }, [location.key, fetchProjectData]);
+
   const handleLoadInput = (role, taskName, field, val) => {
     const key = `${role}||${taskName}`;
     setLoadDraft(prev => {
       const currentEntry = prev[key] || {};
-      const numericVal = val === "" || isNaN(Number(val)) ? "" : Number(val);
+      let numericVal = val === "" || isNaN(Number(val)) ? "" : Number(val);
+      if (field === "planned_units") {
+        if (typeof val === 'string') {
+          const cleanStr = val.replace(/\D/g, '');
+          numericVal = cleanStr === '' ? '' : parseInt(cleanStr, 10);
+        } else if (numericVal !== '') {
+          numericVal = parseInt(numericVal, 10);
+          if (isNaN(numericVal)) numericVal = '';
+        }
+      }
       const nextEntry = {
         ...currentEntry,
         [field]: numericVal,
@@ -906,47 +923,47 @@ const AssignmentScreen = () => {
     });
   };
 
-const validateLoads = (roleToValidate = null) => {
-  const rolesToCheck = roleToValidate ? [roleToValidate] : Object.keys(catalog);
+  const validateLoads = (roleToValidate = null) => {
+    const rolesToCheck = roleToValidate ? [roleToValidate] : Object.keys(catalog);
 
-  for (const role of rolesToCheck) {
-    const tasks = catalog[role] || [];
-    let rolePlannedUnits = 0;
-    let rolePlannedHours = 0;
+    for (const role of rolesToCheck) {
+      const tasks = catalog[role] || [];
+      let rolePlannedUnits = 0;
+      let rolePlannedHours = 0;
 
-    tasks.forEach(t => {
-      const entry = loadDraft[`${role}||${t.task_name}`];
-      if (entry) {
-        rolePlannedUnits += Number(entry.planned_units) || 0;
-        rolePlannedHours += Number(entry.estimated_hours) || 0;
+      tasks.forEach(t => {
+        const entry = loadDraft[`${role}||${t.task_name}`];
+        if (entry) {
+          rolePlannedUnits += Number(entry.planned_units) || 0;
+          rolePlannedHours += Number(entry.estimated_hours) || 0;
+        }
+      });
+
+      if (rolePlannedUnits <= 0 && rolePlannedHours <= 0) continue;
+
+      const effortData = effortByRole[role];
+      if (!effortData) {
+        return `No effort estimate defined for role "${role}". Please set it in the Effort Estimate first.`;
       }
-    });
 
-    if (rolePlannedUnits <= 0 && rolePlannedHours <= 0) continue;
+      const maxUnits = Number(effortData.units) || 0;
+      const maxHours = Number(effortData.total_hrs) || 0;
 
-    const effortData = effortByRole[role];
-    if (!effortData) {
-      return `No effort estimate defined for role "${role}". Please set it in the Effort Estimate first.`;
+      // ✅ Block if the role has zero capacity
+      if (maxUnits === 0 && maxHours === 0) {
+        return `Role "${role}" has zero capacity (units: 0, hours: 0). Cannot allocate any work.`;
+      }
+
+      if (maxUnits > 0 && rolePlannedUnits > maxUnits) {
+        return `Role "${role}": planned units (${rolePlannedUnits}) exceeds the estimated units (${maxUnits}).`;
+      }
+
+      if (maxHours > 0 && rolePlannedHours > maxHours) {
+        return `Role "${role}": estimated hours (${rolePlannedHours} hrs) exceeds the estimated hours limit (${maxHours} hrs).`;
+      }
     }
-
-    const maxUnits = Number(effortData.units) || 0;
-    const maxHours = Number(effortData.total_hrs) || 0;
-
-    // ✅ Block if the role has zero capacity
-    if (maxUnits === 0 && maxHours === 0) {
-      return `Role "${role}" has zero capacity (units: 0, hours: 0). Cannot allocate any work.`;
-    }
-
-    if (maxUnits > 0 && rolePlannedUnits > maxUnits) {
-      return `Role "${role}": planned units (${rolePlannedUnits}) exceeds the estimated units (${maxUnits}).`;
-    }
-
-    if (maxHours > 0 && rolePlannedHours > maxHours) {
-      return `Role "${role}": estimated hours (${rolePlannedHours} hrs) exceeds the estimated hours limit (${maxHours} hrs).`;
-    }
-  }
-  return null;
-};
+    return null;
+  };
 
   const handleSaveLoads = async () => {
     if (!selProject) return;
@@ -964,7 +981,7 @@ const validateLoads = (roleToValidate = null) => {
         tasks.forEach(t => {
           const entry = loadDraft[`${role}||${t.task_name}`];
           if (entry) {
-            const pu = Number(entry.planned_units) || 0;
+            const pu = parseInt(entry.planned_units, 10) || 0;
             const ed = Number(entry.estimated_days) || 0;
             const eh = Number(entry.estimated_hours) || 0;
             loads.push({ role, task_name: t.task_name, planned_units: pu, estimated_days: ed, estimated_hours: eh });
@@ -992,7 +1009,7 @@ const validateLoads = (roleToValidate = null) => {
     const key = `${role}||${task.task_name}`;
     const entry = loadDraft[key] || {};
 
-    const plannedUnits = Number(entry.planned_units) || 0;
+    const plannedUnits = parseInt(entry.planned_units, 10) || 0;
     const estimatedDays = Number(entry.estimated_days) || 0;
 
     if (plannedUnits <= 0 || estimatedDays <= 0) {
@@ -1055,6 +1072,13 @@ const validateLoads = (roleToValidate = null) => {
   (summary.rows || []).forEach(r => { summaryByKey[`${r.role}||${r.task_name}`] = r; });
   const { total_planned = 0, total_effort_days = 0, total_effort_hours = 0, total_assigned = 0, total_completed = 0 } = summary.totals || {};
 
+  const total_assigned_hours = (assignments || []).reduce(
+    (s, a) => s + (Number(a.estimated_hours) || 0),
+    0
+  );
+  const total_balance_units = Math.max(Number(total_planned) - Number(total_assigned), 0);
+  const total_balance_hours = Math.max(Number(total_effort_hours) - Number(total_assigned_hours), 0);
+
   return (
     <div className="p-6 bg-slate-50 min-h-full font-sans">
       {/* Title */}
@@ -1110,7 +1134,7 @@ const validateLoads = (roleToValidate = null) => {
               <KPI
                 label="Total Effort"
                 value={total_planned + " units"}
-                color="text-vio-violet-500" let-600 border-l
+                color="text-violet-600 border-l-violet-500"
               />
               <KPI
                 label="Total Days"
@@ -1123,17 +1147,27 @@ const validateLoads = (roleToValidate = null) => {
                 color="text-slate-800 border-l-slate-400"
               />
               <KPI
-                label="Assigned"
+                label="Assigned Units"
                 value={total_assigned}
                 color="text-sky-500 border-l-sky-400"
               />
+              {/* <KPI
+                label="Balance Units"
+                value={total_balance_units}
+                color="text-amber-500 border-l-amber-400"
+              />
               <KPI
-                label="Completed"
+                label="Balance Hours"
+                value={total_balance_hours}
+                color="text-amber-500 border-l-amber-400"
+              /> */}
+              <KPI
+                label="Completed Units"
                 value={total_completed}
                 color="text-emerald-500 border-l-emerald-400"
               />
               <KPI
-                label="Pending"
+                label="Pending Units"
                 value={Math.max(total_assigned - total_completed, 0)}
                 color="text-rose-500 border-l-rose-400"
               />
@@ -1259,15 +1293,6 @@ const validateLoads = (roleToValidate = null) => {
                   ) || 0),
                 0,
               );
-              const roleAssigned = tasks.reduce(
-                (s, t) =>
-                  s +
-                  Number(
-                    summaryByKey[`${role}||${t.task_name}`]?.total_assigned ||
-                    0,
-                  ),
-                0,
-              );
               const roleAllocatedHrs = tasks.reduce(
                 (s, t) =>
                   s +
@@ -1276,12 +1301,29 @@ const validateLoads = (roleToValidate = null) => {
                   ) || 0),
                 0,
               );
+              const roleAssignments = (assignments || []).filter((a) => a.role === role);
+              const roleAssigned = tasks.reduce(
+                (s, t) =>
+                  s +
+                  Number(
+                    summaryByKey[`${role}||${t.task_name}`]?.total_assigned ??
+                    roleAssignments.filter(a => a.task_name === t.task_name).reduce((sum, a) => sum + Number(a.units_assigned || 0), 0)
+                  ),
+                0,
+              );
+              const roleAssignedHrs = roleAssignments.reduce(
+                (s, a) => s + Number(a.estimated_hours || 0),
+                0
+              );
+              const roleBalUnits = Math.max(rolePlanned - roleAssigned, 0);
+              const roleBalHrs = Math.max(roleAllocatedHrs - roleAssignedHrs, 0);
+
               const remainingBalanceHrs = effortData
-                ? (Number(effortData.total_hrs) || 0) - roleAllocatedHrs
-                : 0;
+                ? Math.max((Number(effortData.total_hrs) || 0) - roleAssignedHrs, 0)
+                : roleBalHrs;
               const remainingBalanceUnits = effortData
-                ? (Number(effortData.units) || 0) - rolePlanned
-                : 0;
+                ? Math.max((Number(effortData.units) || 0) - roleAssigned, 0)
+                : roleBalUnits;
 
               const isCollapsed = !!collapsedRoles[role];
 
@@ -1343,8 +1385,8 @@ const validateLoads = (roleToValidate = null) => {
                             label="Bal Hrs"
                             value={remainingBalanceHrs}
                             valColor={
-                              remainingBalanceHrs < 0
-                                ? "text-rose-500"
+                              remainingBalanceHrs <= 0
+                                ? "text-slate-500"
                                 : "text-emerald-500"
                             }
                           />
@@ -1352,16 +1394,33 @@ const validateLoads = (roleToValidate = null) => {
                             label="Bal Units"
                             value={remainingBalanceUnits}
                             valColor={
-                              remainingBalanceUnits < 0
-                                ? "text-rose-500"
+                              remainingBalanceUnits <= 0
+                                ? "text-slate-500"
                                 : "text-emerald-500"
                             }
                           />
                         </>
                       ) : (
-                        <span className="text-xs text-slate-400 italic">
-                          No estimate found
-                        </span>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <EffortChip
+                            label="Bal Hrs"
+                            value={roleBalHrs}
+                            valColor={
+                              roleBalHrs <= 0
+                                ? "text-slate-500"
+                                : "text-emerald-500"
+                            }
+                          />
+                          <EffortChip
+                            label="Bal Units"
+                            value={roleBalUnits}
+                            valColor={
+                              roleBalUnits <= 0
+                                ? "text-slate-500"
+                                : "text-emerald-500"
+                            }
+                          />
+                        </div>
                       )}
                     </div>
 
@@ -1409,6 +1468,12 @@ const validateLoads = (roleToValidate = null) => {
                               Assigned
                             </th>
                             <th className="py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-20">
+                              Bal Units
+                            </th>
+                            <th className="py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-20">
+                              Bal Hours
+                            </th>
+                            <th className="py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-20">
                               Completed
                             </th>
                             <th className="py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-36">
@@ -1426,17 +1491,26 @@ const validateLoads = (roleToValidate = null) => {
                             const planned = Number(entry.planned_units) || 0;
                             const estimatedDays =
                               Number(entry.estimated_days) || 0;
+                            const estimatedHours =
+                              Number(entry.estimated_hours) || 0;
+                            const taskAssignments = (assignments || []).filter(
+                              (a) =>
+                                a.role === role && a.task_name === t.task_name,
+                            );
                             const sumRow = summaryByKey[key];
                             const assigned = sumRow
                               ? Number(sumRow.total_assigned)
-                              : 0;
+                              : taskAssignments.reduce((s, a) => s + Number(a.units_assigned || 0), 0);
+                            const assignedHrs = taskAssignments.reduce(
+                              (s, a) => s + Number(a.estimated_hours || 0),
+                              0
+                            );
+                            const balanceUnits = Math.max(planned - assigned, 0);
+                            const balanceHours = Math.max(estimatedHours - assignedHrs, 0);
                             const completed = sumRow
                               ? Number(sumRow.total_completed)
                               : 0;
-                            const assigneeCount = assignments.filter(
-                              (a) =>
-                                a.role === role && a.task_name === t.task_name,
-                            ).length;
+                            const assigneeCount = taskAssignments.length;
 
                             return (
                               <tr
@@ -1457,15 +1531,17 @@ const validateLoads = (roleToValidate = null) => {
                                     <input
                                       type="number"
                                       min="0"
+                                      step="1"
                                       value={entry.planned_units ?? ""}
                                       placeholder="0"
                                       onClick={(e) => e.stopPropagation()}
+                                      onKeyDown={(e) => { if (e.key === '.' || e.key === 'e' || e.key === 'E' || e.key === '+' || e.key === '-') e.preventDefault(); }}
                                       onChange={(e) =>
                                         handleLoadInput(
                                           role,
                                           t.task_name,
                                           "planned_units",
-                                          e.target.value,
+                                          e.target.value.replace(/\D/g, ''),
                                         )
                                       }
                                       className="w-20 px-2 py-1 bg-white border border-slate-200 rounded-lg text-center text-xs font-semibold focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
@@ -1532,6 +1608,12 @@ const validateLoads = (roleToValidate = null) => {
                                 </td>
                                 <td className="py-3.5 px-4 text-center text-sm font-bold text-sky-600">
                                   {assigned}
+                                </td>
+                                <td className="py-3.5 px-4 text-center text-sm font-bold text-amber-600">
+                                  {balanceUnits}
+                                </td>
+                                <td className="py-3.5 px-4 text-center text-sm font-bold text-amber-600">
+                                  {balanceHours}
                                 </td>
                                 <td className="py-3.5 px-4 text-center text-sm font-bold text-slate-500">
                                   {completed}

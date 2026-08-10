@@ -101,7 +101,7 @@ const MyWork = () => {
   const [toast, setToast] = useState(null);
 
   // Manual Task State
-  const [manualModalOpen, setManualModalOpen] = useState(false);
+  // const [manualModalOpen, setManualModalOpen] = useState(false);
   const [projects, setProjects] = useState([]);
   const [manualProjectId, setManualProjectId] = useState("");
   const [manualRole, setManualRole] = useState("");
@@ -121,13 +121,16 @@ const MyWork = () => {
   // ── Time comparison helper ──────────────────────────────────────────────────
   const parseTime = (timeStr) => {
     if (!timeStr) return 0;
+    const s = String(timeStr).trim();
     // Handle HH:MM format
-    if (timeStr.includes(':')) {
-      const parts = timeStr.split(':');
-      return parseInt(parts[0]) + (parseInt(parts[1]) / 60);
+    if (s.includes(':')) {
+      const parts = s.split(':');
+      const hrs = parseInt(parts[0], 10) || 0;
+      const mins = parseInt(parts[1], 10) || 0;
+      return hrs + (mins / 60);
     }
     // Handle decimal format
-    return parseFloat(timeStr) || 0;
+    return parseFloat(s) || 0;
   };
 
   const formatTime = (hours) => {
@@ -279,7 +282,7 @@ const MyWork = () => {
           date: logDate,
           todays_tasks: todaysTasks,
           total_time_needed: totalTimeNeeded,
-          units_completed: Number(logUnits) || 0,
+          units_completed: parseInt(logUnits, 10) || 0,
           yesterdays_tasks: yesterdaysTasks,
           risks: risks,
           dependency: dependency,
@@ -311,8 +314,10 @@ const MyWork = () => {
     }
     if (logUnits === "" || logUnits === null || logUnits === undefined) {
       errors.logUnits = "Units Completed is required.";
-    } else if (Number(logUnits) < 0) {
-      errors.logUnits = "Units Completed cannot be negative.";
+    } else if (Number(logUnits) <= 0) {
+      errors.logUnits = "Units Completed must be at least 1 (cannot be 0).";
+    } else if (!Number.isInteger(Number(logUnits)) || String(logUnits).includes('.')) {
+      errors.logUnits = "Units Completed must be a whole number (no decimals allowed).";
     } else {
       const effective = logModal.units_pending - (Number(logModal.units_awaiting) || 0);
       if (Number(logUnits) > effective) {
@@ -320,7 +325,7 @@ const MyWork = () => {
       }
     }
     if (!totalTimeNeeded || !totalTimeNeeded.trim()) {
-      errors.totalTimeNeeded = "Total Estimated Time is required.";
+      errors.totalTimeNeeded = "Total Utilized Time is required.";
     }
     if (!todaysTasks || !todaysTasks.trim()) {
       errors.todaysTasks = "Today's Progress & Tasks are required.";
@@ -328,7 +333,6 @@ const MyWork = () => {
 
     if (Object.keys(errors).length > 0) {
       setLogErrors(errors);
-      setLogError("Please fill in all mandatory fields.");
       return;
     }
 
@@ -398,7 +402,7 @@ const MyWork = () => {
         },
         { headers: getHeaders() }
       );
-      setManualModalOpen(false);
+      // setManualModalOpen(false);
       showToast("Manual task logged successfully!");
       // Reset
       setManualProjectId("");
@@ -518,10 +522,17 @@ const MyWork = () => {
               <input
                 type="number"
                 value={logUnits}
-                min="0"
+                min="1"
+                step="1"
                 max={pendingVal}
-                onChange={e => { setLogUnits(e.target.value); setLogErrors(prev => ({ ...prev, logUnits: "" })); setLogError(""); }}
-                placeholder="0"
+                onKeyDown={(e) => { if (e.key === '.' || e.key === 'e' || e.key === 'E' || e.key === '+' || e.key === '-') e.preventDefault(); }}
+                onChange={e => {
+                  let cleanVal = e.target.value.replace(/\D/g, '').replace(/^0+/, '');
+                  setLogUnits(cleanVal);
+                  setLogErrors(prev => ({ ...prev, logUnits: "" }));
+                  setLogError("");
+                }}
+                placeholder="1"
                 className={`w-full px-3 py-2 border ${logErrors.logUnits ? "border-red-500 focus:ring-red-200" : "border-gray-200 focus:ring-[#856BFF]/40"} rounded-md text-sm focus:outline-none focus:ring-2`}
               />
               {logErrors.logUnits && <p className="text-red-500 text-xs mt-1 font-medium">{logErrors.logUnits}</p>}
@@ -546,7 +557,7 @@ const MyWork = () => {
 
             <div className="mb-4">
               <label className="block text-xs font-semibold text-gray-600 mb-1.5">
-                Total Estimated Time (HH:MM) <span className="text-red-500">*</span>
+                Total Utilized Time (HH:MM) <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <Icon icon="material-symbols:schedule" width="16" height="16" color="#856BFF" className="absolute left-3 top-1/2 -translate-y-1/2" />
@@ -663,13 +674,13 @@ const MyWork = () => {
             Monitor assignments, approvals, and progress across ongoing projects.
           </p>
         </div>
-        <button
+        {/* <button
           onClick={() => setManualModalOpen(true)}
           className="flex items-center gap-1.5 px-4 py-2 bg-[#856BFF] hover:bg-[#7259e6] text-white rounded-lg text-sm font-bold shadow-sm transition-colors"
         >
           <Icon icon="material-symbols:add" width="18" height="18" color="#ffffff" />
           Create Task
-        </button>
+        </button> */}
       </div>
 
       {/* ── Summary strip ── */}
@@ -695,13 +706,13 @@ const MyWork = () => {
         <div className="text-center py-16 px-5 bg-white rounded-lg shadow-sm">
           <p className="text-lg text-gray-300">No assignments yet.</p>
           <p className="text-sm text-gray-300">Your manager will assign tasks soon.</p>
-          <button
+          {/* <button
             onClick={() => setManualModalOpen(true)}
             className="flex items-center gap-2 mt-4 px-6 py-3 bg-[#856BFF] hover:bg-[#7259e6] text-white rounded-lg text-sm font-bold shadow-sm transition-colors"
           >
             <Icon icon="material-symbols:add" width="18" height="18" color="#ffffff" />
             Create a Manual Task
-          </button>
+          </button> */}
         </div>
       )}
 
@@ -807,7 +818,7 @@ const MyWork = () => {
       })}
 
       {/* ── Add Manual Task Modal ── */}
-      {manualModalOpen && (
+      {/* {manualModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[1000] p-5">
           <div className="bg-white rounded-xl p-7 w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
             <h3 className="text-lg font-extrabold text-gray-900 mb-1">Create Manual Task</h3>
@@ -965,6 +976,7 @@ const MyWork = () => {
                   step="0.5"
                   min="0"
                   value={manualTotalTimeNeeded}
+                  onKeyDown={(e) => { if (e.key === 'e' || e.key === 'E' || e.key === '+' || e.key === '-') e.preventDefault(); }}
                   onChange={e => { setManualTotalTimeNeeded(e.target.value); setManualErrors(prev => ({ ...prev, manualTotalTimeNeeded: "" })); }}
                   placeholder="e.g. 4"
                   className={`w-full px-3 py-2 border ${manualErrors.manualTotalTimeNeeded ? "border-red-500 focus:ring-red-200" : "border-gray-200 focus:ring-[#856BFF]/40"} rounded-md text-sm focus:outline-none focus:ring-2`}
@@ -979,6 +991,7 @@ const MyWork = () => {
                   step="0.5"
                   min="0"
                   value={manualAvailability}
+                  onKeyDown={(e) => { if (e.key === 'e' || e.key === 'E' || e.key === '+' || e.key === '-') e.preventDefault(); }}
                   onChange={e => setManualAvailability(e.target.value)}
                   placeholder="e.g. 4"
                   className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#856BFF]/40"
@@ -1005,7 +1018,7 @@ const MyWork = () => {
             </div>
           </div>
         </div>
-      )}
+      )} */}
     </div>
   );
 };

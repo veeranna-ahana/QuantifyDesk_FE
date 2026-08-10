@@ -632,7 +632,7 @@ const ReconPage = () => {
                 <div className="w-full overflow-x-auto rounded-xl border border-gray-100">
                   <table className="w-full border-collapse text-sm">
                     <thead>
-                       <tr style={{ backgroundColor: '#EFF4FF' }}>
+                      <tr style={{ backgroundColor: '#EFF4FF' }}>
                         <th className="px-3 py-3 text-left text-[11px] font-bold text-[#434654] uppercase">Employee</th>
                         <th className="px-3 py-3 text-left text-[11px] font-bold text-[#434654] uppercase">Role</th>
                         <th className="px-3 py-3 text-left text-[11px] font-bold text-[#434654] uppercase">Assigned (H/D)</th>
@@ -807,9 +807,9 @@ const ReconPage = () => {
             <div className="relative bg-white rounded-2xl border border-gray-100 shadow-sm p-5 overflow-hidden">
               <span className="absolute left-0 top-0 bottom-0 w-1 bg-[#856BFF]" />
               <div className="flex items-center gap-2 mb-4">
-                  <span className="w-7 h-7 rounded-md bg-[#856BFF]/10 flex items-center justify-center text-[#856BFF] text-sm">
-                    <Icon icon="material-symbols:assignment" width="30" height="30" color="#856BFF" />
-                  </span>                <span className="text-[20px] font-bold text-[#191B23] text-sm">Project Status</span>
+                <span className="w-7 h-7 rounded-md bg-[#856BFF]/10 flex items-center justify-center text-[#856BFF] text-sm">
+                  <Icon icon="material-symbols:assignment" width="30" height="30" color="#856BFF" />
+                </span>                <span className="text-[20px] font-bold text-[#191B23] text-sm">Project Status</span>
               </div>
               <div className="grid grid-cols-3 gap-x-4 gap-y-5">
                 <div>
@@ -840,8 +840,8 @@ const ReconPage = () => {
               <span className="absolute left-0 top-0 bottom-0 w-1 bg-[#856BFF]" />
               <div className="flex items-center gap-2 mb-4">
                 <span className="w-7 h-7 rounded-md bg-[#856BFF]/10 flex items-center justify-center text-[#856BFF] text-sm">
-  <Icon icon="material-symbols:schedule" width="30" height="30" color="#856BFF" />
-</span>
+                  <Icon icon="material-symbols:schedule" width="30" height="30" color="#856BFF" />
+                </span>
                 <span className="text-[20px] font-bold text-[#191B23] text-sm">Hours Summary</span>
               </div>
               <div className="grid grid-cols-3 gap-4 mb-5">
@@ -872,8 +872,8 @@ const ReconPage = () => {
               <div className="border-t border-gray-100 pt-4">
                 <div className="flex items-center gap-2 mb-3">
                   <span className="w-10 h-10 rounded-md bg-[#856BFF]/10 flex items-center justify-center text-[#856BFF] text-xs">
-  <Icon icon="material-symbols:bar-chart" width="20" height="20" color="#856BFF" />
-</span>
+                    <Icon icon="material-symbols:bar-chart" width="20" height="20" color="#856BFF" />
+                  </span>
                   <span className="text-[20px] font-bold text-[#191B23]  text-xs">Utilization Summary</span>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -976,54 +976,39 @@ const ReconPage = () => {
             </div>
           </div>
 
-        {/* ── Tabs ── */}
-<div className="flex gap-1 mb-5 border-b border-gray-200">
-  <button
-    onClick={() => setActiveTab("project")}
-    className={`px-5 py-3 text-sm font-semibold transition-colors relative ${activeTab === "project" ? "text-[#856BFF]" : "text-gray-500 hover:text-gray-700"
-      }`}
-    style={{
-      background: 'transparent',
-      border: 'none',
-      outline: 'none'
-    }}
-  >
-    Project Level Reconciliation
-    {activeTab === "project" && (
-      <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#856BFF]" />
-    )}
-  </button>
-  <button
-    onClick={() => setActiveTab("employee")}
-    className={`px-5 py-3 text-sm font-semibold transition-colors relative ${activeTab === "employee" ? "text-[#856BFF]" : "text-gray-500 hover:text-gray-700"
-      }`}
-    style={{
-      background: 'transparent',
-      border: 'none',
-      outline: 'none'
-    }}
-  >
-    Employee Level Reconciliation
-    {activeTab === "employee" && (
-      <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#856BFF]" />
-    )}
-  </button>
-  <button
-    onClick={() => setActiveTab("unit")}
-    className={`px-5 py-3 text-sm font-semibold transition-colors relative ${activeTab === "unit" ? "text-[#856BFF]" : "text-gray-500 hover:text-gray-700"
-      }`}
-    style={{
-      background: 'transparent',
-      border: 'none',
-      outline: 'none'
-    }}
-  >
-    Unit Wise Reconciliation
-    {activeTab === "unit" && (
-      <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#856BFF]" />
-    )}
-  </button>
-</div>
+          {/* ── Tabs ── */}
+          <div className="flex gap-1 mb-5 border-b border-gray-200">
+            <button
+              onClick={() => setActiveTab("project")}
+              className={`px-5 py-3 text-sm font-semibold transition-colors relative ${activeTab === "project" ? "text-[#856BFF]" : "text-gray-500 hover:text-gray-700"
+                }`}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                outline: 'none'
+              }}
+            >
+              Project Level Reconciliation
+              {activeTab === "project" && (
+                <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#856BFF]" />
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab("employee")}
+              className={`px-5 py-3 text-sm font-semibold transition-colors relative ${activeTab === "employee" ? "text-[#856BFF]" : "text-gray-500 hover:text-gray-700"
+                }`}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                outline: 'none'
+              }}
+            >
+              Employee Level Reconciliation
+              {activeTab === "employee" && (
+                <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#856BFF]" />
+              )}
+            </button>
+          </div>
 
           {/* ── Tab Contents ── */}
           {loading ? (
@@ -1063,7 +1048,7 @@ const ReconPage = () => {
                   <div className="w-full overflow-x-auto">
                     <table className="w-full border-collapse text-sm">
                       <thead>
-                         <tr style={{ backgroundColor: '#EFF4FF' }}>
+                        <tr style={{ backgroundColor: '#EFF4FF' }}>
                           <th className="px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Project Code</th>
                           <th className="px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Project Name</th>
                           <th className="px-4 py-3 text-right text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">
@@ -1161,15 +1146,15 @@ const ReconPage = () => {
                                   <StatusPill status={item.status} />
                                 </td>
                                 <td className="px-4 py-3 text-center">
-  <button
-    onClick={() => handleViewProjectDetails(item)}
-    className="inline-flex items-center justify-center hover:opacity-70 transition-opacity"
-    title="View Details"
-    style={{ background: 'transparent', border: 'none', outline: 'none' }}
-  >
-    <EyeIcon className="w-[20px] h-[20px]" color="#856BFF" />
-  </button>
-</td>
+                                  <button
+                                    onClick={() => handleViewProjectDetails(item)}
+                                    className="inline-flex items-center justify-center hover:opacity-70 transition-opacity"
+                                    title="View Details"
+                                    style={{ background: 'transparent', border: 'none', outline: 'none' }}
+                                  >
+                                    <EyeIcon className="w-[20px] h-[20px]" color="#856BFF" />
+                                  </button>
+                                </td>
                               </tr>
                             );
                           })
@@ -1222,7 +1207,7 @@ const ReconPage = () => {
                   <div className="w-full overflow-x-auto">
                     <table className="w-full border-collapse text-sm">
                       <thead>
-                         <tr style={{ backgroundColor: '#EFF4FF' }}>
+                        <tr style={{ backgroundColor: '#EFF4FF' }}>
                           <th className="px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Employee</th>
                           {/* <th className="px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Reporting Manager</th> */}
                           <th className="px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Project Code</th>
@@ -1336,116 +1321,6 @@ const ReconPage = () => {
                       onPageSizeChange={handleEmployeePageSizeChange}
                     />
                   )}
-                </div>
-              )}
-
-              {/* ─── Unit Wise Tab ─── */}
-              {activeTab === "unit" && (
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-9">
-                  {/* Header */}
-                  <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-wrap gap-3">
-                    <div>
-                      <span className="font-bold text-gray-900 text-[15px]">Unit Wise Analysis</span>
-                      <p className="text-xs text-gray-400 mt-0.5">Compare estimated vs actual units consumed per task across projects</p>
-                    </div>
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <div className="relative">
-                        <SearchIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                        <input
-                          type="text"
-                          placeholder="Search project or task..."
-                          value={unitSearch}
-                          onChange={(e) => { setUnitSearch(e.target.value); setUnitPage(1); }}
-                          className="w-56 pl-9 pr-3.5 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#856BFF]/30"
-                        />
-                      </div>
-
-                    </div>
-                  </div>
-
-                  {/* Summary chips */}
-                  <div className="flex gap-3 flex-wrap px-5 py-3 border-b border-gray-50 bg-gray-50/60">
-                    {[
-                      { label: "Total Tasks", value: "—", color: "#6366f1" },
-                      { label: "Est. Units", value: "—", color: "#0ea5e9" },
-                      { label: "Actual Units", value: "—", color: "#10b981" },
-                      { label: "Over Budget", value: "—", color: "#ef4444" },
-                      { label: "Under Budget", value: "—", color: "#f59e0b" },
-                    ].map((chip) => (
-                      <div key={chip.label} className="flex items-center gap-2 bg-white border border-gray-100 rounded-lg px-3 py-2 shadow-sm">
-                        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: chip.color }} />
-                        <span className="text-[11px] text-gray-500 font-medium">{chip.label}</span>
-                        <span className="text-sm font-extrabold text-gray-800">{chip.value}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Table */}
-                  <div className="w-full overflow-x-auto">
-                    <table className="w-full border-collapse text-sm">
-                      <thead>
-                         <tr style={{ backgroundColor: '#EFF4FF' }}>
-                          <th className="px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Project</th>
-                          <th className="px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Employee</th>
-                          <th className="px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Task / Activity</th>
-                          <th className="px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Unit Type</th>
-                          <th className="px-4 py-3 text-right text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Est. Units</th>
-                          <th className="px-4 py-3 text-right text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Actual Units</th>
-                          <th className="px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Utilization %</th>
-                          <th className="px-4 py-3 text-right text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Variance</th>
-                          <th className="px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Status</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {/* Empty state — replace with real data map once API is wired */}
-                        <tr>
-                          <td colSpan={9} className="py-16 text-center">
-                            <div className="flex flex-col items-center gap-3">
-                                  <div className="w-12 h-12 rounded-full bg-[#856BFF]/10 flex items-center justify-center">
-                                    <Icon icon="material-symbols:grid-view" width="24" height="24" color="#856BFF" />
-                                  </div>
-                              <div>
-                                <p className="text-sm font-semibold text-gray-700">Unit Wise Reconciliation</p>
-
-                              </div>
-
-                            </div>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {/* Pagination placeholder */}
-                 <div className="flex justify-between items-center px-5 py-4 border-t border-gray-100" style={{ backgroundColor: '#EFF4FF' }}>
-                    <span className="text-xs text-gray-400">Showing 0 to 0 of 0 entries</span>
-                    <div className="flex items-center gap-2">
-                      <select
-                        value={unitPageSize}
-                        onChange={(e) => { setUnitPageSize(parseInt(e.target.value)); setUnitPage(1); }}
-                        className="px-2.5 py-1.5 border border-gray-200 rounded-md text-xs text-gray-600 focus:outline-none"
-                      >
-                        {[5, 10, 25, 50].map((n) => <option key={n} value={n}>{n}</option>)}
-                      </select>
-                      <div className="flex items-center gap-1">
-                        <button
-                          disabled
-                          className="w-7 h-7 flex items-center justify-center rounded-md text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed"
-                        >
-                          <ChevronLeftIcon className="w-10 h-10" />
-                        </button>
-                        <button className="min-w-[28px] h-7 px-1.5 flex items-center justify-center rounded-md text-xs font-semibold bg-[#856BFF] text-white">
-                          1
-                        </button>
-                        <button
-                          disabled
-                          className="w-7 h-7 flex items-center justify-center rounded-md text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed"
-                        >
-                          <ChevronRightIcon className="w-10 h-10" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
                 </div>
               )}
             </>
