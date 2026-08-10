@@ -216,20 +216,25 @@ const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onUpdate, 
     const requestedUnits = Number(units);
     const requestedDays = days ? Number(days) : 0;
     const requestedHours = hours ? Number(hours) : 0;
+  // Build a list of all exceedance errors
+  const errors = [];
+  if (requestedUnits > remainingUnits) {
+    errors.push(`Units: ${requestedUnits} exceeds remaining ${remainingUnits}`);
+  }
+  if (requestedDays > remainingDays) {
+    errors.push(`Days: ${requestedDays} exceeds remaining ${remainingDays}`);
+  }
+  if (requestedHours > remainingHours) {
+    errors.push(`Hours: ${requestedHours} exceeds remaining ${remainingHours}`);
+  }
 
-    if (requestedUnits > remainingUnits) {
-      toast.error(`Cannot assign ${requestedUnits} units. Only ${remainingUnits} units remaining.`);
-      return;
-    }
-    if (requestedDays > remainingDays) {
-      toast.error(`Cannot assign ${requestedDays} days. Only ${remainingDays} days remaining.`);
-      return;
-    }
-    if (requestedHours > remainingHours) {
-      toast.error(`Cannot assign ${requestedHours} hours. Only ${remainingHours} hours remaining.`);
-      return;
-    }
-
+  // If any errors exist, show them all in a single toast
+  if (errors.length > 0) {
+    toast.error(
+      `❌ Assignment blocked:\n${errors.join('\n')}`
+    );
+    return;
+  }
     setSaving(true);
     try {
       const newAssignment = await onAssign({
@@ -477,12 +482,13 @@ const AssignModal = ({ modal, users, assignments, onAssign, onDelete, onUpdate, 
                 {saving ? "Saving…" : "Assign"}
               </button>
             </div>
-            {(unitsExceeded || daysExceeded || hoursExceeded) && (
-              <div className="text-rose-500 text-[11px] font-semibold mt-1">
-                ⚠️ Values exceed remaining limits. Please adjust.
-              </div>
-            )}
-          </div>
+           {(unitsExceeded || daysExceeded || hoursExceeded) && (
+  <div className="text-rose-500 text-[11px] font-semibold mt-1 flex flex-wrap gap-1">
+    {unitsExceeded && <span>⚠️ Units exceed remaining ({remainingUnits})</span>}
+    {daysExceeded && <span>⚠️ Days exceed remaining ({remainingDays})</span>}
+    {hoursExceeded && <span>⚠️ Hours exceed remaining ({remainingHours})</span>}
+  </div>
+)}       </div>
         )}
 
         {/* Employee's Current Workload */}
@@ -900,42 +906,47 @@ const AssignmentScreen = () => {
     });
   };
 
-  const validateLoads = (roleToValidate = null) => {
-    const rolesToCheck = roleToValidate ? [roleToValidate] : Object.keys(catalog);
+const validateLoads = (roleToValidate = null) => {
+  const rolesToCheck = roleToValidate ? [roleToValidate] : Object.keys(catalog);
 
-    for (const role of rolesToCheck) {
-      const tasks = catalog[role] || [];
-      let rolePlannedUnits = 0;
-      let rolePlannedHours = 0;
+  for (const role of rolesToCheck) {
+    const tasks = catalog[role] || [];
+    let rolePlannedUnits = 0;
+    let rolePlannedHours = 0;
 
-      tasks.forEach(t => {
-        const entry = loadDraft[`${role}||${t.task_name}`];
-        if (entry) {
-          rolePlannedUnits += Number(entry.planned_units) || 0;
-          rolePlannedHours += Number(entry.estimated_hours) || 0;
-        }
-      });
-
-      if (rolePlannedUnits <= 0 && rolePlannedHours <= 0) continue;
-
-      const effortData = effortByRole[role];
-      if (!effortData) {
-        return `No effort estimate defined for role "${role}". Please set it in the Effort Estimate first.`;
+    tasks.forEach(t => {
+      const entry = loadDraft[`${role}||${t.task_name}`];
+      if (entry) {
+        rolePlannedUnits += Number(entry.planned_units) || 0;
+        rolePlannedHours += Number(entry.estimated_hours) || 0;
       }
+    });
 
-      const maxUnits = Number(effortData.units) || 0;
-      const maxHours = Number(effortData.total_hrs) || 0;
+    if (rolePlannedUnits <= 0 && rolePlannedHours <= 0) continue;
 
-      if (maxUnits > 0 && rolePlannedUnits > maxUnits) {
-        return `Role "${role}": planned units (${rolePlannedUnits}) exceeds the estimated units (${maxUnits}).`;
-      }
-
-      if (maxHours > 0 && rolePlannedHours > maxHours) {
-        return `Role "${role}": estimated hours (${rolePlannedHours} hrs) exceeds the estimated hours limit (${maxHours} hrs).`;
-      }
+    const effortData = effortByRole[role];
+    if (!effortData) {
+      return `No effort estimate defined for role "${role}". Please set it in the Effort Estimate first.`;
     }
-    return null;
-  };
+
+    const maxUnits = Number(effortData.units) || 0;
+    const maxHours = Number(effortData.total_hrs) || 0;
+
+    // ✅ Block if the role has zero capacity
+    if (maxUnits === 0 && maxHours === 0) {
+      return `Role "${role}" has zero capacity (units: 0, hours: 0). Cannot allocate any work.`;
+    }
+
+    if (maxUnits > 0 && rolePlannedUnits > maxUnits) {
+      return `Role "${role}": planned units (${rolePlannedUnits}) exceeds the estimated units (${maxUnits}).`;
+    }
+
+    if (maxHours > 0 && rolePlannedHours > maxHours) {
+      return `Role "${role}": estimated hours (${rolePlannedHours} hrs) exceeds the estimated hours limit (${maxHours} hrs).`;
+    }
+  }
+  return null;
+};
 
   const handleSaveLoads = async () => {
     if (!selProject) return;
@@ -956,15 +967,7 @@ const AssignmentScreen = () => {
             const pu = Number(entry.planned_units) || 0;
             const ed = Number(entry.estimated_days) || 0;
             const eh = Number(entry.estimated_hours) || 0;
-            if (pu > 0 || ed > 0 || eh > 0) {
-              loads.push({
-                role,
-                task_name: t.task_name,
-                planned_units: pu,
-                estimated_days: ed,
-                estimated_hours: eh,
-              });
-            }
+            loads.push({ role, task_name: t.task_name, planned_units: pu, estimated_days: ed, estimated_hours: eh });
           }
         });
       });

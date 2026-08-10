@@ -953,7 +953,7 @@ const empRows = (showAllEmployees ? serviceDeliveryEmployees : serviceDeliveryEm
         {/* ── KPI Strip ── */}
         <div className="flex gap-3 flex-wrap mb-6">
           <KpiCard icon="material-symbols:group" label="Employees" value={serviceDeliveryEmployees.length} accent="#856BFF" />
-          <KpiCard icon="material-symbols:timer" label="Effort (Hrs)" value={totalLoad} accent="#006C49" />
+          <KpiCard icon="material-symbols:inventory" label="Estimated Units" value={totalLoad} accent="#006C49" />
           <KpiCard icon="material-symbols:assignment" label="Assigned" value={totalAssigned} accent="#784B00" />
           <KpiCard icon="material-symbols:check-circle" label="Completed" value={totalCompleted} accent="#00714D" />
           <KpiCard icon="material-symbols:trending-up" label="Overall Comp." value={`${overallPct}%`} accent="#BA1A1A" sub />
