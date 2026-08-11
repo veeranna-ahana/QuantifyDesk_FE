@@ -154,6 +154,7 @@ const AssignEmployee = () => {
   };
 
   const handleSubmit = async (shouldNavigateOnSuccess = false) => {
+    const navigateAfter = shouldNavigateOnSuccess === true;
     if (!selUser) return toast.error("Please select an employee.");
     const reqUnits = parseInt(units, 10);
     if (!units || isNaN(reqUnits) || reqUnits <= 0) return toast.error("Enter units > 0.");
@@ -177,7 +178,7 @@ const AssignEmployee = () => {
       toast.success("Employee assigned successfully!");
       await refreshAssignments();
       scrollToTop();
-      if (shouldNavigateOnSuccess) {
+      if (navigateAfter) {
         navigate("/assignments", { state: { selProject } });
       }
     } catch (e) {
@@ -356,7 +357,7 @@ const AssignEmployee = () => {
               </div>
             ))}
             <button
-              onClick={handleSubmit}
+              onClick={() => handleSubmit(false)}
               disabled={saving || unitsExceeded || daysExceeded || hoursExceeded || remainingUnits === 0}
               className={`w-full py-2.5 rounded-xl font-bold text-xs transition-all ${saving || unitsExceeded || daysExceeded || hoursExceeded || remainingUnits === 0
                 ? "bg-gray-100 text-gray-400 cursor-not-allowed"
