@@ -75,13 +75,30 @@ export default function EffortEstimate() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // State passed via navigation: { projects, initialProjectId, readOnly }
-  const { projects = [], initialProjectId = '', readOnly = false } = location.state || {};
+  // State passed via navigation: { projects, initialProjectId, readOnly, projectName }
+  const { projects = [], initialProjectId = '', readOnly = false, projectName: passedProjectName = '' } = location.state || {};
 
+  const [projectList, setProjectList] = useState(projects);
   const [selectedProject, setSelectedProject] = useState(initialProjectId);
   const [rows, setRows] = useState(emptyRows());
   const [saving, setSaving] = useState(false);
   const [loadingRows, setLoadingRows] = useState(false);
+
+  // Fetch project list if not provided in state
+  useEffect(() => {
+    if (projectList.length === 0 && selectedProject) {
+      axios
+        .get(`${BASE_URL}/api/projects`, { headers: getHeaders() })
+        .then(res => {
+          const list = res.data?.data || res.data || [];
+          setProjectList(list);
+        })
+        .catch(err => console.error('Error fetching projects:', err));
+    }
+  }, [selectedProject, projectList.length]);
+
+  const currentProject = projectList.find(p => String(p.id) === String(selectedProject));
+  const projectName = passedProjectName || currentProject?.project_name || currentProject?.name || '';
 
   // ── Fetch existing effort when project changes ───────────────────────────
   useEffect(() => {
@@ -241,30 +258,43 @@ export default function EffortEstimate() {
 
       {/* ── Page header ── */}
       <div className="mb-5">
+        {/* <button
+          onClick={() => navigate('/projects')}
+          className="flex items-center gap-1.5 text-gray-500 hover:text-gray-800 font-semibold text-xs transition-colors mb-3"
+        >
+          <Icon icon="material-symbols:arrow-back" width="18" height="18" color="#64748b" />
+          Back to Projects
+        </button> */}
         <h1 className="text-2xl font-bold text-gray-900">
           {readOnly ? 'View Effort Estimate' : 'Effort Estimate & Utilization'}
         </h1>
-        <p className="text-sm #434655 mt-0.5">
+        <p className="text-sm text-gray-500 mt-0.5">
           {readOnly
             ? 'Viewing effort estimates for this project (read-only).'
             : 'Configure project resources and track total capacity alignment.'}
         </p>
       </div>
 
-      {/* ── Project selector ── */}
-      <div className="mb-5">
-        <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-          Select Project <span className="text-red-500">*</span>
-        </label>
-        <div className="w-72">
-          <SearchableSelect
-            value={selectedProject}
-            onChange={setSelectedProject}
-            placeholder="Select Project"
-            options={projects.map(p => ({ value: String(p.id), label: p.project_name || p.name }))}
-          />
+      {/* ── Project Name info before table ── */}
+      {projectName && (
+        <div className="mb-5 bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#856BFF]/10 flex items-center justify-center shrink-0">
+              <Icon icon="material-symbols:folder" width="22" height="22" color="#856BFF" />
+            </div>
+            <div>
+              <span className="text-[10px] font-bold text-gray-400 tracking-wider uppercase block">Project Name</span>
+              <span className="text-base font-bold text-gray-800">{projectName}</span>
+            </div>
+          </div>
+          {currentProject?.project_code && (
+            <div className="flex items-center gap-2 bg-[#EFF4FF] border border-[#856BFF]/20 px-3 py-1.5 rounded-xl">
+              <span className="text-[10px] font-bold text-gray-400 tracking-wider uppercase">Project Code:</span>
+              <span className="text-xs font-bold text-[#856BFF]">{currentProject.project_code}</span>
+            </div>
+          )}
         </div>
-      </div>
+      )}
 
       {/* ── Resource Breakdown card ── */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">

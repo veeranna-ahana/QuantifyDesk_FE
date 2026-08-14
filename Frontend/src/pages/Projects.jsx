@@ -839,7 +839,7 @@ const Projects = () => {
         {!isAdmin && (
           <div className="flex items-center gap-3">
             {/* Effort Estimate — outlined violet */}
-            <button
+            {/* <button
   onClick={() => navigate('/projects/effort', { state: { projects, initialProjectId: '', readOnly: false } })}
   className="flex items-center gap-2 px-4 py-2 border border-[#9984f5] text-[#856BFF] text-sm font-semibold rounded-lg hover:bg-violet-50 transition-colors"
 >
@@ -851,7 +851,7 @@ const Projects = () => {
   style={{ color: '#856BFF' }}
 />
   Effort Estimate
-</button>
+</button> */}
             {/* Create Project — filled violet */}
             <button
               onClick={() => navigate('/projects/create')}
@@ -971,7 +971,7 @@ const Projects = () => {
                             </button>
                           )}
                           <button
-                            onClick={() => navigate('/projects/effort', { state: { projects, initialProjectId: p.id, readOnly: isAdmin } })}
+                            onClick={() => navigate('/projects/effort', { state: { projects, initialProjectId: p.id, projectName: p.project_name || p.name, readOnly: isAdmin } })}
                             className="flex items-center gap-1 text-xs font-semibold text-gray-500 hover:text-gray-700 transition-colors"
                           >
                              {isAdmin ? (
