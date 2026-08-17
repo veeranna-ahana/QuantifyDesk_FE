@@ -789,7 +789,7 @@ const AssignmentScreen = () => {
   // Only restore a previous project when navigating *back* from AssignEmployee.
   // A fresh sidebar click has no location.state, so always start blank.
   const [selProject, setSelProject] = useState(
-    () => location.state?.selProject || ""
+    () => (location.state?.selProject ? String(location.state.selProject) : "")
   );
 
 
@@ -808,10 +808,14 @@ const AssignmentScreen = () => {
   const [assignments, setAssignments] = useState([]);
   const [summary, setSummary] = useState({ rows: [], totals: {} });
   const [effortByRole, setEffortByRole] = useState({});
-  const [collapsedRoles, setCollapsedRoles] = useState({});
+  const [expandedRoles, setExpandedRoles] = useState({});
 
   const toggleRole = (role) =>
-    setCollapsedRoles(prev => ({ ...prev, [role]: !prev[role] }));
+    setExpandedRoles(prev => ({ ...prev, [role]: !prev[role] }));
+
+  useEffect(() => {
+    setExpandedRoles({});
+  }, [selProject]);
 
   // ── Initial fetch: projects, catalog ────────────────────────────────
   useEffect(() => {
@@ -884,8 +888,9 @@ const AssignmentScreen = () => {
 
   useEffect(() => {
     if (location.state?.selProject) {
-      setSelProject(location.state.selProject);
-      fetchProjectData(location.state.selProject);
+      const pid = String(location.state.selProject);
+      setSelProject(pid);
+      fetchProjectData(pid);
     } else {
       // Fresh navigation (sidebar click) — clear any stale stored value
       sessionStorage.removeItem("selectedAssignmentProject");
@@ -1325,7 +1330,7 @@ const AssignmentScreen = () => {
                 ? Math.max((Number(effortData.units) || 0) - roleAssigned, 0)
                 : roleBalUnits;
 
-              const isCollapsed = !!collapsedRoles[role];
+              const isExpanded = !!expandedRoles[role];
 
               return (
                 <div
@@ -1427,7 +1432,7 @@ const AssignmentScreen = () => {
                     {/* Right: Chevron */}
                     <div className="shrink-0 flex items-center justify-center text-slate-400 mt-2 lg:mt-0">
                       <svg
-                        className={`w-5 h-5 transition-transform duration-200 ${isCollapsed ? "-rotate-90" : "rotate-0"}`}
+                        className={`w-5 h-5 transition-transform duration-200 ${isExpanded ? "rotate-0" : "-rotate-90"}`}
                         fill="none"
                         stroke="currentColor"
                         strokeWidth={2.5}
@@ -1443,7 +1448,7 @@ const AssignmentScreen = () => {
                   </div>
 
                   {/* Accordion Body */}
-                  {!isCollapsed && (
+                  {isExpanded && (
                     <div className="overflow-x-auto border-t border-slate-100">
                       <table className="w-full text-left border-collapse">
                         <thead>
