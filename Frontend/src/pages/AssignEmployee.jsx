@@ -260,32 +260,34 @@ const AssignEmployee = () => {
 
   return (
     <div className="p-6 bg-gray-50 min-h-full font-sans">
-      {/* Page Header */}
-      <div className="mb-6 flex items-center gap-4 flex-wrap">
-        <button
-          onClick={handleDoneOrBack}
-          className="flex items-center gap-2 text-gray-500 hover:text-gray-800 font-semibold text-sm transition-colors"
-        >
-          <Icon icon="material-symbols:arrow-back" width="18" height="18" color="#64748b" />
-          Back to Assignments
-        </button>
-        <span className="text-gray-300">|</span>
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="px-2 py-0.5 rounded text-[10px] font-bold text-white uppercase" style={{ backgroundColor: rs.border }}>
-            {roleInitials}
-          </span>
-          <h2 className="text-xl font-extrabold text-gray-800">
-            {isAdmin ? 'View Assignments' : 'Assign Employee'}
-          </h2>
-          <span className="text-gray-400">·</span>
-          <span className="text-gray-600 font-semibold">{modal.task_name}</span>
-          {modal.unit_type && <span className="text-gray-400 text-xs font-semibold">({modal.unit_type})</span>}
-          {isAdmin && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-100">
-              <Icon icon="material-symbols:lock" width="12" height="12" color="#e11d48" />
-              VIEW ONLY
+      {/* Page Header - Sticky */}
+      <div className="sticky top-0 z-30 bg-gray-50/95 backdrop-blur-md py-3 mb-4 -mt-2 flex items-center justify-between gap-4 flex-wrap border-b border-gray-200/70 shadow-sm px-2 rounded-xl">
+        <div className="flex items-center gap-4 flex-wrap">
+          <button
+            onClick={handleDoneOrBack}
+            className="flex items-center gap-2 text-gray-500 hover:text-gray-800 font-semibold text-sm transition-colors"
+          >
+            <Icon icon="material-symbols:arrow-back" width="18" height="18" color="#64748b" />
+            Back to Assignments
+          </button>
+          <span className="text-gray-300">|</span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold text-white uppercase" style={{ backgroundColor: rs.border }}>
+              {roleInitials}
             </span>
-          )}
+            <h2 className="text-xl font-extrabold text-gray-800">
+              {isAdmin ? 'View Assignments' : 'Assign Employee'}
+            </h2>
+            <span className="text-gray-400">·</span>
+            <span className="text-gray-600 font-semibold">{modal.task_name}</span>
+            {modal.unit_type && <span className="text-gray-400 text-xs font-semibold">({modal.unit_type})</span>}
+            {isAdmin && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-100">
+                <Icon icon="material-symbols:lock" width="12" height="12" color="#e11d48" />
+                VIEW ONLY
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
@@ -425,17 +427,17 @@ const AssignEmployee = () => {
                         {!isProjCollapsed && (
                           <div className="overflow-x-auto">
                             <table className="w-full text-left text-[11px] border-collapse">
-                              <thead>
-                                <tr className="bg-gray-50 border-b border-gray-100 text-gray-400 font-bold text-[10px] uppercase">
-                                  <th className="py-2 px-3 min-w-[110px]">Employee Name</th>
-                                  <th className="py-2 px-3 min-w-[110px]">Project Name</th>
-                                  <th className="py-2 px-3 min-w-[110px]">Task Name</th>
-                                  <th className="py-2 px-3 text-center min-w-[90px]">Total Assigned Units</th>
-                                  <th className="py-2 px-3 text-center min-w-[110px]">Total Assigned Person Days</th>
-                                  <th className="py-2 px-3 text-center min-w-[90px]">Completed Units</th>
-                                  <th className="py-2 px-3 text-center min-w-[110px]">Completed Person Days</th>
-                                  <th className="py-2 px-3 text-center min-w-[80px]">Pending Units</th>
-                                  <th className="py-2 px-3 text-center min-w-[100px]">Pending Person Days</th>
+                              <thead className="sticky top-0 z-10 bg-gray-50">
+                                <tr className="bg-gray-50 border-b border-gray-100 text-gray-500 font-bold text-[10px] uppercase">
+                                  <th className="sticky top-0 z-10 bg-gray-50 py-2 px-3 min-w-[110px]">Employee Name</th>
+                                  <th className="sticky top-0 z-10 bg-gray-50 py-2 px-3 min-w-[110px]">Project Name</th>
+                                  <th className="sticky top-0 z-10 bg-gray-50 py-2 px-3 min-w-[110px]">Task Name</th>
+                                  <th className="sticky top-0 z-10 bg-gray-50 py-2 px-3 text-center min-w-[90px]">Total Assigned Units</th>
+                                  <th className="sticky top-0 z-10 bg-gray-50 py-2 px-3 text-center min-w-[110px]">Total Assigned Person Days</th>
+                                  <th className="sticky top-0 z-10 bg-gray-50 py-2 px-3 text-center min-w-[90px]">Completed Units</th>
+                                  <th className="sticky top-0 z-10 bg-gray-50 py-2 px-3 text-center min-w-[110px]">Completed Person Days</th>
+                                  <th className="sticky top-0 z-10 bg-gray-50 py-2 px-3 text-center min-w-[80px]">Pending Units</th>
+                                  <th className="sticky top-0 z-10 bg-gray-50 py-2 px-3 text-center min-w-[100px]">Pending Person Days</th>
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-gray-50">
@@ -488,18 +490,18 @@ const AssignEmployee = () => {
         {existing.length > 0 ? (
           <div className="overflow-x-auto border border-gray-100 rounded-xl">
             <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="border-b border-gray-100 text-gray-500 font-bold text-[10px] uppercase" style={{ backgroundColor: '#EFF4FF' }}>
-                  <th className="py-2.5 px-3 min-w-[130px]">Employee Name</th>
-                  <th className="py-2.5 px-3 min-w-[130px]">Project Name</th>
-                  <th className="py-2.5 px-3 min-w-[130px]">Task Name</th>
-                  <th className="py-2.5 px-3 text-center min-w-[100px]">Total Assigned Units</th>
-                  <th className="py-2.5 px-3 text-center min-w-[120px]">Total Assigned Person Days</th>
-                  <th className="py-2.5 px-3 text-center min-w-[100px]">Completed Units</th>
-                  <th className="py-2.5 px-3 text-center min-w-[120px]">Completed Person Days</th>
-                  <th className="py-2.5 px-3 text-center min-w-[90px]">Pending Units</th>
-                  <th className="py-2.5 px-3 text-center min-w-[110px]">Pending Person Days</th>
-                  {!isAdmin && <th className="py-2.5 px-3 text-center min-w-[120px]">Action</th>}
+              <thead className="sticky top-0 z-10 bg-[#EFF4FF]">
+                <tr className="border-b border-gray-100 text-[#434654] font-bold text-[10px] uppercase" style={{ backgroundColor: '#EFF4FF' }}>
+                  <th className="sticky top-0 z-10 bg-[#EFF4FF] py-2.5 px-3 min-w-[130px]">Employee Name</th>
+                  <th className="sticky top-0 z-10 bg-[#EFF4FF] py-2.5 px-3 min-w-[130px]">Project Name</th>
+                  <th className="sticky top-0 z-10 bg-[#EFF4FF] py-2.5 px-3 min-w-[130px]">Task Name</th>
+                  <th className="sticky top-0 z-10 bg-[#EFF4FF] py-2.5 px-3 text-center min-w-[100px]">Total Assigned Units</th>
+                  <th className="sticky top-0 z-10 bg-[#EFF4FF] py-2.5 px-3 text-center min-w-[120px]">Total Assigned Person Days</th>
+                  <th className="sticky top-0 z-10 bg-[#EFF4FF] py-2.5 px-3 text-center min-w-[100px]">Completed Units</th>
+                  <th className="sticky top-0 z-10 bg-[#EFF4FF] py-2.5 px-3 text-center min-w-[120px]">Completed Person Days</th>
+                  <th className="sticky top-0 z-10 bg-[#EFF4FF] py-2.5 px-3 text-center min-w-[90px]">Pending Units</th>
+                  <th className="sticky top-0 z-10 bg-[#EFF4FF] py-2.5 px-3 text-center min-w-[110px]">Pending Person Days</th>
+                  {!isAdmin && <th className="sticky top-0 z-10 bg-[#EFF4FF] py-2.5 px-3 text-center min-w-[120px]">Action</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">

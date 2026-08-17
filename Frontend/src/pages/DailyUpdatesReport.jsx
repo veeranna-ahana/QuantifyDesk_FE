@@ -337,8 +337,8 @@ export default function DailyUpdatesReport() {
         </p>
       </div>
 
-      {/* ── Filter bar ── */}
-      <div className="flex flex-wrap items-end gap-4 mb-5">
+      {/* ── Filter bar - Sticky ── */}
+      <div className="sticky top-0 z-30 bg-[#f0f0f8]/95 backdrop-blur-md py-3 -mt-2 mb-4 flex flex-wrap items-end gap-4 border-b border-gray-200/60 shadow-sm rounded-xl px-2">
 
         {/* Date */}
         <SelectWrapper label="Date">
@@ -409,12 +409,12 @@ export default function DailyUpdatesReport() {
           <table className="w-full text-sm border-collapse min-w-[960px]">
 
             {/* Head */}
-            <thead>
+            <thead className="sticky top-0 z-10 bg-[#EFF4FF]">
               <tr className="border-b border-gray-100 bg-[#EFF4FF]">
                 {COLS.map(col => (
                   <th
                     key={col}
-                    className="text-left px-4 py-3 text-[11px] font-bold text-slate-500 tracking-wide uppercase whitespace-nowrap"
+                    className="sticky top-0 z-10 bg-[#EFF4FF] text-left px-4 py-3 text-[11px] font-bold text-slate-500 tracking-wide uppercase whitespace-nowrap"
                   >
                     {col}
                   </th>

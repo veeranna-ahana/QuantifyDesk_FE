@@ -629,18 +629,18 @@ const ReconPage = () => {
                   </div>
                 </div>
 
-                <div className="w-full overflow-x-auto rounded-xl border border-gray-100">
+                <div className="w-full overflow-auto max-h-[calc(100vh-280px)] rounded-xl border border-gray-100">
                   <table className="w-full border-collapse text-sm">
-                    <thead>
-                      <tr style={{ backgroundColor: '#EFF4FF' }}>
-                        <th className="px-3 py-3 text-left text-[11px] font-bold text-[#434654] uppercase">Employee</th>
-                        <th className="px-3 py-3 text-left text-[11px] font-bold text-[#434654] uppercase">Role</th>
-                        <th className="px-3 py-3 text-left text-[11px] font-bold text-[#434654] uppercase">Assigned (H/D)</th>
-                        <th className="px-3 py-3 text-left text-[11px] font-bold text-[#434654] uppercase">Actual (H/D)</th>
-                        <th className="px-3 py-3 text-left text-[11px] font-bold text-[#434654] uppercase">Utilization %</th>
-                        <th className="px-3 py-3 text-left text-[11px] font-bold text-[#434654] uppercase">Variance (H/%)</th>
-                        <th className="px-3 py-3 text-left text-[11px] font-bold text-[#434654] uppercase">Status</th>
-                        <th className="px-3 py-3 text-left text-[11px] font-bold text-[#434654] uppercase">Timesheet Status</th>
+                    <thead className="sticky top-0 z-20 bg-[#EFF4FF]">
+                      <tr className="border-b border-gray-200 bg-[#EFF4FF]" style={{ backgroundColor: '#EFF4FF' }}>
+                        <th className="sticky top-0 z-20 bg-[#EFF4FF] px-3 py-3 text-left text-[11px] font-bold text-[#434654] uppercase shadow-sm">Employee</th>
+                        <th className="sticky top-0 z-20 bg-[#EFF4FF] px-3 py-3 text-left text-[11px] font-bold text-[#434654] uppercase shadow-sm">Role</th>
+                        <th className="sticky top-0 z-20 bg-[#EFF4FF] px-3 py-3 text-left text-[11px] font-bold text-[#434654] uppercase shadow-sm">Assigned (H/D)</th>
+                        <th className="sticky top-0 z-20 bg-[#EFF4FF] px-3 py-3 text-left text-[11px] font-bold text-[#434654] uppercase shadow-sm">Actual (H/D)</th>
+                        <th className="sticky top-0 z-20 bg-[#EFF4FF] px-3 py-3 text-left text-[11px] font-bold text-[#434654] uppercase shadow-sm">Utilization %</th>
+                        <th className="sticky top-0 z-20 bg-[#EFF4FF] px-3 py-3 text-left text-[11px] font-bold text-[#434654] uppercase shadow-sm">Variance (H/%)</th>
+                        <th className="sticky top-0 z-20 bg-[#EFF4FF] px-3 py-3 text-left text-[11px] font-bold text-[#434654] uppercase shadow-sm">Status</th>
+                        <th className="sticky top-0 z-20 bg-[#EFF4FF] px-3 py-3 text-left text-[11px] font-bold text-[#434654] uppercase shadow-sm">Timesheet Status</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1045,24 +1045,24 @@ const ReconPage = () => {
                     </div>
                   </div>
 
-                  <div className="w-full overflow-x-auto">
+                  <div className="w-full overflow-auto max-h-[calc(100vh-230px)]">
                     <table className="w-full border-collapse text-sm">
-                      <thead>
-                        <tr style={{ backgroundColor: '#EFF4FF' }}>
-                          <th className="px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Project Code</th>
-                          <th className="px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Project Name</th>
-                          <th className="px-4 py-3 text-right text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">
+                      <thead className="sticky top-0 z-20 bg-[#EFF4FF]">
+                        <tr className="border-b border-gray-200 bg-[#EFF4FF]" style={{ backgroundColor: '#EFF4FF' }}>
+                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap shadow-sm">Project Code</th>
+                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap shadow-sm">Project Name</th>
+                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-right text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap shadow-sm">
                             Est. Hours <span className="font-normal normal-case text-gray-400">(Days)</span>
                           </th>
-                          <th className="px-4 py-3 text-right text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">
+                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-right text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap shadow-sm">
                             Actual Hours <span className="font-normal normal-case text-gray-400">(Days)</span>
                           </th>
-                          <th className="px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Utilized %</th>
-                          <th className="px-4 py-3 text-right text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">
+                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap shadow-sm">Utilized %</th>
+                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-right text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap shadow-sm">
                             Variance <span className="font-normal normal-case text-gray-400">(Hrs / %)</span>
                           </th>
-                          <th className="px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Status</th>
-                          <th className="px-4 py-3 text-center text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Actions</th>
+                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap shadow-sm">Status</th>
+                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-center text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap shadow-sm">Actions</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1204,18 +1204,18 @@ const ReconPage = () => {
                     </div>
                   </div>
 
-                  <div className="w-full overflow-x-auto">
+                  <div className="w-full overflow-auto max-h-[calc(100vh-230px)]">
                     <table className="w-full border-collapse text-sm">
-                      <thead>
-                        <tr style={{ backgroundColor: '#EFF4FF' }}>
-                          <th className="px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Employee</th>
+                      <thead className="sticky top-0 z-20 bg-[#EFF4FF]">
+                        <tr className="border-b border-gray-200 bg-[#EFF4FF]" style={{ backgroundColor: '#EFF4FF' }}>
+                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap shadow-sm">Employee</th>
                           {/* <th className="px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Reporting Manager</th> */}
-                          <th className="px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Project Code</th>
-                          <th className="px-4 py-3 text-right text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Assigned (H)</th>
-                          <th className="px-4 py-3 text-right text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Actual (H)</th>
-                          <th className="px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Utilization %</th>
-                          <th className="px-4 py-3 text-right text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Variance %</th>
-                          <th className="px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Status</th>
+                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap shadow-sm">Project Code</th>
+                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-right text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap shadow-sm">Assigned (H)</th>
+                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-right text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap shadow-sm">Actual (H)</th>
+                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap shadow-sm">Utilization %</th>
+                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-right text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap shadow-sm">Variance %</th>
+                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap shadow-sm">Status</th>
                         </tr>
                       </thead>
                       <tbody>

@@ -346,8 +346,8 @@ export default function EffortEstimate() {
   return (
     <div className="min-h-screen bg-[#f0f0f8] p-6 font-sans">
 
-      {/* ── Page header ── */}
-      <div className="mb-5">
+      {/* ── Page header - Sticky ── */}
+      <div className="sticky top-0 z-30 bg-[#f0f0f8]/95 backdrop-blur-md pb-4 -mt-2 mb-4">
         <h1 className="text-2xl font-bold text-gray-900">
           {readOnly ? 'View Effort Estimate' : 'Effort Estimate & Utilization'}
         </h1>
@@ -356,34 +356,34 @@ export default function EffortEstimate() {
             ? 'Viewing effort estimates for this project (read-only).'
             : 'Configure project resources and track total capacity alignment.'}
         </p>
+
+        {/* Project Name info bar inside sticky header */}
+        {projectName && (
+          <div className="mt-4 bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex items-center justify-between flex-wrap gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#856BFF]/10 flex items-center justify-center shrink-0">
+                <Icon icon="material-symbols:folder" width="22" height="22" color="#856BFF" />
+              </div>
+              <div>
+                <span className="text-[10px] font-bold text-gray-400 tracking-wider uppercase block">Project Name</span>
+                <span className="text-base font-bold text-gray-800">{projectName}</span>
+              </div>
+            </div>
+            {currentProject?.project_code && (
+              <div className="flex items-center gap-2 bg-[#EFF4FF] border border-[#856BFF]/20 px-3 py-1.5 rounded-xl">
+                <span className="text-[10px] font-bold text-gray-400 tracking-wider uppercase">Project Code:</span>
+                <span className="text-xs font-bold text-[#856BFF]">{currentProject.project_code}</span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* ── Project Name info before table ── */}
-      {projectName && (
-        <div className="mb-5 bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex items-center justify-between flex-wrap gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#856BFF]/10 flex items-center justify-center shrink-0">
-              <Icon icon="material-symbols:folder" width="22" height="22" color="#856BFF" />
-            </div>
-            <div>
-              <span className="text-[10px] font-bold text-gray-400 tracking-wider uppercase block">Project Name</span>
-              <span className="text-base font-bold text-gray-800">{projectName}</span>
-            </div>
-          </div>
-          {currentProject?.project_code && (
-            <div className="flex items-center gap-2 bg-[#EFF4FF] border border-[#856BFF]/20 px-3 py-1.5 rounded-xl">
-              <span className="text-[10px] font-bold text-gray-400 tracking-wider uppercase">Project Code:</span>
-              <span className="text-xs font-bold text-[#856BFF]">{currentProject.project_code}</span>
-            </div>
-          )}
-        </div>
-      )}
-
       {/* ── Resource Breakdown card ── */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col">
 
         {/* Card header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
           <div className="flex items-center gap-2">
             <Icon icon="material-symbols:grid-view" width="20" height="20" color="#856BFF" />
             <span className="text-base font-bold text-gray-900">Effort Breakdown</span>
@@ -406,14 +406,14 @@ export default function EffortEstimate() {
             Loading effort data…
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-auto max-h-[calc(100vh-320px)]">
             <table className="w-full text-sm border-collapse">
               {/* Head */}
-              <thead>
-                <tr className="bg-gray-50 border-b border-gray-100" style={{ backgroundColor: '#EFF4FF' }}>
+              <thead className="sticky top-0 z-20 bg-[#EFF4FF]">
+                <tr className="border-b border-gray-200 bg-[#EFF4FF]" style={{ backgroundColor: '#EFF4FF' }}>
                   {COLS.map(col => (
                     <th key={typeof col === 'string' ? col : Math.random()}
-                      className="px-4 py-3 text-[11px] font-semibold text-[#434655] tracking-widest uppercase text-left whitespace-nowrap">
+                      className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-[11px] font-semibold text-[#434654] tracking-widest uppercase text-left whitespace-nowrap shadow-sm">
                       {col}
                     </th>
                   ))}
@@ -499,31 +499,31 @@ export default function EffortEstimate() {
               </tbody>
 
               {/* Totals footer */}
-              <tfoot>
-                <tr className="bg-gray-50 border-t border-gray-200">
-                  <td className="px-5 py-3 text-xs font-bold text-[#856BFF] uppercase tracking-wider">
+              <tfoot className="sticky bottom-0 z-20 bg-gray-50 border-t-2 border-gray-200 shadow-sm">
+                <tr className="bg-gray-50">
+                  <td className="sticky bottom-0 bg-gray-50 px-5 py-3 text-xs font-bold text-[#856BFF] uppercase tracking-wider">
                     TOTAL
                   </td>
-                  <td className="px-4 py-3 text-center text-sm font-semibold text-gray-700">
+                  <td className="sticky bottom-0 bg-gray-50 px-4 py-3 text-center text-sm font-semibold text-gray-700">
                     {totals.days > 0 ? `${totals.days} Days` : '0 Days'}
                   </td>
-                  <td className="px-4 py-3 text-center text-sm font-semibold text-gray-700">
+                  <td className="sticky bottom-0 bg-gray-50 px-4 py-3 text-center text-sm font-semibold text-gray-700">
                     {totals.hrs > 0 ? `${totals.hrs} Hrs` : '0 Hrs'}
                   </td>
-                  <td className="px-4 py-3 text-center text-sm font-semibold text-gray-700">
+                  <td className="sticky bottom-0 bg-gray-50 px-4 py-3 text-center text-sm font-semibold text-gray-700">
                     {totals.bufferDays > 0 ? `${totals.bufferDays} Days` : '0 Days'}
                   </td>
-                  <td className="px-4 py-3 text-center text-sm font-semibold text-gray-700">
+                  <td className="sticky bottom-0 bg-gray-50 px-4 py-3 text-center text-sm font-semibold text-gray-700">
                     {totals.bufferHrs > 0 ? `${totals.bufferHrs} Hrs` : '0 Hrs'}
                   </td>
 
-                  <td className="px-4 py-3 text-center text-sm font-bold text-emerald-500">
+                  <td className="sticky bottom-0 bg-gray-50 px-4 py-3 text-center text-sm font-bold text-emerald-500">
                     {totals.totalHrs > 0 ? `${totals.totalHrs} Hrs` : '0 Hrs'}
                   </td>
-                  <td className="px-4 py-3 text-center text-sm font-semibold text-gray-700">
+                  <td className="sticky bottom-0 bg-gray-50 px-4 py-3 text-center text-sm font-semibold text-gray-700">
                     {totals.units > 0 ? totals.units : '0'}
                   </td>
-                  <td />
+                  <td className="sticky bottom-0 bg-gray-50" />
                 </tr>
               </tfoot>
             </table>

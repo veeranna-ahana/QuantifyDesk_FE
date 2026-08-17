@@ -831,27 +831,13 @@ const Projects = () => {
     <div className="min-h-screen bg-[#f0f0f8] p-6 font-sans">
 
       {/* ── Page header ── */}
-      <div className="flex items-start justify-between mb-6 flex-wrap gap-3">
+      <div className="sticky top-0 z-30 bg-[#f0f0f8]/95 backdrop-blur-md pb-4 -mt-2 flex items-start justify-between mb-4 flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 leading-tight">Projects</h1>
           <p className="text-sm text-gray-400 mt-0.5">Manage and reconcile enterprise-level project efforts.</p>
         </div>
         {!isAdmin && (
           <div className="flex items-center gap-3">
-            {/* Effort Estimate — outlined violet */}
-            {/* <button
-  onClick={() => navigate('/projects/effort', { state: { projects, initialProjectId: '', readOnly: false } })}
-  className="flex items-center gap-2 px-4 py-2 border border-[#9984f5] text-[#856BFF] text-sm font-semibold rounded-lg hover:bg-violet-50 transition-colors"
->
-<Icon 
-  icon="boxicons:math-filled" 
-  width="22" 
-  height="22" 
-  className="border-2 border-[#856BFF]  p-0.5"
-  style={{ color: '#856BFF' }}
-/>
-  Effort Estimate
-</button> */}
             {/* Create Project — filled violet */}
             <button
               onClick={() => navigate('/projects/create')}
@@ -864,7 +850,7 @@ const Projects = () => {
       </div>
 
       {/* ── Table card ── */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col">
         {loading ? (
           <div className="flex items-center justify-center gap-2 py-20 text-gray-400">
             <svg className="animate-spin w-5 h-5 text-[#9e88ff]" fill="none" viewBox="0 0 24 24">
@@ -882,12 +868,12 @@ const Projects = () => {
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto">
+            <div className="overflow-auto max-h-[calc(100vh-230px)]">
               <table className="w-full text-sm border-collapse min-w-[900px]">
-                <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50 bg-[#EFF4FF]" style={{ backgroundColor: '#EFF4FF' }}>
+                <thead className="sticky top-0 z-20 bg-[#EFF4FF]">
+                  <tr className="border-b border-gray-200 bg-[#EFF4FF]" style={{ backgroundColor: '#EFF4FF' }}>
                     {COLS.map(c => (
-                      <th key={c.label} className={`text-left px-4 py-3 text-[11px] font-bold text-[#434654] tracking-wide uppercase whitespace-nowrap ${c.w}`}>
+                      <th key={c.label} className={`sticky top-0 z-20 bg-[#EFF4FF] text-left px-4 py-3 text-[11px] font-bold text-[#434654] tracking-wide uppercase whitespace-nowrap shadow-sm ${c.w}`}>
                         {c.label}
                       </th>
                     ))}

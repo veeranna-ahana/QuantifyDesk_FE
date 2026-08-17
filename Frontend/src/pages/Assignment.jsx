@@ -1096,12 +1096,14 @@ const AssignmentScreen = () => {
         </p>
       </div>
 
-      {/* Main card */}
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 mb-6">
+      {/* Main card - Entire card sticky when project selected */}
+      <div className={`bg-white rounded-2xl border border-slate-200/90 shadow-md p-5 mb-6 transition-all ${
+        selProject ? 'sticky top-0 z-30 bg-white/95 backdrop-blur-md' : ''
+      }`}>
         {selProject ? (
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-4">
             {/* Top row: Title + Dropdown */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-5">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-3.5">
               <div>
                 <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                   Effort Estimate & Assign
@@ -1451,40 +1453,40 @@ const AssignmentScreen = () => {
                   {isExpanded && (
                     <div className="overflow-x-auto border-t border-slate-100">
                       <table className="w-full text-left border-collapse">
-                        <thead>
+                        <thead className="sticky top-0 z-10 bg-[#EFF4FF]">
                           <tr className="border-b border-slate-100" style={{ backgroundColor: '#EFF4FF' }}>
 
-                            <th className="py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase">
+                            <th className="sticky top-0 z-10 bg-[#EFF4FF] py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase">
                               Task Name
                             </th>
-                            <th className="py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-28">
+                            <th className="sticky top-0 z-10 bg-[#EFF4FF] py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-28">
                               Planned Units
                             </th>
-                            <th className="py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-24">
+                            <th className="sticky top-0 z-10 bg-[#EFF4FF] py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-24">
                               Est. Days
                             </th>
-                            <th className="py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-24">
+                            <th className="sticky top-0 z-10 bg-[#EFF4FF] py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-24">
                               Est. Hours
                             </th>
-                            <th className="py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase w-32">
+                            <th className="sticky top-0 z-10 bg-[#EFF4FF] py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase w-32">
                               Unit Type
                             </th>
-                            <th className="py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-20">
+                            <th className="sticky top-0 z-10 bg-[#EFF4FF] py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-20">
                               Assigned
                             </th>
-                            <th className="py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-20">
+                            <th className="sticky top-0 z-10 bg-[#EFF4FF] py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-20">
                               Bal Units
                             </th>
-                            <th className="py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-20">
+                            <th className="sticky top-0 z-10 bg-[#EFF4FF] py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-20">
                               Bal Hours
                             </th>
-                            <th className="py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-20">
+                            <th className="sticky top-0 z-10 bg-[#EFF4FF] py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-20">
                               Completed
                             </th>
-                            <th className="py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-36">
+                            <th className="sticky top-0 z-10 bg-[#EFF4FF] py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-36">
                               Status
                             </th>
-                            <th className="py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-28">
+                            <th className="sticky top-0 z-10 bg-[#EFF4FF] py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-28">
                               Action
                             </th>
                           </tr>
