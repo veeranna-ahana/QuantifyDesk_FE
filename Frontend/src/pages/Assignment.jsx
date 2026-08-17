@@ -1140,42 +1140,32 @@ const AssignmentScreen = () => {
             <div className="flex gap-3 flex-wrap">
               <KPI
                 label="Total Effort"
-                value={total_planned + " units"}
+                value={`${Number(total_planned || 0).toLocaleString('en-US')} units`}
                 color="text-violet-600 border-l-violet-500"
               />
               <KPI
                 label="Total Days"
-                value={total_effort_days}
+                value={Number(total_effort_days || 0).toLocaleString('en-US', { maximumFractionDigits: 1 })}
                 color="text-slate-800 border-l-slate-400"
               />
               <KPI
                 label="Total Hours"
-                value={total_effort_hours}
+                value={Number(total_effort_hours || 0).toLocaleString('en-US', { maximumFractionDigits: 2 })}
                 color="text-slate-800 border-l-slate-400"
               />
               <KPI
                 label="Assigned Units"
-                value={total_assigned}
+                value={Number(total_assigned || 0).toLocaleString('en-US')}
                 color="text-sky-500 border-l-sky-400"
               />
-              {/* <KPI
-                label="Balance Units"
-                value={total_balance_units}
-                color="text-amber-500 border-l-amber-400"
-              />
-              <KPI
-                label="Balance Hours"
-                value={total_balance_hours}
-                color="text-amber-500 border-l-amber-400"
-              /> */}
               <KPI
                 label="Completed Units"
-                value={total_completed}
+                value={Number(total_completed || 0).toLocaleString('en-US')}
                 color="text-emerald-500 border-l-emerald-400"
               />
               <KPI
                 label="Pending Units"
-                value={Math.max(total_assigned - total_completed, 0)}
+                value={Number(Math.max(Number(total_assigned || 0) - Number(total_completed || 0), 0)).toLocaleString('en-US')}
                 color="text-rose-500 border-l-rose-400"
               />
             </div>
