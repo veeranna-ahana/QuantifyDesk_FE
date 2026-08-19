@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
 import axios from "axios";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { fetchHrmsEmployees, selectAllEmployees, selectEmployeesLoading } from "../store/slices/employeeSlice";
 import Cookies from "js-cookie";
 import SearchableSelect from "../component/SearchableSelect";
 import { Icon } from '@iconify/react';
@@ -35,7 +36,10 @@ const AssignEmployee = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isAdmin = getUserRole() === 'ADMIN';
-  const serviceDeliveryEmployees = useSelector((state) => state.auth.serviceDeliveryEmployees);
+  // const serviceDeliveryEmployees = useSelector((state) => state.auth.serviceDeliveryEmployees);
+  const dispatch = useDispatch();
+const hrmsEmployees = useSelector(selectAllEmployees);
+const employeesLoading = useSelector(selectEmployeesLoading);
 
   // All context passed via navigation state
   const { modal, selProject, projectName = "", assignments: initAssignments = [], extraData: initExtraData = {} } = location.state || {};
@@ -72,6 +76,23 @@ const AssignEmployee = () => {
   useEffect(() => {
     scrollToTop();
   }, []);
+
+  // Fetch HRMS employees when component mounts
+useEffect(() => {
+  if (hrmsEmployees.length === 0 && !employeesLoading) {
+    dispatch(fetchHrmsEmployees());
+  }
+}, [dispatch, hrmsEmployees.length, employeesLoading]);
+
+// Add this after your hrmsEmployees useEffect
+useEffect(() => {
+  if (hrmsEmployees.length > 0) {
+    // console.log('🔍 All employees with departments:');
+    hrmsEmployees.forEach(emp => {
+      // console.log(`- ${emp.Employee_Name}: "${emp.Name_of_Department}" (length: ${emp.Name_of_Department?.length || 0})`);
+    });
+  }
+}, [hrmsEmployees]);
 
   // Redirect if navigated directly without state
   useEffect(() => {
@@ -257,6 +278,19 @@ const AssignEmployee = () => {
   const rs = roleStyle(modal.role);
   const roleInitials = modal.role.split(/\s+/).map(w => w[0]).join("").slice(0, 2).toUpperCase();
 
+const deliveryEmployees = hrmsEmployees.filter(emp => {
+  if (!emp.Name_of_Department) return false;
+  // Trim and compare case-insensitively
+  const dept = emp.Name_of_Department.trim();
+  return dept.toLowerCase() === 'delivery';
+});
+
+// Add debug log
+console.log('Total employees:', hrmsEmployees.length);
+console.log('ADM employees:', deliveryEmployees.length);
+
+// Then use deliveryEmployees in the SearchableSelect
+
   return (
     <div className="p-6 bg-gray-50 min-h-full font-sans">
       {/* Page Header */}
@@ -327,16 +361,16 @@ const AssignEmployee = () => {
           <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
             <div className="md:col-span-2">
               <label className="block text-[10px] font-semibold text-gray-400 mb-1">Employee</label>
-              <SearchableSelect
-                value={selUser}
-                onChange={setSelUser}
-                placeholder="Select employee…"
-                options={serviceDeliveryEmployees.map(emp => ({
-                  value: String(emp.employee_id || emp.id),
-                  label: emp.emp_name || emp.name,
-                }))}
-                className="rounded-xl text-xs font-semibold text-gray-700 border-gray-200"
-              />
+            <SearchableSelect
+  value={selUser}
+  onChange={setSelUser}
+  placeholder={employeesLoading ? "Loading employees..." : "Select employee…"}
+  options={deliveryEmployees.map(emp => ({
+    value: String(emp.Employee_ID),
+    label: `${emp.Employee_Name} (${emp.Employee_ID})`,
+  }))}
+  className="rounded-xl text-xs font-semibold text-gray-700 border-gray-200"
+/>
             </div>
             {[
               { label: "Units", val: units, onChange: val => setUnits(val.replace(/\D/g, '')), exceeded: unitsExceeded, step: "1", integerOnly: true },
@@ -445,10 +479,10 @@ const AssignEmployee = () => {
                                   const assignedDays = parseFloat((Number(task.estimated_hours || 0) / 8).toFixed(2));
                                   const completedDays = parseFloat((Number(task.completed_hours || 0) / 8).toFixed(2));
                                   const pendingDays = parseFloat((Number(task.pending_hours || 0) / 8).toFixed(2));
-                                  const empObj = serviceDeliveryEmployees.find(
-                                    e => String(e.employee_id || e.id) === String(selUser)
+                                  const empObj = hrmsEmployees.find(
+                                    e => String(e.Employee_ID) === String(selUser)
                                   );
-                                  const empName = empObj?.emp_name || empObj?.name || selUser;
+                                  const empName = empObj?.Employee_Name || selUser;
                                   return (
                                     <tr key={task.task_id} className="hover:bg-gray-50/60 transition-colors">
                                       <td className="py-2 px-3 font-semibold text-gray-700">{empName}</td>
