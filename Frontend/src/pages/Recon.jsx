@@ -560,8 +560,8 @@ const ReconPage = () => {
                     ({projectDetail.project?.variance_pct}%)
                     {" "}
                     {Number(projectDetail.project?.variance_hours) < 0
-                      ? "Over-allocated"
-                      : "Under-allocated"}
+                      ? "Over-utilized"
+                      : "Under-utilized"}
                   </p>
                 </div>
 
