@@ -12,13 +12,13 @@ import tasksReducer from './slices/tasksSlice';
 const persistConfig = {
   key: 'root',
   storage,
-  whitelist: ['selectedFMS', 'tasks', 'auth'], // ✅ Add 'auth' to whitelist
+  whitelist: ['selectedFMS', 'tasks', 'auth', 'employees'], // ✅ Add 'employees'
 };
 
 const rootReducer = combineReducers({
   theme: themeReducer,
   auth: authReducer,
-  employees: employeeReducer,
+  employees: employeeReducer, // ✅ Ensure this is included
   selectedFMS: selectedFMSReducer,
   tasks: tasksReducer,
 });
