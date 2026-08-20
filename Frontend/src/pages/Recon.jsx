@@ -10,6 +10,7 @@ import {
 } from "../api/recon.api";
 import { Icon } from '@iconify/react';
 import { DownloadOutlined } from "@ant-design/icons";
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 
 // ─── Number Formatting Helper ────────────────────────────────────
 const formatNumber = (val, maxDecimals = 2) => {
@@ -69,6 +70,27 @@ const StatusText = ({ status }) => {
       {status}
     </span>
   );
+};
+
+// ─── Custom Pie Chart Tooltip ────────────────────────────────────
+const CustomPieTooltip = ({ active, payload }) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    const total = payload[0].chartData?.reduce((acc, curr) => acc + curr.count, 0) || payload[0].payload?.totalProjects || 1;
+    const pct = ((data.count / total) * 100).toFixed(1);
+    return (
+      <div className="bg-white/95 backdrop-blur-sm border border-gray-100 p-2.5 rounded-xl shadow-lg text-xs z-50">
+        <div className="flex items-center gap-1.5 font-semibold text-gray-800">
+          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: data.color }} />
+          <span>{data.name}</span>
+        </div>
+        <div className="mt-1 text-gray-500 font-medium">
+          <span className="font-bold text-gray-900">{data.count}</span> projects ({pct}%)
+        </div>
+      </div>
+    );
+  }
+  return null;
 };
 
 // ─── Small inline icons ──────────────────────────────────────────
@@ -277,6 +299,48 @@ const ReconPage = () => {
         (e.role && e.role.toLowerCase().includes(search))
     );
   }, [projectDetail.employeeSummary, resourceSearch]);
+
+  // ─── Utilization Donut Chart Data ─────────────────────────────
+  const utilizationPieData = useMemo(() => {
+    let over = 0;
+    let utilized = 0;
+    let moderate = 0;
+    let under = 0;
+    let noEst = 0;
+
+    projectReconList.forEach((p) => {
+      const estimated = parseFloat(p.estimated_hours || 0);
+      const actual = parseFloat(p.actual_hours || 0);
+      if (!p.in_system || estimated === 0) {
+        noEst++;
+      } else {
+        const util = (actual / estimated) * 100;
+        if (util > 100) over++;
+        else if (util >= 70) utilized++;
+        else if (util >= 50) moderate++;
+        else under++;
+      }
+    });
+
+    const data = [
+      { name: "Over-utilized (>100%)", count: over, color: "#EF4444", shortName: "Over-utilized" },
+      { name: "Utilized (70%–90%)", count: utilized, color: "#10B981", shortName: "Utilized" },
+      { name: "Moderate (50%–70%)", count: moderate, color: "#0284C7", shortName: "Moderate" },
+      { name: "Under-utilized (<50%)", count: under, color: "#F59E0B", shortName: "Under-utilized" },
+    ];
+
+    if (noEst > 0) {
+      data.push({ name: "No Estimate / Other", count: noEst, color: "#94A3B8", shortName: "No Estimate" });
+    }
+
+    const filtered = data.filter((d) => d.count > 0);
+    const total = filtered.reduce((acc, curr) => acc + curr.count, 0);
+    return filtered.map((d) => ({ ...d, totalProjects: total }));
+  }, [projectReconList]);
+
+  const totalUtilizedProjects = useMemo(() => {
+    return utilizationPieData.reduce((acc, curr) => acc + curr.count, 0);
+  }, [utilizationPieData]);
 
   // ─── Paginated Data ────────────────────────────────────────────
   const paginatedProjects = useMemo(() => {
@@ -827,92 +891,170 @@ const ReconPage = () => {
             </button>
           </div>
 
-          {/* ── Project Status + Hours Summary cards ── */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+          {/* ── Project Status + Hours Summary + Utilization Donut cards ── */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 mb-6">
             {/* Project Status */}
-            <div className="relative bg-white rounded-2xl border border-gray-100 shadow-sm p-5 overflow-hidden">
+            <div className="relative bg-white rounded-2xl border border-gray-100 shadow-sm p-5 overflow-hidden flex flex-col justify-between">
               <span className="absolute left-0 top-0 bottom-0 w-1 bg-[#856BFF]" />
-              <div className="flex items-center gap-2 mb-4">
-                <span className="w-7 h-7 rounded-md bg-[#856BFF]/10 flex items-center justify-center text-[#856BFF] text-sm">
-                  <Icon icon="material-symbols:assignment" width="30" height="30" color="#856BFF" />
-                </span>                <span className="text-[20px] font-bold text-[#191B23] text-sm">Project Status</span>
-              </div>
-              <div className="grid grid-cols-3 gap-x-4 gap-y-5">
-                <div>
-                  <div className="text-[12px] font-semibold text-[#64748B] uppercase tracking-wide">Total Projects</div>
-                  <div className="text-xl font-extrabold text-gray-900 mt-1">{dashboardData.total_projects}</div>
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="w-7 h-7 rounded-md bg-[#856BFF]/10 flex items-center justify-center text-[#856BFF] text-sm">
+                    <Icon icon="material-symbols:assignment" width="22" height="22" color="#856BFF" />
+                  </span>
+                  <span className="text-[17px] font-bold text-[#191B23]">Project Status</span>
                 </div>
-                <div>
-                  <div className="text-[12px] font-semibold text-[#64748B]  uppercase tracking-wide">With Estimates</div>
-                  <div className="text-xl font-extrabold text-green-600 mt-1">{dashboardData.projects_with_estimates}</div>
-                </div>
-                <div>
-                  <div className="text-[12px] font-semibold text-[#64748B]  uppercase tracking-wide">Without Estimates</div>
-                  <div className="text-xl font-extrabold text-amber-500 mt-1">{dashboardData.projects_without_estimates}</div>
-                </div>
-                <div>
-                  <div className="text-[12px] font-semibold text-[#64748B]  uppercase tracking-wide">With Timesheets</div>
-                  <div className="text-xl font-extrabold text-[#856BFF] mt-1">{dashboardData.projects_with_timesheets}</div>
-                </div>
-                <div>
-                  <div className="text-[12px] font-semibold text-[#64748B] uppercase tracking-wide">Without Timesheets</div>
-                  <div className="text-xl font-extrabold text-red-500 mt-1">{dashboardData.projects_without_timesheets}</div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-4">
+                  <div className="col-span-2 sm:col-span-1">
+                    <div className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wide">Total Projects</div>
+                    <div className="text-2xl font-extrabold text-gray-900 mt-0.5">{dashboardData.total_projects}</div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wide">With Estimates</div>
+                    <div className="text-xl font-extrabold text-green-600 mt-0.5">{dashboardData.projects_with_estimates}</div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wide">Without Estimates</div>
+                    <div className="text-xl font-extrabold text-amber-500 mt-0.5">{dashboardData.projects_without_estimates}</div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wide">With Timesheets</div>
+                    <div className="text-xl font-extrabold text-[#856BFF] mt-0.5">{dashboardData.projects_with_timesheets}</div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wide">Without Timesheets</div>
+                    <div className="text-xl font-extrabold text-red-500 mt-0.5">{dashboardData.projects_without_timesheets}</div>
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Hours Summary */}
-            <div className="relative bg-white rounded-2xl border border-gray-100 shadow-sm p-5 overflow-hidden">
+            <div className="relative bg-white rounded-2xl border border-gray-100 shadow-sm p-5 overflow-hidden flex flex-col justify-between">
               <span className="absolute left-0 top-0 bottom-0 w-1 bg-[#856BFF]" />
-              <div className="flex items-center gap-2 mb-4">
-                <span className="w-7 h-7 rounded-md bg-[#856BFF]/10 flex items-center justify-center text-[#856BFF] text-sm">
-                  <Icon icon="material-symbols:schedule" width="30" height="30" color="#856BFF" />
-                </span>
-                <span className="text-[20px] font-bold text-[#191B23] text-sm">Hours Summary</span>
-              </div>
-              <div className="grid grid-cols-3 gap-4 mb-5">
-                <div>
-                  <div className="text-[12px] font-semibold text-[#64748B] uppercase tracking-wide">Total Estimated</div>
-                  <div className="text-xl font-extrabold text-gray-900 mt-1">
-                    {formatNumber(dashboardData.total_estimated_hours)}
-                    <span className="text-xs font-normal text-gray-400"> hrs</span>
-                  </div>
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="w-7 h-7 rounded-md bg-[#856BFF]/10 flex items-center justify-center text-[#856BFF] text-sm">
+                    <Icon icon="material-symbols:schedule" width="22" height="22" color="#856BFF" />
+                  </span>
+                  <span className="text-[17px] font-bold text-[#191B23]">Hours Summary</span>
                 </div>
-                <div>
-                  <div className="text-[12px] font-semibold text-[#64748B] uppercase tracking-wide">Total Actual</div>
-                  <div className="text-xl font-extrabold text-green-600 mt-1">
-                    {formatNumber(dashboardData.total_actual_hours)}
-                    <span className="text-xs font-normal text-gray-400"> hrs</span>
+                <div className="grid grid-cols-3 gap-3 mb-3">
+                  <div>
+                    <div className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wide">Estimated</div>
+                    <div className="text-lg font-extrabold text-gray-900 mt-0.5">
+                      {formatNumber(dashboardData.total_estimated_hours)}
+                      <span className="text-[10px] font-normal text-gray-400"> hrs</span>
+                    </div>
                   </div>
-                </div>
-                <div>
-                  <div className="text-[12px] font-semibold text-[#64748B] uppercase tracking-wide">Total Variance</div>
-                  <div className={`text-xl font-extrabold mt-1 ${Number(dashboardData.total_variance_hours) > 0 ? "text-red-500" : "text-green-600"}`}>
-                    {Number(dashboardData.total_variance_hours) > 0 ? "+" : ""}
-                    {formatNumber(dashboardData.total_variance_hours)}
-                    <span className="text-xs font-normal text-gray-400"> hrs</span>
+                  <div>
+                    <div className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wide">Actual</div>
+                    <div className="text-lg font-extrabold text-green-600 mt-0.5">
+                      {formatNumber(dashboardData.total_actual_hours)}
+                      <span className="text-[10px] font-normal text-gray-400"> hrs</span>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wide">Variance</div>
+                    <div className={`text-lg font-extrabold mt-0.5 ${Number(dashboardData.total_variance_hours) > 0 ? "text-red-500" : "text-green-600"}`}>
+                      {Number(dashboardData.total_variance_hours) > 0 ? "+" : ""}
+                      {formatNumber(dashboardData.total_variance_hours)}
+                      <span className="text-[10px] font-normal text-gray-400"> hrs</span>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="border-t border-gray-100 pt-4">
-                <div className="flex items-center gap-2 mb-3">
-                    <span className="w-10 h-10 rounded-md bg-[#856BFF]/10 flex items-center justify-center text-[#856BFF] text-xs">
-                      <Icon icon="material-symbols:bar-chart" width="20" height="20" color="#856BFF" />
-                    </span>
-                  <span className="text-[20px] font-bold text-[#191B23]  text-xs">Utilization Summary</span>
-                  </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <div className="text-[12px] font-semibold text-[#64748B]  uppercase tracking-wide">Overutilized Projects</div>
-                    <div className="text-lg font-extrabold text-red-500 mt-1">{dashboardData.overutilized_count}</div>
+              {/* Progress burn indicator */}
+              <div className="border-t border-gray-100 pt-3 mt-2">
+                <div className="flex items-center justify-between text-xs mb-1.5">
+                  <span className="text-gray-500 font-medium">Overall Effort Consumption</span>
+                  <span className="font-bold text-gray-800">
+                    {dashboardData.total_estimated_hours > 0
+                      ? `${formatNumber((dashboardData.total_actual_hours / dashboardData.total_estimated_hours) * 100, 1)}%`
+                      : "0%"}
+                  </span>
                 </div>
-                  <div>
-                    <div className="text-[12px] font-semibold text-[#64748B]  uppercase tracking-wide">Underutilized Projects</div>
-                    <div className="text-lg font-extrabold text-green-600 mt-1">{dashboardData.underutilized_count}</div>
-                  </div>
-                  </div>
+                <div className="w-full h-2 rounded-full bg-gray-100 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-[#856BFF] transition-all duration-500"
+                    style={{
+                      width: `${Math.min(
+                        dashboardData.total_estimated_hours > 0
+                          ? (dashboardData.total_actual_hours / dashboardData.total_estimated_hours) * 100
+                          : 0,
+                        100
+                      )}%`,
+                    }}
+                  />
+                </div>
               </div>
+            </div>
+
+            {/* Utilization Breakdown Donut Chart */}
+            <div className="relative bg-white rounded-2xl border border-gray-100 shadow-sm p-5 overflow-hidden flex flex-col justify-between">
+              <span className="absolute left-0 top-0 bottom-0 w-1 bg-[#856BFF]" />
+              <div className="flex items-center gap-2 mb-1">
+                <span className="w-7 h-7 rounded-md bg-[#856BFF]/10 flex items-center justify-center text-[#856BFF] text-sm">
+                  <Icon icon="material-symbols:pie-chart" width="22" height="22" color="#856BFF" />
+                </span>
+                <span className="text-[17px] font-bold text-[#191B23]">Utilization Breakdown</span>
+              </div>
+
+              {utilizationPieData.length > 0 ? (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+                  <div className="w-full sm:w-[145px] h-[135px] relative flex items-center justify-center shrink-0">
+                    <ResponsiveContainer width="100%" height={135}>
+                      <PieChart>
+                        <Pie
+                          data={utilizationPieData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={40}
+                          outerRadius={58}
+                          paddingAngle={3}
+                          dataKey="count"
+                          strokeWidth={2}
+                          stroke="#ffffff"
+                        >
+                          {utilizationPieData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip content={<CustomPieTooltip />} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                      <span className="text-base font-extrabold text-gray-900 leading-none">
+                        {totalUtilizedProjects}
+                      </span>
+                      <span className="text-[10px] text-gray-400 font-medium mt-0.5">Projects</span>
+                    </div>
+                  </div>
+
+                  <div className="flex-1 w-full flex flex-col gap-1.5 justify-center">
+                    {utilizationPieData.map((item) => {
+                      const pct = totalUtilizedProjects > 0 ? ((item.count / totalUtilizedProjects) * 100).toFixed(0) : 0;
+                      return (
+                        <div key={item.name} className="flex items-center justify-between text-xs">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                            <span className="text-gray-600 truncate text-[11px]">{item.shortName}</span>
+                          </div>
+                          <div className="flex items-center gap-1 font-semibold text-gray-800 text-[11px] shrink-0 ml-2">
+                            <span>{item.count}</span>
+                            <span className="text-gray-400 font-normal">({pct}%)</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-6 text-gray-400 text-xs">
+                  <Icon icon="solar:chart-2-outline" width="32" height="32" className="text-gray-300 mb-1" />
+                  No utilization data available
+                </div>
+              )}
             </div>
           </div>
 

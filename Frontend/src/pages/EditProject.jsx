@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import SearchableSelect from '../component/SearchableSelect';
@@ -106,6 +107,54 @@ export default function EditProject() {
   const [customers, setCustomers] = useState([]);
   const [customersLoading, setCustomersLoading] = useState(false);
   const [customersError, setCustomersError] = useState('');
+
+  // ── Employee dropdown state ────────────────────────────────────────────────
+  const serviceDeliveryEmployees = useSelector(state => state.auth?.serviceDeliveryEmployees);
+  const [employees, setEmployees] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('serviceDeliveryEmployees') || '[]');
+    } catch {
+      return [];
+    }
+  });
+  const [employeesLoading, setEmployeesLoading] = useState(false);
+
+  useEffect(() => {
+    if (serviceDeliveryEmployees && serviceDeliveryEmployees.length > 0) {
+      setEmployees(serviceDeliveryEmployees);
+      return;
+    }
+    const fetchEmployees = async () => {
+      setEmployeesLoading(true);
+      try {
+        const res = await axios.post(`${BASE_URL}/hrms/getAllAhanaEmplist`, {}, { headers: getHeaders() });
+        const list = Array.isArray(res.data)
+          ? res.data
+          : Array.isArray(res.data?.data)
+            ? res.data.data
+            : [];
+        if (list.length > 0) {
+          setEmployees(list);
+        }
+      } catch (err) {
+        console.error('Failed to fetch employees:', err);
+      } finally {
+        setEmployeesLoading(false);
+      }
+    };
+    fetchEmployees();
+  }, [serviceDeliveryEmployees]);
+
+  const employeeOptions = useMemo(() => {
+    return employees.map(emp => {
+      const name = emp.emp_name || emp.name || '';
+      const id = emp.employee_id || emp.emp_id || emp.id || '';
+      return {
+        value: name,
+        label: id ? `${name} (${id})` : name,
+      };
+    });
+  }, [employees]);
 
   useEffect(() => {
     const fetchCustomers = async () => {
@@ -313,12 +362,12 @@ export default function EditProject() {
                 */}
                 <div>
                   <Label>Team Lead</Label>
-                  <input
-                    type="text"
+                  <SearchableSelect
                     value={form.teamLead}
-                    onChange={e => set('teamLead', e.target.value)}
-                    placeholder="e.g. John Smith"
-                    className={inputClsLight}
+                    onChange={val => set('teamLead', val)}
+                    placeholder="Select Team Lead…"
+                    options={employeeOptions}
+                    loading={employeesLoading}
                   />
                 </div>
               </div>

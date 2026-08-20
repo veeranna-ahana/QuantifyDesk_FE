@@ -1,10 +1,12 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import { Icon } from '@iconify/react';
+import SearchableSelect from '../component/SearchableSelect';
 
 // ── Role helper ───────────────────────────────────────────────────────────────
 const getUserRole = () => {
@@ -54,6 +56,49 @@ const CreateProjectModal = ({ onClose, onCreated }) => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
+  const serviceDeliveryEmployees = useSelector(state => state.auth?.serviceDeliveryEmployees);
+  const [employees, setEmployees] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('serviceDeliveryEmployees') || '[]');
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    if (serviceDeliveryEmployees && serviceDeliveryEmployees.length > 0) {
+      setEmployees(serviceDeliveryEmployees);
+      return;
+    }
+    const fetchEmployees = async () => {
+      try {
+        const res = await axios.post(`${BASE_URL}/hrms/getAllAhanaEmplist`, {}, { headers: getHeaders() });
+        const list = Array.isArray(res.data)
+          ? res.data
+          : Array.isArray(res.data?.data)
+            ? res.data.data
+            : [];
+        if (list.length > 0) {
+          setEmployees(list);
+        }
+      } catch (err) {
+        console.error('Failed to fetch employees:', err);
+      }
+    };
+    fetchEmployees();
+  }, [serviceDeliveryEmployees]);
+
+  const employeeOptions = useMemo(() => {
+    return employees.map(emp => {
+      const name = emp.emp_name || emp.name || '';
+      const id = emp.employee_id || emp.emp_id || emp.id || '';
+      return {
+        value: name,
+        label: id ? `${name} (${id})` : name,
+      };
+    });
+  }, [employees]);
+
   const handleChange = (field, val) => {
     setForm(prev => ({ ...prev, [field]: val }));
     setError('');
@@ -102,7 +147,7 @@ const CreateProjectModal = ({ onClose, onCreated }) => {
     { key: 'projectCode', label: 'Project Code', required: false, placeholder: 'e.g. PRJ-001' },
     { key: 'subCategory', label: 'Sub Category', required: false, placeholder: 'e.g. Web App / Mobile' },
     { key: 'customer', label: 'Customer', required: true, placeholder: 'Client or company name' },
-    { key: 'teamLead', label: 'Team Lead Name', required: false, placeholder: 'e.g. John Smith' },
+    { key: 'teamLead', label: 'Team Lead', required: false, placeholder: 'Select Team Lead', isSelect: true },
   ];
 
   return (
@@ -126,7 +171,14 @@ const CreateProjectModal = ({ onClose, onCreated }) => {
                 {f.label}
                 {f.required && <span style={{ color: '#e74c3c', marginLeft: 3 }}>*</span>}
               </label>
-              {f.multiline ? (
+              {f.isSelect ? (
+                <SearchableSelect
+                  value={form[f.key]}
+                  onChange={val => handleChange(f.key, val)}
+                  placeholder={f.placeholder}
+                  options={employeeOptions}
+                />
+              ) : f.multiline ? (
                 <textarea
                   rows={3}
                   value={form[f.key]}
@@ -233,6 +285,49 @@ const EditProjectModal = ({ project, onClose, onUpdated }) => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
+  const serviceDeliveryEmployees = useSelector(state => state.auth?.serviceDeliveryEmployees);
+  const [employees, setEmployees] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('serviceDeliveryEmployees') || '[]');
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    if (serviceDeliveryEmployees && serviceDeliveryEmployees.length > 0) {
+      setEmployees(serviceDeliveryEmployees);
+      return;
+    }
+    const fetchEmployees = async () => {
+      try {
+        const res = await axios.post(`${BASE_URL}/hrms/getAllAhanaEmplist`, {}, { headers: getHeaders() });
+        const list = Array.isArray(res.data)
+          ? res.data
+          : Array.isArray(res.data?.data)
+            ? res.data.data
+            : [];
+        if (list.length > 0) {
+          setEmployees(list);
+        }
+      } catch (err) {
+        console.error('Failed to fetch employees:', err);
+      }
+    };
+    fetchEmployees();
+  }, [serviceDeliveryEmployees]);
+
+  const employeeOptions = useMemo(() => {
+    return employees.map(emp => {
+      const name = emp.emp_name || emp.name || '';
+      const id = emp.employee_id || emp.emp_id || emp.id || '';
+      return {
+        value: name,
+        label: id ? `${name} (${id})` : name,
+      };
+    });
+  }, [employees]);
+
   const handleChange = (field, val) => {
     setForm(prev => ({ ...prev, [field]: val }));
     setError('');
@@ -281,7 +376,7 @@ const EditProjectModal = ({ project, onClose, onUpdated }) => {
     { key: 'projectCode', label: 'Project Code', required: false, placeholder: 'e.g. PRJ-001' },
     { key: 'subCategory', label: 'Sub Category', required: false, placeholder: 'e.g. Web App / Mobile' },
     { key: 'customer', label: 'Customer', required: true, placeholder: 'Client or company name' },
-    { key: 'teamLead', label: 'Team Lead Name', required: false, placeholder: 'e.g. John Smith' },
+    { key: 'teamLead', label: 'Team Lead', required: false, placeholder: 'Select Team Lead', isSelect: true },
   ];
 
   return (
@@ -305,7 +400,14 @@ const EditProjectModal = ({ project, onClose, onUpdated }) => {
                 {f.label}
                 {f.required && <span style={{ color: '#e74c3c', marginLeft: 3 }}>*</span>}
               </label>
-              {f.multiline ? (
+              {f.isSelect ? (
+                <SearchableSelect
+                  value={form[f.key]}
+                  onChange={val => handleChange(f.key, val)}
+                  placeholder={f.placeholder}
+                  options={employeeOptions}
+                />
+              ) : f.multiline ? (
                 <textarea
                   rows={3}
                   value={form[f.key]}
