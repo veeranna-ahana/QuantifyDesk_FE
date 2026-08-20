@@ -244,6 +244,74 @@ const upsertEffortEstimate = async (req, res, next) => {
       return res.status(400).json({ message: 'projectId and rows[] are required' });
     }
 
+    // ── Check if any active task assignments exist for this project ───────
+    const existingAssignments = await query(
+      `SELECT 
+         a.id, a.project_id, a.emp_id, a.role, a.task_name, 
+         a.units_assigned, a.estimated_days, a.estimated_hours,
+         COALESCE(e.emp_name, a.emp_id) AS user_name
+       FROM assignments a
+       LEFT JOIN master.emp e ON a.emp_id = e.emp_id
+       WHERE a.project_id = ?`,
+      [projectId]
+    );
+
+    if (existingAssignments.length > 0) {
+      const assignmentsByRole = {};
+      for (const a of existingAssignments) {
+        if (!assignmentsByRole[a.role]) {
+          assignmentsByRole[a.role] = [];
+        }
+        assignmentsByRole[a.role].push(a);
+      }
+
+      const blockedRoles = [];
+      for (const [role, assignedList] of Object.entries(assignmentsByRole)) {
+        const incomingRow = rows.find(r => r.role === role);
+        const effortDays = incomingRow ? (parseFloat(incomingRow.effort_days) || 0) : 0;
+        const bufferDays = incomingRow ? (parseFloat(incomingRow.buffer_days) || 0) : 0;
+        const units = incomingRow ? (parseInt(incomingRow.units, 10) || 0) : 0;
+
+        const totalAssignedUnits = assignedList.reduce((s, a) => s + (Number(a.units_assigned) || 0), 0);
+        const totalAssignedDays = assignedList.reduce((s, a) => s + (Number(a.estimated_days) || 0), 0);
+        const totalAssignedHours = assignedList.reduce((s, a) => s + (Number(a.estimated_hours) || 0), 0);
+
+        const isRemoved = effortDays <= 0 || units <= 0;
+        const isUnderAssigned = units < totalAssignedUnits || (effortDays + bufferDays) < totalAssignedDays;
+
+        if (isRemoved || isUnderAssigned) {
+          blockedRoles.push({
+            role,
+            reason: isRemoved ? 'removed' : 'under_assigned',
+            assignedCount: assignedList.length,
+            totalAssignedUnits,
+            totalAssignedDays,
+            totalAssignedHours,
+            newUnits: units,
+            newDays: effortDays,
+            newBufferDays: bufferDays,
+            assignments: assignedList.map(a => ({
+              id: a.id,
+              task_name: a.task_name,
+              emp_id: a.emp_id,
+              user_name: a.user_name,
+              units_assigned: a.units_assigned,
+              estimated_days: a.estimated_days,
+              estimated_hours: a.estimated_hours,
+            })),
+          });
+        }
+      }
+
+      if (blockedRoles.length > 0) {
+        const roleNames = blockedRoles.map(b => `"${b.role}"`).join(', ');
+        return res.status(400).json({
+          message: `Cannot remove or reduce effort for ${roleNames} because active task assignments exist in Task Allocation. Please remove or update assignments first.`,
+          blockedRoles,
+        });
+      }
+    }
+
     const HOURS_PER_DAY = 8;
 
     for (const r of rows) {
@@ -313,6 +381,22 @@ const upsertEffortEstimate = async (req, res, next) => {
 const deleteEffortEstimate = async (req, res, next) => {
   try {
     const { projectId } = req.params;
+
+    const existingAssignments = await query(
+      `SELECT a.id, a.role, a.task_name, a.units_assigned, a.emp_id, COALESCE(e.emp_name, a.emp_id) AS user_name
+       FROM assignments a
+       LEFT JOIN master.emp e ON a.emp_id = e.emp_id
+       WHERE a.project_id = ?`,
+      [projectId]
+    );
+
+    if (existingAssignments.length > 0) {
+      return res.status(400).json({
+        message: 'Cannot clear effort estimates because active task assignments exist for this project. Please remove assignments in Task Allocation first.',
+        assignedCount: existingAssignments.length,
+      });
+    }
+
     await query('DELETE FROM effort_estimates WHERE project_id = ?', [projectId]);
     return res.status(200).json({ message: 'Effort estimate cleared' });
   } catch (err) {

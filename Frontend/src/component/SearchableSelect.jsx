@@ -36,7 +36,7 @@ const SearchableSelect = ({
   const inputRef = useRef(null);
 
   // Derived
-  const selectedLabel = options.find(o => o.value === value)?.label || '';
+  const selectedLabel = options.find(o => String(o.value) === String(value))?.label || '';
 
   const filtered = query.trim()
     ? options.filter(o => o.label.toLowerCase().includes(query.toLowerCase()))
@@ -197,7 +197,7 @@ const SearchableSelect = ({
                   <button
                     type="button"
                     onMouseDown={() => handleSelect(opt.value)}
-                    className={`w-full text-left px-3.5 py-2 text-sm transition-colors ${opt.value === value
+                    className={`w-full text-left px-3.5 py-2 text-sm transition-colors ${String(opt.value) === String(value)
                       ? 'bg-violet-50 text-violet-700 font-semibold'
                       : 'text-gray-700 hover:bg-gray-50'
                       }`}

@@ -789,7 +789,7 @@ const AssignmentScreen = () => {
   // Only restore a previous project when navigating *back* from AssignEmployee.
   // A fresh sidebar click has no location.state, so always start blank.
   const [selProject, setSelProject] = useState(
-    () => location.state?.selProject || ""
+    () => (location.state?.selProject ? String(location.state.selProject) : "")
   );
 
 
@@ -808,10 +808,14 @@ const AssignmentScreen = () => {
   const [assignments, setAssignments] = useState([]);
   const [summary, setSummary] = useState({ rows: [], totals: {} });
   const [effortByRole, setEffortByRole] = useState({});
-  const [collapsedRoles, setCollapsedRoles] = useState({});
+  const [expandedRoles, setExpandedRoles] = useState({});
 
   const toggleRole = (role) =>
-    setCollapsedRoles(prev => ({ ...prev, [role]: !prev[role] }));
+    setExpandedRoles(prev => ({ ...prev, [role]: !prev[role] }));
+
+  useEffect(() => {
+    setExpandedRoles({});
+  }, [selProject]);
 
   // ── Initial fetch: projects, catalog ────────────────────────────────
   useEffect(() => {
@@ -884,8 +888,9 @@ const AssignmentScreen = () => {
 
   useEffect(() => {
     if (location.state?.selProject) {
-      setSelProject(location.state.selProject);
-      fetchProjectData(location.state.selProject);
+      const pid = String(location.state.selProject);
+      setSelProject(pid);
+      fetchProjectData(pid);
     } else {
       // Fresh navigation (sidebar click) — clear any stale stored value
       sessionStorage.removeItem("selectedAssignmentProject");
@@ -1091,12 +1096,14 @@ const AssignmentScreen = () => {
         </p>
       </div>
 
-      {/* Main card */}
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 mb-6">
+      {/* Main card - Entire card sticky when project selected */}
+      <div className={`bg-white rounded-2xl border border-slate-200/90 shadow-md p-5 mb-6 transition-all ${
+        selProject ? 'sticky top-0 z-30 bg-white/95 backdrop-blur-md' : ''
+      }`}>
         {selProject ? (
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-4">
             {/* Top row: Title + Dropdown */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-5">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-3.5">
               <div>
                 <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                   Effort Estimate & Assign
@@ -1133,42 +1140,32 @@ const AssignmentScreen = () => {
             <div className="flex gap-3 flex-wrap">
               <KPI
                 label="Total Effort"
-                value={total_planned + " units"}
+                value={`${Number(total_planned || 0).toLocaleString('en-US')} units`}
                 color="text-violet-600 border-l-violet-500"
               />
               <KPI
                 label="Total Days"
-                value={total_effort_days}
+                value={Number(total_effort_days || 0).toLocaleString('en-US', { maximumFractionDigits: 1 })}
                 color="text-slate-800 border-l-slate-400"
               />
               <KPI
                 label="Total Hours"
-                value={total_effort_hours}
+                value={Number(total_effort_hours || 0).toLocaleString('en-US', { maximumFractionDigits: 2 })}
                 color="text-slate-800 border-l-slate-400"
               />
               <KPI
                 label="Assigned Units"
-                value={total_assigned}
+                value={Number(total_assigned || 0).toLocaleString('en-US')}
                 color="text-sky-500 border-l-sky-400"
               />
-              {/* <KPI
-                label="Balance Units"
-                value={total_balance_units}
-                color="text-amber-500 border-l-amber-400"
-              />
-              <KPI
-                label="Balance Hours"
-                value={total_balance_hours}
-                color="text-amber-500 border-l-amber-400"
-              /> */}
               <KPI
                 label="Completed Units"
-                value={total_completed}
+                value={Number(total_completed || 0).toLocaleString('en-US')}
                 color="text-emerald-500 border-l-emerald-400"
               />
               <KPI
                 label="Pending Units"
-                value={Math.max(total_assigned - total_completed, 0)}
+                value={Number(Math.max(Number(total_assigned || 0) - Number(total_completed || 0), 0)).toLocaleString('en-US')}
                 color="text-rose-500 border-l-rose-400"
               />
             </div>
@@ -1325,7 +1322,7 @@ const AssignmentScreen = () => {
                 ? Math.max((Number(effortData.units) || 0) - roleAssigned, 0)
                 : roleBalUnits;
 
-              const isCollapsed = !!collapsedRoles[role];
+              const isExpanded = !!expandedRoles[role];
 
               return (
                 <div
@@ -1427,7 +1424,7 @@ const AssignmentScreen = () => {
                     {/* Right: Chevron */}
                     <div className="shrink-0 flex items-center justify-center text-slate-400 mt-2 lg:mt-0">
                       <svg
-                        className={`w-5 h-5 transition-transform duration-200 ${isCollapsed ? "-rotate-90" : "rotate-0"}`}
+                        className={`w-5 h-5 transition-transform duration-200 ${isExpanded ? "rotate-0" : "-rotate-90"}`}
                         fill="none"
                         stroke="currentColor"
                         strokeWidth={2.5}
@@ -1443,43 +1440,43 @@ const AssignmentScreen = () => {
                   </div>
 
                   {/* Accordion Body */}
-                  {!isCollapsed && (
+                  {isExpanded && (
                     <div className="overflow-x-auto border-t border-slate-100">
                       <table className="w-full text-left border-collapse">
-                        <thead>
+                        <thead className="sticky top-0 z-10 bg-[#EFF4FF]">
                           <tr className="border-b border-slate-100" style={{ backgroundColor: '#EFF4FF' }}>
 
-                            <th className="py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase">
+                            <th className="sticky top-0 z-10 bg-[#EFF4FF] py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase">
                               Task Name
                             </th>
-                            <th className="py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-28">
+                            <th className="sticky top-0 z-10 bg-[#EFF4FF] py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-28">
                               Planned Units
                             </th>
-                            <th className="py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-24">
+                            <th className="sticky top-0 z-10 bg-[#EFF4FF] py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-24">
                               Est. Days
                             </th>
-                            <th className="py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-24">
+                            <th className="sticky top-0 z-10 bg-[#EFF4FF] py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-24">
                               Est. Hours
                             </th>
-                            <th className="py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase w-32">
+                            <th className="sticky top-0 z-10 bg-[#EFF4FF] py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase w-32">
                               Unit Type
                             </th>
-                            <th className="py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-20">
+                            <th className="sticky top-0 z-10 bg-[#EFF4FF] py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-20">
                               Assigned
                             </th>
-                            <th className="py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-20">
+                            <th className="sticky top-0 z-10 bg-[#EFF4FF] py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-20">
                               Bal Units
                             </th>
-                            <th className="py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-20">
+                            <th className="sticky top-0 z-10 bg-[#EFF4FF] py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-20">
                               Bal Hours
                             </th>
-                            <th className="py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-20">
+                            <th className="sticky top-0 z-10 bg-[#EFF4FF] py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-20">
                               Completed
                             </th>
-                            <th className="py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-36">
+                            <th className="sticky top-0 z-10 bg-[#EFF4FF] py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-36">
                               Status
                             </th>
-                            <th className="py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-28">
+                            <th className="sticky top-0 z-10 bg-[#EFF4FF] py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-28">
                               Action
                             </th>
                           </tr>

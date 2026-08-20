@@ -279,7 +279,7 @@ const S = {
   projectName:   { color: "white", fontWeight: 700, fontSize: 15 },
   projectCount:  { background: "#e74c3c", color: "white", borderRadius: 12, padding: "2px 10px", fontSize: 12, fontWeight: 700 },
   table:         { width: "100%", borderCollapse: "collapse", fontSize: 13 },
-  th:            { padding: "9px 14px", background: "#f8f9fa", fontWeight: 600, color: "#555", textAlign: "center", borderBottom: "1px solid #eee", fontSize: 12 },
+  th:            { padding: "9px 14px", background: "#f8f9fa", fontWeight: 600, color: "#555", textAlign: "center", borderBottom: "1px solid #eee", fontSize: 12, position: "sticky", top: 0, zIndex: 10 },
   td:            { padding: "10px 14px", borderBottom: "1px solid #f5f5f5", color: "#333" },
   avatar:        { width: 30, height: 30, borderRadius: "50%", background: "#3498db", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, flexShrink: 0 },
   unitsBadge:    { display: "inline-block", background: "#e8f4fd", color: "#2980b9", borderRadius: 10, padding: "2px 10px", fontWeight: 700, fontSize: 13 },

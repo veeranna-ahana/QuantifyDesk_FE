@@ -10,12 +10,27 @@ import {
 } from "../api/recon.api";
 import { Icon } from '@iconify/react';
 import { DownloadOutlined } from "@ant-design/icons";
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
+
+// ─── Number Formatting Helper ────────────────────────────────────
+const formatNumber = (val, maxDecimals = 2) => {
+  if (val === null || val === undefined || isNaN(val) || val === '') return '0';
+  const num = Number(val);
+  return num.toLocaleString('en-US', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: maxDecimals,
+  });
+};
 
 // ─── Status colors (shared by pill + text variants) ─────────────
 const STATUS_STYLES = {
+  "Utilized": { bg: "#d1fae5", text: "#059669" },
   "On Track": { bg: "#d1fae5", text: "#059669" },
-  "Over Utilized": { bg: "#fee2e2", text: "#dc2626" },
+  "Moderate": { bg: "#e0f2fe", text: "#0284c7" },
+  "Under-utilized": { bg: "#fef3c7", text: "#d97706" },
   "Under Utilized": { bg: "#fef3c7", text: "#d97706" },
+  "Over-utilized": { bg: "#fee2e2", text: "#dc2626" },
+  "Over Utilized": { bg: "#fee2e2", text: "#dc2626" },
   "Project Not Found": { bg: "#fee2e2", text: "#dc2626" },
   "No Estimate": { bg: "#fef3c7", text: "#d97706" },
   "Not Assigned": { bg: "#fef3c7", text: "#d97706" },
@@ -23,14 +38,26 @@ const STATUS_STYLES = {
 };
 
 // Pill-style status badge — used on the Project Level table
-const StatusPill = ({ status }) => {
-  const c = STATUS_STYLES[status] || STATUS_STYLES["On Track"];
+const StatusPill = ({ status, utilizationPct, inSystem = true, estimatedHours = 0 }) => {
+  let finalStatus = status;
+  if (!inSystem) {
+    finalStatus = "Project Not Found";
+  } else if (Number(estimatedHours) === 0) {
+    finalStatus = "No Estimate";
+  } else if (utilizationPct !== undefined && utilizationPct !== null) {
+    const u = Number(utilizationPct);
+    if (u > 100) finalStatus = "Over-utilized";
+    else if (u >= 70) finalStatus = "Utilized";
+    else if (u >= 50) finalStatus = "Moderate";
+    else finalStatus = "Under-utilized";
+  }
+  const c = STATUS_STYLES[finalStatus] || STATUS_STYLES[status] || STATUS_STYLES["Utilized"];
   return (
     <span
       className="inline-block px-2.5 py-1 rounded-md text-xs font-semibold whitespace-nowrap"
       style={{ backgroundColor: c.bg, color: c.text }}
     >
-      {status}
+      {finalStatus}
     </span>
   );
 };
@@ -43,6 +70,27 @@ const StatusText = ({ status }) => {
       {status}
     </span>
   );
+};
+
+// ─── Custom Pie Chart Tooltip ────────────────────────────────────
+const CustomPieTooltip = ({ active, payload }) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    const total = payload[0].chartData?.reduce((acc, curr) => acc + curr.count, 0) || payload[0].payload?.totalProjects || 1;
+    const pct = ((data.count / total) * 100).toFixed(1);
+    return (
+      <div className="bg-white/95 backdrop-blur-sm border border-gray-100 p-2.5 rounded-xl shadow-lg text-xs z-50">
+        <div className="flex items-center gap-1.5 font-semibold text-gray-800">
+          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: data.color }} />
+          <span>{data.name}</span>
+        </div>
+        <div className="mt-1 text-gray-500 font-medium">
+          <span className="font-bold text-gray-900">{data.count}</span> projects ({pct}%)
+        </div>
+      </div>
+    );
+  }
+  return null;
 };
 
 // ─── Small inline icons ──────────────────────────────────────────
@@ -251,6 +299,48 @@ const ReconPage = () => {
         (e.role && e.role.toLowerCase().includes(search))
     );
   }, [projectDetail.employeeSummary, resourceSearch]);
+
+  // ─── Utilization Donut Chart Data ─────────────────────────────
+  const utilizationPieData = useMemo(() => {
+    let over = 0;
+    let utilized = 0;
+    let moderate = 0;
+    let under = 0;
+    let noEst = 0;
+
+    projectReconList.forEach((p) => {
+      const estimated = parseFloat(p.estimated_hours || 0);
+      const actual = parseFloat(p.actual_hours || 0);
+      if (!p.in_system || estimated === 0) {
+        noEst++;
+      } else {
+        const util = (actual / estimated) * 100;
+        if (util > 100) over++;
+        else if (util >= 70) utilized++;
+        else if (util >= 50) moderate++;
+        else under++;
+      }
+    });
+
+    const data = [
+      { name: "Over-utilized (>100%)", count: over, color: "#EF4444", shortName: "Over-utilized" },
+      { name: "Utilized (70%–90%)", count: utilized, color: "#10B981", shortName: "Utilized" },
+      { name: "Moderate (50%–70%)", count: moderate, color: "#0284C7", shortName: "Moderate" },
+      { name: "Under-utilized (<50%)", count: under, color: "#F59E0B", shortName: "Under-utilized" },
+    ];
+
+    if (noEst > 0) {
+      data.push({ name: "No Estimate / Other", count: noEst, color: "#94A3B8", shortName: "No Estimate" });
+    }
+
+    const filtered = data.filter((d) => d.count > 0);
+    const total = filtered.reduce((acc, curr) => acc + curr.count, 0);
+    return filtered.map((d) => ({ ...d, totalProjects: total }));
+  }, [projectReconList]);
+
+  const totalUtilizedProjects = useMemo(() => {
+    return utilizationPieData.reduce((acc, curr) => acc + curr.count, 0);
+  }, [utilizationPieData]);
 
   // ─── Paginated Data ────────────────────────────────────────────
   const paginatedProjects = useMemo(() => {
@@ -493,19 +583,19 @@ const ReconPage = () => {
                   </p>
 
                   <h3 className="mt-3 text-4xl font-semibold text-gray-900">
-                    {Number(projectDetail.project?.estimated_hours).toLocaleString()}
+                    {formatNumber(projectDetail.project?.estimated_hours)}
                     <span className="text-base font-normal text-gray-500 ml-1">
                       Hours
                     </span>
                   </h3>
 
                   <p className="mt-2 text-sm text-gray-500">
-                    ~ {Number(projectDetail.project?.estimated_days).toLocaleString()} Work Days
+                    ~ {formatNumber(projectDetail.project?.estimated_days, 1)} Work Days
                   </p>
                 </div>
 
                 {/* Actual */}
-                <div className="relative bg-white rounded-2xl shadow-sm border border-gray-100 px-5 py-2overflow-hidden">
+                <div className="relative bg-white rounded-2xl shadow-sm border border-gray-100 px-5 py-2 overflow-hidden">
                   <HistoryIcon className="absolute top-5 right-5 w-10 h-10 text-gray-200" />
 
                   <p className="text-xs text-gray-500 font-medium p-2">
@@ -513,14 +603,14 @@ const ReconPage = () => {
                   </p>
 
                   <h3 className="mt-3 text-4xl font-semibold text-gray-900">
-                    {Number(projectDetail.project?.actual_hours).toLocaleString()}
+                    {formatNumber(projectDetail.project?.actual_hours)}
                     <span className="text-base font-normal text-gray-500 ml-1">
                       Hours
                     </span>
                   </h3>
 
                   <p className="mt-2 text-sm text-gray-500">
-                    ~ {Number(projectDetail.project?.actual_days).toLocaleString()} Work Days
+                    ~ {formatNumber(projectDetail.project?.actual_days, 1)} Work Days
                   </p>
                 </div>
 
@@ -544,7 +634,7 @@ const ReconPage = () => {
                       }`}
                   >
                     {Number(projectDetail.project?.variance_hours) > 0 ? "+" : ""}
-                    {Number(projectDetail.project?.variance_hours).toLocaleString()}
+                    {formatNumber(projectDetail.project?.variance_hours)}
 
                     <span className="text-base font-normal ml-1">
                       Hrs
@@ -557,7 +647,7 @@ const ReconPage = () => {
                       : "text-green-500"
                       }`}
                   >
-                    ({projectDetail.project?.variance_pct}%)
+                    ({formatNumber(projectDetail.project?.variance_pct, 1)}%)
                     {" "}
                     {Number(projectDetail.project?.variance_hours) < 0
                       ? "Over-utilized"
@@ -629,18 +719,18 @@ const ReconPage = () => {
                   </div>
                 </div>
 
-                <div className="w-full overflow-x-auto rounded-xl border border-gray-100">
+                <div className="w-full overflow-auto max-h-[calc(100vh-280px)] rounded-xl border border-gray-100">
                   <table className="w-full border-collapse text-sm">
-                    <thead>
-                      <tr style={{ backgroundColor: '#EFF4FF' }}>
-                        <th className="px-3 py-3 text-left text-[11px] font-bold text-[#434654] uppercase">Employee</th>
-                        <th className="px-3 py-3 text-left text-[11px] font-bold text-[#434654] uppercase">Role</th>
-                        <th className="px-3 py-3 text-left text-[11px] font-bold text-[#434654] uppercase">Assigned (H/D)</th>
-                        <th className="px-3 py-3 text-left text-[11px] font-bold text-[#434654] uppercase">Actual (H/D)</th>
-                        <th className="px-3 py-3 text-left text-[11px] font-bold text-[#434654] uppercase">Utilization %</th>
-                        <th className="px-3 py-3 text-left text-[11px] font-bold text-[#434654] uppercase">Variance (H/%)</th>
-                        <th className="px-3 py-3 text-left text-[11px] font-bold text-[#434654] uppercase">Status</th>
-                        <th className="px-3 py-3 text-left text-[11px] font-bold text-[#434654] uppercase">Timesheet Status</th>
+                    <thead className="sticky top-0 z-20 bg-[#EFF4FF]">
+                      <tr className="border-b border-gray-200 bg-[#EFF4FF]" style={{ backgroundColor: '#EFF4FF' }}>
+                        <th className="sticky top-0 z-20 bg-[#EFF4FF] px-3 py-3 text-left text-[11px] font-bold text-[#434654] uppercase shadow-sm">Employee</th>
+                        <th className="sticky top-0 z-20 bg-[#EFF4FF] px-3 py-3 text-left text-[11px] font-bold text-[#434654] uppercase shadow-sm">Role</th>
+                        <th className="sticky top-0 z-20 bg-[#EFF4FF] px-3 py-3 text-left text-[11px] font-bold text-[#434654] uppercase shadow-sm">Assigned (H/D)</th>
+                        <th className="sticky top-0 z-20 bg-[#EFF4FF] px-3 py-3 text-left text-[11px] font-bold text-[#434654] uppercase shadow-sm">Actual (H/D)</th>
+                        <th className="sticky top-0 z-20 bg-[#EFF4FF] px-3 py-3 text-left text-[11px] font-bold text-[#434654] uppercase shadow-sm">Utilization %</th>
+                        <th className="sticky top-0 z-20 bg-[#EFF4FF] px-3 py-3 text-left text-[11px] font-bold text-[#434654] uppercase shadow-sm">Variance (H/%)</th>
+                        <th className="sticky top-0 z-20 bg-[#EFF4FF] px-3 py-3 text-left text-[11px] font-bold text-[#434654] uppercase shadow-sm">Status</th>
+                        <th className="sticky top-0 z-20 bg-[#EFF4FF] px-3 py-3 text-left text-[11px] font-bold text-[#434654] uppercase shadow-sm">Timesheet Status</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -664,7 +754,7 @@ const ReconPage = () => {
 
                             if (assigned > 0) {
                               utilPct = (actual / assigned) * 100;
-                              utilizationDisplay = utilPct.toFixed(1) + "%";
+                              utilizationDisplay = formatNumber(utilPct, 1) + "%";
                             } else if (actual > 0 && assigned === 0) {
                               utilizationDisplay = "N/A";
                             }
@@ -698,12 +788,12 @@ const ReconPage = () => {
                                   </span>
                                 </td>
                                 <td className="px-3 py-2.5 text-gray-800">
-                                  <div className="font-semibold">{Number(e.assigned_hours).toLocaleString()}</div>
-                                  <div className="text-[11px] text-gray-400">({Number(e.assigned_days).toFixed(1)}D)</div>
+                                  <div className="font-semibold">{formatNumber(e.assigned_hours)}</div>
+                                  <div className="text-[11px] text-gray-400">({formatNumber(e.assigned_days, 1)}D)</div>
                                 </td>
                                 <td className="px-3 py-2.5 text-gray-800">
-                                  <div className="font-semibold">{Number(e.actual_hours).toLocaleString()}</div>
-                                  <div className="text-[11px] text-gray-400">({Number(e.actual_days).toFixed(1)}D)</div>
+                                  <div className="font-semibold">{formatNumber(e.actual_hours)}</div>
+                                  <div className="text-[11px] text-gray-400">({formatNumber(e.actual_days, 1)}D)</div>
                                 </td>
                                 <td className="px-3 py-2.5">
                                   <div className="w-28">
@@ -719,11 +809,11 @@ const ReconPage = () => {
                                 <td className="px-3 py-2.5">
                                   <div className={`font-semibold ${Number(e.variance_hours) > 0 ? "text-green-600" : "text-red-500"}`}>
                                     {Number(e.variance_hours) > 0 ? "+" : ""}
-                                    {Number(e.variance_hours).toLocaleString()}
+                                    {formatNumber(e.variance_hours)}
                                   </div>
                                   <div className={`text-[11px] ${Number(e.variance_pct) > 0 ? "text-green-600" : "text-red-500"}`}>
                                     ({Number(e.variance_pct) > 0 ? "+" : ""}
-                                    {e.variance_pct}%)
+                                    {formatNumber(e.variance_pct, 1)}%)
                                   </div>
                                 </td>
                                 <td className="px-3 py-2.5">
@@ -801,92 +891,170 @@ const ReconPage = () => {
             </button>
           </div>
 
-          {/* ── Project Status + Hours Summary cards ── */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+          {/* ── Project Status + Hours Summary + Utilization Donut cards ── */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 mb-6">
             {/* Project Status */}
-            <div className="relative bg-white rounded-2xl border border-gray-100 shadow-sm p-5 overflow-hidden">
+            <div className="relative bg-white rounded-2xl border border-gray-100 shadow-sm p-5 overflow-hidden flex flex-col justify-between">
               <span className="absolute left-0 top-0 bottom-0 w-1 bg-[#856BFF]" />
-              <div className="flex items-center gap-2 mb-4">
-                <span className="w-7 h-7 rounded-md bg-[#856BFF]/10 flex items-center justify-center text-[#856BFF] text-sm">
-                  <Icon icon="material-symbols:assignment" width="30" height="30" color="#856BFF" />
-                </span>                <span className="text-[20px] font-bold text-[#191B23] text-sm">Project Status</span>
-              </div>
-              <div className="grid grid-cols-3 gap-x-4 gap-y-5">
-                <div>
-                  <div className="text-[12px] font-semibold text-[#64748B] uppercase tracking-wide">Total Projects</div>
-                  <div className="text-xl font-extrabold text-gray-900 mt-1">{dashboardData.total_projects}</div>
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="w-7 h-7 rounded-md bg-[#856BFF]/10 flex items-center justify-center text-[#856BFF] text-sm">
+                    <Icon icon="material-symbols:assignment" width="22" height="22" color="#856BFF" />
+                  </span>
+                  <span className="text-[17px] font-bold text-[#191B23]">Project Status</span>
                 </div>
-                <div>
-                  <div className="text-[12px] font-semibold text-[#64748B]  uppercase tracking-wide">With Estimates</div>
-                  <div className="text-xl font-extrabold text-green-600 mt-1">{dashboardData.projects_with_estimates}</div>
-                </div>
-                <div>
-                  <div className="text-[12px] font-semibold text-[#64748B]  uppercase tracking-wide">Without Estimates</div>
-                  <div className="text-xl font-extrabold text-amber-500 mt-1">{dashboardData.projects_without_estimates}</div>
-                </div>
-                <div>
-                  <div className="text-[12px] font-semibold text-[#64748B]  uppercase tracking-wide">With Timesheets</div>
-                  <div className="text-xl font-extrabold text-[#856BFF] mt-1">{dashboardData.projects_with_timesheets}</div>
-                </div>
-                <div>
-                  <div className="text-[12px] font-semibold text-[#64748B] uppercase tracking-wide">Without Timesheets</div>
-                  <div className="text-xl font-extrabold text-red-500 mt-1">{dashboardData.projects_without_timesheets}</div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-4">
+                  <div className="col-span-2 sm:col-span-1">
+                    <div className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wide">Total Projects</div>
+                    <div className="text-2xl font-extrabold text-gray-900 mt-0.5">{dashboardData.total_projects}</div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wide">With Estimates</div>
+                    <div className="text-xl font-extrabold text-green-600 mt-0.5">{dashboardData.projects_with_estimates}</div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wide">Without Estimates</div>
+                    <div className="text-xl font-extrabold text-amber-500 mt-0.5">{dashboardData.projects_without_estimates}</div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wide">With Timesheets</div>
+                    <div className="text-xl font-extrabold text-[#856BFF] mt-0.5">{dashboardData.projects_with_timesheets}</div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wide">Without Timesheets</div>
+                    <div className="text-xl font-extrabold text-red-500 mt-0.5">{dashboardData.projects_without_timesheets}</div>
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Hours Summary */}
-            <div className="relative bg-white rounded-2xl border border-gray-100 shadow-sm p-5 overflow-hidden">
+            <div className="relative bg-white rounded-2xl border border-gray-100 shadow-sm p-5 overflow-hidden flex flex-col justify-between">
               <span className="absolute left-0 top-0 bottom-0 w-1 bg-[#856BFF]" />
-              <div className="flex items-center gap-2 mb-4">
-                <span className="w-7 h-7 rounded-md bg-[#856BFF]/10 flex items-center justify-center text-[#856BFF] text-sm">
-                  <Icon icon="material-symbols:schedule" width="30" height="30" color="#856BFF" />
-                </span>
-                <span className="text-[20px] font-bold text-[#191B23] text-sm">Hours Summary</span>
-              </div>
-              <div className="grid grid-cols-3 gap-4 mb-5">
-                <div>
-                  <div className="text-[12px] font-semibold text-[#64748B] uppercase tracking-wide">Total Estimated</div>
-                  <div className="text-xl font-extrabold text-gray-900 mt-1">
-                    {Number(dashboardData.total_estimated_hours).toLocaleString()}
-                    <span className="text-xs font-normal text-gray-400"> hrs</span>
-                  </div>
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="w-7 h-7 rounded-md bg-[#856BFF]/10 flex items-center justify-center text-[#856BFF] text-sm">
+                    <Icon icon="material-symbols:schedule" width="22" height="22" color="#856BFF" />
+                  </span>
+                  <span className="text-[17px] font-bold text-[#191B23]">Hours Summary</span>
                 </div>
-                <div>
-                  <div className="text-[12px] font-semibold text-[#64748B]  uppercase tracking-wide">Total Actual</div>
-                  <div className="text-xl font-extrabold text-green-600 mt-1">
-                    {Number(dashboardData.total_actual_hours).toLocaleString()}
-                    <span className="text-xs font-normal text-gray-400"> hrs</span>
+                <div className="grid grid-cols-3 gap-3 mb-3">
+                  <div>
+                    <div className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wide">Estimated</div>
+                    <div className="text-lg font-extrabold text-gray-900 mt-0.5">
+                      {formatNumber(dashboardData.total_estimated_hours)}
+                      <span className="text-[10px] font-normal text-gray-400"> hrs</span>
+                    </div>
                   </div>
-                </div>
-                <div>
-                  <div className="text-[12px] font-semibold text-[#64748B]  uppercase tracking-wide">Total Variance</div>
-                  <div className={`text-xl font-extrabold mt-1 ${Number(dashboardData.total_variance_hours) > 0 ? "text-red-500" : "text-green-600"}`}>
-                    {Number(dashboardData.total_variance_hours) > 0 ? "+" : ""}
-                    {Number(dashboardData.total_variance_hours).toLocaleString()}
-                    <span className="text-xs font-normal text-gray-400"> hrs</span>
+                  <div>
+                    <div className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wide">Actual</div>
+                    <div className="text-lg font-extrabold text-green-600 mt-0.5">
+                      {formatNumber(dashboardData.total_actual_hours)}
+                      <span className="text-[10px] font-normal text-gray-400"> hrs</span>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wide">Variance</div>
+                    <div className={`text-lg font-extrabold mt-0.5 ${Number(dashboardData.total_variance_hours) > 0 ? "text-red-500" : "text-green-600"}`}>
+                      {Number(dashboardData.total_variance_hours) > 0 ? "+" : ""}
+                      {formatNumber(dashboardData.total_variance_hours)}
+                      <span className="text-[10px] font-normal text-gray-400"> hrs</span>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="border-t border-gray-100 pt-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="w-10 h-10 rounded-md bg-[#856BFF]/10 flex items-center justify-center text-[#856BFF] text-xs">
-                    <Icon icon="material-symbols:bar-chart" width="20" height="20" color="#856BFF" />
+              {/* Progress burn indicator */}
+              <div className="border-t border-gray-100 pt-3 mt-2">
+                <div className="flex items-center justify-between text-xs mb-1.5">
+                  <span className="text-gray-500 font-medium">Overall Effort Consumption</span>
+                  <span className="font-bold text-gray-800">
+                    {dashboardData.total_estimated_hours > 0
+                      ? `${formatNumber((dashboardData.total_actual_hours / dashboardData.total_estimated_hours) * 100, 1)}%`
+                      : "0%"}
                   </span>
-                  <span className="text-[20px] font-bold text-[#191B23]  text-xs">Utilization Summary</span>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <div className="text-[12px] font-semibold text-[#64748B]  uppercase tracking-wide">Overutilized Projects</div>
-                    <div className="text-lg font-extrabold text-red-500 mt-1">{dashboardData.overutilized_count}</div>
-                  </div>
-                  <div>
-                    <div className="text-[12px] font-semibold text-[#64748B]  uppercase tracking-wide">Underutilized Projects</div>
-                    <div className="text-lg font-extrabold text-green-600 mt-1">{dashboardData.underutilized_count}</div>
-                  </div>
+                <div className="w-full h-2 rounded-full bg-gray-100 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-[#856BFF] transition-all duration-500"
+                    style={{
+                      width: `${Math.min(
+                        dashboardData.total_estimated_hours > 0
+                          ? (dashboardData.total_actual_hours / dashboardData.total_estimated_hours) * 100
+                          : 0,
+                        100
+                      )}%`,
+                    }}
+                  />
                 </div>
               </div>
+            </div>
+
+            {/* Utilization Breakdown Donut Chart */}
+            <div className="relative bg-white rounded-2xl border border-gray-100 shadow-sm p-5 overflow-hidden flex flex-col justify-between">
+              <span className="absolute left-0 top-0 bottom-0 w-1 bg-[#856BFF]" />
+              <div className="flex items-center gap-2 mb-1">
+                <span className="w-7 h-7 rounded-md bg-[#856BFF]/10 flex items-center justify-center text-[#856BFF] text-sm">
+                  <Icon icon="material-symbols:pie-chart" width="22" height="22" color="#856BFF" />
+                </span>
+                <span className="text-[17px] font-bold text-[#191B23]">Utilization Breakdown</span>
+              </div>
+
+              {utilizationPieData.length > 0 ? (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+                  <div className="w-full sm:w-[145px] h-[135px] relative flex items-center justify-center shrink-0">
+                    <ResponsiveContainer width="100%" height={135}>
+                      <PieChart>
+                        <Pie
+                          data={utilizationPieData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={40}
+                          outerRadius={58}
+                          paddingAngle={3}
+                          dataKey="count"
+                          strokeWidth={2}
+                          stroke="#ffffff"
+                        >
+                          {utilizationPieData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip content={<CustomPieTooltip />} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                      <span className="text-base font-extrabold text-gray-900 leading-none">
+                        {totalUtilizedProjects}
+                      </span>
+                      <span className="text-[10px] text-gray-400 font-medium mt-0.5">Projects</span>
+                    </div>
+                  </div>
+
+                  <div className="flex-1 w-full flex flex-col gap-1.5 justify-center">
+                    {utilizationPieData.map((item) => {
+                      const pct = totalUtilizedProjects > 0 ? ((item.count / totalUtilizedProjects) * 100).toFixed(0) : 0;
+                      return (
+                        <div key={item.name} className="flex items-center justify-between text-xs">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                            <span className="text-gray-600 truncate text-[11px]">{item.shortName}</span>
+                          </div>
+                          <div className="flex items-center gap-1 font-semibold text-gray-800 text-[11px] shrink-0 ml-2">
+                            <span>{item.count}</span>
+                            <span className="text-gray-400 font-normal">({pct}%)</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-6 text-gray-400 text-xs">
+                  <Icon icon="solar:chart-2-outline" width="32" height="32" className="text-gray-300 mb-1" />
+                  No utilization data available
+                </div>
+              )}
             </div>
           </div>
 
@@ -1045,24 +1213,24 @@ const ReconPage = () => {
                     </div>
                   </div>
 
-                  <div className="w-full overflow-x-auto">
+                  <div className="w-full overflow-auto max-h-[calc(100vh-230px)]">
                     <table className="w-full border-collapse text-sm">
-                      <thead>
-                        <tr style={{ backgroundColor: '#EFF4FF' }}>
-                          <th className="px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Project Code</th>
-                          <th className="px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Project Name</th>
-                          <th className="px-4 py-3 text-right text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">
+                      <thead className="sticky top-0 z-20 bg-[#EFF4FF]">
+                        <tr className="border-b border-gray-200 bg-[#EFF4FF]" style={{ backgroundColor: '#EFF4FF' }}>
+                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap shadow-sm">Project Code</th>
+                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap shadow-sm">Project Name</th>
+                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-right text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap shadow-sm">
                             Est. Hours <span className="font-normal normal-case text-gray-400">(Days)</span>
                           </th>
-                          <th className="px-4 py-3 text-right text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">
+                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-right text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap shadow-sm">
                             Actual Hours <span className="font-normal normal-case text-gray-400">(Days)</span>
                           </th>
-                          <th className="px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Utilized %</th>
-                          <th className="px-4 py-3 text-right text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">
+                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap shadow-sm">Utilized %</th>
+                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-right text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap shadow-sm">
                             Variance <span className="font-normal normal-case text-gray-400">(Hrs / %)</span>
                           </th>
-                          <th className="px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Status</th>
-                          <th className="px-4 py-3 text-center text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Actions</th>
+                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap shadow-sm">Status</th>
+                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-center text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap shadow-sm">Actions</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1086,15 +1254,21 @@ const ReconPage = () => {
                             let pctColor = "text-gray-800";
 
                             if (usagePercentage > 100) {
-                              rowBgClass = "bg-red-50";
+                              rowBgClass = "bg-red-50/50";
                               barColor = "#dc2626";
                               pctColor = "text-red-600";
-                            } else if (usagePercentage >= 80 && usagePercentage < 100) {
-                              rowBgClass = "bg-amber-50";
+                            } else if (usagePercentage >= 70 && usagePercentage <= 100) {
+                              rowBgClass = "bg-emerald-50/30";
+                              barColor = "#059669";
+                              pctColor = "text-emerald-600";
+                            } else if (usagePercentage >= 50 && usagePercentage < 70) {
+                              rowBgClass = "bg-sky-50/30";
+                              barColor = "#0284c7";
+                              pctColor = "text-sky-600";
+                            } else if (usagePercentage > 0 && usagePercentage < 50) {
+                              rowBgClass = "bg-amber-50/40";
                               barColor = "#d97706";
                               pctColor = "text-amber-600";
-                            } else if (usagePercentage > 0) {
-                              barColor = "#10b981";
                             }
 
                             return (
@@ -1112,12 +1286,12 @@ const ReconPage = () => {
                                 </td>
                                 <td className="px-4 py-3 text-gray-800">{item.project_name}</td>
                                 <td className="px-4 py-3 text-right font-semibold text-gray-900 whitespace-nowrap">
-                                  {Number(item.estimated_hours).toLocaleString()}{" "}
-                                  <span className="text-gray-400 font-normal">({Number(item.estimated_days).toLocaleString()})</span>
+                                  {formatNumber(item.estimated_hours)}{" "}
+                                  <span className="text-gray-400 font-normal">({formatNumber(item.estimated_days, 1)})</span>
                                 </td>
                                 <td className="px-4 py-3 text-right font-semibold text-[#856BFF] whitespace-nowrap">
-                                  {Number(item.actual_hours).toLocaleString()}{" "}
-                                  <span className="text-gray-400 font-normal">({Number(item.actual_days).toLocaleString()})</span>
+                                  {formatNumber(item.actual_hours)}{" "}
+                                  <span className="text-gray-400 font-normal">({formatNumber(item.actual_days, 1)})</span>
                                 </td>
                                 <td className="px-4 py-3">
                                   <div className="flex items-center gap-2 min-w-[110px]">
@@ -1128,22 +1302,27 @@ const ReconPage = () => {
                                       />
                                     </div>
                                     <span className={`text-xs font-bold ${pctColor}`}>
-                                      {estimatedHours > 0 ? `${usagePercentage.toFixed(1)}%` : "N/A"}
+                                      {estimatedHours > 0 ? `${formatNumber(usagePercentage, 1)}%` : "N/A"}
                                     </span>
                                   </div>
                                 </td>
                                 <td className="px-4 py-3 text-right whitespace-nowrap">
                                   <div className={`font-semibold ${Number(item.variance_hours) > 0 ? "text-green-600" : "text-red-500"}`}>
                                     {Number(item.variance_hours) > 0 ? "+" : ""}
-                                    {Number(item.variance_hours).toLocaleString()}
+                                    {formatNumber(item.variance_hours)}
                                   </div>
                                   <div className={`text-[11px] ${Number(item.variance_pct) > 0 ? "text-green-600" : "text-red-500"}`}>
                                     ({Number(item.variance_pct) > 0 ? "+" : ""}
-                                    {item.variance_pct}%)
+                                    {formatNumber(item.variance_pct, 1)}%)
                                   </div>
                                 </td>
                                 <td className="px-4 py-3">
-                                  <StatusPill status={item.status} />
+                                  <StatusPill
+                                    status={item.status}
+                                    utilizationPct={estimatedHours > 0 ? usagePercentage : undefined}
+                                    inSystem={item.in_system !== false}
+                                    estimatedHours={estimatedHours}
+                                  />
                                 </td>
                                 <td className="px-4 py-3 text-center">
                                   <button
@@ -1204,18 +1383,18 @@ const ReconPage = () => {
                     </div>
                   </div>
 
-                  <div className="w-full overflow-x-auto">
+                  <div className="w-full overflow-auto max-h-[calc(100vh-230px)]">
                     <table className="w-full border-collapse text-sm">
-                      <thead>
-                        <tr style={{ backgroundColor: '#EFF4FF' }}>
-                          <th className="px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Employee</th>
+                      <thead className="sticky top-0 z-20 bg-[#EFF4FF]">
+                        <tr className="border-b border-gray-200 bg-[#EFF4FF]" style={{ backgroundColor: '#EFF4FF' }}>
+                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap shadow-sm">Employee</th>
                           {/* <th className="px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Reporting Manager</th> */}
-                          <th className="px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Project Code</th>
-                          <th className="px-4 py-3 text-right text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Assigned (H)</th>
-                          <th className="px-4 py-3 text-right text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Actual (H)</th>
-                          <th className="px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Utilization %</th>
-                          <th className="px-4 py-3 text-right text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Variance %</th>
-                          <th className="px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Status</th>
+                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap shadow-sm">Project Code</th>
+                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-right text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap shadow-sm">Assigned (H)</th>
+                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-right text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap shadow-sm">Actual (H)</th>
+                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap shadow-sm">Utilization %</th>
+                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-right text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap shadow-sm">Variance %</th>
+                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap shadow-sm">Status</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1234,7 +1413,7 @@ const ReconPage = () => {
 
                             if (assigned > 0) {
                               utilizationPct = (actual / assigned) * 100;
-                              utilizationDisplay = utilizationPct.toFixed(1) + "%";
+                              utilizationDisplay = formatNumber(utilizationPct, 1) + "%";
                             } else if (actual > 0 && assigned === 0) {
                               utilizationDisplay = "N/A";
                             }
@@ -1270,10 +1449,10 @@ const ReconPage = () => {
                                   <span className="text-xs text-gray-600">{item.project_code || "—"}</span>
                                 </td>
                                 <td className="px-4 py-3 text-right font-semibold text-gray-900">
-                                  {Number(item.assigned_hours).toLocaleString()}
+                                  {formatNumber(item.assigned_hours)}
                                 </td>
                                 <td className="px-4 py-3 text-right font-semibold text-[#856BFF]">
-                                  {Number(item.actual_hours).toLocaleString()}
+                                  {formatNumber(item.actual_hours)}
                                 </td>
                                 <td className="px-4 py-3">
                                   <div className="flex items-center gap-2 min-w-[110px]">
@@ -1292,11 +1471,11 @@ const ReconPage = () => {
                                 <td className="px-4 py-3 text-right whitespace-nowrap">
                                   <div className={`font-semibold ${Number(item.variance_hours) > 0 ? "text-green-600" : "text-red-500"}`}>
                                     {Number(item.variance_hours) > 0 ? "+" : ""}
-                                    {Number(item.variance_hours || 0).toLocaleString()}
+                                    {formatNumber(item.variance_hours || 0)}
                                   </div>
                                   <div className={`text-[11px] ${Number(item.variance_pct) > 0 ? "text-green-600" : "text-red-500"}`}>
-                                    {Number(item.variance_pct) > 0 ? "+" : ""}
-                                    {item.variance_pct}%
+                                    ({Number(item.variance_pct) > 0 ? "+" : ""}
+                                    {formatNumber(item.variance_pct, 1)}%)
                                   </div>
                                 </td>
                                 <td className="px-4 py-3">

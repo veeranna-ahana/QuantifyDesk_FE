@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import Cookies from 'js-cookie';
 import { useNavigate } from 'react-router-dom';
 import SearchableSelect from '../component/SearchableSelect';
+import { Icon } from '@iconify/react';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL;
 const PAGE_SIZE = 10;
@@ -92,9 +93,6 @@ export default function DailyUpdatesReport() {
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedProject, setSelectedProject] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState('');
-  const [pendingDate, setPendingDate] = useState('');
-  const [pendingProject, setPendingProject] = useState('');
-  const [pendingEmployee, setPendingEmployee] = useState('');
 
   const [rows, setRows] = useState([]);
   const [loadingMeta, setLoadingMeta] = useState(true);
@@ -189,7 +187,6 @@ export default function DailyUpdatesReport() {
         const todayStr = new Date().toISOString().split('T')[0];
         const defaultDate = dates.includes(todayStr) ? todayStr : dates[0] || '';
         setSelectedDate(defaultDate);
-        setPendingDate(defaultDate);
 
       } catch (err) {
         console.error('❌ Load meta error:', err);
@@ -269,11 +266,14 @@ export default function DailyUpdatesReport() {
     }));
   }, [isAdminOrManager, serviceDeliveryEmployees]);
 
-  // ── Apply filter ───────────────────────────────────────────────────────────
-  const handleFilter = () => {
-    setSelectedDate(pendingDate);
-    setSelectedProject(pendingProject);
-    setSelectedEmployee(pendingEmployee);
+  // ── Reset filter ───────────────────────────────────────────────────────────
+  const handleReset = () => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const defaultDate = meta.dates?.includes(todayStr) ? todayStr : meta.dates?.[0] || todayStr;
+    setSelectedDate(defaultDate);
+    setSelectedProject('');
+    setSelectedEmployee('');
+    setPage(1);
   };
 
   // ── Handle logout on auth error ──
@@ -337,20 +337,20 @@ export default function DailyUpdatesReport() {
         </p>
       </div>
 
-      {/* ── Filter bar ── */}
-      <div className="flex flex-wrap items-end gap-4 mb-5">
+      {/* ── Filter bar - Sticky ── */}
+      <div className="sticky top-0 z-30 bg-[#f0f0f8]/95 backdrop-blur-md py-3 -mt-2 mb-4 flex flex-wrap items-end gap-4 border-b border-gray-200/60 shadow-sm rounded-xl px-2">
 
         {/* Date */}
         <SelectWrapper label="Date">
           <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2.5 shadow-sm min-w-[140px]">
             <span className="text-sm text-gray-700 flex-1">
-              {pendingDate ? formatDisplay(pendingDate) : 'Select date'}
+              {selectedDate ? formatDisplay(selectedDate) : 'Select date'}
             </span>
             <CalIcon />
             <input
               type="date"
-              value={pendingDate}
-              onChange={e => setPendingDate(e.target.value)}
+              value={selectedDate}
+              onChange={e => setSelectedDate(e.target.value)}
               className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
             />
           </div>
@@ -360,8 +360,8 @@ export default function DailyUpdatesReport() {
         <SelectWrapper label="Project">
           <div className="min-w-[220px]">
             <SearchableSelect
-              value={pendingProject}
-              onChange={setPendingProject}
+              value={selectedProject}
+              onChange={setSelectedProject}
               placeholder="All projects"
               disabled={loadingMeta}
               loading={loadingMeta && meta.projects.length === 0}
@@ -378,8 +378,8 @@ export default function DailyUpdatesReport() {
           <SelectWrapper label="Employee">
             <div className="min-w-[220px]">
               <SearchableSelect
-                value={pendingEmployee}
-                onChange={setPendingEmployee}
+                value={selectedEmployee}
+                onChange={setSelectedEmployee}
                 placeholder="All employees"
                 disabled={employeeOptions.length === 0 || loadingMeta}
                 options={employeeOptions.map(emp => ({
@@ -391,13 +391,15 @@ export default function DailyUpdatesReport() {
           </SelectWrapper>
         )}
 
-        {/* Filter button */}
+        {/* Reset button */}
         <button
-          onClick={handleFilter}
+          onClick={handleReset}
           disabled={loadingMeta || loadingRows}
-          className="self-end px-6 py-2.5 bg-[#856BFF] hover:bg-[#7f62ff] active:bg-[#856BFF] text-white text-sm font-semibold rounded-lg shadow-sm transition-colors disabled:opacity-50"
+          className="self-end px-5 py-2.5 bg-white border border-slate-200 hover:border-[#856BFF] hover:text-[#856BFF] text-slate-600 text-sm font-semibold rounded-lg shadow-sm transition-all flex items-center gap-1.5 disabled:opacity-50"
+          title="Reset all filters to default"
         >
-          {loadingMeta ? 'Loading...' : 'Filter Results'}
+          <Icon icon="material-symbols:restart-alt" width="18" height="18" />
+          Reset
         </button>
       </div>
 
@@ -407,12 +409,12 @@ export default function DailyUpdatesReport() {
           <table className="w-full text-sm border-collapse min-w-[960px]">
 
             {/* Head */}
-            <thead>
+            <thead className="sticky top-0 z-10 bg-[#EFF4FF]">
               <tr className="border-b border-gray-100 bg-[#EFF4FF]">
                 {COLS.map(col => (
                   <th
                     key={col}
-                    className="text-left px-4 py-3 text-[11px] font-bold text-slate-500 tracking-wide uppercase whitespace-nowrap"
+                    className="sticky top-0 z-10 bg-[#EFF4FF] text-left px-4 py-3 text-[11px] font-bold text-slate-500 tracking-wide uppercase whitespace-nowrap"
                   >
                     {col}
                   </th>

@@ -740,14 +740,14 @@ const MyWork = () => {
 
             {/* Table */}
             <table className="w-full border-collapse">
-              <thead>
+              <thead className="sticky top-0 z-10 bg-[#EFF4FF]">
                 <tr className="bg-[#EFF4FF]">
-                  <th className="px-6 py-3 text-xs font-semibold text-[#434654] text-left">Role</th>
-                  <th className="px-6 py-3 text-xs font-semibold text-[#434654] text-left">Task</th>
-                  <th className="px-6 py-3 text-xs font-semibold text-[#434654] text-left">Assigned</th>
-                  <th className="px-6 py-3 text-xs font-semibold text-[#434654] text-left">Pending</th>
-                  <th className="px-6 py-3 text-xs font-semibold text-[#434654] text-left">Progress</th>
-                  <th className="px-6 py-3 text-xs font-semibold text-[#434654] text-left">Action</th>
+                  <th className="sticky top-0 z-10 bg-[#EFF4FF] px-6 py-3 text-xs font-semibold text-[#434654] text-left">Role</th>
+                  <th className="sticky top-0 z-10 bg-[#EFF4FF] px-6 py-3 text-xs font-semibold text-[#434654] text-left">Task</th>
+                  <th className="sticky top-0 z-10 bg-[#EFF4FF] px-6 py-3 text-xs font-semibold text-[#434654] text-left">Assigned</th>
+                  <th className="sticky top-0 z-10 bg-[#EFF4FF] px-6 py-3 text-xs font-semibold text-[#434654] text-left">Pending</th>
+                  <th className="sticky top-0 z-10 bg-[#EFF4FF] px-6 py-3 text-xs font-semibold text-[#434654] text-left">Progress</th>
+                  <th className="sticky top-0 z-10 bg-[#EFF4FF] px-6 py-3 text-xs font-semibold text-[#434654] text-left">Action</th>
                 </tr>
               </thead>
               <tbody>

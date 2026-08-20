@@ -314,6 +314,9 @@ const UtilizationDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 6;
 
+  const [overallEmpPage, setOverallEmpPage] = useState(1);
+  const overallEmpRowsPerPage = 10;
+
   // ── Unit Utilization state ─────────────────────────────────────────────────
   const [unitProject, setUnitProject] = useState("");
   const [unitEmployee, setUnitEmployee] = useState("");
@@ -393,6 +396,7 @@ useEffect(() => {
 
   // ── Fetch employee unit summary when employee or project changes ───────────
   useEffect(() => {
+    setOverallEmpPage(1);
     if (!unitEmployee) { setUnitEmpData(null); return; }
     const fetchUnitEmp = async () => {
       setUnitLoading(true);
@@ -528,13 +532,13 @@ const empRows = (showAllEmployees ? serviceDeliveryEmployees : serviceDeliveryEm
         <div className="space-y-5">
 
           {/* ── Filters row ── */}
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-4 flex flex-wrap gap-4 items-end">
+          <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-md rounded-xl border border-gray-200/80 shadow-md px-5 py-4 flex flex-wrap gap-4 items-end transition-all">
             <div className="flex flex-col gap-1">
               <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Select Project</label>
               <div className="min-w-[220px]">
                 <SearchableSelect
                   value={unitProject}
-                  onChange={val => { setUnitProject(val); setUnitEmployee(""); }}
+                  onChange={val => { setUnitProject(val); setUnitEmployee(""); setOverallEmpPage(1); }}
                   placeholder="— Choose a project —"
                   options={projects.map(p => ({ value: String(p.id), label: p.project_name || p.name }))}
                 />
@@ -545,7 +549,7 @@ const empRows = (showAllEmployees ? serviceDeliveryEmployees : serviceDeliveryEm
               <div className="min-w-[220px]">
                 <SearchableSelect
                   value={unitEmployee}
-                  onChange={setUnitEmployee}
+                  onChange={val => { setUnitEmployee(val); setOverallEmpPage(1); }}
                   placeholder="— Choose an employee —"
                   disabled={!unitProject}
                   options={serviceDeliveryEmployees.map(emp => ({
@@ -674,7 +678,7 @@ const empRows = (showAllEmployees ? serviceDeliveryEmployees : serviceDeliveryEm
                   {/* Task breakdown table with 12 detailed columns */}
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
-                      <thead>
+                      <thead className="sticky top-0 z-10 bg-[#EFF4FF]">
                         <tr className="bg-[#EFF4FF] border-b border-gray-100">
                           {[
                             "Employee Name", "Project Name", "Task Name",
@@ -683,7 +687,7 @@ const empRows = (showAllEmployees ? serviceDeliveryEmployees : serviceDeliveryEm
                             "Pending Units", "Pending Person Days",
                             "Unit Utilization (%)", "Person Days Utilization (%)", "Hours Utilization (%)"
                           ].map(h => (
-                            <th key={h} className="px-4 py-2.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">{h}</th>
+                            <th key={h} className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-2.5 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
                           ))}
                         </tr>
                       </thead>
@@ -856,81 +860,131 @@ const empRows = (showAllEmployees ? serviceDeliveryEmployees : serviceDeliveryEm
 
 
                 {/* All-project task table */}
-                <div className="overflow-x-auto mt-5">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="bg-[#EFF4FF] border-b border-gray-100" style={{ backgroundColor: '#EFF4FF' }} >
-                        {[
-                          "Employee Name", "Project Name", "Task Name",
-                          "Total Units", "Total Person Days",
-                          "Completed Units", "Completed Person Days",
-                          "Pending Units", "Pending Person Days",
-                          "Unit Utilization (%)", "Person Days Utilization (%)", "Hours Utilization (%)"
-                        ].map(h => (
-                          <th key={h} className="px-4 py-2.5 text-left text-[10px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(() => {
-                        // resolve employee name from serviceDeliveryEmployees
-                        const empObj = serviceDeliveryEmployees.find(
-                          e => String(e.employee_id || e.emp_id) === String(unitEmployee)
-                        );
-                        const empName = empObj?.emp_name || unitEmployee;
-                        // use tableData (by-project endpoint) filtered by this employee — it has hours fields
-                        const empRows = tableData.filter(r => r.user_name === empName);
-                        if (empRows.length === 0) {
-                          return <tr><td colSpan={12} className="py-6 text-center text-gray-300">No tasks found</td></tr>;
-                        }
-                        return empRows.map((t, i) => {
-                          const assignedUnits = Number(t.units_assigned || 0);
-                          const completedUnits = Number(t.units_completed || 0);
-                          const pendingUnits = Number(t.units_pending || 0);
-                          const assignedHrs = Number(t.hours_assigned || 0);
-                          const utilizedHrs = Number(t.hours_utilized || 0);
-                          const pendingHrs = Math.max(assignedHrs - utilizedHrs, 0);
-                          // person days = hours / 8
-                          const totalPD = parseFloat((assignedHrs / 8).toFixed(2));
-                          const completedPD = parseFloat((utilizedHrs / 8).toFixed(2));
-                          const pendingPD = parseFloat((pendingHrs / 8).toFixed(2));
-                          // utilization %
-                          const unitPct = assignedUnits > 0 ? Math.round((completedUnits / assignedUnits) * 100) : 0;
-                          const pdPct = totalPD > 0 ? Math.round((completedPD / totalPD) * 100) : 0;
-                          const hrsPct = assignedHrs > 0 ? Math.round((utilizedHrs / assignedHrs) * 100) : 0;
-                          return (
-                            <tr key={i} className="border-b border-gray-50 hover:bg-gray-50/60">
-                              <td className="px-4 py-2.5 font-semibold text-gray-700 text-[12px] whitespace-nowrap">{empName}</td>
-                              <td className="px-4 py-2.5 text-[12px] text-gray-500">{t.project_name || "—"}</td>
-                              <td className="px-4 py-2.5 font-semibold text-gray-700 text-[12px]">{t.task_name}</td>
-                              <td className="px-4 py-2.5 text-center font-bold text-blue-600">{assignedUnits}</td>
-                              <td className="px-4 py-2.5 text-center font-semibold text-slate-700">{totalPD}</td>
-                              <td className="px-4 py-2.5 text-center font-bold text-emerald-500">{completedUnits}</td>
-                              <td className="px-4 py-2.5 text-center font-semibold text-emerald-400">{completedPD}</td>
-                              <td className="px-4 py-2.5 text-center font-bold" style={{ color: pendingUnits > 0 ? "#e74c3c" : "#00b894" }}>{pendingUnits}</td>
-                              <td className="px-4 py-2.5 text-center font-semibold" style={{ color: pendingPD > 0 ? "#e74c3c" : "#00b894" }}>{pendingPD}</td>
-                              <td className="px-4 py-2.5 text-center">
-                                <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${unitPct >= 100 ? 'bg-emerald-50 text-emerald-600' : unitPct >= 50 ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-rose-500'}`}>
-                                  {unitPct}%
-                                </span>
-                              </td>
-                              <td className="px-4 py-2.5 text-center">
-                                <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${pdPct >= 100 ? 'bg-emerald-50 text-emerald-600' : pdPct >= 50 ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-rose-500'}`}>
-                                  {pdPct}%
-                                </span>
-                              </td>
-                              <td className="px-4 py-2.5 text-center">
-                                <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${hrsPct >= 100 ? 'bg-emerald-50 text-emerald-600' : hrsPct >= 50 ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-rose-500'}`}>
-                                  {hrsPct}%
-                                </span>
-                              </td>
+                {(() => {
+                  // resolve employee name from serviceDeliveryEmployees
+                  const empObj = serviceDeliveryEmployees.find(
+                    e => String(e.employee_id || e.emp_id) === String(unitEmployee)
+                  );
+                  const empName = empObj?.emp_name || unitEmployee;
+                  // use tableData (by-project endpoint) filtered by this employee — it has hours fields
+                  const empRows = tableData.filter(r => r.user_name === empName);
+                  const totalOverallPages = Math.ceil(empRows.length / overallEmpRowsPerPage);
+                  const currentOverallRows = empRows.slice(
+                    (overallEmpPage - 1) * overallEmpRowsPerPage,
+                    overallEmpPage * overallEmpRowsPerPage
+                  );
+                  const overallPageNums = Array.from(
+                    { length: Math.min(totalOverallPages, 3) },
+                    (_, i) => {
+                      if (totalOverallPages <= 3 || overallEmpPage <= 2) return i + 1;
+                      if (overallEmpPage >= totalOverallPages - 1) return totalOverallPages - 2 + i;
+                      return overallEmpPage - 1 + i;
+                    }
+                  );
+
+                  return (
+                    <>
+                      <div className="overflow-x-auto mt-5">
+                        <table className="w-full text-sm">
+                          <thead className="sticky top-0 z-10 bg-[#EFF4FF]">
+                            <tr className="bg-[#EFF4FF] border-b border-gray-100" style={{ backgroundColor: '#EFF4FF' }} >
+                              {[
+                                "Employee Name", "Project Name", "Task Name",
+                                "Total Units", "Total Person Days",
+                                "Completed Units", "Completed Person Days",
+                                "Pending Units", "Pending Person Days",
+                                "Unit Utilization (%)", "Person Days Utilization (%)", "Hours Utilization (%)"
+                              ].map(h => (
+                                <th key={h} className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-2.5 text-left text-[10px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">{h}</th>
+                              ))}
                             </tr>
-                          );
-                        });
-                      })()}
-                    </tbody>
-                  </table>
-                </div>
+                          </thead>
+                          <tbody>
+                            {currentOverallRows.length === 0 ? (
+                              <tr><td colSpan={12} className="py-6 text-center text-gray-300">No tasks found</td></tr>
+                            ) : (
+                              currentOverallRows.map((t, i) => {
+                                const assignedUnits = Number(t.units_assigned || 0);
+                                const completedUnits = Number(t.units_completed || 0);
+                                const pendingUnits = Number(t.units_pending || 0);
+                                const assignedHrs = Number(t.hours_assigned || 0);
+                                const utilizedHrs = Number(t.hours_utilized || 0);
+                                const pendingHrs = Math.max(assignedHrs - utilizedHrs, 0);
+                                // person days = hours / 8
+                                const totalPD = parseFloat((assignedHrs / 8).toFixed(2));
+                                const completedPD = parseFloat((utilizedHrs / 8).toFixed(2));
+                                const pendingPD = parseFloat((pendingHrs / 8).toFixed(2));
+                                // utilization %
+                                const unitPct = assignedUnits > 0 ? Math.round((completedUnits / assignedUnits) * 100) : 0;
+                                const pdPct = totalPD > 0 ? Math.round((completedPD / totalPD) * 100) : 0;
+                                const hrsPct = assignedHrs > 0 ? Math.round((utilizedHrs / assignedHrs) * 100) : 0;
+                                return (
+                                  <tr key={i} className="border-b border-gray-50 hover:bg-gray-50/60">
+                                    <td className="px-4 py-2.5 font-semibold text-gray-700 text-[12px] whitespace-nowrap">{empName}</td>
+                                    <td className="px-4 py-2.5 text-[12px] text-gray-500">{t.project_name || "—"}</td>
+                                    <td className="px-4 py-2.5 font-semibold text-gray-700 text-[12px]">{t.task_name}</td>
+                                    <td className="px-4 py-2.5 text-center font-bold text-blue-600">{assignedUnits}</td>
+                                    <td className="px-4 py-2.5 text-center font-semibold text-slate-700">{totalPD}</td>
+                                    <td className="px-4 py-2.5 text-center font-bold text-emerald-500">{completedUnits}</td>
+                                    <td className="px-4 py-2.5 text-center font-semibold text-emerald-400">{completedPD}</td>
+                                    <td className="px-4 py-2.5 text-center font-bold" style={{ color: pendingUnits > 0 ? "#e74c3c" : "#00b894" }}>{pendingUnits}</td>
+                                    <td className="px-4 py-2.5 text-center font-semibold" style={{ color: pendingPD > 0 ? "#e74c3c" : "#00b894" }}>{pendingPD}</td>
+                                    <td className="px-4 py-2.5 text-center">
+                                      <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${unitPct >= 100 ? 'bg-emerald-50 text-emerald-600' : unitPct >= 50 ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-rose-500'}`}>
+                                        {unitPct}%
+                                      </span>
+                                    </td>
+                                    <td className="px-4 py-2.5 text-center">
+                                      <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${pdPct >= 100 ? 'bg-emerald-50 text-emerald-600' : pdPct >= 50 ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-rose-500'}`}>
+                                        {pdPct}%
+                                      </span>
+                                    </td>
+                                    <td className="px-4 py-2.5 text-center">
+                                      <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${hrsPct >= 100 ? 'bg-emerald-50 text-emerald-600' : hrsPct >= 50 ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-rose-500'}`}>
+                                        {hrsPct}%
+                                      </span>
+                                    </td>
+                                  </tr>
+                                );
+                              })
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Pagination */}
+                      <div className="flex items-center justify-between px-5 py-3 border-t border-gray-50" style={{ backgroundColor: '#EFF4FF' }}>
+                        <span className="text-[11px] text-[#434654]">
+                          Showing {empRows.length === 0 ? 0 : (overallEmpPage - 1) * overallEmpRowsPerPage + 1} to {Math.min(overallEmpPage * overallEmpRowsPerPage, empRows.length)} of {empRows.length} entries
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => setOverallEmpPage(p => Math.max(1, p - 1))}
+                            disabled={overallEmpPage === 1}
+                            className="w-7 h-7 flex items-center justify-center rounded border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed text-xs"
+                          >‹</button>
+                          {overallPageNums.map(n => (
+                            <button key={n}
+                              onClick={() => setOverallEmpPage(n)}
+                              className={`w-7 h-7 flex items-center justify-center rounded text-[12px] font-semibold border transition-colors
+                              ${overallEmpPage === n
+                                  ? "bg-[#856BFF] text-white border-[#856BFF]"
+                                  : "border-gray-200 text-gray-500 hover:bg-gray-50"}`}
+                            >{n}</button>
+                          ))}
+                          {totalOverallPages > 3 && overallPageNums[overallPageNums.length - 1] < totalOverallPages && (
+                            <span className="text-gray-400 text-xs px-1">…</span>
+                          )}
+                          <button
+                            onClick={() => setOverallEmpPage(p => Math.min(totalOverallPages, p + 1))}
+                            disabled={overallEmpPage === totalOverallPages || totalOverallPages === 0}
+                            className="w-7 h-7 flex items-center justify-center rounded border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed text-xs"
+                          >›</button>
+                        </div>
+                      </div>
+                    </>
+                  );
+                })()}
 
               </div>
             ) : null
@@ -975,10 +1029,10 @@ const empRows = (showAllEmployees ? serviceDeliveryEmployees : serviceDeliveryEm
             </div>
 
             <table className="w-full text-sm">
-              <thead>
+              <thead className="sticky top-0 z-10 bg-[#EFF4FF]">
                 <tr className="border-b border-gray-50" style={{ backgroundColor: '#EFF4FF' }}>
                   {["EMPLOYEE", "ROLE", "UTILIZATION", "STATUS"].map(h => (
-                    <th key={h} className="px-5 py-2 text-left text-[10px] font-bold text-[#434654] uppercase tracking-wider">{h}</th>
+                    <th key={h} className="sticky top-0 z-10 bg-[#EFF4FF] px-5 py-2 text-left text-[10px] font-bold text-[#434654] uppercase tracking-wider">{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -1131,10 +1185,10 @@ const empRows = (showAllEmployees ? serviceDeliveryEmployees : serviceDeliveryEm
 
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead>
+              <thead className="sticky top-0 z-10 bg-[#EFF4FF]">
                 <tr className="border-b border-gray-50" style={{ backgroundColor: '#EFF4FF' }}>
                   {["USER", "PROJECT", "ROLE", "TASK", "ASSIGNED", "COMPLETED", "PENDING", "ASSIGNED HRS", "ACTUAL HRS", "PROGRESS"].map(h => (
-                    <th key={h} className="px-4 py-3 text-left text-[10px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">{h}</th>
+                    <th key={h} className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-left text-[10px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
               </thead>

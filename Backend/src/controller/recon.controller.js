@@ -218,11 +218,11 @@ const getReconDashboard = async (req, res, next) => {
             `, [p.project_code, p.project_code]);
             
             const actualHrs = parseFloat(actualResult[0]?.actual_hours || 0);
-            const variancePct = ((p.estimated_hours - actualHrs) / p.estimated_hours) * 100;
+            const utilPct = (actualHrs / p.estimated_hours) * 100;
             
-            if (variancePct < 0) {
+            if (utilPct > 100) {
                 overutilized++;
-            } else if (variancePct > 0) {
+            } else if (utilPct < 100) {
                 underutilized++;
             }
         }
@@ -535,21 +535,22 @@ const getProjectLevelRecon = async (req, res, next) => {
             const actual = parseFloat(p.actual_hours || 0);
             const variance = estimated - actual;
             const variancePct = estimated > 0 ? (variance / estimated) * 100 : 0;
+            const utilPct = estimated > 0 ? (actual / estimated) * 100 : 0;
 
-            let status = 'On Track';
+            let status = 'Utilized';
 
             if (!p.in_system) {
                 status = 'Project Not Found';
             } else if (estimated === 0) {
                 status = 'No Estimate';
-            } else if (variancePct < 0) {
-                status = 'Over Utilized';
-            } else if (variancePct > 20) {
-                status = 'Under Utilized';
-            } else if (variancePct > 0) {
-                status = 'Under Utilized';
+            } else if (utilPct > 100) {
+                status = 'Over-utilized';
+            } else if (utilPct >= 70) {
+                status = 'Utilized';
+            } else if (utilPct >= 50) {
+                status = 'Moderate';
             } else {
-                status = 'On Track';
+                status = 'Under-utilized';
             }
             
             return {

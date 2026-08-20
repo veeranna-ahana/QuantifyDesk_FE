@@ -1,10 +1,12 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import { Icon } from '@iconify/react';
+import SearchableSelect from '../component/SearchableSelect';
 
 // ── Role helper ───────────────────────────────────────────────────────────────
 const getUserRole = () => {
@@ -54,6 +56,49 @@ const CreateProjectModal = ({ onClose, onCreated }) => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
+  const serviceDeliveryEmployees = useSelector(state => state.auth?.serviceDeliveryEmployees);
+  const [employees, setEmployees] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('serviceDeliveryEmployees') || '[]');
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    if (serviceDeliveryEmployees && serviceDeliveryEmployees.length > 0) {
+      setEmployees(serviceDeliveryEmployees);
+      return;
+    }
+    const fetchEmployees = async () => {
+      try {
+        const res = await axios.post(`${BASE_URL}/hrms/getAllAhanaEmplist`, {}, { headers: getHeaders() });
+        const list = Array.isArray(res.data)
+          ? res.data
+          : Array.isArray(res.data?.data)
+            ? res.data.data
+            : [];
+        if (list.length > 0) {
+          setEmployees(list);
+        }
+      } catch (err) {
+        console.error('Failed to fetch employees:', err);
+      }
+    };
+    fetchEmployees();
+  }, [serviceDeliveryEmployees]);
+
+  const employeeOptions = useMemo(() => {
+    return employees.map(emp => {
+      const name = emp.emp_name || emp.name || '';
+      const id = emp.employee_id || emp.emp_id || emp.id || '';
+      return {
+        value: name,
+        label: id ? `${name} (${id})` : name,
+      };
+    });
+  }, [employees]);
+
   const handleChange = (field, val) => {
     setForm(prev => ({ ...prev, [field]: val }));
     setError('');
@@ -102,7 +147,7 @@ const CreateProjectModal = ({ onClose, onCreated }) => {
     { key: 'projectCode', label: 'Project Code', required: false, placeholder: 'e.g. PRJ-001' },
     { key: 'subCategory', label: 'Sub Category', required: false, placeholder: 'e.g. Web App / Mobile' },
     { key: 'customer', label: 'Customer', required: true, placeholder: 'Client or company name' },
-    { key: 'teamLead', label: 'Team Lead Name', required: false, placeholder: 'e.g. John Smith' },
+    { key: 'teamLead', label: 'Team Lead', required: false, placeholder: 'Select Team Lead', isSelect: true },
   ];
 
   return (
@@ -126,7 +171,14 @@ const CreateProjectModal = ({ onClose, onCreated }) => {
                 {f.label}
                 {f.required && <span style={{ color: '#e74c3c', marginLeft: 3 }}>*</span>}
               </label>
-              {f.multiline ? (
+              {f.isSelect ? (
+                <SearchableSelect
+                  value={form[f.key]}
+                  onChange={val => handleChange(f.key, val)}
+                  placeholder={f.placeholder}
+                  options={employeeOptions}
+                />
+              ) : f.multiline ? (
                 <textarea
                   rows={3}
                   value={form[f.key]}
@@ -233,6 +285,49 @@ const EditProjectModal = ({ project, onClose, onUpdated }) => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
+  const serviceDeliveryEmployees = useSelector(state => state.auth?.serviceDeliveryEmployees);
+  const [employees, setEmployees] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('serviceDeliveryEmployees') || '[]');
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    if (serviceDeliveryEmployees && serviceDeliveryEmployees.length > 0) {
+      setEmployees(serviceDeliveryEmployees);
+      return;
+    }
+    const fetchEmployees = async () => {
+      try {
+        const res = await axios.post(`${BASE_URL}/hrms/getAllAhanaEmplist`, {}, { headers: getHeaders() });
+        const list = Array.isArray(res.data)
+          ? res.data
+          : Array.isArray(res.data?.data)
+            ? res.data.data
+            : [];
+        if (list.length > 0) {
+          setEmployees(list);
+        }
+      } catch (err) {
+        console.error('Failed to fetch employees:', err);
+      }
+    };
+    fetchEmployees();
+  }, [serviceDeliveryEmployees]);
+
+  const employeeOptions = useMemo(() => {
+    return employees.map(emp => {
+      const name = emp.emp_name || emp.name || '';
+      const id = emp.employee_id || emp.emp_id || emp.id || '';
+      return {
+        value: name,
+        label: id ? `${name} (${id})` : name,
+      };
+    });
+  }, [employees]);
+
   const handleChange = (field, val) => {
     setForm(prev => ({ ...prev, [field]: val }));
     setError('');
@@ -281,7 +376,7 @@ const EditProjectModal = ({ project, onClose, onUpdated }) => {
     { key: 'projectCode', label: 'Project Code', required: false, placeholder: 'e.g. PRJ-001' },
     { key: 'subCategory', label: 'Sub Category', required: false, placeholder: 'e.g. Web App / Mobile' },
     { key: 'customer', label: 'Customer', required: true, placeholder: 'Client or company name' },
-    { key: 'teamLead', label: 'Team Lead Name', required: false, placeholder: 'e.g. John Smith' },
+    { key: 'teamLead', label: 'Team Lead', required: false, placeholder: 'Select Team Lead', isSelect: true },
   ];
 
   return (
@@ -305,7 +400,14 @@ const EditProjectModal = ({ project, onClose, onUpdated }) => {
                 {f.label}
                 {f.required && <span style={{ color: '#e74c3c', marginLeft: 3 }}>*</span>}
               </label>
-              {f.multiline ? (
+              {f.isSelect ? (
+                <SearchableSelect
+                  value={form[f.key]}
+                  onChange={val => handleChange(f.key, val)}
+                  placeholder={f.placeholder}
+                  options={employeeOptions}
+                />
+              ) : f.multiline ? (
                 <textarea
                   rows={3}
                   value={form[f.key]}
@@ -831,27 +933,13 @@ const Projects = () => {
     <div className="min-h-screen bg-[#f0f0f8] p-6 font-sans">
 
       {/* ── Page header ── */}
-      <div className="flex items-start justify-between mb-6 flex-wrap gap-3">
+      <div className="sticky top-0 z-30 bg-[#f0f0f8]/95 backdrop-blur-md pb-4 -mt-2 flex items-start justify-between mb-4 flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 leading-tight">Projects</h1>
           <p className="text-sm text-gray-400 mt-0.5">Manage and reconcile enterprise-level project efforts.</p>
         </div>
         {!isAdmin && (
           <div className="flex items-center gap-3">
-            {/* Effort Estimate — outlined violet */}
-            <button
-  onClick={() => navigate('/projects/effort', { state: { projects, initialProjectId: '', readOnly: false } })}
-  className="flex items-center gap-2 px-4 py-2 border border-[#9984f5] text-[#856BFF] text-sm font-semibold rounded-lg hover:bg-violet-50 transition-colors"
->
-<Icon 
-  icon="boxicons:math-filled" 
-  width="22" 
-  height="22" 
-  className="border-2 border-[#856BFF]  p-0.5"
-  style={{ color: '#856BFF' }}
-/>
-  Effort Estimate
-</button>
             {/* Create Project — filled violet */}
             <button
               onClick={() => navigate('/projects/create')}
@@ -864,7 +952,7 @@ const Projects = () => {
       </div>
 
       {/* ── Table card ── */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col">
         {loading ? (
           <div className="flex items-center justify-center gap-2 py-20 text-gray-400">
             <svg className="animate-spin w-5 h-5 text-[#9e88ff]" fill="none" viewBox="0 0 24 24">
@@ -882,12 +970,12 @@ const Projects = () => {
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto">
+            <div className="overflow-auto max-h-[calc(100vh-230px)]">
               <table className="w-full text-sm border-collapse min-w-[900px]">
-                <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50 bg-[#EFF4FF]" style={{ backgroundColor: '#EFF4FF' }}>
+                <thead className="sticky top-0 z-20 bg-[#EFF4FF]">
+                  <tr className="border-b border-gray-200 bg-[#EFF4FF]" style={{ backgroundColor: '#EFF4FF' }}>
                     {COLS.map(c => (
-                      <th key={c.label} className={`text-left px-4 py-3 text-[11px] font-bold text-[#434654] tracking-wide uppercase whitespace-nowrap ${c.w}`}>
+                      <th key={c.label} className={`sticky top-0 z-20 bg-[#EFF4FF] text-left px-4 py-3 text-[11px] font-bold text-[#434654] tracking-wide uppercase whitespace-nowrap shadow-sm ${c.w}`}>
                         {c.label}
                       </th>
                     ))}
@@ -971,7 +1059,7 @@ const Projects = () => {
                             </button>
                           )}
                           <button
-                            onClick={() => navigate('/projects/effort', { state: { projects, initialProjectId: p.id, readOnly: isAdmin } })}
+                            onClick={() => navigate('/projects/effort', { state: { projects, initialProjectId: p.id, projectName: p.project_name || p.name, readOnly: isAdmin } })}
                             className="flex items-center gap-1 text-xs font-semibold text-gray-500 hover:text-gray-700 transition-colors"
                           >
                              {isAdmin ? (
