@@ -168,16 +168,17 @@ const Pagination = ({ page, pageSize, total, onPageChange, onPageSizeChange, ent
   };
 
   return (
-    <div className="flex justify-between items-center px-5 py-4 border-t border-gray-100 flex-wrap gap-3" style={{ backgroundColor: '#EFF4FF' }}>
-      <div className="text-xs text-gray-500">
+    <div className="flex items-center justify-between px-5 py-3 border-t border-gray-50" style={{ backgroundColor: '#EFF4FF' }}>
+      <span className="text-[12px] text-[#434654] font-normal">
         Showing {start} to {end} of {total} {entryLabel}
-      </div>
-      <div className="flex items-center gap-2">
+      </span>
+      
+      <div className="flex items-center gap-1">
         {onPageSizeChange && (
           <select
             value={pageSize}
             onChange={onPageSizeChange}
-            className="px-2.5 py-1.5 border border-gray-200 rounded-md text-xs text-gray-600 focus:outline-none"
+            className="px-2.5 py-1.5 border border-gray-200 rounded-md text-xs text-gray-600 focus:outline-none mr-2"
           >
             <option value={5}>5</option>
             <option value={10}>10</option>
@@ -185,34 +186,39 @@ const Pagination = ({ page, pageSize, total, onPageChange, onPageSizeChange, ent
             <option value={50}>50</option>
           </select>
         )}
-        <div className="flex items-center gap-1">
+        
+        <button
+          onClick={() => onPageChange(page - 1)}
+          disabled={page === 1}
+          className="w-7 h-7 flex items-center justify-center rounded border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed text-xs"
+        >
+          ‹
+        </button>
+        
+        {getPageNumbers().map((p) => (
           <button
-            onClick={() => onPageChange(page - 1)}
-            disabled={page === 1}
-            className="w-7 h-7 flex items-center justify-center rounded-md text-gray-400 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-100 hover:text-gray-600 transition-colors"
-            aria-label="Previous page"
+            key={p}
+            onClick={() => onPageChange(p)}
+            className={`w-7 h-7 flex items-center justify-center rounded text-[12px] font-semibold border transition-colors
+              ${p === page
+                ? "bg-[#856BFF] text-white border-[#856BFF]"
+                : "border-gray-200 text-gray-500 hover:bg-gray-50"}`}
           >
-            <ChevronLeftIcon className="w-10 h-10" />
+            {p}
           </button>
-          {getPageNumbers().map((p) => (
-            <button
-              key={p}
-              onClick={() => onPageChange(p)}
-              className={`min-w-[28px] h-7 px-1.5 flex items-center justify-center rounded-md text-xs font-semibold transition-colors ${p === page ? "bg-[#856BFF] text-white" : "text-gray-500 hover:bg-gray-100"
-                }`}
-            >
-              {p}
-            </button>
-          ))}
-          <button
-            onClick={() => onPageChange(page + 1)}
-            disabled={page >= totalPages}
-            className="w-7 h-7 flex items-center justify-center rounded-md text-gray-400 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-100 hover:text-gray-600 transition-colors"
-            aria-label="Next page"
-          >
-            <ChevronRightIcon className="w-10 h-10" />
-          </button>
-        </div>
+        ))}
+        
+        {totalPages > 3 && page < totalPages - 1 && (
+          <span className="text-gray-400 text-xs px-1">…</span>
+        )}
+        
+        <button
+          onClick={() => onPageChange(page + 1)}
+          disabled={page >= totalPages}
+          className="w-7 h-7 flex items-center justify-center rounded border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed text-xs"
+        >
+          ›
+        </button>
       </div>
     </div>
   );
@@ -973,14 +979,14 @@ const ReconPage = () => {
                   <table className="w-full border-collapse text-sm">
                     <thead className="sticky top-0 z-20 bg-[#EFF4FF]">
                       <tr className="border-b border-gray-200 bg-[#EFF4FF]" style={{ backgroundColor: '#EFF4FF' }}>
-                        <th className="sticky top-0 z-20 bg-[#EFF4FF] px-3 py-3 text-left text-[11px] font-bold text-[#434654] uppercase shadow-sm">Employee</th>
-                        <th className="sticky top-0 z-20 bg-[#EFF4FF] px-3 py-3 text-left text-[11px] font-bold text-[#434654] uppercase shadow-sm">Role</th>
-                        <th className="sticky top-0 z-20 bg-[#EFF4FF] px-3 py-3 text-left text-[11px] font-bold text-[#434654] uppercase shadow-sm">Assigned (H/D)</th>
-                        <th className="sticky top-0 z-20 bg-[#EFF4FF] px-3 py-3 text-left text-[11px] font-bold text-[#434654] uppercase shadow-sm">Actual (H/D)</th>
-                        <th className="sticky top-0 z-20 bg-[#EFF4FF] px-3 py-3 text-left text-[11px] font-bold text-[#434654] uppercase shadow-sm">Utilization %</th>
-                        <th className="sticky top-0 z-20 bg-[#EFF4FF] px-3 py-3 text-left text-[11px] font-bold text-[#434654] uppercase shadow-sm">Variance (H/%)</th>
-                        <th className="sticky top-0 z-20 bg-[#EFF4FF] px-3 py-3 text-left text-[11px] font-bold text-[#434654] uppercase shadow-sm">Status</th>
-                        <th className="sticky top-0 z-20 bg-[#EFF4FF] px-3 py-3 text-left text-[11px] font-bold text-[#434654] uppercase shadow-sm">Timesheet Status</th>
+                        <th className="sticky top-0 z-20 bg-[#EFF4FF] px-3 py-3 text-left text-[12px] font-bold text-[#434654] uppercase shadow-sm">Employee</th>
+                        <th className="sticky top-0 z-20 bg-[#EFF4FF] px-3 py-3 text-left text-[12px] font-bold text-[#434654] uppercase shadow-sm">Role</th>
+                        <th className="sticky top-0 z-20 bg-[#EFF4FF] px-3 py-3 text-left text-[12px] font-bold text-[#434654] uppercase shadow-sm">Assigned (H/D)</th>
+                        <th className="sticky top-0 z-20 bg-[#EFF4FF] px-3 py-3 text-left text-[12px] font-bold text-[#434654] uppercase shadow-sm">Actual (H/D)</th>
+                        <th className="sticky top-0 z-20 bg-[#EFF4FF] px-3 py-3 text-left text-[12px] font-bold text-[#434654] uppercase shadow-sm">Utilization %</th>
+                        <th className="sticky top-0 z-20 bg-[#EFF4FF] px-3 py-3 text-left text-[12px] font-bold text-[#434654] uppercase shadow-sm">Variance (H/%)</th>
+                        <th className="sticky top-0 z-20 bg-[#EFF4FF] px-3 py-3 text-left text-[12px] font-bold text-[#434654] uppercase shadow-sm">Status</th>
+                        <th className="sticky top-0 z-20 bg-[#EFF4FF] px-3 py-3 text-left text-[12px] font-bold text-[#434654] uppercase shadow-sm">Timesheet Status</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1440,7 +1446,7 @@ const ReconPage = () => {
               {activeTab === "project" && (
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-9">
                   <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-wrap gap-3">
-                    <span className="font-bold text-gray-900 text-[15px]">Project Breakdown</span>
+                    <span className="font-semibold text-[191B23] text-[20px]">Project Breakdown</span>
                     <div className="flex items-center gap-3 flex-wrap">
                       <div className="relative">
                         <SearchIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -1467,20 +1473,20 @@ const ReconPage = () => {
                     <table className="w-full border-collapse text-sm">
                       <thead className="sticky top-0 z-20 bg-[#EFF4FF]">
                         <tr className="border-b border-gray-200 bg-[#EFF4FF]" style={{ backgroundColor: '#EFF4FF' }}>
-                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap shadow-sm">Project Code</th>
-                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap shadow-sm">Project Name</th>
-                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-right text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap shadow-sm">
+                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-left text-[12px] font-semibold text-[#434654] uppercase whitespace-nowrap shadow-sm">Project Code</th>
+                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-left text-[12px] font-bold text-[#434654] uppercase whitespace-nowrap shadow-sm">Project Name</th>
+                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-right text-[12px] font-bold text-[#434654] uppercase whitespace-nowrap shadow-sm">
                             Est. Hours <span className="font-normal normal-case text-gray-400">(Days)</span>
                           </th>
-                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-right text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap shadow-sm">
+                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-right text-[12px] font-bold text-[#434654] uppercase whitespace-nowrap shadow-sm">
                             Actual Hours <span className="font-normal normal-case text-gray-400">(Days)</span>
                           </th>
-                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap shadow-sm">Utilized %</th>
-                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-right text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap shadow-sm">
+                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-left text-[12px] font-bold text-[#434654] uppercase whitespace-nowrap shadow-sm">Utilized %</th>
+                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-right text-[12px] font-bold text-[#434654] uppercase whitespace-nowrap shadow-sm">
                             Variance <span className="font-normal normal-case text-gray-400">(Hrs / %)</span>
                           </th>
-                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap shadow-sm">Status</th>
-                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-center text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap shadow-sm">Actions</th>
+                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-left text-[12px] font-bold text-[#434654] uppercase whitespace-nowrap shadow-sm">Status</th>
+                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-center text-[12px] font-bold text-[#434654] uppercase whitespace-nowrap shadow-sm">Actions</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1610,7 +1616,7 @@ const ReconPage = () => {
               {activeTab === "employee" && (
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-9">
                   <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-wrap gap-3">
-                    <span className="font-bold text-gray-900 text-[15px]">Employee Level Analysis</span>
+                    <span className="font-semibold text-[#191B23] text-[20px]">Employee Level Analysis</span>
                     <div className="flex items-center gap-3 flex-wrap">
                       <div className="relative">
                         <SearchIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -1637,14 +1643,14 @@ const ReconPage = () => {
                     <table className="w-full border-collapse text-sm">
                       <thead className="sticky top-0 z-20 bg-[#EFF4FF]">
                         <tr className="border-b border-gray-200 bg-[#EFF4FF]" style={{ backgroundColor: '#EFF4FF' }}>
-                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap shadow-sm">Employee</th>
-                          {/* <th className="px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">Reporting Manager</th> */}
-                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap shadow-sm">Project Code</th>
-                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-right text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap shadow-sm">Assigned (H)</th>
-                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-right text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap shadow-sm">Actual (H)</th>
-                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap shadow-sm">Utilization %</th>
-                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-right text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap shadow-sm">Variance %</th>
-                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap shadow-sm">Status</th>
+                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-left text-[12px] font-bold text-[#434654] uppercase whitespace-nowrap shadow-sm">Employee</th>
+                          {/* <th className="px-4 py-3 text-left text-[12px] font-bold text-[#434654] uppercase whitespace-nowrap">Reporting Manager</th> */}
+                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-left text-[12px] font-bold text-[#434654] uppercase whitespace-nowrap shadow-sm">Project Code</th>
+                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-right text-[12px] font-bold text-[#434654] uppercase whitespace-nowrap shadow-sm">Assigned (H)</th>
+                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-right text-[12px] font-bold text-[#434654] uppercase whitespace-nowrap shadow-sm">Actual (H)</th>
+                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-left text-[12px] font-bold text-[#434654] uppercase whitespace-nowrap shadow-sm">Utilization %</th>
+                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-right text-[12px] font-bold text-[#434654] uppercase whitespace-nowrap shadow-sm">Variance %</th>
+                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-left text-[12px] font-bold text-[#434654] uppercase whitespace-nowrap shadow-sm">Status</th>
                         </tr>
                       </thead>
                       <tbody>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback,  useMemo  } from "react";
 import axios from "axios";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchHrmsEmployees, selectAllEmployees, selectEmployeesLoading } from "../store/slices/employeeSlice";
@@ -333,6 +333,9 @@ const UtilizationDashboard = () => {
   // pagination
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
+  // Add these with your other useState declarations
+const [empCurrentPage, setEmpCurrentPage] = useState(1);
+const [empRowsPerPage, setEmpRowsPerPage] = useState(5);
 
   // Add these state variables with the other useState declarations
 const [withinProjectPage, setWithinProjectPage] = useState(1);
@@ -362,6 +365,29 @@ useEffect(() => {
     setIsEmployeeLoading(false);
   }
 }, [dispatch, hrmsEmployees.length, employeesLoading]);
+
+// Add these functions inside your component (before the return statement)
+
+// Get total pages for employee table
+const getEmpTotalPages = () => {
+  return Math.max(1, Math.ceil(empRows.length / empRowsPerPage));
+};
+
+// Get page numbers for employee table
+const getEmpPageNumbers = () => {
+  const totalPages = getEmpTotalPages();
+  const maxVisible = 3;
+  let startPage = Math.max(1, empCurrentPage - 1);
+  let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+  if (endPage - startPage + 1 < maxVisible) {
+    startPage = Math.max(1, endPage - maxVisible + 1);
+  }
+  const pages = [];
+  for (let i = startPage; i <= endPage; i++) pages.push(i);
+  return pages;
+};
+
+
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -491,27 +517,43 @@ useEffect(() => {
     ? Math.round((totalCompleted / totalAssigned) * 100) : 0;
 
  
-// employee utilization - show ALL service delivery employees
-const empRows = (showAllEmployees ? deliveryEmployees : deliveryEmployees.slice(0, 7)).map(emp => {
-  // Get all assignments for this employee from tableData
-  const empAssignments = tableData.filter(row => row.user_name === emp.Employee_Name);
+// employee utilization - show ALL service delivery employees with pagination
+const empRows = useMemo(() => {
+  // Always use all employees, pagination will handle the display
+  const employees = deliveryEmployees;
   
-  // Calculate totals from assignments
-  const totalUnits = empAssignments.reduce((sum, row) => sum + Number(row.units_assigned || 0), 0);
-  const utilizedUnits = empAssignments.reduce((sum, row) => sum + Number(row.units_completed || 0), 0);
-  
-  // Calculate percentage from actual data
-  const actualPct = totalUnits > 0 ? Math.round((utilizedUnits / totalUnits) * 100) : 0;
-  
-  return {
-    name: emp.Employee_Name.replace(/^(Mr\.|Ms\.|Mrs\.)\s*/i, ""),
-    fullName: emp.Employee_Name,
-    role: emp.role || "—",
-    pct: actualPct,
-    totalUnits: totalUnits,
-    utilizedUnits: utilizedUnits,
-  };
-});
+  return employees.map(emp => {
+    // Get all assignments for this employee from tableData
+    const empAssignments = tableData.filter(row => row.user_name === emp.Employee_Name);
+    
+    // Calculate totals from assignments
+    const totalUnits = empAssignments.reduce((sum, row) => sum + Number(row.units_assigned || 0), 0);
+    const utilizedUnits = empAssignments.reduce((sum, row) => sum + Number(row.units_completed || 0), 0);
+    
+    // Calculate percentage from actual data
+    const actualPct = totalUnits > 0 ? Math.round((utilizedUnits / totalUnits) * 100) : 0;
+    
+    return {
+      name: emp.Employee_Name.replace(/^(Mr\.|Ms\.|Mrs\.)\s*/i, ""),
+      fullName: emp.Employee_Name,
+      role: emp.role || "—",
+      pct: actualPct,
+      totalUnits: totalUnits,
+      utilizedUnits: utilizedUnits,
+    };
+  });
+}, [deliveryEmployees, tableData]);
+
+// Paginated employee data
+const paginatedEmpRows = useMemo(() => {
+  const start = (empCurrentPage - 1) * empRowsPerPage;
+  return empRows.slice(start, start + empRowsPerPage);
+}, [empRows, empCurrentPage, empRowsPerPage]);
+
+// Add this useEffect
+useEffect(() => {
+  setEmpCurrentPage(1);
+}, [empRows]);
 
   // unique employee names for filter dropdown
   const employeeOptions = [...new Set(tableData.map(r => r.user_name).filter(Boolean))].sort();
@@ -638,7 +680,7 @@ const empRows = (showAllEmployees ? deliveryEmployees : deliveryEmployees.slice(
             <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-5">
               <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
                 <div>
-                  <div className="text-[15px] font-extrabold text-gray-800">Employee Utilization — within Project</div>
+                  <div className="font-semibold text-[#191B23] text-[20px]">Employee Utilization — within Project</div>
                   <div className="text-[12px] text-gray-400 mt-0.5">
                     {unitEmpName} · {unitProjectSummary?.project_name || ""}
                   </div>
@@ -770,7 +812,7 @@ const empName = empObj?.Employee_Name || unitEmployee;
                 "Pending Units", "Pending Person Days",
                 "Unit Utilization (%)", "Person Days Utilization (%)", "Hours Utilization (%)"
               ].map(h => (
-                <th key={h} className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-2.5 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
+                <th key={h} className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-2.5 text-left text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">{h}</th>
               ))}
             </tr>
           </thead>
@@ -916,7 +958,7 @@ const empName = empObj?.Employee_Name || unitEmployee;
           {unitEmployee && (
             unitLoading ? (
               <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-5">
-                <div className="text-[13px] font-bold text-gray-700 mb-4">Overall Employee Utilization</div>
+                <div className="font-semibold text-[#191B23] text-[20px] mb-4">Overall Employee Utilization</div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
                   {Array.from({ length: 6 }).map((_, i) => (
                     <div key={i} className="rounded-xl p-4 h-20 animate-pulse bg-gray-100" />
@@ -927,7 +969,7 @@ const empName = empObj?.Employee_Name || unitEmployee;
               <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-5">
                 <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
                   <div>
-                    <div className="text-[15px] font-extrabold text-gray-800">Overall Employee Utilization</div>
+                    <div className="font-semibold text-[#191B23] text-[20px] ">Overall Employee Utilization</div>
                     <div className="text-[12px] text-gray-400 mt-0.5">
                       {unitEmpName} · Across all projects
                     </div>
@@ -1031,7 +1073,7 @@ const empName = empObj?.Employee_Name || unitEmployee;
                                 "Pending Units", "Pending Person Days",
                                 "Unit Utilization (%)", "Person Days Utilization (%)", "Hours Utilization (%)"
                               ].map(h => (
-                                <th key={h} className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-2.5 text-left text-[10px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">{h}</th>
+                                <th key={h} className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-2.5 text-left text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">{h}</th>
                               ))}
                             </tr>
                           </thead>
@@ -1153,57 +1195,106 @@ const empName = empObj?.Employee_Name || unitEmployee;
         {/* ── Middle row: Employee Utilization + Work Distribution ── */}
         <div className="flex gap-4 mb-5 flex-wrap">
 
-          {/* Employee Utilization */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex-1 min-w-[340px]">
-            <div className="flex items-center justify-between px-5 pt-4 pb-2">
-              <div>
-                <div className="text-[13px] font-bold text-gray-700">Employee Utilization</div>
-                <div className="text-[11px] text-gray-400">Capacity and current load across teams</div>
-              </div>
-              {/* <button className="text-gray-400 hover:text-gray-600">
-                <Icon icon="material-symbols:more-horiz" width="22" height="22" color="#856BFF" />
-              </button> */}
-            </div>
+         {/* Employee Utilization */}
+<div className="bg-white rounded-xl shadow-sm border border-gray-100 flex-1 min-w-[340px]">
+  {/* ✅ FIXED: Table Header Text */}
+  <div className="flex items-center justify-between px-5 pt-4 pb-2">
+    <div>
+      <div className="font-semibold text-[#191B23] text-[20px]">
+        Employee Utilization
+      </div>
+      <div className="text-[11px] text-gray-400">Capacity and current load across teams</div>
+    </div>
+  </div>
 
-            <table className="w-full text-sm">
-              <thead className="sticky top-0 z-10 bg-[#EFF4FF]">
-                <tr className="border-b border-gray-50" style={{ backgroundColor: '#EFF4FF' }}>
-                  {["EMPLOYEE", "ROLE", "UTILIZATION", "STATUS"].map(h => (
-                    <th key={h} className="sticky top-0 z-10 bg-[#EFF4FF] px-5 py-2 text-left text-[10px] font-bold text-[#434654] uppercase tracking-wider">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {empRows.length === 0 ? (
-                  <tr><td colSpan={4} className="px-5 py-6 text-center text-gray-300 text-sm">No data</td></tr>
-                ) : empRows.map((r, i) => (
-                  <tr key={i} className="border-b border-gray-50 last:border-0">
-                    <td className="px-5 py-3 font-semibold text-gray-700 text-[13px]">{r.name}</td>
-                    <td className="px-5 py-3"><RolePill role={r.role} /></td>
-                    <td className="px-5 py-3 min-w-[140px]">
-                      <UtilBar
-                        pct={r.pct}
-                        totalUnits={r.totalUnits}
-                        utilizedUnits={r.utilizedUnits}
-                      />
-                    </td>
-                    <td className="px-5 py-3"><StatusDot pct={r.pct} /></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+  <div className="overflow-x-auto">
+    <table className="w-full text-sm">
+      <thead className="sticky top-0 z-10 bg-[#EFF4FF]">
+        <tr className="border-b border-gray-50" style={{ backgroundColor: '#EFF4FF' }}>
+          {["EMPLOYEE", "ROLE", "UTILIZATION", "STATUS"].map(h => (
+            <th key={h} className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-left text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">
+              {h}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {paginatedEmpRows.length === 0 ? (
+          <tr>
+            <td colSpan={4} className="px-4 py-8 text-center text-gray-300 text-[12px]">No data available</td>
+          </tr>
+        ) : paginatedEmpRows.map((r, i) => (
+          <tr key={i} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors last:border-0">
+            <td className="px-4 py-3 font-semibold text-[12px] text-gray-700">{r.name}</td>
+            <td className="px-4 py-3">
+              <RolePill role={r.role} />
+            </td>
+            <td className="px-4 py-3 min-w-[140px]">
+              <UtilBar
+                pct={r.pct}
+                totalUnits={r.totalUnits}
+                utilizedUnits={r.utilizedUnits}
+              />
+            </td>
+            <td className="px-4 py-3">
+              <StatusDot pct={r.pct} />
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
 
-            <div className="px-5 py-3 text-right">
-              <button
-                onClick={() => setShowAllEmployees(prev => !prev)}
-                className="text-[12px] font-semibold text-[#856BFF] hover:text-purple-800 transition-colors"
-              >
-                {showAllEmployees
-  ? "Show less"
-  : `View all ${deliveryEmployees.length} employees`}
-              </button>
-            </div>
-          </div>
+  {/* ✅ FIXED: Pagination with EFF4FF background */}
+  {empRows.length > 0 && (
+    <div className="flex items-center justify-between px-5 py-3 border-t border-gray-50" style={{ backgroundColor: '#EFF4FF' }}>
+      <span className="text-[12px] text-[#434654] font-normal">
+        Showing {empRows.length === 0 ? 0 : (empCurrentPage - 1) * empRowsPerPage + 1} to {Math.min(empCurrentPage * empRowsPerPage, empRows.length)} of {empRows.length} entries
+      </span>
+      <div className="flex items-center gap-1">
+        <button
+          onClick={() => setEmpCurrentPage(p => Math.max(1, p - 1))}
+          disabled={empCurrentPage === 1}
+          className="w-7 h-7 flex items-center justify-center rounded border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed text-xs"
+        >
+          ‹
+        </button>
+        {getEmpPageNumbers().map(n => (
+          <button
+            key={n}
+            onClick={() => setEmpCurrentPage(n)}
+            className={`w-7 h-7 flex items-center justify-center rounded text-[12px] font-semibold border transition-colors
+              ${empCurrentPage === n
+                ? "bg-[#856BFF] text-white border-[#856BFF]"
+                : "border-gray-200 text-gray-500 hover:bg-gray-50"}`}
+          >
+            {n}
+          </button>
+        ))}
+        {getEmpTotalPages() > 3 && <span className="text-gray-400 text-xs px-1">…</span>}
+        <button
+          onClick={() => setEmpCurrentPage(p => Math.min(getEmpTotalPages(), p + 1))}
+          disabled={empCurrentPage === getEmpTotalPages() || getEmpTotalPages() === 0}
+          className="w-7 h-7 flex items-center justify-center rounded border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed text-xs"
+        >
+          ›
+        </button>
+      </div>
+    </div>
+  )}
+
+  {/* View All Button */}
+  <div className="px-5 py-3 text-right border-t border-gray-50">
+    <button
+      onClick={() => setShowAllEmployees(prev => !prev)}
+      className="text-[12px] font-semibold text-[#856BFF] hover:text-purple-800 transition-colors"
+    >
+      {showAllEmployees
+        ? "Show less"
+        : `View all ${deliveryEmployees.length} employees`}
+    </button>
+  </div>
+</div>
 
          {/* Work Distribution Donut */}
 <div className="bg-white rounded-xl shadow-sm border border-gray-100 w-64 px-5 py-4 shrink-0">
@@ -1265,7 +1356,7 @@ const empName = empObj?.Employee_Name || unitEmployee;
         {/* ── Assignment Overview ── */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-5">
           <div className="flex items-center justify-between px-5 py-4 border-b border-gray-50">
-            <h3 className="text-[14px] font-bold text-gray-800">Assignment Overview</h3>
+            <h3 className="font-semibold text-[191B23] text-[20px]">Assignment Overview</h3>
             <div className="flex items-center gap-2 flex-wrap">
               {/* search */}
               <div className="min-w-[180px]">
@@ -1325,7 +1416,7 @@ const empName = empObj?.Employee_Name || unitEmployee;
               <thead className="sticky top-0 z-10 bg-[#EFF4FF]">
                 <tr className="border-b border-gray-50" style={{ backgroundColor: '#EFF4FF' }}>
                   {["USER", "PROJECT", "ROLE", "TASK", "ASSIGNED", "COMPLETED", "PENDING", "ASSIGNED HRS", "ACTUAL HRS", "PROGRESS"].map(h => (
-                    <th key={h} className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-left text-[10px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">{h}</th>
+                    <th key={h} className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-left text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -1365,7 +1456,7 @@ const empName = empObj?.Employee_Name || unitEmployee;
 
           {/* Pagination */}
           <div className="flex items-center justify-between px-5 py-3 border-t border-gray-50" style={{ backgroundColor: '#EFF4FF' }}>
-            <span className="text-[11px] text-[#434654]">
+            <span className="text-[12px] text-[#434654] font-normal">
               Showing {filtered.length === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1} to {Math.min(currentPage * rowsPerPage, filtered.length)} of {filtered.length} entries
             </span>
             <div className="flex items-center gap-1">

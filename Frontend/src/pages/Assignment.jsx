@@ -1459,37 +1459,37 @@ const AssignmentScreen = () => {
                         <thead className="sticky top-0 z-10 bg-[#EFF4FF]">
                           <tr className="border-b border-slate-100" style={{ backgroundColor: '#EFF4FF' }}>
 
-                            <th className="sticky top-0 z-10 bg-[#EFF4FF] py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase">
+                            <th className="sticky top-0 z-10 bg-[#EFF4FF] py-3 px-4 text-[12px] font-bold text-[#434654] tracking-wider uppercase">
                               Task Name
                             </th>
-                            <th className="sticky top-0 z-10 bg-[#EFF4FF] py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-28">
+                            <th className="sticky top-0 z-10 bg-[#EFF4FF] py-3 px-4 text-[12px] font-bold text-[#434654] tracking-wider uppercase text-center w-28">
                               Planned Units
                             </th>
-                            <th className="sticky top-0 z-10 bg-[#EFF4FF] py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-24">
+                            <th className="sticky top-0 z-10 bg-[#EFF4FF] py-3 px-4 text-[12px] font-bold text-[#434654] tracking-wider uppercase text-center w-24">
                               Est. Days
                             </th>
-                            <th className="sticky top-0 z-10 bg-[#EFF4FF] py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-24">
+                            <th className="sticky top-0 z-10 bg-[#EFF4FF] py-3 px-4 text-[12px] font-bold text-[#434654] tracking-wider uppercase text-center w-24">
                               Est. Hours
                             </th>
-                            <th className="sticky top-0 z-10 bg-[#EFF4FF] py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase w-32">
+                            <th className="sticky top-0 z-10 bg-[#EFF4FF] py-3 px-4 text-[12px] font-bold text-[#434654] tracking-wider uppercase w-32">
                               Unit Type
                             </th>
-                            <th className="sticky top-0 z-10 bg-[#EFF4FF] py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-20">
+                            <th className="sticky top-0 z-10 bg-[#EFF4FF] py-3 px-4 text-[12px] font-bold text-[#434654] tracking-wider uppercase text-center w-20">
                               Assigned
                             </th>
-                            <th className="sticky top-0 z-10 bg-[#EFF4FF] py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-20">
+                            <th className="sticky top-0 z-10 bg-[#EFF4FF] py-3 px-4 text-[12px] font-bold text-[#434654] tracking-wider uppercase text-center w-20">
                               Bal Units
                             </th>
-                            <th className="sticky top-0 z-10 bg-[#EFF4FF] py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-20">
+                            <th className="sticky top-0 z-10 bg-[#EFF4FF] py-3 px-4 text-[12px] font-bold text-[#434654] tracking-wider uppercase text-center w-20">
                               Bal Hours
                             </th>
-                            <th className="sticky top-0 z-10 bg-[#EFF4FF] py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-20">
+                            <th className="sticky top-0 z-10 bg-[#EFF4FF] py-3 px-4 text-[12px] font-bold text-[#434654] tracking-wider uppercase text-center w-20">
                               Completed
                             </th>
-                            <th className="sticky top-0 z-10 bg-[#EFF4FF] py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-36">
+                            <th className="sticky top-0 z-10 bg-[#EFF4FF] py-3 px-4 text-[12px] font-bold text-[#434654] tracking-wider uppercase text-center w-36">
                               Status
                             </th>
-                            <th className="sticky top-0 z-10 bg-[#EFF4FF] py-3 px-4 text-[10px] font-bold text-slate-500 tracking-wider uppercase text-center w-28">
+                            <th className="sticky top-0 z-10 bg-[#EFF4FF] py-3 px-4 text-[12px] font-bold text-[#434654] tracking-wider uppercase text-center w-28">
                               Action
                             </th>
                           </tr>

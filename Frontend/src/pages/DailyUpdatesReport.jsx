@@ -333,7 +333,7 @@ useEffect(() => {
   // ── Show authentication error state ──
   if (authError) {
     return (
-      <div className="min-h-screen bg-[#f0f0f8] p-6 font-sans flex items-center justify-center">
+      <div className="mx-auto  bg-[#FAF8FF] p-6 font-sans flex items-center justify-center">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 max-w-md w-full text-center">
           <div className="text-5xl mb-4">🔒</div>
           <h2 className="text-xl font-bold text-gray-800 mb-2">Session Expired</h2>
@@ -439,7 +439,7 @@ useEffect(() => {
                 {COLS.map(col => (
                   <th
                     key={col}
-                    className="sticky top-0 z-10 bg-[#EFF4FF] text-left px-4 py-3 text-[11px] font-bold text-slate-500 tracking-wide uppercase whitespace-nowrap"
+                    className="sticky top-0 z-10 bg-[#EFF4FF] text-left px-4 py-3 text-[12px] font-bold text-[#434654] tracking-wide uppercase whitespace-nowrap"
                   >
                     {col}
                   </th>
@@ -569,48 +569,79 @@ useEffect(() => {
           </table>
         </div>
 
-        {/* ── Pagination footer ── */}
-        {!loadingRows && !error && rows.length > 0 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-white">
-            <p className="text-xs text-gray-400">
-              Showing {startEntry} to {endEntry} of {rows.length} entries
-            </p>
+       {/* ── Pagination footer ── */}
+{!loadingRows && !error && rows.length >= 0 && (
+  <div className="flex items-center justify-between px-5 py-3 border-t border-gray-50" style={{ backgroundColor: '#EFF4FF' }}>
+    <span className="text-[12px] text-[#434654] font-normal">
+      Showing {startEntry} to {endEntry} of {rows.length} entries
+    </span>
 
-            <div className="flex items-center gap-1">
-              {/* Prev */}
-              <button
-                onClick={() => setPage(p => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="w-8 h-8 flex items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 disabled:opacity-30 transition-colors"
-              >
-                <ChevLeft />
-              </button>
+    <div className="flex items-center gap-1">
+      {/* Prev */}
+      <button
+        onClick={() => setPage(p => Math.max(1, p - 1))}
+        disabled={page === 1}
+        className="w-7 h-7 flex items-center justify-center rounded border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed text-xs"
+      >
+        ‹
+      </button>
 
-              {/* Page numbers */}
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(n => (
-                <button
-                  key={n}
-                  onClick={() => setPage(n)}
-                  className={`w-8 h-8 flex items-center justify-center rounded-md text-sm font-medium transition-colors ${n === page
-                    ? 'bg-[#856BFF] text-white shadow-sm'
-                    : 'text-gray-500 hover:bg-gray-100'
-                    }`}
-                >
-                  {n}
-                </button>
-              ))}
+      {/* Page numbers */}
+      {Array.from({ length: Math.min(totalPages, 3) }, (_, i) => {
+        // Show first 3 pages, or current page centered
+        let pageNum;
+        if (totalPages <= 3) {
+          pageNum = i + 1;
+        } else if (page <= 2) {
+          pageNum = i + 1;
+        } else if (page >= totalPages - 1) {
+          pageNum = totalPages - 2 + i;
+        } else {
+          pageNum = page - 1 + i;
+        }
+        return pageNum;
+      }).map(n => (
+        <button
+          key={n}
+          onClick={() => setPage(n)}
+          className={`w-7 h-7 flex items-center justify-center rounded text-[12px] font-semibold border transition-colors
+            ${n === page
+              ? "bg-[#856BFF] text-white border-[#856BFF]"
+              : "border-gray-200 text-gray-500 hover:bg-gray-50"}`}
+        >
+          {n}
+        </button>
+      ))}
 
-              {/* Next */}
-              <button
-                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
-                className="w-8 h-8 flex items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 disabled:opacity-30 transition-colors"
-              >
-                <ChevRight />
-              </button>
-            </div>
-          </div>
-        )}
+      {/* Ellipsis if more pages */}
+      {totalPages > 3 && page < totalPages - 1 && (
+        <span className="text-gray-400 text-xs px-1">…</span>
+      )}
+
+      {/* Last page if not visible */}
+      {totalPages > 3 && page < totalPages - 1 && (
+        <button
+          onClick={() => setPage(totalPages)}
+          className={`w-7 h-7 flex items-center justify-center rounded text-[12px] font-semibold border transition-colors
+            ${totalPages === page
+              ? "bg-[#856BFF] text-white border-[#856BFF]"
+              : "border-gray-200 text-gray-500 hover:bg-gray-50"}`}
+        >
+          {totalPages}
+        </button>
+      )}
+
+      {/* Next */}
+      <button
+        onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+        disabled={page === totalPages || totalPages === 0}
+        className="w-7 h-7 flex items-center justify-center rounded border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed text-xs"
+      >
+        ›
+      </button>
+    </div>
+  </div>
+)}
       </div>
     </div>
   );

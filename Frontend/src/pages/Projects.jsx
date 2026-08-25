@@ -1137,7 +1137,7 @@ const Projects = () => {
                 <thead className="sticky top-0 z-20 bg-[#EFF4FF]">
                   <tr className="border-b border-gray-200 bg-[#EFF4FF]" style={{ backgroundColor: '#EFF4FF' }}>
                     {COLS.map(c => (
-                      <th key={c.label} className={`sticky top-0 z-20 bg-[#EFF4FF] text-left px-4 py-3 text-[11px] font-bold text-[#434654] tracking-wide uppercase whitespace-nowrap shadow-sm ${c.w}`}>
+                      <th key={c.label} className={`sticky top-0 z-20 bg-[#EFF4FF] text-left px-4 py-3 text-[12px] font-bold text-[#434654]] tracking-wide uppercase whitespace-nowrap shadow-sm ${c.w}`}>
                         {c.label}
                       </th>
                     ))}

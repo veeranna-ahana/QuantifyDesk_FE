@@ -246,7 +246,7 @@ export default function CreateProject() {
 };
 
   return (
-    <div className="min-h-screen bg-[#f0f0f8] p-6 font-sans">
+    <div className="mx-auto  bg-[#FAF8FF] p-6 font-sans">
 
       {/* ── Page header ── */}
       <div className="mb-6">

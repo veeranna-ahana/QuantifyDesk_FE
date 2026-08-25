@@ -312,11 +312,11 @@ console.log('ADM employees:', deliveryEmployees.length);
           <span className="px-2 py-0.5 rounded text-[10px] font-bold text-white uppercase" style={{ backgroundColor: rs.border }}>
             {roleInitials}
           </span>
-          <h2 className="text-xl font-extrabold text-gray-800">
+          <h2 className="text-[24px] font-bold text-[#191B23] m-0">
             {isAdmin ? 'View Assignments' : 'Assign Employee'}
           </h2>
           <span className="text-gray-400">·</span>
-          <span className="text-gray-600 font-semibold">{modal.task_name}</span>
+          <span className="text-[16px] text-[#434654] mt-1">{modal.task_name}</span>
           {modal.unit_type && <span className="text-gray-400 text-xs font-semibold">({modal.unit_type})</span>}
           {isAdmin && (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-100">
@@ -362,7 +362,7 @@ console.log('ADM employees:', deliveryEmployees.length);
       {/* New Assignment Form - Updated button colors */}
       {!isAdmin && (
         <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6 mb-6">
-          <h3 className="text-[11px] font-extrabold text-gray-500 tracking-wider uppercase mb-4">New Assignment</h3>
+          <h3 className="font-semibold text-[#191B23] text-[20px] uppercase mb-4">New Assignment</h3>
           <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
             <div className="md:col-span-2">
               <label className="block text-[10px] font-semibold text-gray-400 mb-1">Employee</label>
@@ -422,7 +422,7 @@ console.log('ADM employees:', deliveryEmployees.length);
             onClick={() => setWorkloadOpen(o => !o)}
             className="w-full flex items-center justify-between px-6 py-4 hover:bg-gray-50/60 transition-colors select-none"
           >
-            <span className="text-xs font-bold text-gray-700 flex items-center gap-1.5">
+            <span className="font-semibold text-[#191B23] text-[20px] flex items-center gap-1.5">
               <Icon icon="material-symbols:work" width="16" height="16" color="#856BFF" />
               Current Workload
             </span>
@@ -445,9 +445,9 @@ console.log('ADM employees:', deliveryEmployees.length);
                         {/* Per-project accordion header */}
                         <button
                           onClick={() => toggleProject(proj.project_id)}
-                          className="w-full flex items-center justify-between px-4 py-2.5 bg-[#EFF4FF] hover:bg-[#e4ecff] transition-colors select-none"
+                          className="w-full flex items-center justify-between px-4 py-2.5  select-none"
                         >
-                          <span className="text-[11px] font-bold text-gray-700 flex items-center gap-1.5">
+                          <span className="text-[16px] font-semibold text-[#434654] flex items-center gap-1.5">
                             <Icon icon="material-symbols:folder" width="14" height="14" color="#856BFF" />
                             {proj.project_name}
                             <span className="ml-1 px-1.5 py-0.5 bg-gray-200 text-gray-500 rounded-full text-[9px] font-bold">
@@ -463,19 +463,19 @@ console.log('ADM employees:', deliveryEmployees.length);
                         {!isProjCollapsed && (
                           <div className="overflow-x-auto">
                             <table className="w-full text-left text-[11px] border-collapse">
-                              <thead className="sticky top-0 z-10 bg-gray-50">
-                                <tr className="bg-gray-50 border-b border-gray-100 text-gray-500 font-bold text-[10px] uppercase">
-                                  <th className="sticky top-0 z-10 bg-gray-50 py-2 px-3 min-w-[110px]">Employee Name</th>
-                                  <th className="sticky top-0 z-10 bg-gray-50 py-2 px-3 min-w-[110px]">Project Name</th>
-                                  <th className="sticky top-0 z-10 bg-gray-50 py-2 px-3 min-w-[110px]">Task Name</th>
-                                  <th className="sticky top-0 z-10 bg-gray-50 py-2 px-3 text-center min-w-[90px]">Total Assigned Units</th>
-                                  <th className="sticky top-0 z-10 bg-gray-50 py-2 px-3 text-center min-w-[110px]">Total Assigned Person Days</th>
-                                  <th className="sticky top-0 z-10 bg-gray-50 py-2 px-3 text-center min-w-[90px]">Completed Units</th>
-                                  <th className="sticky top-0 z-10 bg-gray-50 py-2 px-3 text-center min-w-[110px]">Completed Person Days</th>
-                                  <th className="sticky top-0 z-10 bg-gray-50 py-2 px-3 text-center min-w-[80px]">Pending Units</th>
-                                  <th className="sticky top-0 z-10 bg-gray-50 py-2 px-3 text-center min-w-[100px]">Pending Person Days</th>
-                                </tr>
-                              </thead>
+                              <thead className="sticky top-0 z-10 bg-[#EFF4FF]">
+  <tr className="border-b border-gray-50" style={{ backgroundColor: '#EFF4FF' }}>
+    <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-left text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">Employee Name</th>
+    <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-left text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">Project Name</th>
+    <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-left text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">Task Name</th>
+    <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-center text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">Assigned Units</th>
+    <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-center text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">Assigned Days</th>
+    <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-center text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">Completed Units</th>
+    <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-center text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">Completed Days</th>
+    <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-center text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">Pending Units</th>
+    <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-center text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">Pending Days</th>
+  </tr>
+</thead>
                               <tbody className="divide-y divide-gray-50">
                                 {proj.tasks.map(task => {
                                   const assignedUnits = Number(task.units_assigned || 0);
@@ -490,15 +490,15 @@ console.log('ADM employees:', deliveryEmployees.length);
                                   const empName = empObj?.Employee_Name || selUser;
                                   return (
                                     <tr key={task.task_id} className="hover:bg-gray-50/60 transition-colors">
-                                      <td className="py-2 px-3 font-semibold text-gray-700">{empName}</td>
-                                      <td className="py-2 px-3 text-gray-600 font-medium">{proj.project_name}</td>
-                                      <td className="py-2 px-3 font-semibold text-gray-700">{task.task_name}</td>
-                                      <td className="py-2 px-3 text-center font-bold text-[#856BFF]">{assignedUnits}</td>
-                                      <td className="py-2 px-3 text-center font-semibold text-gray-700">{assignedDays}</td>
-                                      <td className="py-2 px-3 text-center font-bold text-emerald-600">{completedUnits}</td>
-                                      <td className="py-2 px-3 text-center font-semibold text-emerald-500">{completedDays}</td>
-                                      <td className="py-2 px-3 text-center font-bold text-rose-500">{pendingUnits}</td>
-                                      <td className="py-2 px-3 text-center font-semibold text-rose-400">{pendingDays}</td>
+                                      <td className="px-4 py-3 text-[12px] font-semibold text-gray-700">{empName}</td>
+<td className="px-4 py-3 text-[12px] text-gray-500">{proj.project_name}</td>
+<td className="px-4 py-3 text-[12px] font-semibold text-gray-700">{task.task_name}</td>
+<td className="px-4 py-3 text-center text-[12px] font-bold text-[#856BFF]">{assignedUnits}</td>
+<td className="px-4 py-3 text-center text-[12px] font-semibold text-gray-700">{assignedDays}</td>
+<td className="px-4 py-3 text-center text-[12px] font-bold text-emerald-600">{completedUnits}</td>
+<td className="px-4 py-3 text-center text-[12px] font-semibold text-emerald-500">{completedDays}</td>
+<td className="px-4 py-3 text-center text-[12px] font-bold text-rose-500">{pendingUnits}</td>
+<td className="px-4 py-3 text-center text-[12px] font-semibold text-rose-400">{pendingDays}</td>
                                     </tr>
                                   );
                                 })}
@@ -521,25 +521,25 @@ console.log('ADM employees:', deliveryEmployees.length);
       {/* Current Assignments Table - Updated header and colors */}
       <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
         <div className="flex justify-between items-center mb-4">
-          <span className="text-[11px] font-bold text-gray-500 tracking-wider uppercase">Current Assignments ({existing.length})</span>
+          <span className="font-semibold text-[#191B23] text-[20px] tracking-wider uppercase">Current Assignments ({existing.length})</span>
         </div>
         {existing.length > 0 ? (
           <div className="overflow-x-auto border border-gray-100 rounded-xl">
             <table className="w-full text-left text-xs border-collapse">
               <thead className="sticky top-0 z-10 bg-[#EFF4FF]">
-                <tr className="border-b border-gray-100 text-[#434654] font-bold text-[10px] uppercase" style={{ backgroundColor: '#EFF4FF' }}>
-                  <th className="sticky top-0 z-10 bg-[#EFF4FF] py-2.5 px-3 min-w-[130px]">Employee Name</th>
-                  <th className="sticky top-0 z-10 bg-[#EFF4FF] py-2.5 px-3 min-w-[130px]">Project Name</th>
-                  <th className="sticky top-0 z-10 bg-[#EFF4FF] py-2.5 px-3 min-w-[130px]">Task Name</th>
-                  <th className="sticky top-0 z-10 bg-[#EFF4FF] py-2.5 px-3 text-center min-w-[100px]">Total Assigned Units</th>
-                  <th className="sticky top-0 z-10 bg-[#EFF4FF] py-2.5 px-3 text-center min-w-[120px]">Total Assigned Person Days</th>
-                  <th className="sticky top-0 z-10 bg-[#EFF4FF] py-2.5 px-3 text-center min-w-[100px]">Completed Units</th>
-                  <th className="sticky top-0 z-10 bg-[#EFF4FF] py-2.5 px-3 text-center min-w-[120px]">Completed Person Days</th>
-                  <th className="sticky top-0 z-10 bg-[#EFF4FF] py-2.5 px-3 text-center min-w-[90px]">Pending Units</th>
-                  <th className="sticky top-0 z-10 bg-[#EFF4FF] py-2.5 px-3 text-center min-w-[110px]">Pending Person Days</th>
-                  {!isAdmin && <th className="sticky top-0 z-10 bg-[#EFF4FF] py-2.5 px-3 text-center min-w-[120px]">Action</th>}
-                </tr>
-              </thead>
+  <tr className="border-b border-gray-50" style={{ backgroundColor: '#EFF4FF' }}>
+    <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-left text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">Employee Name</th>
+    <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-left text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">Project Name</th>
+    <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-left text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">Task Name</th>
+    <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-center text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">Assigned Units</th>
+    <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-center text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">Assigned Days</th>
+    <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-center text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">Completed Units</th>
+    <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-center text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">Completed Days</th>
+    <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-center text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">Pending Units</th>
+    <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-center text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">Pending Days</th>
+    {!isAdmin && <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-center text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">Action</th>}
+  </tr>
+</thead>
               <tbody className="divide-y divide-gray-100">
                 {existing.map(a => {
                   const completedUnits = Number(a.units_completed || 0);
@@ -566,16 +566,16 @@ console.log('ADM employees:', deliveryEmployees.length);
                   const editAnyExceeded   = editUnitsExceeded || editDaysExceeded;
                   return (
                     <tr key={a.id} className={`transition-colors ${isCompleted ? 'bg-emerald-50/40' : 'hover:bg-gray-50/20'}`}>
-                      <td className="py-3 px-3">
-                        <div className="flex items-center gap-2">
-                          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${isCompleted ? 'bg-emerald-100 text-emerald-600' : 'bg-[#856BFF]/10 text-[#856BFF]'}`}>
-                            {a.user_name?.[0]?.toUpperCase() || "?"}
-                          </div>
-                          <span className="font-bold text-gray-800">{a.user_name}</span>
-                        </div>
-                      </td>
-                      <td className="py-3 px-3 text-gray-600 font-semibold">{projectName || "—"}</td>
-                      <td className="py-3 px-3 text-gray-700 font-semibold">{modal.task_name}</td>
+                      <td className="px-4 py-3">
+  <div className="flex items-center gap-2">
+    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ...`}>
+      {a.user_name?.[0]?.toUpperCase() || "?"}
+    </div>
+    <span className="font-semibold text-[12px] text-gray-700">{a.user_name}</span>
+  </div>
+</td>
+<td className="px-4 py-3 text-[12px] text-gray-500">{projectName || "—"}</td>
+<td className="px-4 py-3 text-[12px] text-gray-700 font-semibold">{modal.task_name}</td>
                       <td className="py-3 px-3 text-center">
                         {isEditing ? (
                           <div className="flex flex-col items-center gap-0.5">
