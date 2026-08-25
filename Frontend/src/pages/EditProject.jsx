@@ -1,6 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { 
+  fetchHrmsEmployees, 
+  selectAllEmployees, 
+  selectEmployeesLoading 
+} from '../store/slices/employeeSlice';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import SearchableSelect from '../component/SearchableSelect';
@@ -108,53 +113,44 @@ export default function EditProject() {
   const [customersLoading, setCustomersLoading] = useState(false);
   const [customersError, setCustomersError] = useState('');
 
-  // ── Employee dropdown state ────────────────────────────────────────────────
-  const serviceDeliveryEmployees = useSelector(state => state.auth?.serviceDeliveryEmployees);
-  const [employees, setEmployees] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem('serviceDeliveryEmployees') || '[]');
-    } catch {
-      return [];
-    }
-  });
-  const [employeesLoading, setEmployeesLoading] = useState(false);
+// ── Employee dropdown state ────────────────────────────────────────────────
+const dispatch = useDispatch();
+const hrmsEmployees = useSelector(selectAllEmployees);
+const employeesLoading = useSelector(selectEmployeesLoading);
 
-  useEffect(() => {
-    if (serviceDeliveryEmployees && serviceDeliveryEmployees.length > 0) {
-      setEmployees(serviceDeliveryEmployees);
-      return;
-    }
-    const fetchEmployees = async () => {
-      setEmployeesLoading(true);
-      try {
-        const res = await axios.post(`${BASE_URL}/hrms/getAllAhanaEmplist`, {}, { headers: getHeaders() });
-        const list = Array.isArray(res.data)
-          ? res.data
-          : Array.isArray(res.data?.data)
-            ? res.data.data
-            : [];
-        if (list.length > 0) {
-          setEmployees(list);
-        }
-      } catch (err) {
-        console.error('Failed to fetch employees:', err);
-      } finally {
-        setEmployeesLoading(false);
-      }
+// Filter only Delivery department employees
+const deliveryEmployees = useMemo(() => {
+  return hrmsEmployees.filter(emp => 
+    emp.Name_of_Department === 'Delivery'
+  );
+}, [hrmsEmployees]);
+
+const [employees, setEmployees] = useState([]);
+
+// Fetch HRMS employees when component mounts
+useEffect(() => {
+  if (hrmsEmployees.length === 0 && !employeesLoading) {
+    dispatch(fetchHrmsEmployees());
+  }
+}, [dispatch, hrmsEmployees.length, employeesLoading]);
+
+// Update employees state when hrmsEmployees changes
+useEffect(() => {
+  if (hrmsEmployees.length > 0) {
+    setEmployees(deliveryEmployees);
+  }
+}, [hrmsEmployees, deliveryEmployees]);
+
+const employeeOptions = useMemo(() => {
+  return employees.map(emp => {
+    const name = emp.Employee_Name || emp.emp_name || emp.name || '';
+    const id = emp.Employee_ID || emp.employee_id || emp.emp_id || emp.id || '';
+    return {
+      value: name,
+      label: id ? `${name} (${id})` : name,
     };
-    fetchEmployees();
-  }, [serviceDeliveryEmployees]);
-
-  const employeeOptions = useMemo(() => {
-    return employees.map(emp => {
-      const name = emp.emp_name || emp.name || '';
-      const id = emp.employee_id || emp.emp_id || emp.id || '';
-      return {
-        value: name,
-        label: id ? `${name} (${id})` : name,
-      };
-    });
-  }, [employees]);
+  });
+}, [employees]);
 
   useEffect(() => {
     const fetchCustomers = async () => {

@@ -1255,38 +1255,43 @@ const Projects = () => {
               </table>
             </div>
 
-            {/* ── Pagination footer ── */}
-            <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-white">
-              <p className="text-xs text-gray-400">
+                       {/* ── Pagination footer ── */}
+            <div className="flex items-center justify-between px-5 py-3 border-t border-gray-50" style={{ backgroundColor: '#EFF4FF' }}>
+              <span className="text-[12px] text-[#434654] font-normal">
                 Showing {startEntry} to {endEntry} of {filteredProjects.length} entries
                 {hasActiveFilters && ` (filtered from ${projects.length} total)`}
-              </p>
+              </span>
+              
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => setPage(p => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="w-8 h-8 flex items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 disabled:opacity-30 transition-colors"
+                  className="w-7 h-7 flex items-center justify-center rounded border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed text-xs"
                 >
-                  <ChevL />
+                  ‹
                 </button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(n => (
+                
+                {Array.from({ length: Math.min(totalPages, 3) }, (_, i) => i + 1).map(n => (
                   <button
                     key={n}
                     onClick={() => setPage(n)}
-                    className={`w-8 h-8 flex items-center justify-center rounded-md text-sm font-medium transition-colors ${n === page
-                      ? 'bg-[#856BFF] text-white shadow-sm'
-                      : 'text-gray-500 hover:bg-gray-100'
-                      }`}
+                    className={`w-7 h-7 flex items-center justify-center rounded text-[12px] font-semibold border transition-colors
+                      ${page === n
+                        ? "bg-[#856BFF] text-white border-[#856BFF]"
+                        : "border-gray-200 text-gray-500 hover:bg-gray-50"}`}
                   >
                     {n}
                   </button>
                 ))}
+                
+                {totalPages > 3 && <span className="text-gray-400 text-xs px-1">…</span>}
+                
                 <button
                   onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                  disabled={page === totalPages}
-                  className="w-8 h-8 flex items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 disabled:opacity-30 transition-colors"
+                  disabled={page === totalPages || totalPages === 0}
+                  className="w-7 h-7 flex items-center justify-center rounded border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed text-xs"
                 >
-                  <ChevR />
+                  ›
                 </button>
               </div>
             </div>
