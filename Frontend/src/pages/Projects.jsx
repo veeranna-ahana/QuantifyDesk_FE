@@ -106,7 +106,7 @@ const CreateProjectModal = ({ onClose, onCreated }) => {
 
   const handleSubmit = async () => {
     if (!form.projectName.trim()) return setError('Project Name is required.');
-    if (!form.customer.trim()) return setError('Customer is required.');
+    // if (!form.customer.trim()) return setError('Customer is required.');
     if (form.startDate && form.endDate && form.endDate < form.startDate) {
       return setError('End Date cannot be earlier than Start Date.');
     }
@@ -116,7 +116,7 @@ const CreateProjectModal = ({ onClose, onCreated }) => {
         `${BASE_URL}/api/projects`,
         {
           name: form.projectName.trim(),
-          clientName: form.customer.trim(),
+          clientName: form.customer ? form.customer.trim() : null,
           description: form.description.trim(),
           nbdId: form.nbdId.trim(),
           o2dId: form.o2dId.trim(),
@@ -146,7 +146,7 @@ const CreateProjectModal = ({ onClose, onCreated }) => {
     { key: 'o2dId', label: 'O2D ID', required: false, placeholder: 'e.g. O2D-2024-042' },
     { key: 'projectCode', label: 'Project Code', required: false, placeholder: 'e.g. PRJ-001' },
     { key: 'subCategory', label: 'Sub Category', required: false, placeholder: 'e.g. Web App / Mobile' },
-    { key: 'customer', label: 'Customer', required: true, placeholder: 'Client or company name' },
+    { key: 'customer', label: 'Customer', required: false, placeholder: 'Client or company name' },
     { key: 'teamLead', label: 'Team Lead', required: false, placeholder: 'Select Team Lead', isSelect: true },
   ];
 
@@ -335,7 +335,7 @@ const EditProjectModal = ({ project, onClose, onUpdated }) => {
 
   const handleSubmit = async () => {
     if (!form.projectName.trim()) return setError('Project Name is required.');
-    if (!form.customer.trim()) return setError('Customer is required.');
+    // if (!form.customer.trim()) return setError('Customer is required.');
     if (form.startDate && form.endDate && form.endDate < form.startDate) {
       return setError('End Date cannot be earlier than Start Date.');
     }
@@ -345,7 +345,7 @@ const EditProjectModal = ({ project, onClose, onUpdated }) => {
         `${BASE_URL}/api/projects/${project.id}`,
         {
           name: form.projectName.trim(),
-          clientName: form.customer.trim(),
+          clientName: form.customer ? form.customer.trim() : null,
           description: form.description.trim(),
           nbdId: form.nbdId.trim(),
           o2dId: form.o2dId.trim(),
@@ -375,7 +375,7 @@ const EditProjectModal = ({ project, onClose, onUpdated }) => {
     { key: 'o2dId', label: 'O2D ID', required: false, placeholder: 'e.g. O2D-2024-042' },
     { key: 'projectCode', label: 'Project Code', required: false, placeholder: 'e.g. PRJ-001' },
     { key: 'subCategory', label: 'Sub Category', required: false, placeholder: 'e.g. Web App / Mobile' },
-    { key: 'customer', label: 'Customer', required: true, placeholder: 'Client or company name' },
+    { key: 'customer', label: 'Customer', required: false, placeholder: 'Client or company name' },
     { key: 'teamLead', label: 'Team Lead', required: false, placeholder: 'Select Team Lead', isSelect: true },
   ];
 
@@ -880,6 +880,9 @@ const Projects = () => {
   const [loading, setLoading] = useState(true);
   const [initialEffortProjectId, setInitialEffortProjectId] = useState('');
   const [page, setPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [typeFilter, setTypeFilter] = useState('');
 
   const isAdmin = getUserRole() === 'ADMIN';
 
@@ -899,11 +902,69 @@ const Projects = () => {
 
   useEffect(() => { fetchProjects(); }, []);
 
+  // ── Filter Options ──────────────────────────────────────────────────────────
+  const statusOptions = useMemo(() => {
+    const set = new Set();
+    projects.forEach(p => {
+      if (p.status) set.add(p.status);
+    });
+    return Array.from(set);
+  }, [projects]);
+
+  const typeOptions = useMemo(() => {
+    const set = new Set();
+    projects.forEach(p => {
+      if (p.project_type) set.add(p.project_type);
+    });
+    return Array.from(set);
+  }, [projects]);
+
+  // ── Filtered Projects ───────────────────────────────────────────────────────
+  const filteredProjects = useMemo(() => {
+    const q = searchTerm.trim().toLowerCase();
+    return projects.filter(p => {
+      // Search text match
+      const matchesSearch = !q || (
+        (p.project_code && p.project_code.toLowerCase().includes(q)) ||
+        (p.nbd_id && p.nbd_id.toLowerCase().includes(q)) ||
+        (p.o2d_id && p.o2d_id.toLowerCase().includes(q)) ||
+        ((p.project_name || p.name) && (p.project_name || p.name).toLowerCase().includes(q)) ||
+        (p.client_name && p.client_name.toLowerCase().includes(q)) ||
+        (p.team_lead && p.team_lead.toLowerCase().includes(q)) ||
+        (p.sub_category && p.sub_category.toLowerCase().includes(q)) ||
+        (p.description && p.description.toLowerCase().includes(q)) ||
+        (p.project_type && p.project_type.toLowerCase().includes(q)) ||
+        (p.status && p.status.toLowerCase().includes(q))
+      );
+
+      // Status match
+      const matchesStatus = !statusFilter || (
+        p.status && p.status.toLowerCase() === statusFilter.toLowerCase()
+      );
+
+      // Type match
+      const matchesType = !typeFilter || (
+        p.project_type && p.project_type.toLowerCase() === typeFilter.toLowerCase()
+      );
+
+      return matchesSearch && matchesStatus && matchesType;
+    });
+  }, [projects, searchTerm, statusFilter, typeFilter]);
+
+  const hasActiveFilters = Boolean(searchTerm.trim() || statusFilter || typeFilter);
+
+  const handleResetFilters = () => {
+    setSearchTerm('');
+    setStatusFilter('');
+    setTypeFilter('');
+    setPage(1);
+  };
+
   // ── Pagination ──────────────────────────────────────────────────────────────
-  const totalPages = Math.max(1, Math.ceil(projects.length / PAGE_SIZE));
-  const pageRows = projects.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-  const startEntry = projects.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
-  const endEntry = Math.min(page * PAGE_SIZE, projects.length);
+  const totalPages = Math.max(1, Math.ceil(filteredProjects.length / PAGE_SIZE));
+  const pageRows = filteredProjects.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const startEntry = filteredProjects.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const endEntry = Math.min(page * PAGE_SIZE, filteredProjects.length);
 
   // ── Status badge ────────────────────────────────────────────────────────────
   const StatusBadge = ({ status }) => {
@@ -953,6 +1014,94 @@ const Projects = () => {
 
       {/* ── Table card ── */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col">
+        {/* ── Table Card Header with Search & Filters ── */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-wrap gap-3">
+          <div className="flex items-center gap-2">
+            <h2 className="font-bold text-gray-900 text-[15px]">All Projects</h2>
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-[#856BFF]/10 text-[#856BFF]">
+              {filteredProjects.length} {filteredProjects.length === 1 ? 'project' : 'projects'}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2.5 flex-wrap">
+            {/* Search Input */}
+            <div className="min-w-[220px] max-w-xs flex-1">
+              <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-1.5 h-[38px] bg-white focus-within:border-[#856BFF] focus-within:ring-2 focus-within:ring-[#856BFF]/20 transition-all">
+                <Icon icon="material-symbols:search" width="18" height="18" color="#856BFF" className="shrink-0" />
+                <input
+                  type="text"
+                  placeholder="Search projects..."
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setPage(1);
+                  }}
+                  className="w-full bg-transparent !border-none outline-none ring-0 shadow-none text-xs text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-0 focus:!border-none"
+                  style={{ border: 'none', outline: 'none', boxShadow: 'none', background: 'transparent' }}
+                />
+                {searchTerm && (
+                  <button
+                    onClick={() => {
+                      setSearchTerm('');
+                      setPage(1);
+                    }}
+                    className="text-gray-400 hover:text-gray-600 transition-colors shrink-0 p-0.5"
+                    title="Clear search"
+                  >
+                    <Icon icon="material-symbols:close" width="16" height="16" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Status Filter */}
+            <div className="min-w-[130px]">
+              <select
+                value={statusFilter}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full h-[38px] px-3 py-1.5 border border-gray-200 rounded-lg text-xs font-medium text-gray-700 bg-white hover:border-gray-300 focus:outline-none focus:border-[#856BFF] focus:ring-2 focus:ring-[#856BFF]/20 cursor-pointer transition-all"
+              >
+                <option value="">All Statuses</option>
+                {statusOptions.map(st => (
+                  <option key={st} value={st}>{st}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Type Filter */}
+            <div className="min-w-[130px]">
+              <select
+                value={typeFilter}
+                onChange={(e) => {
+                  setTypeFilter(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full h-[38px] px-3 py-1.5 border border-gray-200 rounded-lg text-xs font-medium text-gray-700 bg-white hover:border-gray-300 focus:outline-none focus:border-[#856BFF] focus:ring-2 focus:ring-[#856BFF]/20 cursor-pointer transition-all"
+              >
+                <option value="">All Types</option>
+                {typeOptions.map(t => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Reset Filters */}
+            {hasActiveFilters && (
+              <button
+                onClick={handleResetFilters}
+                className="h-[38px] px-3 py-1.5 text-xs font-semibold text-[#856BFF] hover:bg-[#856BFF]/10 rounded-lg transition-colors flex items-center gap-1 shrink-0"
+                title="Reset all filters"
+              >
+                <Icon icon="solar:restart-outline" width="16" height="16" />
+                Reset
+              </button>
+            )}
+          </div>
+        </div>
+
         {loading ? (
           <div className="flex items-center justify-center gap-2 py-20 text-gray-400">
             <svg className="animate-spin w-5 h-5 text-[#9e88ff]" fill="none" viewBox="0 0 24 24">
@@ -967,6 +1116,19 @@ const Projects = () => {
               <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
             </svg>
             <p className="text-gray-400 text-sm">No projects found. Create one to get started.</p>
+          </div>
+        ) : !filteredProjects.length ? (
+          <div className="py-16 text-center">
+            <Icon icon="material-symbols:search-off" width="48" height="48" className="text-gray-300 mx-auto mb-2" />
+            <p className="text-gray-500 font-medium text-sm">No projects match your search criteria</p>
+            <p className="text-gray-400 text-xs mt-1">Try adjusting or clearing your search and filter parameters.</p>
+            <button
+              onClick={handleResetFilters}
+              className="mt-3 px-3.5 py-1.5 text-xs font-semibold text-[#856BFF] bg-[#856BFF]/10 hover:bg-[#856BFF]/20 rounded-lg transition-colors inline-flex items-center gap-1"
+            >
+              <Icon icon="solar:restart-outline" width="14" height="14" />
+              Reset Filters
+            </button>
           </div>
         ) : (
           <>
@@ -1096,7 +1258,8 @@ const Projects = () => {
             {/* ── Pagination footer ── */}
             <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-white">
               <p className="text-xs text-gray-400">
-                Showing {startEntry} to {endEntry} of {projects.length} entries
+                Showing {startEntry} to {endEntry} of {filteredProjects.length} entries
+                {hasActiveFilters && ` (filtered from ${projects.length} total)`}
               </p>
               <div className="flex items-center gap-1">
                 <button

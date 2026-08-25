@@ -22,9 +22,14 @@ const createProject = async (req, res, next) => {
       teamLead,
     } = req.body;
 
-    if (!name || !clientName) {
+    // if (!name || !clientName) {
+    //   return res.status(400).json({
+    //     message: 'Project name and client name are required',
+    //   });
+    // }
+    if (!name) {
       return res.status(400).json({
-        message: 'Project name and client name are required',
+        message: 'Project name is required',
       });
     }
 
@@ -579,80 +584,69 @@ const updateProject = async (req, res, next) => {
 // ─────────────────────────────────────────────────────────────────────────────
 const getCustomers = async (req, res, next) => {
   try {
-    let rows = [];
+    let allCustomers = [];
 
-    // Attempt 1: Query projectCodePool for project_codes_import table
-    try {
-      rows = await projectCodeQuery(
-        `SELECT DISTINCT customer_name 
-         FROM project_codes_import 
-         WHERE customer_name IS NOT NULL AND TRIM(customer_name) != '' 
-         ORDER BY customer_name ASC`
-      );
-    } catch (e1) {
-      // Attempt 2: Query projectCodePool for project_codes table
+    const customerQueries = [
+      () =>
+        projectCodeQuery(`
+          SELECT customer_name
+          FROM project_codes_import
+          WHERE customer_name IS NOT NULL AND TRIM(customer_name) != ''
+        `),
+
+      () =>
+        projectCodeQuery(`
+          SELECT customer_name
+          FROM project_codes
+          WHERE customer_name IS NOT NULL AND TRIM(customer_name) != ''
+        `),
+
+      () =>
+        query(`
+          SELECT customer_name
+          FROM project_codes_db.project_codes_import
+          WHERE customer_name IS NOT NULL AND TRIM(customer_name) != ''
+        `),
+
+      () =>
+        query(`
+          SELECT customer_name
+          FROM project_codes_db.project_codes_internal_import
+          WHERE customer_name IS NOT NULL AND TRIM(customer_name) != ''
+        `),
+
+      () =>
+        query(`
+          SELECT customer_name
+          FROM project_codes_db.project_codes
+          WHERE customer_name IS NOT NULL AND TRIM(customer_name) != ''
+        `),
+    ];
+
+    // Fetch customer names from all 5 tables
+    for (const runQuery of customerQueries) {
       try {
-        rows = await projectCodeQuery(
-          `SELECT DISTINCT customer_name 
-           FROM project_codes 
-           WHERE customer_name IS NOT NULL AND TRIM(customer_name) != '' 
-           ORDER BY customer_name ASC`
-        );
-      } catch (e2) {
-        // Attempt 3: Query quantifyPool for project_codes_db.project_codes_import
-        try {
-          rows = await query(
-            `SELECT DISTINCT customer_name 
-             FROM project_codes_db.project_codes_import 
-             WHERE customer_name IS NOT NULL AND TRIM(customer_name) != '' 
-             ORDER BY customer_name ASC`
-          );
-        } catch (e3) {
-          // Attempt 4: Query quantifyPool for project_codes_db.project_codes
-          try {
-            rows = await query(
-              `SELECT DISTINCT customer_name 
-               FROM project_codes_db.project_codes 
-               WHERE customer_name IS NOT NULL AND TRIM(customer_name) != '' 
-               ORDER BY customer_name ASC`
-            );
-          } catch (e4) {
-            // Attempt 5: Query quantifyPool for project_codes_import
-            try {
-              rows = await query(
-                `SELECT DISTINCT customer_name 
-                 FROM project_codes_import 
-                 WHERE customer_name IS NOT NULL AND TRIM(customer_name) != '' 
-                 ORDER BY customer_name ASC`
-              );
-            } catch (e5) {
-              // Attempt 6: Query quantifyPool projects table client_name as fallback
-              try {
-                rows = await query(
-                  `SELECT DISTINCT client_name AS customer_name 
-                   FROM projects 
-                   WHERE client_name IS NOT NULL AND TRIM(client_name) != '' 
-                   ORDER BY client_name ASC`
-                );
-              } catch (e6) {
-                console.error("All customer fetch queries failed:", e6.message);
-              }
-            }
-          }
-        }
+        const rows = await runQuery();
+        allCustomers.push(...rows);
+      } catch (err) {
+        console.log("Skipping table:", err.message);
       }
     }
 
-    const customerNames = (rows || [])
-      .map(r => r.customer_name || r.client_name)
-      .filter(name => name && name.trim());
-      
-    const uniqueCustomers = [...new Set(customerNames)].sort();
+    // Remove duplicates, nulls, empty values, and sort
+    const uniqueCustomers = [
+      ...new Set(
+        allCustomers
+          .map((row) => row.customer_name?.trim())
+          .filter(Boolean)
+      ),
+    ].sort((a, b) => a.localeCompare(b));
 
-    const formatted = uniqueCustomers.map((name, idx) => ({
-      id: idx + 1,
+    // Format response for frontend dropdown
+    const formatted = uniqueCustomers.map((name, index) => ({
+      id: index + 1,
       customer_name: name,
-      name: name,
+      name,
     }));
 
     return res.status(200).json(formatted);
@@ -660,7 +654,6 @@ const getCustomers = async (req, res, next) => {
     return next(err);
   }
 };
-
 module.exports = {
   createProject,
   getAllProjects,

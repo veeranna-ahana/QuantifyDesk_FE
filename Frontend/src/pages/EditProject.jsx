@@ -190,7 +190,7 @@ export default function EditProject() {
   const validate = () => {
     const e = {};
     if (!form.projectName.trim()) e.projectName = 'Project Name is required.';
-    if (!form.customer.trim()) e.customer = 'Customer is required.';
+    // if (!form.customer.trim()) e.customer = 'Customer is required.';
     if (form.startDate && form.endDate && form.endDate < form.startDate) {
       e.endDate = 'End Date cannot be earlier than Start Date.';
     }
@@ -207,7 +207,7 @@ export default function EditProject() {
         `${BASE_URL}/api/projects/${project.id}`,
         {
           name: form.projectName.trim(),
-          clientName: form.customer.trim(),
+          clientName: form.customer ? form.customer.trim() : null,
           description: form.description.trim(),
           nbdId: form.nbdId.trim(),
           o2dId: form.o2dId.trim(),
@@ -330,19 +330,19 @@ export default function EditProject() {
                   />
                 </div>
                 <div>
-                  <Label required>Customer</Label>
-                  <input
+                  <Label>Customer</Label>
+                  {/* <input
                     type="text"
                     value={form.customer}
                     onChange={e => set('customer', e.target.value)}
                     placeholder="e.g. Acme Corp"
                     className={`${inputClsLight} ${errors.customer ? 'border-red-400 ring-2 ring-red-200' : ''}`}
-                  />
+                  /> */}
                   {errors.customer && (
                     <p className="text-red-500 text-xs mt-1">{errors.customer}</p>
                   )}
-                </div>
-                {/* 
+                
+                
                 <SearchableSelect
                   value={form.customer}
                   onChange={val => set('customer', val)}
@@ -359,7 +359,7 @@ export default function EditProject() {
                     }),
                   ]}
                 />
-                */}
+               </div>
                 <div>
                   <Label>Team Lead</Label>
                   <SearchableSelect
