@@ -189,7 +189,7 @@ const ReconciliationUpload = ({ onUploadSuccess }) => {
         key: 'project_code',
         width: 190,
         render: (text) => (
-            <span className="inline-block font-mono text-xs font-semibold text-[#856BFF] bg-[#EDEDF8] border border-[#856BFF]/20 px-2.5 py-1 rounded-md">
+            <span className="inline-block font-mono text-[14px] font-medium  text-[#856BFF] bg-[#EDEDF8] border border-[#856BFF]/20 px-2.5 py-1 rounded-md">
                 {text || 'N/A'}
             </span>
         ),
@@ -275,7 +275,7 @@ const expandedRowRender = (record) => {
     }
     return (
         <div className="bg-[#F5F5FA] rounded-lg p-4">
-            <div className="text-xs font-bold text-[#434654]uppercase tracking-wide mb-3 flex items-center gap-1.5">
+            <div className="text-[12px] font-semibold text-[#434654] uppercase tracking-wide mb-3 flex items-center gap-1.5">
                 <TeamOutlined /> Employee Breakdown
             </div>
             <div className="bg-white rounded-lg border border-gray-100 overflow-hidden">
@@ -312,12 +312,12 @@ const expandedRowRender = (record) => {
     const selectedBatch = allBatches.find(b => b.id === selectedBatchId);
 
     return (
-        <div className=" mx-auto p-6 font-sans">
+        <div className=" mx-auto  bg-[#FAF8FF] p-6 font-sans">
 
           {/* ── Page Header ── */}
 <div className="mb-6">
-    <h1 className="text-2xl font-bold text-gray-900 m-0">Timesheet Upload</h1>
-    <p className="text-sm text-[#434654]mt-1">
+    <h1 className="text-[24px] font-bold text-[#191B23] m-0">Timesheet Upload</h1>
+    <p className="text-[16px] text-[#434654] mt-1">
         Upload and review timesheet data against active projects in the system
     </p>
 </div>
@@ -496,7 +496,7 @@ const expandedRowRender = (record) => {
             ) : hasData ? (
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
     <div className="flex items-center justify-between px-6 py-4">
-        <span className="font-bold text-gray-900 text-base">Project Validation Status</span>
+        <span className="font-semibold text-[#191B23]text-base">Project Validation Status</span>
         <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-50 text-green-600 text-xs font-semibold">
                 <CheckCircleOutlined /> {foundProjects} Found
@@ -540,14 +540,20 @@ const expandedRowRender = (record) => {
 
             {/* Table look & feel overrides */}
            <style>{`
-    .ant-table-thead > tr > th {
+
+           .ant-upload-drag {
+    background: white !important;
+}
+   .ant-table-thead > tr > th {
         background: #EFF4FF !important;
         color: #434654 !important;
-        font-size: 11px !important;
-        font-weight: 700 !important;
+        font-weight: 600 !important;
+        font-size: 14px !important;
+        line-height: 16px !important;
+        vertical-align: middle !important;
         text-transform: uppercase !important;
-        letter-spacing: 0.03em !important;
         border-bottom: none !important;
+        padding: 12px 16px !important;
     }
     .ant-table-tbody > tr > td {
         border-bottom: 1px solid #f3f4f6 !important;

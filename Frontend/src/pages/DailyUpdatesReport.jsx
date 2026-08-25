@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchHrmsEmployees, selectAllEmployees, selectEmployeesLoading } from '../store/slices/employeeSlice';
 import Cookies from 'js-cookie';
 import { useNavigate } from 'react-router-dom';
 import SearchableSelect from '../component/SearchableSelect';
@@ -67,7 +68,10 @@ const SelectWrapper = ({ label, children }) => (
 export default function DailyUpdatesReport() {
   const navigate = useNavigate();
   const reduxUser = useSelector(state => state.auth?.user);
-  const serviceDeliveryEmployees = useSelector(state => state.auth.serviceDeliveryEmployees);
+   const dispatch = useDispatch();
+  // const serviceDeliveryEmployees = useSelector(state => state.auth.serviceDeliveryEmployees);
+   const hrmsEmployees = useSelector(selectAllEmployees);
+  const employeesLoading = useSelector(selectEmployeesLoading);
 
   // ── Get user from Redux or cookie ──────────────────────────────────────────
   const user = useMemo(() => {
@@ -116,6 +120,13 @@ export default function DailyUpdatesReport() {
       setAuthError(false);
     }
   }, [isAuthenticated]);
+
+  // Fetch HRMS employees when component mounts
+useEffect(() => {
+  if (isAuthenticated && hrmsEmployees.length === 0 && !employeesLoading) {
+    dispatch(fetchHrmsEmployees());
+  }
+}, [dispatch, hrmsEmployees.length, employeesLoading, isAuthenticated]);
 
   // ── Load filter meta (dates + projects) based on role ─────────────────────
   useEffect(() => {
@@ -257,14 +268,27 @@ export default function DailyUpdatesReport() {
   }, [selectedDate, selectedProject, selectedEmployee, userId, isAdminOrManager, token, isAuthenticated]);
 
   // ── Employee dropdown options (only for Admin/Manager) ────────────────────
-  const employeeOptions = useMemo(() => {
-    if (!isAdminOrManager) return [];
-    if (!serviceDeliveryEmployees?.length) return [];
-    return serviceDeliveryEmployees.map(emp => ({
-      id: emp.employee_id || emp.u_id || emp.id,
-      name: emp.emp_name || emp.name,
+  // const employeeOptions = useMemo(() => {
+  //   if (!isAdminOrManager) return [];
+  //   if (!serviceDeliveryEmployees?.length) return [];
+  //   return serviceDeliveryEmployees.map(emp => ({
+  //     id: emp.employee_id || emp.u_id || emp.id,
+  //     name: emp.emp_name || emp.name,
+  //   }));
+  // }, [isAdminOrManager, serviceDeliveryEmployees]);
+
+ const employeeOptions = useMemo(() => {
+  if (!isAdminOrManager) return [];
+  if (!hrmsEmployees?.length) return [];
+  // ✅ Filter only Delivery department employees
+  return hrmsEmployees
+    .filter(emp => emp.Name_of_Department === 'Delivery')
+    .map(emp => ({
+      id: emp.Employee_ID,
+      name: emp.Employee_Name,
+      department: emp.Name_of_Department,
     }));
-  }, [isAdminOrManager, serviceDeliveryEmployees]);
+}, [isAdminOrManager, hrmsEmployees]);
 
   // ── Reset filter ───────────────────────────────────────────────────────────
   const handleReset = () => {
@@ -309,7 +333,7 @@ export default function DailyUpdatesReport() {
   // ── Show authentication error state ──
   if (authError) {
     return (
-      <div className="min-h-screen bg-[#f0f0f8] p-6 font-sans flex items-center justify-center">
+      <div className="mx-auto  bg-[#FAF8FF] p-6 font-sans flex items-center justify-center">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 max-w-md w-full text-center">
           <div className="text-5xl mb-4">🔒</div>
           <h2 className="text-xl font-bold text-gray-800 mb-2">Session Expired</h2>
@@ -326,19 +350,19 @@ export default function DailyUpdatesReport() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f0f0f8] p-6 font-sans">
+    <div className="mx-auto  bg-[#FAF8FF] p-6 font-sans">
 
       {/* ── Page header ── */}
       <div className="mb-5">
-        <h1 className="text-2xl font-bold text-gray-900 leading-tight">Daily Status Report</h1>
-        <p className="text-sm text-gray-400 mt-0.5">
+        <h1 className="text-[24px] font-bold text-[#191B23] m-0">Daily Status Report</h1>
+        <p className="text-[16px] text-[#434654] mt-1">
           Monitor daily activity and resource updates
           {!isAdminOrManager && ' (Your assigned projects only)'}
         </p>
       </div>
 
       {/* ── Filter bar - Sticky ── */}
-      <div className="sticky top-0 z-30 bg-[#f0f0f8]/95 backdrop-blur-md py-3 -mt-2 mb-4 flex flex-wrap items-end gap-4 border-b border-gray-200/60 shadow-sm rounded-xl px-2">
+      <div className="sticky top-0 z-30 py-3 -mt-2 mb-4 flex flex-wrap items-end gap-4  shadow-sm rounded-xl px-2">
 
         {/* Date */}
         <SelectWrapper label="Date">
@@ -378,15 +402,16 @@ export default function DailyUpdatesReport() {
           <SelectWrapper label="Employee">
             <div className="min-w-[220px]">
               <SearchableSelect
-                value={selectedEmployee}
-                onChange={setSelectedEmployee}
-                placeholder="All employees"
-                disabled={employeeOptions.length === 0 || loadingMeta}
-                options={employeeOptions.map(emp => ({
-                  value: String(emp.id),
-                  label: emp.name,
-                }))}
-              />
+  value={selectedEmployee}
+  onChange={setSelectedEmployee}
+  placeholder={employeesLoading ? "Loading employees..." : "All employees"}
+  disabled={employeeOptions.length === 0 || loadingMeta || employeesLoading}
+  loading={employeesLoading}
+  options={employeeOptions.map(emp => ({
+    value: String(emp.id),
+    label: emp.name,
+  }))}
+/>
             </div>
           </SelectWrapper>
         )}
@@ -414,7 +439,7 @@ export default function DailyUpdatesReport() {
                 {COLS.map(col => (
                   <th
                     key={col}
-                    className="sticky top-0 z-10 bg-[#EFF4FF] text-left px-4 py-3 text-[11px] font-bold text-slate-500 tracking-wide uppercase whitespace-nowrap"
+                    className="sticky top-0 z-10 bg-[#EFF4FF] text-left px-4 py-3 text-[12px] font-bold text-[#434654] tracking-wide uppercase whitespace-nowrap"
                   >
                     {col}
                   </th>
@@ -544,48 +569,79 @@ export default function DailyUpdatesReport() {
           </table>
         </div>
 
-        {/* ── Pagination footer ── */}
-        {!loadingRows && !error && rows.length > 0 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-white">
-            <p className="text-xs text-gray-400">
-              Showing {startEntry} to {endEntry} of {rows.length} entries
-            </p>
+       {/* ── Pagination footer ── */}
+{!loadingRows && !error && rows.length >= 0 && (
+  <div className="flex items-center justify-between px-5 py-3 border-t border-gray-50" style={{ backgroundColor: '#EFF4FF' }}>
+    <span className="text-[12px] text-[#434654] font-normal">
+      Showing {startEntry} to {endEntry} of {rows.length} entries
+    </span>
 
-            <div className="flex items-center gap-1">
-              {/* Prev */}
-              <button
-                onClick={() => setPage(p => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="w-8 h-8 flex items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 disabled:opacity-30 transition-colors"
-              >
-                <ChevLeft />
-              </button>
+    <div className="flex items-center gap-1">
+      {/* Prev */}
+      <button
+        onClick={() => setPage(p => Math.max(1, p - 1))}
+        disabled={page === 1}
+        className="w-7 h-7 flex items-center justify-center rounded border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed text-xs"
+      >
+        ‹
+      </button>
 
-              {/* Page numbers */}
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(n => (
-                <button
-                  key={n}
-                  onClick={() => setPage(n)}
-                  className={`w-8 h-8 flex items-center justify-center rounded-md text-sm font-medium transition-colors ${n === page
-                    ? 'bg-[#856BFF] text-white shadow-sm'
-                    : 'text-gray-500 hover:bg-gray-100'
-                    }`}
-                >
-                  {n}
-                </button>
-              ))}
+      {/* Page numbers */}
+      {Array.from({ length: Math.min(totalPages, 3) }, (_, i) => {
+        // Show first 3 pages, or current page centered
+        let pageNum;
+        if (totalPages <= 3) {
+          pageNum = i + 1;
+        } else if (page <= 2) {
+          pageNum = i + 1;
+        } else if (page >= totalPages - 1) {
+          pageNum = totalPages - 2 + i;
+        } else {
+          pageNum = page - 1 + i;
+        }
+        return pageNum;
+      }).map(n => (
+        <button
+          key={n}
+          onClick={() => setPage(n)}
+          className={`w-7 h-7 flex items-center justify-center rounded text-[12px] font-semibold border transition-colors
+            ${n === page
+              ? "bg-[#856BFF] text-white border-[#856BFF]"
+              : "border-gray-200 text-gray-500 hover:bg-gray-50"}`}
+        >
+          {n}
+        </button>
+      ))}
 
-              {/* Next */}
-              <button
-                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
-                className="w-8 h-8 flex items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 disabled:opacity-30 transition-colors"
-              >
-                <ChevRight />
-              </button>
-            </div>
-          </div>
-        )}
+      {/* Ellipsis if more pages */}
+      {totalPages > 3 && page < totalPages - 1 && (
+        <span className="text-gray-400 text-xs px-1">…</span>
+      )}
+
+      {/* Last page if not visible */}
+      {totalPages > 3 && page < totalPages - 1 && (
+        <button
+          onClick={() => setPage(totalPages)}
+          className={`w-7 h-7 flex items-center justify-center rounded text-[12px] font-semibold border transition-colors
+            ${totalPages === page
+              ? "bg-[#856BFF] text-white border-[#856BFF]"
+              : "border-gray-200 text-gray-500 hover:bg-gray-50"}`}
+        >
+          {totalPages}
+        </button>
+      )}
+
+      {/* Next */}
+      <button
+        onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+        disabled={page === totalPages || totalPages === 0}
+        className="w-7 h-7 flex items-center justify-center rounded border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed text-xs"
+      >
+        ›
+      </button>
+    </div>
+  </div>
+)}
       </div>
     </div>
   );

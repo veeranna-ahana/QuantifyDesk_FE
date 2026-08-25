@@ -71,7 +71,7 @@ export default function EditProject() {
   // If navigated directly without state, redirect back
   if (!project) {
     return (
-      <div className="min-h-screen bg-[#f0f0f8] p-6 font-sans flex items-center justify-center">
+      <div className="mx-auto  bg-[#FAF8FF] p-6 font-sans flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-400 text-sm mb-4">No project data found.</p>
           <button
@@ -232,12 +232,12 @@ export default function EditProject() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f0f0f8] p-6 font-sans">
+    <div className="mx-auto  bg-[#FAF8FF] p-6 font-sans">
 
       {/* ── Page header ── */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Edit Project</h1>
-        <p className="text-sm text-gray-400 mt-0.5">Fill in the details below to register a new project.</p>
+        <h1 className="text-[24px] font-bold text-[#191B23] m-0">Edit Project</h1>
+        <p className="text-[16px] text-[#434654] mt-1">Fill in the details below to register a new project.</p>
       </div>
 
       {/* ── Card ── */}

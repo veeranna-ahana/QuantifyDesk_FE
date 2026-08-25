@@ -655,7 +655,7 @@ const MyWork = () => {
   }
 
   return (
-    <div className="mx-auto p-5 font-sans">
+    <div className="mx-auto  bg-[#FAF8FF] p-6 font-sans">
       {/* Toast */}
       {toast && (
         <div
@@ -669,8 +669,8 @@ const MyWork = () => {
       {/* ── Page header ── */}
       <div className="flex justify-between items-start mb-6">
         <div>
-          <h2 className="text-2xl font-extrabold text-gray-900 m-0">My Work</h2>
-          <p className="text-sm text-gray-400 mt-1">
+          <h2 className="text-[24px] font-bold text-[#191B23] m-0">My Work</h2>
+          <p className="text-[16px] text-[#434654] mt-1">
             Monitor assignments, approvals, and progress across ongoing projects.
           </p>
         </div>

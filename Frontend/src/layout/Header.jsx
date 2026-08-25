@@ -3,6 +3,7 @@ import axios from "axios";
 import Cookies from "js-cookie";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import ahana from "../../public/ahana.png";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const getHeaders = () => ({
@@ -137,8 +138,10 @@ const Header = () => {
   return (
     <header className="h-14 bg-white border-b border-gray-100 flex items-center justify-between px-6 sticky top-0 z-50 shadow-sm shrink-0">
 
-      {/* ── Left: empty / breadcrumb area ── */}
-      <div />
+      {/* ── Left: Logo ── */}
+      <div className="flex items-center gap-2">
+        <img src={ahana} alt="Ahana" style={{ width: "100px", height: "40px" }} />
+      </div>
 
       {/* ── Right ── */}
       <div className="flex items-center gap-3" ref={dropdownRef}>

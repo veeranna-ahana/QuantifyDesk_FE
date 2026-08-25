@@ -344,14 +344,14 @@ export default function EffortEstimate() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#f0f0f8] p-6 font-sans">
+    <div className="mx-auto  bg-[#FAF8FF] p-6 font-sans">
 
       {/* ── Page header - Sticky ── */}
-      <div className="sticky top-0 z-30 bg-[#f0f0f8]/95 backdrop-blur-md pb-4 -mt-2 mb-4">
-        <h1 className="text-2xl font-bold text-gray-900">
+      <div className="sticky top-0 z-30  pb-4  mb-4">
+        <h1 className="text-[24px] font-bold text-[#191B23] m-0">
           {readOnly ? 'View Effort Estimate' : 'Effort Estimate & Utilization'}
         </h1>
-        <p className="text-sm text-gray-500 mt-0.5">
+        <p className="text-[16px] text-[#434654] mt-1">
           {readOnly
             ? 'Viewing effort estimates for this project (read-only).'
             : 'Configure project resources and track total capacity alignment.'}
@@ -386,7 +386,7 @@ export default function EffortEstimate() {
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
           <div className="flex items-center gap-2">
             <Icon icon="material-symbols:grid-view" width="20" height="20" color="#856BFF" />
-            <span className="text-base font-bold text-gray-900">Effort Breakdown</span>
+            <span className="font-semibold text-[#191B23] text-[20px]">Effort Breakdown</span>
           </div>
           <div className="flex items-center gap-1.5 text-xs #434655">
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -413,7 +413,7 @@ export default function EffortEstimate() {
                 <tr className="border-b border-gray-200 bg-[#EFF4FF]" style={{ backgroundColor: '#EFF4FF' }}>
                   {COLS.map(col => (
                     <th key={typeof col === 'string' ? col : Math.random()}
-                      className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-[11px] font-semibold text-[#434654] tracking-widest uppercase text-left whitespace-nowrap shadow-sm">
+                      className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-[12px] font-bold text-[#434654] tracking-widest uppercase text-left whitespace-nowrap shadow-sm">
                       {col}
                     </th>
                   ))}
