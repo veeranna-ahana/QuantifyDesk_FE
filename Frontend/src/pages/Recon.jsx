@@ -93,6 +93,25 @@ const CustomPieTooltip = ({ active, payload }) => {
   return null;
 };
 
+// ─── Custom Project Detail Pie Chart Tooltip ────────────────────
+const CustomProjectDetailPieTooltip = ({ active, payload }) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-white/95 backdrop-blur-sm border border-gray-100 p-2.5 rounded-xl shadow-lg text-xs z-50">
+        <div className="flex items-center gap-1.5 font-semibold text-gray-800">
+          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: data.color }} />
+          <span className="truncate max-w-[200px]">{data.name}</span>
+        </div>
+        <div className="mt-1 text-gray-500 font-medium">
+          <span className="font-bold text-gray-900">{formatNumber(data.value)}</span> Hours ({data.pct}%)
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
 // ─── Small inline icons ──────────────────────────────────────────
 const SearchIcon = ({ className = "w-10 h-10" }) => (
   <Icon icon="material-symbols:search" className={className} />
@@ -341,6 +360,86 @@ const ReconPage = () => {
   const totalUtilizedProjects = useMemo(() => {
     return utilizationPieData.reduce((acc, curr) => acc + curr.count, 0);
   }, [utilizationPieData]);
+
+  // ─── Project Detail Chart States ──────────────────────────────
+  const [detailChartTab, setDetailChartTab] = useState("role"); // "role" | "employee"
+  const [detailMetric, setDetailMetric] = useState("actual"); // "actual" | "estimated"
+
+  // ─── Project Detail Role Pie Chart Data ────────────────────────
+  const projectRolePieData = useMemo(() => {
+    if (!projectDetail?.project) return [];
+    const colors = ['#856BFF', '#3B82F6', '#10B981', '#F59E0B', '#EC4899', '#06B6D4', '#8B5CF6', '#F97316', '#6366F1', '#14B8A6'];
+
+    if (projectDetail.roleSummary && projectDetail.roleSummary.length > 0) {
+      const raw = projectDetail.roleSummary
+        .map((r, i) => {
+          const val = detailMetric === 'actual' ? parseFloat(r.actual_hours || 0) : parseFloat(r.estimated_hours || 0);
+          return {
+            name: r.role || 'Other',
+            value: val,
+            color: colors[i % colors.length]
+          };
+        })
+        .filter(item => item.value > 0);
+
+      const total = raw.reduce((sum, item) => sum + item.value, 0);
+      return raw.map(item => ({
+        ...item,
+        pct: total > 0 ? ((item.value / total) * 100).toFixed(1) : '0'
+      }));
+    }
+
+    if (projectDetail.employeeSummary && projectDetail.employeeSummary.length > 0) {
+      const roleMap = {};
+      projectDetail.employeeSummary.forEach(e => {
+        const role = e.role || 'Not Assigned';
+        const val = detailMetric === 'actual' ? parseFloat(e.actual_hours || 0) : parseFloat(e.assigned_hours || 0);
+        roleMap[role] = (roleMap[role] || 0) + val;
+      });
+
+      const raw = Object.entries(roleMap)
+        .map(([role, val], i) => ({
+          name: role,
+          value: val,
+          color: colors[i % colors.length]
+        }))
+        .filter(item => item.value > 0);
+
+      const total = raw.reduce((sum, item) => sum + item.value, 0);
+      return raw.map(item => ({
+        ...item,
+        pct: total > 0 ? ((item.value / total) * 100).toFixed(1) : '0'
+      }));
+    }
+
+    return [];
+  }, [projectDetail, detailMetric]);
+
+  // ─── Project Detail Employee Pie Chart Data ────────────────────
+  const projectEmployeePieData = useMemo(() => {
+    if (!projectDetail?.employeeSummary || projectDetail.employeeSummary.length === 0) return [];
+    const colors = ['#856BFF', '#3B82F6', '#10B981', '#F59E0B', '#EC4899', '#06B6D4', '#8B5CF6', '#F97316', '#6366F1', '#14B8A6', '#D946EF', '#0EA5E9'];
+
+    const raw = projectDetail.employeeSummary
+      .map((e, i) => {
+        const val = detailMetric === 'actual' ? parseFloat(e.actual_hours || 0) : parseFloat(e.assigned_hours || 0);
+        return {
+          name: e.employee_name || 'Unknown',
+          value: val,
+          color: colors[i % colors.length]
+        };
+      })
+      .filter(item => item.value > 0);
+
+    const total = raw.reduce((sum, item) => sum + item.value, 0);
+    return raw.map(item => ({
+      ...item,
+      pct: total > 0 ? ((item.value / total) * 100).toFixed(1) : '0'
+    }));
+  }, [projectDetail, detailMetric]);
+
+  const currentProjectChartData = detailChartTab === 'role' ? projectRolePieData : projectEmployeePieData;
+  const currentProjectChartTotal = currentProjectChartData.reduce((sum, item) => sum + item.value, 0);
 
   // ─── Paginated Data ────────────────────────────────────────────
   const paginatedProjects = useMemo(() => {
@@ -692,6 +791,157 @@ const ReconPage = () => {
                     )}
                   </div>
                 </div>
+              </div>
+
+              {/* ── Effort Distribution Donut / Pie Chart ── */}
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mt-6">
+                <div className="flex items-center justify-between flex-wrap gap-3 pb-4 border-b border-gray-100">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-[#856BFF]/10 flex items-center justify-center">
+                      <Icon icon="material-symbols:pie-chart" width="20" height="20" color="#856BFF" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-gray-900 text-[15px] leading-tight">
+                        Effort Distribution ({detailChartTab === 'role' ? 'By Role' : 'By Resource'})
+                      </h3>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        Breakdown of {detailMetric === 'actual' ? 'actual logged' : 'estimated'} hours for this project
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Controls: Metric & Category Toggle */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {/* Metric Toggle */}
+                    <div className="flex items-center bg-gray-100 p-1 rounded-lg">
+                      <button
+                        onClick={() => setDetailMetric("actual")}
+                        className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
+                          detailMetric === "actual"
+                            ? "bg-white text-[#856BFF] shadow-sm"
+                            : "text-gray-500 hover:text-gray-800"
+                        }`}
+                        style={{ background: detailMetric === 'actual' ? '#fff' : 'transparent', border: 'none' }}
+                      >
+                        Actual Hours
+                      </button>
+                      <button
+                        onClick={() => setDetailMetric("estimated")}
+                        className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
+                          detailMetric === "estimated"
+                            ? "bg-white text-[#856BFF] shadow-sm"
+                            : "text-gray-500 hover:text-gray-800"
+                        }`}
+                        style={{ background: detailMetric === 'estimated' ? '#fff' : 'transparent', border: 'none' }}
+                      >
+                        Estimated Hours
+                      </button>
+                    </div>
+
+                    {/* Breakdown Type Toggle */}
+                    <div className="flex items-center bg-gray-100 p-1 rounded-lg">
+                      <button
+                        onClick={() => setDetailChartTab("role")}
+                        className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
+                          detailChartTab === "role"
+                            ? "bg-white text-[#856BFF] shadow-sm"
+                            : "text-gray-500 hover:text-gray-800"
+                        }`}
+                        style={{ background: detailChartTab === 'role' ? '#fff' : 'transparent', border: 'none' }}
+                      >
+                        By Role
+                      </button>
+                      <button
+                        onClick={() => setDetailChartTab("employee")}
+                        className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
+                          detailChartTab === "employee"
+                            ? "bg-white text-[#856BFF] shadow-sm"
+                            : "text-gray-500 hover:text-gray-800"
+                        }`}
+                        style={{ background: detailChartTab === 'employee' ? '#fff' : 'transparent', border: 'none' }}
+                      >
+                        By Resource
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Chart & Breakdown Content */}
+                {currentProjectChartData.length > 0 ? (
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center pt-4">
+                    {/* Donut Chart */}
+                    <div className="lg:col-span-5 flex flex-col items-center justify-center">
+                      <div className="w-full h-[220px] relative">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={currentProjectChartData}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={60}
+                              outerRadius={88}
+                              paddingAngle={3}
+                              dataKey="value"
+                            >
+                              {currentProjectChartData.map((entry, index) => (
+                                <Cell key={`cell-proj-${index}`} fill={entry.color} />
+                              ))}
+                            </Pie>
+                            <Tooltip content={<CustomProjectDetailPieTooltip />} />
+                          </PieChart>
+                        </ResponsiveContainer>
+                        {/* Donut Center Total Label */}
+                        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                          <span className="text-xl font-extrabold text-gray-800 leading-tight">
+                            {formatNumber(currentProjectChartTotal)}
+                          </span>
+                          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                            Total Hrs
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Breakdown List */}
+                    <div className="lg:col-span-7 flex flex-col gap-2 max-h-[220px] overflow-y-auto pr-2">
+                      {currentProjectChartData.map((item, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-gray-50/80 transition-colors border border-gray-100"
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <span
+                              className="w-2.5 h-2.5 rounded-full shrink-0"
+                              style={{ backgroundColor: item.color }}
+                            />
+                            <span className="font-semibold text-xs text-gray-800 truncate" title={item.name}>
+                              {item.name}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-3 shrink-0">
+                            <span className="text-xs font-bold text-[#856BFF]">
+                              {formatNumber(item.value)} <span className="text-[10px] font-medium text-gray-400">Hrs</span>
+                            </span>
+                            <div className="w-16 h-1.5 rounded-full bg-gray-100 overflow-hidden hidden sm:block">
+                              <div
+                                className="h-full rounded-full"
+                                style={{ width: `${Math.min(item.pct, 100)}%`, backgroundColor: item.color }}
+                              />
+                            </div>
+                            <span className="text-xs font-bold text-gray-500 w-12 text-right">
+                              {item.pct}%
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-10 text-gray-400 text-xs">
+                    <Icon icon="material-symbols:pie-chart-outline" width="36" height="36" className="text-gray-300 mb-1.5" />
+                    No {detailMetric} hours logged to display distribution
+                  </div>
+                )}
               </div>
 
               {/* Employee-wise Breakdown */}
