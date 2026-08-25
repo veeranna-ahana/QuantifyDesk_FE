@@ -103,7 +103,12 @@ const SubMenu = ({ label, icon, children }) => {
 // ── Main Sidebar ──────────────────────────────────────────────────────────────
 const Sidebar = () => {
   const reduxUser = useSelector(state => state.auth?.user);
-  const [collapsed, setCollapsed] = useState(false);
+  
+  // Load collapsed state from localStorage
+  const [collapsed, setCollapsed] = useState(() => {
+    const saved = localStorage.getItem("sidebarCollapsed");
+    return saved ? JSON.parse(saved) : false;
+  });
 
   let user = reduxUser;
   if (!user) {
@@ -120,6 +125,11 @@ const Sidebar = () => {
 
   const links = ROLE_LINKS[userRole] || ROLE_LINKS.Employee;
 
+  const toggleCollapse = (newState) => {
+    setCollapsed(newState);
+    localStorage.setItem("sidebarCollapsed", JSON.stringify(newState));
+  };
+
   const handleLogout = () => {
     Cookies.remove("user");
     ["token", "email", "emp_id", "role", "userName"].forEach(k => localStorage.removeItem(k));
@@ -127,20 +137,30 @@ const Sidebar = () => {
   };
 
   return (
-    <div className={`flex flex-col h-screen bg-white border-r border-gray-100 shadow-sm shrink-0 transition-all duration-200 ${collapsed ? "w-16" : "w-[210px]"}`}>
+    <div 
+      className={`flex flex-col h-screen bg-white border-r border-gray-100 shadow-sm shrink-0 transition-all duration-200 ${collapsed ? "w-16" : "w-[210px]"}`}
+      onMouseEnter={() => {
+        if (collapsed) {
+          setCollapsed(false);
+        }
+      }}
+      onMouseLeave={() => {
+        if (!collapsed) {
+          const wasCollapsed = localStorage.getItem("sidebarCollapsed");
+          if (wasCollapsed === "true") {
+            setCollapsed(true);
+          }
+        }
+      }}
+    >
 
-      {/* ── Logo ── */}
-      <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100 min-h-[60px]">
+      {/* ── Header with collapse toggle ── */}
+      {/* <div className="flex items-center justify-end px-4 py-4 border-b border-gray-100 min-h-[60px]">
         {!collapsed && (
-          <div className="flex items-center gap-2">
-            {/* ahana logo mark */}
-
-            <div>
-              <div className="text-[13px] font-extrabold text-purple-700 leading-tight">
-                <img style={{ width: "100px", height: "40px" }} src={ahana} />
-              </div>
-            </div>
-          </div>
+          <button onClick={() => toggleCollapse(true)}
+            className="p-1 rounded text-gray-300 hover:text-gray-500 hover:bg-gray-50 transition-colors">
+            <Icon d={Icons.chevronLeft} size={14} />
+          </button>
         )}
         {collapsed && (
           <div className="w-7 h-7 rounded-lg mx-auto flex items-center justify-center"
@@ -148,13 +168,7 @@ const Sidebar = () => {
             <span className="text-white text-[10px] font-extrabold">ah</span>
           </div>
         )}
-        {!collapsed && (
-          <button onClick={() => setCollapsed(true)}
-            className="p-1 rounded text-gray-300 hover:text-gray-500 hover:bg-gray-50 transition-colors">
-            <Icon d={Icons.chevronLeft} size={14} />
-          </button>
-        )}
-      </div>
+      </div> */}
 
       {/* ── Nav ── */}
       <nav className="flex-1 flex flex-col gap-0.5 px-2 py-3 overflow-y-auto">
@@ -179,14 +193,6 @@ const Sidebar = () => {
           </NavLink>
         ))}
       </nav>
-
-      {/* ── Collapse toggle when collapsed ── */}
-      {collapsed && (
-        <button onClick={() => setCollapsed(false)}
-          className="mx-auto mb-2 p-1.5 rounded text-gray-300 hover:text-gray-500 hover:bg-gray-50 transition-colors">
-          <Icon d={Icons.chevronRight} size={14} />
-        </button>
-      )}
 
       {/* ── Footer user chip ── */}
       {/* {!collapsed && (

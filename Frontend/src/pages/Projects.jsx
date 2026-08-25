@@ -930,13 +930,13 @@ const Projects = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#f0f0f8] p-6 font-sans">
+    <div className="mx-auto  bg-[#FAF8FF] p-6 font-sans">
 
       {/* ── Page header ── */}
-      <div className="sticky top-0 z-30 bg-[#f0f0f8]/95 backdrop-blur-md pb-4 -mt-2 flex items-start justify-between mb-4 flex-wrap gap-3">
+      <div className="sticky top-0 z-30  pb-4  flex items-start justify-between mb-4 flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 leading-tight">Projects</h1>
-          <p className="text-sm text-gray-400 mt-0.5">Manage and reconcile enterprise-level project efforts.</p>
+          <h1 className="text-[24px] font-bold text-[#191B23] m-0">Projects</h1>
+          <p className="text-[16px] text-[#434654] mt-1">Manage and reconcile enterprise-level project efforts.</p>
         </div>
         {!isAdmin && (
           <div className="flex items-center gap-3">

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchHrmsEmployees, selectAllEmployees, selectEmployeesLoading } from '../store/slices/employeeSlice';
 import Cookies from 'js-cookie';
 import { useNavigate } from 'react-router-dom';
 import SearchableSelect from '../component/SearchableSelect';
@@ -67,7 +68,10 @@ const SelectWrapper = ({ label, children }) => (
 export default function DailyUpdatesReport() {
   const navigate = useNavigate();
   const reduxUser = useSelector(state => state.auth?.user);
-  const serviceDeliveryEmployees = useSelector(state => state.auth.serviceDeliveryEmployees);
+   const dispatch = useDispatch();
+  // const serviceDeliveryEmployees = useSelector(state => state.auth.serviceDeliveryEmployees);
+   const hrmsEmployees = useSelector(selectAllEmployees);
+  const employeesLoading = useSelector(selectEmployeesLoading);
 
   // ── Get user from Redux or cookie ──────────────────────────────────────────
   const user = useMemo(() => {
@@ -116,6 +120,13 @@ export default function DailyUpdatesReport() {
       setAuthError(false);
     }
   }, [isAuthenticated]);
+
+  // Fetch HRMS employees when component mounts
+useEffect(() => {
+  if (isAuthenticated && hrmsEmployees.length === 0 && !employeesLoading) {
+    dispatch(fetchHrmsEmployees());
+  }
+}, [dispatch, hrmsEmployees.length, employeesLoading, isAuthenticated]);
 
   // ── Load filter meta (dates + projects) based on role ─────────────────────
   useEffect(() => {
@@ -257,14 +268,27 @@ export default function DailyUpdatesReport() {
   }, [selectedDate, selectedProject, selectedEmployee, userId, isAdminOrManager, token, isAuthenticated]);
 
   // ── Employee dropdown options (only for Admin/Manager) ────────────────────
-  const employeeOptions = useMemo(() => {
-    if (!isAdminOrManager) return [];
-    if (!serviceDeliveryEmployees?.length) return [];
-    return serviceDeliveryEmployees.map(emp => ({
-      id: emp.employee_id || emp.u_id || emp.id,
-      name: emp.emp_name || emp.name,
+  // const employeeOptions = useMemo(() => {
+  //   if (!isAdminOrManager) return [];
+  //   if (!serviceDeliveryEmployees?.length) return [];
+  //   return serviceDeliveryEmployees.map(emp => ({
+  //     id: emp.employee_id || emp.u_id || emp.id,
+  //     name: emp.emp_name || emp.name,
+  //   }));
+  // }, [isAdminOrManager, serviceDeliveryEmployees]);
+
+ const employeeOptions = useMemo(() => {
+  if (!isAdminOrManager) return [];
+  if (!hrmsEmployees?.length) return [];
+  // ✅ Filter only Delivery department employees
+  return hrmsEmployees
+    .filter(emp => emp.Name_of_Department === 'Delivery')
+    .map(emp => ({
+      id: emp.Employee_ID,
+      name: emp.Employee_Name,
+      department: emp.Name_of_Department,
     }));
-  }, [isAdminOrManager, serviceDeliveryEmployees]);
+}, [isAdminOrManager, hrmsEmployees]);
 
   // ── Reset filter ───────────────────────────────────────────────────────────
   const handleReset = () => {
@@ -326,19 +350,19 @@ export default function DailyUpdatesReport() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f0f0f8] p-6 font-sans">
+    <div className="mx-auto  bg-[#FAF8FF] p-6 font-sans">
 
       {/* ── Page header ── */}
       <div className="mb-5">
-        <h1 className="text-2xl font-bold text-gray-900 leading-tight">Daily Status Report</h1>
-        <p className="text-sm text-gray-400 mt-0.5">
+        <h1 className="text-[24px] font-bold text-[#191B23] m-0">Daily Status Report</h1>
+        <p className="text-[16px] text-[#434654] mt-1">
           Monitor daily activity and resource updates
           {!isAdminOrManager && ' (Your assigned projects only)'}
         </p>
       </div>
 
       {/* ── Filter bar - Sticky ── */}
-      <div className="sticky top-0 z-30 bg-[#f0f0f8]/95 backdrop-blur-md py-3 -mt-2 mb-4 flex flex-wrap items-end gap-4 border-b border-gray-200/60 shadow-sm rounded-xl px-2">
+      <div className="sticky top-0 z-30 py-3 -mt-2 mb-4 flex flex-wrap items-end gap-4  shadow-sm rounded-xl px-2">
 
         {/* Date */}
         <SelectWrapper label="Date">
@@ -378,15 +402,16 @@ export default function DailyUpdatesReport() {
           <SelectWrapper label="Employee">
             <div className="min-w-[220px]">
               <SearchableSelect
-                value={selectedEmployee}
-                onChange={setSelectedEmployee}
-                placeholder="All employees"
-                disabled={employeeOptions.length === 0 || loadingMeta}
-                options={employeeOptions.map(emp => ({
-                  value: String(emp.id),
-                  label: emp.name,
-                }))}
-              />
+  value={selectedEmployee}
+  onChange={setSelectedEmployee}
+  placeholder={employeesLoading ? "Loading employees..." : "All employees"}
+  disabled={employeeOptions.length === 0 || loadingMeta || employeesLoading}
+  loading={employeesLoading}
+  options={employeeOptions.map(emp => ({
+    value: String(emp.id),
+    label: emp.name,
+  }))}
+/>
             </div>
           </SelectWrapper>
         )}

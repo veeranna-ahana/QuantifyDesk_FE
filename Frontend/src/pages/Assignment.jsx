@@ -56,8 +56,7 @@ const StatusBadge = ({ assigned, planned }) => {
 
 // ── KPI Card Component ────────────────────────────────────────────────────────
 const KPI = ({ label, value, color }) => (
-  <div className="flex-1 min-w-[130px] bg-white border border-slate-100 rounded-xl p-4 shadow-sm"
-    style={{ borderLeft: '4px solid', borderLeftColor: color.includes('violet') ? '#856BFF' : color.includes('slate') ? '#94a3b8' : color.includes('sky') ? '#0ea5e9' : color.includes('emerald') ? '#10b981' : '#f43f5e' }}>
+  <div className="flex-1 min-w-[130px] bg-white border border-slate-100 rounded-xl p-4 shadow-sm">
     <div className="text-[10px] font-bold tracking-widest text-slate-400 uppercase mb-2 leading-none">{label}</div>
     <div className={`text-[22px] font-extrabold leading-none ${color}`}>{value}</div>
   </div>
@@ -65,10 +64,18 @@ const KPI = ({ label, value, color }) => (
 
 // ── Effort Chip Component ─────────────────────────────────────────────────────
 const EffortChip = ({ label, value, valColor }) => (
-  <div className="flex flex-col items-center bg-slate-50 border border-slate-200/60 px-3 py-1 rounded-lg min-w-[80px]">
-    <span className="text-[9px] text-slate-400 font-bold tracking-wider uppercase leading-none">{label}</span>
-    <span className={`text-[12px] font-bold mt-0.5 leading-none ${valColor || 'text-[#856BFF]'}`}>
-      {value !== undefined && value !== null && value !== '' ? Number(value).toFixed(2) : "0.00"}
+  <div className="flex flex-col items-center justify-center px-4 py-2">
+    <span className="text-[9px] text-[#94A3B8] font-bold tracking-wider uppercase leading-none">
+      {label}
+    </span>
+    <span
+      className={`text-[12px] font-bold mt-1 leading-none ${
+        valColor || "text-[#856BFF]"
+      }`}
+    >
+      {value !== undefined && value !== null && value !== ""
+        ? Number(value).toFixed(2)
+        : "0.00"}
     </span>
   </div>
 );
@@ -1085,7 +1092,7 @@ const AssignmentScreen = () => {
   const total_balance_hours = Math.max(Number(total_effort_hours) - Number(total_assigned_hours), 0);
 
   return (
-    <div className="p-6 bg-slate-50 min-h-full font-sans">
+    <div className="p-6 bg-[#FAF8FF] min-h-full font-sans">
       {/* Title */}
       <div className="mb-6">
         <h2 className="text-2xl font-extrabold text-slate-800 flex items-center gap-2">
@@ -1097,13 +1104,13 @@ const AssignmentScreen = () => {
       </div>
 
       {/* Main card - Entire card sticky when project selected */}
-      <div className={`bg-white rounded-2xl border border-slate-200/90 shadow-md p-5 mb-6 transition-all ${
-        selProject ? 'sticky top-0 z-30 bg-white/95 backdrop-blur-md' : ''
+      <div className={`  mb-6 transition-all ${
+        selProject ? 'sticky top-0 z-30  backdrop-blur-md' : ''
       }`}>
         {selProject ? (
           <div className="flex flex-col gap-4">
             {/* Top row: Title + Dropdown */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-3.5">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-[#FFFFFF] p-2 border-b border-slate-100 pb-3.5">
               <div>
                 <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                   Effort Estimate & Assign
@@ -1170,100 +1177,102 @@ const AssignmentScreen = () => {
               />
             </div>
           </div>
-        ) : (
-          <div>
-            <label className="block text-[11px] font-bold text-slate-400 tracking-widest uppercase mb-2">
-              SELECTED PROJECT
-            </label>
-            <div className="w-full md:w-[480px] mb-6">
-              <SearchableSelect
-                value={selProject}
-                onChange={setSelProject}
-                placeholder="Search or choose a project…"
-                options={projects.map((p) => ({
-                  value: String(p.id),
-                  label: p.project_name || p.name,
-                }))}
-                className="rounded-xl text-sm font-semibold text-slate-700 border-slate-200"
-              />
-            </div>
+      ) : (
+  <div>
+    <div className="bg-white rounded-2xl border border-slate-200/90 shadow-md p-5">
+      <label className="block text-[11px] font-bold text-slate-400 tracking-widest uppercase mb-2">
+        SELECTED PROJECT
+      </label>
+      <div className="w-full md:w-[480px]">
+        <SearchableSelect
+          value={selProject}
+          onChange={setSelProject}
+          placeholder="Search or choose a project…"
+          options={projects.map((p) => ({
+            value: String(p.id),
+            label: p.project_name || p.name,
+          }))}
+          className="rounded-xl text-sm font-semibold text-slate-700 border-slate-200"
+        />
+      </div>
+    </div>
 
-            {/* Empty state illustration */}
-            <div className="border-2 border-dashed border-slate-200/80 bg-slate-50/50 rounded-2xl p-12 flex flex-col items-center justify-center text-center">
-              <div className="w-32 h-32 flex items-center justify-center mb-4">
-                <svg
-                  width="120"
-                  height="120"
-                  viewBox="0 0 160 160"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <circle cx="80" cy="80" r="60" fill="#f3f0ff" />
-                  <g filter="drop-shadow(0px 8px 16px rgba(127, 95, 235, 0.15))">
-                    <rect
-                      x="56"
-                      y="44"
-                      width="48"
-                      height="64"
-                      rx="8"
-                      fill="white"
-                    />
-                    <circle cx="68" cy="58" r="3" fill="#c7d2fe" />
-                    <rect
-                      x="76"
-                      y="56"
-                      width="18"
-                      height="4"
-                      rx="2"
-                      fill="#e2e8f0"
-                    />
-                    <circle cx="68" cy="70" r="3" fill="#c7d2fe" />
-                    <rect
-                      x="76"
-                      y="68"
-                      width="18"
-                      height="4"
-                      rx="2"
-                      fill="#e2e8f0"
-                    />
-                    <circle cx="68" cy="82" r="3" fill="#c7d2fe" />
-                    <rect
-                      x="76"
-                      y="80"
-                      width="18"
-                      height="4"
-                      rx="2"
-                      fill="#e2e8f0"
-                    />
-                  </g>
-                  <rect
-                    x="92"
-                    y="38"
-                    width="22"
-                    height="22"
-                    rx="6"
-                    fill="#7f5feb"
-                  />
-                  <path
-                    d="M103 45C104.657 45 106 46.3431 106 48C106 49.6569 104.657 51 103 51C101.343 51 100 49.6569 100 48C100 46.3431 101.343 45 103 45Z"
-                    fill="white"
-                  />
-                  <path
-                    d="M96 56C96 53.7909 97.7909 52 100 52H106C108.209 52 110 53.7909 110 56V57H96V56Z"
-                    fill="white"
-                  />
-                </svg>
-              </div>
-              <h4 className="text-lg font-bold text-slate-800 mb-1.5">
-                No Project Selected
-              </h4>
-              <p className="text-sm text-slate-500 max-w-sm">
-                Select a project from the dropdown above to define resource
-                loads and begin assigning employees to specific tasks.
-              </p>
-            </div>
-          </div>
-        )}
+    {/* Empty state illustration with gap */}
+    <div className="bg-white mt-6 border-2 border-dashed border-slate-200/80 bg-slate-50/50 rounded-2xl p-12 flex flex-col items-center justify-center text-center">
+      <div className="w-32 h-32 flex items-center justify-center mb-4">
+        <svg
+          width="120"
+          height="120"
+          viewBox="0 0 160 160"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <circle cx="80" cy="80" r="60" fill="#f3f0ff" />
+          <g filter="drop-shadow(0px 8px 16px rgba(127, 95, 235, 0.15))">
+            <rect
+              x="56"
+              y="44"
+              width="48"
+              height="64"
+              rx="8"
+              fill="white"
+            />
+            <circle cx="68" cy="58" r="3" fill="#c7d2fe" />
+            <rect
+              x="76"
+              y="56"
+              width="18"
+              height="4"
+              rx="2"
+              fill="#e2e8f0"
+            />
+            <circle cx="68" cy="70" r="3" fill="#c7d2fe" />
+            <rect
+              x="76"
+              y="68"
+              width="18"
+              height="4"
+              rx="2"
+              fill="#e2e8f0"
+            />
+            <circle cx="68" cy="82" r="3" fill="#c7d2fe" />
+            <rect
+              x="76"
+              y="80"
+              width="18"
+              height="4"
+              rx="2"
+              fill="#e2e8f0"
+            />
+          </g>
+          <rect
+            x="92"
+            y="38"
+            width="22"
+            height="22"
+            rx="6"
+            fill="#7f5feb"
+          />
+          <path
+            d="M103 45C104.657 45 106 46.3431 106 48C106 49.6569 104.657 51 103 51C101.343 51 100 49.6569 100 48C100 46.3431 101.343 45 103 45Z"
+            fill="white"
+          />
+          <path
+            d="M96 56C96 53.7909 97.7909 52 100 52H106C108.209 52 110 53.7909 110 56V57H96V56Z"
+            fill="white"
+          />
+        </svg>
+      </div>
+      <h4 className="text-lg font-bold text-slate-800 mb-1.5">
+        No Project Selected
+      </h4>
+      <p className="text-sm text-slate-500 max-w-sm">
+        Select a project from the dropdown above to define resource
+        loads and begin assigning employees to specific tasks.
+      </p>
+    </div>
+  </div>
+)}
       </div>
 
       {/* Accordion role table list */}
@@ -1327,26 +1336,30 @@ const AssignmentScreen = () => {
               return (
                 <div
                   key={role}
-                  className="border border-slate-200/80 rounded-2xl overflow-hidden shadow-sm bg-white"
+                  className="overflow-hidden shadow-sm "
                 >
                   {/* Accordion Header */}
                   <div
                     onClick={() => toggleRole(role)}
-                    className="flex flex-col lg:flex-row lg:items-center justify-between p-4 cursor-pointer hover:bg-slate-50/50 transition-all select-none border-l-4"
-                    style={{ borderLeftColor: rs.border }}
+                    className="flex flex-col lg:flex-row lg:items-center justify-between p-4 cursor-pointer  transition-all select-none"
+                   
                   >
                     {/* Left: Initials + Title */}
                     <div className="flex items-center gap-3">
                       <div
-                        className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
-                        style={{ backgroundColor: rs.border }}
+                        className="w-[40px] h-[40px] rounded-lg flex items-center justify-center text-xs font-bold bg-[#E0E7FF] text-[#000000] border border-[#C3C6D7] shrink-0"
+                        // style={{ backgroundColor: rs.border }}
                       >
-                        {role
-                          .split(/\s+/)
-                          .map((w) => w[0])
-                          .join("")
-                          .slice(0, 2)
-                          .toUpperCase()}
+                        {(() => {
+  const words = role.split(/\s+/);
+  if (words.length >= 2) {
+    // For multi-word roles, take first letter of first two words
+    return words.slice(0, 2).map(w => w[0]).join('').toUpperCase();
+  } else {
+    // For single-word roles, take first two letters of the word
+    return role.slice(0, 2).toUpperCase();
+  }
+})()}
                       </div>
                       <div>
                         <h4 className="text-sm font-bold text-slate-800">
@@ -1359,67 +1372,67 @@ const AssignmentScreen = () => {
                     </div>
 
                     {/* Center: Est Chips */}
-                    <div className="flex flex-wrap items-center gap-2 mt-3 lg:mt-0 justify-center lg:justify-end flex-1 lg:mr-4">
-                      {effortData ? (
-                        <>
-                          <EffortChip
-                            label="Est. Days"
-                            value={effortData.effort_days}
-                          />
-                          <EffortChip
-                            label="Est. Hrs"
-                            value={effortData.effort_hrs}
-                          />
-                          <EffortChip
-                            label="Buf Days"
-                            value={effortData.buffer_days}
-                          />
-                          <EffortChip
-                            label="Total Hrs"
-                            value={effortData.total_hrs}
-                          />
-                          <EffortChip
-                            label="Bal Hrs"
-                            value={remainingBalanceHrs}
-                            valColor={
-                              remainingBalanceHrs <= 0
-                                ? "text-slate-500"
-                                : "text-emerald-500"
-                            }
-                          />
-                          <EffortChip
-                            label="Bal Units"
-                            value={remainingBalanceUnits}
-                            valColor={
-                              remainingBalanceUnits <= 0
-                                ? "text-slate-500"
-                                : "text-emerald-500"
-                            }
-                          />
-                        </>
-                      ) : (
-                        <div className="flex flex-wrap items-center gap-2">
-                          <EffortChip
-                            label="Bal Hrs"
-                            value={roleBalHrs}
-                            valColor={
-                              roleBalHrs <= 0
-                                ? "text-slate-500"
-                                : "text-emerald-500"
-                            }
-                          />
-                          <EffortChip
-                            label="Bal Units"
-                            value={roleBalUnits}
-                            valColor={
-                              roleBalUnits <= 0
-                                ? "text-slate-500"
-                                : "text-emerald-500"
-                            }
-                          />
-                        </div>
-                      )}
-                    </div>
+<div className="flex flex-wrap items-center mt-3 lg:mt-0 justify-center lg:justify-end flex-1 lg:mr-4">
+  {effortData ? (
+    <div className="bg-[#F3F4F6] rounded-lg flex items-center divide-x divide-slate-300/50">
+      <EffortChip
+        label="Est. Days"
+        value={effortData.effort_days}
+      />
+      <EffortChip
+        label="Est. Hrs"
+        value={effortData.effort_hrs}
+      />
+      <EffortChip
+        label="Buf Days"
+        value={effortData.buffer_days}
+      />
+      <EffortChip
+        label="Total Hrs"
+        value={effortData.total_hrs}
+      />
+      <EffortChip
+        label="Bal Hrs"
+        value={remainingBalanceHrs}
+        valColor={
+          remainingBalanceHrs <= 0
+            ? "text-slate-500"
+            : "text-emerald-500"
+        }
+      />
+      <EffortChip
+        label="Bal Units"
+        value={remainingBalanceUnits}
+        valColor={
+          remainingBalanceUnits <= 0
+            ? "text-slate-500"
+            : "text-emerald-500"
+        }
+      />
+    </div>
+  ) : (
+    <div className="bg-[#F3F4F6] rounded-lg flex items-center divide-x divide-slate-300/50">
+      <EffortChip
+        label="Bal Hrs"
+        value={roleBalHrs}
+        valColor={
+          roleBalHrs <= 0
+            ? "text-slate-500"
+            : "text-emerald-500"
+        }
+      />
+      <EffortChip
+        label="Bal Units"
+        value={roleBalUnits}
+        valColor={
+          roleBalUnits <= 0
+            ? "text-slate-500"
+            : "text-emerald-500"
+        }
+      />
+    </div>
+  )}
+</div>
 
                     {/* Right: Chevron */}
                     <div className="shrink-0 flex items-center justify-center text-slate-400 mt-2 lg:mt-0">
@@ -1512,7 +1525,7 @@ const AssignmentScreen = () => {
                             return (
                               <tr
                                 key={t.id}
-                                className="hover:bg-slate-50/20 transition-colors"
+                                className="bg-white transition-colors"
                               >
                                 <td className="py-3.5 px-4 text-sm font-semibold text-slate-700">
                                   {t.task_name}

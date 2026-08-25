@@ -524,10 +524,10 @@ const ReconPage = () => {
 
   // ─── Render ─────────────────────────────────────────────────────
   return (
-    <div className="max-w-[1400px] mx-auto p-6 font-sans bg-gray-50 min-h-screen">
+    <div className="p-6 font-sans bg-[#FAF8FF] min-h-screen">
       {/* ── If Detail View is Active, Show Only Project Details ── */}
       {showDetailView ? (
-        <div className="px-4 pt-4">
+        <div className="px-0 pt-0">
           <button
             onClick={handleBackToDashboard}
             className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-[#6D5EF6] mb-4 transition"
@@ -573,49 +573,49 @@ const ReconPage = () => {
           ) : (
             <div className="py-5 ">
               {/* Stat cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 mt-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 mt-0">
                 {/* Estimated */}
-                <div className="relative bg-white rounded-2xl shadow-sm border border-gray-100 px-5 py-2 overflow-hidden">
-                  <ClockIcon className="absolute top-5 right-5 w-10 h-10 text-gray-200" />
+                <div className="relative bg-white rounded-2xl shadow-sm border border-gray-100 px-4 py-4 overflow-hidden">
+                  <ClockIcon className="absolute top-5 right-5 w-16 h-16 text-gray-200" />
 
-                  <p className="text-xs text-gray-500 font-medium p-2">
+                  <p className="text-[12px] text-[#434654] font-normal p-2">
                     Estimated Effort
                   </p>
 
-                  <h3 className="mt-3 text-4xl font-semibold text-gray-900">
+                  <h3 className="mt-3 text-[24px] font-normal text-[#191B23]">
                     {formatNumber(projectDetail.project?.estimated_hours)}
-                    <span className="text-base font-normal text-gray-500 ml-1">
+                    <span className="text-[14px] font-normal text-[#434654] ml-1">
                       Hours
                     </span>
                   </h3>
 
-                  <p className="mt-2 text-sm text-gray-500">
+                  <p className="mt-2 text-[16px] text-[#434654]">
                     ~ {formatNumber(projectDetail.project?.estimated_days, 1)} Work Days
                   </p>
                 </div>
 
                 {/* Actual */}
-                <div className="relative bg-white rounded-2xl shadow-sm border border-gray-100 px-5 py-2 overflow-hidden">
-                  <HistoryIcon className="absolute top-5 right-5 w-10 h-10 text-gray-200" />
+                <div className="relative bg-white rounded-2xl shadow-sm border border-gray-100 px-4 py-4 overflow-hidden">
+                  <HistoryIcon className="absolute top-5 right-5 w-16 h-16 text-gray-200" />
 
-                  <p className="text-xs text-gray-500 font-medium p-2">
+                  <p className="text-[12px] text-[#434654] font-normal p-2">
                     Actual Logged
                   </p>
 
-                  <h3 className="mt-3 text-4xl font-semibold text-gray-900">
+                  <h3 className="mt-3 text-[24px] font-normal text-[#191B23]">
                     {formatNumber(projectDetail.project?.actual_hours)}
-                    <span className="text-base font-normal text-gray-500 ml-1">
+                    <span className="text-[14px] font-normal text-[#434654] ml-1">
                       Hours
                     </span>
                   </h3>
 
-                  <p className="mt-2 text-sm text-gray-500">
+                  <p className="mt-2 text-[16px] text-[#434654]">
                     ~ {formatNumber(projectDetail.project?.actual_days, 1)} Work Days
                   </p>
                 </div>
 
                 {/* Variance */}
-                <div className="relative bg-white rounded-2xl shadow-sm border border-gray-100 px-5 py-2 pl-6 overflow-hidden">
+                <div className="relative bg-white rounded-2xl shadow-sm border border-gray-100 px-4 py-4 overflow-hidden">
                   <div
                     className={`absolute left-0 top-0 h-full w-1 ${Number(projectDetail.project?.variance_hours) < 0
                       ? "bg-red-500"
@@ -623,12 +623,12 @@ const ReconPage = () => {
                       }`}
                   />
 
-                  <p className="text-xs text-gray-500 font-medium p-2">
+                  <p className="text-[12px] text-[#434654] font-normal p-2">
                     Total Variance
                   </p>
 
                   <h3
-                    className={`mt-3 text-4xl font-semibold ${Number(projectDetail.project?.variance_hours) < 0
+                    className={`mt-3 text-[24px] font-normal ${Number(projectDetail.project?.variance_hours) < 0
                       ? "text-red-600"
                       : "text-green-600"
                       }`}
@@ -642,7 +642,7 @@ const ReconPage = () => {
                   </h3>
 
                   <p
-                    className={`mt-2 text-sm ${Number(projectDetail.project?.variance_hours) < 0
+                    className={`mt-2 text-[16px] ${Number(projectDetail.project?.variance_hours) < 0
                       ? "text-red-500"
                       : "text-green-500"
                       }`}
@@ -656,17 +656,17 @@ const ReconPage = () => {
                 </div>
 
                 {/* Resources */}
-                <div className="relative bg-white rounded-2xl shadow-sm border border-gray-100 px-5 py-2 overflow-hidden">
-                  <UsersIcon className="absolute top-5 right-5 w-10 h-10 text-gray-200" />
+                <div className="relative bg-white rounded-2xl shadow-sm border border-gray-100 px-4 py-4 overflow-hidden">
+                  <UsersIcon className="absolute top-5 right-5 w-16 h-16 text-gray-200" />
 
-                  <p className="text-xs text-gray-500 font-medium p-2">
+                  <p className="text-[12px] text-[#434654] font-normal p-2">
                     Active Resources
                   </p>
 
-                  <h3 className="mt-3 text-4xl font-semibold text-[#7C5CFC]">
+                  <h3 className="mt-3 text-[24px] font-normal text-[#856BFF]">
                     {projectDetail.employeeSummary?.length || 0}
 
-                    <span className="text-base font-normal text-gray-500 ml-1">
+                    <span className="mt-2 text-[16px] text-[#434654] ml-1">
                       Members
                     </span>
                   </h3>
@@ -878,7 +878,7 @@ const ReconPage = () => {
           {/* ── Header ── */}
           <div className="flex justify-between items-center flex-wrap gap-4 mb-6">
             <div>
-              <h1 className="text-2xl font-extrabold text-[#191B23] m-0">Recon Dashboard</h1>
+              <h1 className="text-[24px] font-bold text-[#191B23] m-0">Recon Dashboard</h1>
               <p className="text-sm text-gray-500 mt-1">
                 Compare project estimates against actual hours logged in timesheets
               </p>
@@ -898,7 +898,7 @@ const ReconPage = () => {
               <span className="absolute left-0 top-0 bottom-0 w-1 bg-[#856BFF]" />
               <div>
                 <div className="flex items-center gap-2 mb-4">
-                  <span className="w-7 h-7 rounded-md bg-[#856BFF]/10 flex items-center justify-center text-[#856BFF] text-sm">
+                  <span className="w-7 h-7 rounded-md flex items-center justify-center text-[#856BFF] text-sm">
                     <Icon icon="material-symbols:assignment" width="22" height="22" color="#856BFF" />
                   </span>
                   <span className="text-[17px] font-bold text-[#191B23]">Project Status</span>
@@ -933,7 +933,7 @@ const ReconPage = () => {
               <span className="absolute left-0 top-0 bottom-0 w-1 bg-[#856BFF]" />
               <div>
                 <div className="flex items-center gap-2 mb-4">
-                  <span className="w-7 h-7 rounded-md bg-[#856BFF]/10 flex items-center justify-center text-[#856BFF] text-sm">
+                  <span className="w-7 h-7 rounded-md flex items-center justify-center text-[#856BFF] text-sm">
                     <Icon icon="material-symbols:schedule" width="22" height="22" color="#856BFF" />
                   </span>
                   <span className="text-[17px] font-bold text-[#191B23]">Hours Summary</span>
@@ -1204,7 +1204,7 @@ const ReconPage = () => {
                       </div>
                       <button
                         onClick={() => exportProjectLevelExcel(filters)}
-                        className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-colors"
+                        className="flex items-center gap-1.5 px-3.5 py-2 bg-[#856BFF] hover:bg-[#7556ff] text-white rounded-lg text-xs font-semibold shadow-sm transition-colors"
                       >
                         <DownloadOutlined />
                         <span>Export Excel</span>

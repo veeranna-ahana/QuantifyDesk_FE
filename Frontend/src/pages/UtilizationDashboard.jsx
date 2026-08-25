@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import axios from "axios";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { fetchHrmsEmployees, selectAllEmployees, selectEmployeesLoading } from "../store/slices/employeeSlice";
 import SearchableSelect from "../component/SearchableSelect";
 import { DownloadOutlined, FileExcelOutlined } from "@ant-design/icons";
 import {
@@ -92,13 +93,23 @@ const KpiCard = ({ icon, label, value, accent, sub }) => (
 
 // ── Role Pill ─────────────────────────────────────────────────────────────────
 const roleMap = {
-  Lead: { bg: "#EEE8FF", text: "#7C3AED" },
-  Dev: { bg: "#E0F2FE", text: "#0369A1" },
-  QA: { bg: "#FEF9C3", text: "#A16207" },
-  Analyst: { bg: "#E0FDF4", text: "#065F46" },
-  BA: { bg: "#FAE8FF", text: "#86198F" },
-  Tester: { bg: "#FFF7ED", text: "#C2410C" },
-  TL: { bg: "#EFF6FF", text: "#1D4ED8" },
+  // Your specified roles from the data
+  "FE Dev":{ bg: "#FFDDB7", text: "#653E00" },
+  "BA": { bg: "#856BFF1A", text: "#856BFF" },
+  "Tester": { bg: "#FFDDB7", text: "#653E00" },
+  "BE Dev": { bg: "#9AF2C5", text: "#0C714D" },
+  "UI/UX": { bg: "#BA1A1A1A", text: "#BA1A1A" },
+  "Solution Architect": { bg: "#EDEDF9", text: "#434654" },
+  "Project Manager": { bg: "#EDEDF9", text: "#434654" },
+  "Warranty & Support": { bg: "#9AF2C5", text: "#0C714D" },
+  "Deployment": { bg: "#FFDDB7", text: "#653E00" },
+  
+  // Keep existing role mappings for any other roles that might appear
+  "Lead": { bg: "#EDEDF9", text: "#434654" },
+  "Dev": { bg: "#9AF2C5", text: "#0C714D" },
+  "QA": { bg: "#FFDDB7", text: "#653E00" },
+  "Analyst": { bg: "#BA1A1A1A", text: "#BA1A1A" },
+  "TL": { bg: "#EDEDF9", text: "#434654" },
 };
 const RolePill = ({ role }) => {
   const s = roleMap[role] || { bg: "#F3F4F6", text: "#374151" };
@@ -285,11 +296,20 @@ const CircleProgress = ({ pct, size = 80, stroke = 7, color = "#6C5CE7" }) => {
 };
 
 // ── MAIN COMPONENT ────────────────────────────────────────────────────────────
-const UtilizationDashboard = () => {
-  const serviceDeliveryEmployees = useSelector(
-    (state) => state.auth.serviceDeliveryEmployees
-  );
+// const UtilizationDashboard = () => {
+//   const serviceDeliveryEmployees = useSelector(
+//     (state) => state.auth.serviceDeliveryEmployees
+//   );
 
+const UtilizationDashboard = () => {
+  const dispatch = useDispatch();
+  const hrmsEmployees = useSelector(selectAllEmployees);
+  const employeesLoading = useSelector(selectEmployeesLoading);
+  
+  // Filter only Delivery department employees
+  const deliveryEmployees = hrmsEmployees.filter(
+    emp => emp.Name_of_Department === 'Delivery'
+  );
   const [activeTab, setActiveTab] = useState("overview"); // overview | unit
 
   const [overall, setOverall] = useState([]);
@@ -312,7 +332,13 @@ const UtilizationDashboard = () => {
 
   // pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const rowsPerPage = 6;
+  const rowsPerPage = 10;
+
+  // Add these state variables with the other useState declarations
+const [withinProjectPage, setWithinProjectPage] = useState(1);
+const withinProjectRowsPerPage = 10;
+
+const [isEmployeeLoading, setIsEmployeeLoading] = useState(false);
 
   const [overallEmpPage, setOverallEmpPage] = useState(1);
   const overallEmpRowsPerPage = 10;
@@ -324,6 +350,18 @@ const UtilizationDashboard = () => {
   const [unitEmpData, setUnitEmpData] = useState(null);
   const [unitLoading, setUnitLoading] = useState(false);
   const [unitAllTasks, setUnitAllTasks] = useState([]);  // all tasks for emp across all projects
+
+// Fetch HRMS employees when component mounts
+useEffect(() => {
+  if (hrmsEmployees.length === 0 && !employeesLoading) {
+    setIsEmployeeLoading(true);
+    dispatch(fetchHrmsEmployees()).finally(() => {
+      setIsEmployeeLoading(false);
+    });
+  } else {
+    setIsEmployeeLoading(false);
+  }
+}, [dispatch, hrmsEmployees.length, employeesLoading]);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -397,6 +435,7 @@ useEffect(() => {
   // ── Fetch employee unit summary when employee or project changes ───────────
   useEffect(() => {
     setOverallEmpPage(1);
+     setWithinProjectPage(1);
     if (!unitEmployee) { setUnitEmpData(null); return; }
     const fetchUnitEmp = async () => {
       setUnitLoading(true);
@@ -433,7 +472,8 @@ useEffect(() => {
   }, [unitEmployee]);
 
   // ── derived ─────────────────────────────────────────────────────────────────
-  const serviceDeliveryNames = serviceDeliveryEmployees.map(e => e.emp_name);
+  // const serviceDeliveryNames = serviceDeliveryEmployees.map(e => e.emp_name);
+  const serviceDeliveryNames = deliveryEmployees.map(e => e.Employee_Name);
   const filteredOverall = overall.filter(u => serviceDeliveryNames.includes(u.user_name));
 
   const totalLoad = health.reduce((s, p) => s + Number(p.total_load), 0);
@@ -452,9 +492,9 @@ useEffect(() => {
 
  
 // employee utilization - show ALL service delivery employees
-const empRows = (showAllEmployees ? serviceDeliveryEmployees : serviceDeliveryEmployees.slice(0, 5)).map(emp => {
+const empRows = (showAllEmployees ? deliveryEmployees : deliveryEmployees.slice(0, 7)).map(emp => {
   // Get all assignments for this employee from tableData
-  const empAssignments = tableData.filter(row => row.user_name === emp.emp_name);
+  const empAssignments = tableData.filter(row => row.user_name === emp.Employee_Name);
   
   // Calculate totals from assignments
   const totalUnits = empAssignments.reduce((sum, row) => sum + Number(row.units_assigned || 0), 0);
@@ -464,8 +504,8 @@ const empRows = (showAllEmployees ? serviceDeliveryEmployees : serviceDeliveryEm
   const actualPct = totalUnits > 0 ? Math.round((utilizedUnits / totalUnits) * 100) : 0;
   
   return {
-    name: emp.emp_name.replace(/^(Mr\.|Ms\.|Mrs\.)\s*/i, ""),
-    fullName: emp.emp_name,
+    name: emp.Employee_Name.replace(/^(Mr\.|Ms\.|Mrs\.)\s*/i, ""),
+    fullName: emp.Employee_Name,
     role: emp.role || "—",
     pct: actualPct,
     totalUnits: totalUnits,
@@ -488,14 +528,15 @@ const empRows = (showAllEmployees ? serviceDeliveryEmployees : serviceDeliveryEm
 
   const pageNums = Array.from({ length: Math.min(totalPages, 3) }, (_, i) => i + 1);
 
-  if (loading) return (
-    <div className="flex items-center justify-center h-64 text-gray-400">
-      <div className="text-center">
-        <div className="animate-spin w-8 h-8 border-4 border-purple-200 border-t-[#856BFF] rounded-full mx-auto mb-3" />
-        Loading dashboard…
-      </div>
+ if (loading || isEmployeeLoading) return (
+  <div className="flex items-center justify-center min-h-[80vh] text-gray-400">
+    <div className="text-center">
+      <div className="animate-spin w-12 h-12 border-4 border-purple-200 border-t-[#856BFF] rounded-full mx-auto mb-4" />
+      <div className="text-[16px] font-semibold text-gray-500">Loading Dashboard</div>
+      <div className="text-[13px] text-gray-400 mt-1">Please wait while we fetch employee data...</div>
     </div>
-  );
+  </div>
+)
 
   // ── Unit Utilization derived ───────────────────────────────────────────────
   const unitEmpProjectSummary = unitEmpData?.project_summary?.[0] || null;
@@ -504,13 +545,13 @@ const empRows = (showAllEmployees ? serviceDeliveryEmployees : serviceDeliveryEm
   const unitEmpName = unitEmpData?.employee?.emp_name || "";
 
   return (
-    <div className="p-6 bg-gray-50 min-h-full font-sans">
+    <div className="mx-auto  bg-[#FAF8FF] p-5 font-sans">
 
       {/* ── Title + Tab bar ── */}
       <div className="mb-5 flex items-end justify-between flex-wrap gap-3">
         <div>
-          <h2 className="text-xl font-extrabold text-gray-800">Utilization Dashboard</h2>
-          <p className="text-sm text-gray-400 mt-0.5">Monitor resource allocation, project efforts, and completion status.</p>
+          <h2 className="text-[24px] font-bold text-[#191B23] m-0">Utilization Dashboard</h2>
+          <p className="text-[16px] text-[#434654] mt-1">Monitor resource allocation, project efforts, and completion status.</p>
         </div>
         <div className="flex gap-1 bg-white border border-gray-200 rounded-xl p-1 shadow-sm">
           {[["overview", "📊 Overview"], ["unit", "🎯 Unit Utilization"]].map(([key, label]) => (
@@ -552,10 +593,10 @@ const empRows = (showAllEmployees ? serviceDeliveryEmployees : serviceDeliveryEm
                   onChange={val => { setUnitEmployee(val); setOverallEmpPage(1); }}
                   placeholder="— Choose an employee —"
                   disabled={!unitProject}
-                  options={serviceDeliveryEmployees.map(emp => ({
-                    value: String(emp.employee_id || emp.emp_id),
-                    label: emp.emp_name,
-                  }))}
+                  options={deliveryEmployees.map(emp => ({
+  value: String(emp.Employee_ID),
+  label: emp.Employee_Name,
+}))}
                 />
               </div>
             </div>
@@ -641,10 +682,10 @@ const empRows = (showAllEmployees ? serviceDeliveryEmployees : serviceDeliveryEm
 
                   {/* Person Days KPI row for within Project */}
                   {(() => {
-                    const empObj = serviceDeliveryEmployees.find(
-                      e => String(e.employee_id || e.emp_id) === String(unitEmployee)
-                    );
-                    const empName = empObj?.emp_name || unitEmployee;
+                    const empObj = deliveryEmployees.find(
+  e => String(e.Employee_ID) === String(unitEmployee)
+);
+const empName = empObj?.Employee_Name || unitEmployee;
                     const empProjectRows = tableData.filter(r => {
                       const matchEmp = r.user_name === empName;
                       const matchProj = String(r.project_id) === String(unitProject) ||
@@ -675,104 +716,199 @@ const empRows = (showAllEmployees ? serviceDeliveryEmployees : serviceDeliveryEm
                     );
                   })()}
 
-                  {/* Task breakdown table with 12 detailed columns */}
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead className="sticky top-0 z-10 bg-[#EFF4FF]">
-                        <tr className="bg-[#EFF4FF] border-b border-gray-100">
-                          {[
-                            "Employee Name", "Project Name", "Task Name",
-                            "Total Units", "Total Person Days",
-                            "Completed Units", "Completed Person Days",
-                            "Pending Units", "Pending Person Days",
-                            "Unit Utilization (%)", "Person Days Utilization (%)", "Hours Utilization (%)"
-                          ].map(h => (
-                            <th key={h} className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-2.5 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {(() => {
-                          const empObj = serviceDeliveryEmployees.find(
-                            e => String(e.employee_id || e.emp_id) === String(unitEmployee)
-                          );
-                          const empName = empObj?.emp_name || unitEmployee;
-                          const empProjectRows = tableData.filter(r => {
-                            const matchEmp = r.user_name === empName;
-                            const matchProj = String(r.project_id) === String(unitProject) ||
-                              r.project_name === unitProjectSummary?.project_name;
-                            return matchEmp && matchProj;
-                          });
+                {/* Task breakdown table with 12 detailed columns */}
+{(() => {
+  const empObj = deliveryEmployees.find(
+    e => String(e.Employee_ID) === String(unitEmployee)
+  );
+  const empName = empObj?.Employee_Name || unitEmployee;
+  const empProjectRows = tableData.filter(r => {
+    const matchEmp = r.user_name === empName;
+    const matchProj = String(r.project_id) === String(unitProject) ||
+      r.project_name === unitProjectSummary?.project_name;
+    return matchEmp && matchProj;
+  });
 
-                          const displayRows = empProjectRows.length > 0
-                            ? empProjectRows
-                            : unitEmpTasks.map(t => ({
-                              user_name: empName,
-                              project_name: unitProjectSummary?.project_name || "—",
-                              task_name: t.task_name,
-                              units_assigned: t.units_assigned,
-                              units_completed: t.units_completed,
-                              units_pending: t.units_pending,
-                              hours_assigned: 0,
-                              hours_utilized: 0
-                            }));
+  const displayRows = empProjectRows.length > 0
+    ? empProjectRows
+    : unitEmpTasks.map(t => ({
+      user_name: empName,
+      project_name: unitProjectSummary?.project_name || "—",
+      task_name: t.task_name,
+      units_assigned: t.units_assigned,
+      units_completed: t.units_completed,
+      units_pending: t.units_pending,
+      hours_assigned: 0,
+      hours_utilized: 0
+    }));
 
-                          if (displayRows.length === 0) {
-                            return <tr><td colSpan={12} className="py-6 text-center text-gray-300">No tasks found</td></tr>;
-                          }
+  // Pagination calculations for Section 2
+  const totalWithinProjectPages = Math.ceil(displayRows.length / withinProjectRowsPerPage);
+  const currentWithinProjectRows = displayRows.slice(
+    (withinProjectPage - 1) * withinProjectRowsPerPage,
+    withinProjectPage * withinProjectRowsPerPage
+  );
+  const withinProjectPageNums = Array.from(
+    { length: Math.min(totalWithinProjectPages, 3) },
+    (_, i) => {
+      if (totalWithinProjectPages <= 3 || withinProjectPage <= 2) return i + 1;
+      if (withinProjectPage >= totalWithinProjectPages - 1) return totalWithinProjectPages - 2 + i;
+      return withinProjectPage - 1 + i;
+    }
+  );
 
-                          return displayRows.map((t, i) => {
-                            const assignedUnits = Number(t.units_assigned || 0);
-                            const completedUnits = Number(t.units_completed || 0);
-                            const pendingUnits = Number(t.units_pending || 0);
-                            const assignedHrs = Number(t.hours_assigned || 0);
-                            const utilizedHrs = Number(t.hours_utilized || 0);
-                            const pendingHrs = Math.max(assignedHrs - utilizedHrs, 0);
-                            const totalPD = parseFloat((assignedHrs / 8).toFixed(2));
-                            const completedPD = parseFloat((utilizedHrs / 8).toFixed(2));
-                            const pendingPD = parseFloat((pendingHrs / 8).toFixed(2));
+  return (
+    <>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="sticky top-0 z-10 bg-[#EFF4FF]">
+            <tr className="bg-[#EFF4FF] border-b border-gray-100">
+              {[
+                "Employee Name", "Project Name", "Task Name",
+                "Total Units", "Total Person Days",
+                "Completed Units", "Completed Person Days",
+                "Pending Units", "Pending Person Days",
+                "Unit Utilization (%)", "Person Days Utilization (%)", "Hours Utilization (%)"
+              ].map(h => (
+                <th key={h} className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-2.5 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {displayRows.length === 0 ? (
+              <tr>
+                <td colSpan={12} className="py-6 text-center text-gray-300">No tasks found</td>
+              </tr>
+            ) : (
+              currentWithinProjectRows.map((t, i) => {
+                const assignedUnits = Number(t.units_assigned || 0);
+                const completedUnits = Number(t.units_completed || 0);
+                const pendingUnits = Number(t.units_pending || 0);
+                const assignedHrs = Number(t.hours_assigned || 0);
+                const utilizedHrs = Number(t.hours_utilized || 0);
+                const pendingHrs = Math.max(assignedHrs - utilizedHrs, 0);
+                const totalPD = parseFloat((assignedHrs / 8).toFixed(2));
+                const completedPD = parseFloat((utilizedHrs / 8).toFixed(2));
+                const pendingPD = parseFloat((pendingHrs / 8).toFixed(2));
 
-                            const unitPct = assignedUnits > 0 ? Math.round((completedUnits / assignedUnits) * 100) : 0;
-                            const pdPct = totalPD > 0 ? Math.round((completedPD / totalPD) * 100) : 0;
-                            const hrsPct = assignedHrs > 0 ? Math.round((utilizedHrs / assignedHrs) * 100) : 0;
+                const unitPct = assignedUnits > 0 ? Math.round((completedUnits / assignedUnits) * 100) : 0;
+                const pdPct = totalPD > 0 ? Math.round((completedPD / totalPD) * 100) : 0;
+                const hrsPct = assignedHrs > 0 ? Math.round((utilizedHrs / assignedHrs) * 100) : 0;
 
-                            return (
-                              <tr key={i} className="border-b border-gray-50 hover:bg-gray-50/60">
-                                <td className="px-4 py-2.5 font-semibold text-gray-700 text-[12px] whitespace-nowrap">{empName}</td>
-                                <td className="px-4 py-2.5 text-[12px] text-gray-500">{t.project_name || unitProjectSummary?.project_name || "—"}</td>
-                                <td className="px-4 py-2.5 font-semibold text-gray-700 text-[12px]">{t.task_name}</td>
-                                <td className="px-4 py-2.5 text-center font-bold text-blue-600">{assignedUnits}</td>
-                                <td className="px-4 py-2.5 text-center font-semibold text-slate-700">{totalPD}</td>
-                                <td className="px-4 py-2.5 text-center font-bold text-emerald-500">{completedUnits}</td>
-                                <td className="px-4 py-2.5 text-center font-semibold text-emerald-400">{completedPD}</td>
-                                <td className="px-4 py-2.5 text-center font-bold" style={{ color: pendingUnits > 0 ? "#e74c3c" : "#00b894" }}>{pendingUnits}</td>
-                                <td className="px-4 py-2.5 text-center font-semibold" style={{ color: pendingPD > 0 ? "#e74c3c" : "#00b894" }}>{pendingPD}</td>
-                                <td className="px-4 py-2.5 text-center">
-                                  <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${unitPct >= 100 ? 'bg-emerald-50 text-emerald-600' : unitPct >= 50 ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-rose-500'}`}>
-                                    {unitPct}%
-                                  </span>
-                                </td>
-                                <td className="px-4 py-2.5 text-center">
-                                  <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${pdPct >= 100 ? 'bg-emerald-50 text-emerald-600' : pdPct >= 50 ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-rose-500'}`}>
-                                    {pdPct}%
-                                  </span>
-                                </td>
-                                <td className="px-4 py-2.5 text-center">
-                                  <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${hrsPct >= 100 ? 'bg-emerald-50 text-emerald-600' : hrsPct >= 50 ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-rose-500'}`}>
-                                    {hrsPct}%
-                                  </span>
-                                </td>
-                              </tr>
-                            );
-                          });
-                        })()}
-                      </tbody>
-                    </table>
-                  </div>
+                return (
+                  <tr key={i} className="border-b border-gray-50 hover:bg-gray-50/60">
+                    <td className="px-4 py-2.5 font-semibold text-gray-700 text-[12px] whitespace-nowrap">{empName}</td>
+                    <td className="px-4 py-2.5 text-[12px] text-gray-500">{t.project_name || unitProjectSummary?.project_name || "—"}</td>
+                    <td className="px-4 py-2.5 font-semibold text-gray-700 text-[12px]">{t.task_name}</td>
+                    <td className="px-4 py-2.5 text-center font-bold text-blue-600">{assignedUnits}</td>
+                    <td className="px-4 py-2.5 text-center font-semibold text-slate-700">{totalPD}</td>
+                    <td className="px-4 py-2.5 text-center font-bold text-emerald-500">{completedUnits}</td>
+                    <td className="px-4 py-2.5 text-center font-semibold text-emerald-400">{completedPD}</td>
+                    <td className="px-4 py-2.5 text-center font-bold" style={{ color: pendingUnits > 0 ? "#e74c3c" : "#00b894" }}>{pendingUnits}</td>
+                    <td className="px-4 py-2.5 text-center font-semibold" style={{ color: pendingPD > 0 ? "#e74c3c" : "#00b894" }}>{pendingPD}</td>
+                    <td className="px-4 py-2.5 text-center">
+                      <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${unitPct >= 100 ? 'bg-emerald-50 text-emerald-600' : unitPct >= 50 ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-rose-500'}`}>
+                        {unitPct}%
+                      </span>
+                    </td>
+                    <td className="px-4 py-2.5 text-center">
+                      <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${pdPct >= 100 ? 'bg-emerald-50 text-emerald-600' : pdPct >= 50 ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-rose-500'}`}>
+                        {pdPct}%
+                      </span>
+                    </td>
+                    <td className="px-4 py-2.5 text-center">
+                      <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${hrsPct >= 100 ? 'bg-emerald-50 text-emerald-600' : hrsPct >= 50 ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-rose-500'}`}>
+                        {hrsPct}%
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pagination for Section 2 */}
+      <div className="flex items-center justify-between px-5 py-3 border-t border-gray-50" style={{ backgroundColor: '#EFF4FF' }}>
+        <span className="text-[11px] text-[#434654]">
+          Showing {displayRows.length === 0 ? 0 : (withinProjectPage - 1) * withinProjectRowsPerPage + 1} to {Math.min(withinProjectPage * withinProjectRowsPerPage, displayRows.length)} of {displayRows.length} entries
+        </span>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setWithinProjectPage(p => Math.max(1, p - 1))}
+            disabled={withinProjectPage === 1}
+            className="w-7 h-7 flex items-center justify-center rounded border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed text-xs"
+          >‹</button>
+          {withinProjectPageNums.map(n => (
+            <button key={n}
+              onClick={() => setWithinProjectPage(n)}
+              className={`w-7 h-7 flex items-center justify-center rounded text-[12px] font-semibold border transition-colors
+              ${withinProjectPage === n
+                  ? "bg-[#856BFF] text-white border-[#856BFF]"
+                  : "border-gray-200 text-gray-500 hover:bg-gray-50"}`}
+            >{n}</button>
+          ))}
+          {totalWithinProjectPages > 3 && withinProjectPageNums[withinProjectPageNums.length - 1] < totalWithinProjectPages && (
+            <span className="text-gray-400 text-xs px-1">…</span>
+          )}
+          <button
+            onClick={() => setWithinProjectPage(p => Math.min(totalWithinProjectPages, p + 1))}
+            disabled={withinProjectPage === totalWithinProjectPages || totalWithinProjectPages === 0}
+            className="w-7 h-7 flex items-center justify-center rounded border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed text-xs"
+          >›</button>
+        </div>
+      </div>
+    </>
+  );
+})()}
                 </>
               ) : (
-                <div className="text-center text-gray-300 py-6">No assignment data for this employee in the selected project.</div>
-              )}
+  // Show table with headers even when no data
+  <div>
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead className="sticky top-0 z-10 bg-[#EFF4FF]">
+          <tr className="bg-[#EFF4FF] border-b border-gray-100">
+            {[
+              "Employee Name", "Project Name", "Task Name",
+              "Total Units", "Total Person Days",
+              "Completed Units", "Completed Person Days",
+              "Pending Units", "Pending Person Days",
+              "Unit Utilization (%)", "Person Days Utilization (%)", "Hours Utilization (%)"
+            ].map(h => (
+              <th key={h} className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-2.5 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td colSpan={12} className="py-6 text-center text-gray-300">No assignment data for this employee in the selected project.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    {/* Add pagination footer even for empty state */}
+    <div className="flex items-center justify-between px-5 py-3 border-t border-gray-50" style={{ backgroundColor: '#EFF4FF' }}>
+      <span className="text-[11px] text-[#434654]">
+        Showing 0 to 0 of 0 entries
+      </span>
+      <div className="flex items-center gap-1">
+        <button
+          disabled
+          className="w-7 h-7 flex items-center justify-center rounded border border-gray-200 text-gray-500 opacity-40 cursor-not-allowed text-xs"
+        >‹</button>
+        <button
+          className="w-7 h-7 flex items-center justify-center rounded text-[12px] font-semibold border bg-[#856BFF] text-white border-[#856BFF]"
+        >1</button>
+        <button
+          disabled
+          className="w-7 h-7 flex items-center justify-center rounded border border-gray-200 text-gray-500 opacity-40 cursor-not-allowed text-xs"
+        >›</button>
+      </div>
+    </div>
+  </div>
+)}
             </div>
           )}
 
@@ -829,10 +965,10 @@ const empRows = (showAllEmployees ? serviceDeliveryEmployees : serviceDeliveryEm
 
                 {/* Person Days KPI row — derived from tableData (has hours fields) */}
                 {(() => {
-                  const empObj = serviceDeliveryEmployees.find(
-                    e => String(e.employee_id || e.emp_id) === String(unitEmployee)
-                  );
-                  const empName = empObj?.emp_name || unitEmployee;
+                  const empObj = deliveryEmployees.find(
+  e => String(e.Employee_ID) === String(unitEmployee)
+);
+const empName = empObj?.Employee_Name || unitEmployee;
                   const empRows = tableData.filter(r => r.user_name === empName);
                   const totalHrsAssigned = empRows.reduce((s, r) => s + Number(r.hours_assigned || 0), 0);
                   const totalHrsUtilized = empRows.reduce((s, r) => s + Number(r.hours_utilized || 0), 0);
@@ -862,10 +998,10 @@ const empRows = (showAllEmployees ? serviceDeliveryEmployees : serviceDeliveryEm
                 {/* All-project task table */}
                 {(() => {
                   // resolve employee name from serviceDeliveryEmployees
-                  const empObj = serviceDeliveryEmployees.find(
-                    e => String(e.employee_id || e.emp_id) === String(unitEmployee)
-                  );
-                  const empName = empObj?.emp_name || unitEmployee;
+                 const empObj = deliveryEmployees.find(
+  e => String(e.Employee_ID) === String(unitEmployee)
+);
+const empName = empObj?.Employee_Name || unitEmployee;
                   // use tableData (by-project endpoint) filtered by this employee — it has hours fields
                   const empRows = tableData.filter(r => r.user_name === empName);
                   const totalOverallPages = Math.ceil(empRows.length / overallEmpRowsPerPage);
@@ -1006,7 +1142,8 @@ const empRows = (showAllEmployees ? serviceDeliveryEmployees : serviceDeliveryEm
 
         {/* ── KPI Strip ── */}
         <div className="flex gap-3 flex-wrap mb-6">
-          <KpiCard icon="material-symbols:group" label="Employees" value={serviceDeliveryEmployees.length} accent="#856BFF" />
+          {/* <KpiCard icon="material-symbols:group" label="Employees" value={serviceDeliveryEmployees.length} accent="#856BFF" /> */}
+          <KpiCard icon="material-symbols:group" label="Employees" value={deliveryEmployees.length} accent="#856BFF" />
           <KpiCard icon="material-symbols:inventory" label="Estimated Units" value={totalLoad} accent="#006C49" />
           <KpiCard icon="material-symbols:assignment" label="Assigned Units" value={totalAssigned} accent="#784B00" />
           <KpiCard icon="material-symbols:check-circle" label="Completed Units" value={totalCompleted} accent="#00714D" />
@@ -1023,9 +1160,9 @@ const empRows = (showAllEmployees ? serviceDeliveryEmployees : serviceDeliveryEm
                 <div className="text-[13px] font-bold text-gray-700">Employee Utilization</div>
                 <div className="text-[11px] text-gray-400">Capacity and current load across teams</div>
               </div>
-              <button className="text-gray-400 hover:text-gray-600">
+              {/* <button className="text-gray-400 hover:text-gray-600">
                 <Icon icon="material-symbols:more-horiz" width="22" height="22" color="#856BFF" />
-              </button>
+              </button> */}
             </div>
 
             <table className="w-full text-sm">
@@ -1062,8 +1199,8 @@ const empRows = (showAllEmployees ? serviceDeliveryEmployees : serviceDeliveryEm
                 className="text-[12px] font-semibold text-[#856BFF] hover:text-purple-800 transition-colors"
               >
                 {showAllEmployees
-                  ? "Show less"
-                  : `View all ${serviceDeliveryEmployees.length} employees`}
+  ? "Show less"
+  : `View all ${deliveryEmployees.length} employees`}
               </button>
             </div>
           </div>
@@ -1133,7 +1270,7 @@ const empRows = (showAllEmployees ? serviceDeliveryEmployees : serviceDeliveryEm
               {/* search */}
               <div className="min-w-[180px]">
                 <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-1.5 h-[38px] bg-white focus-within:border-purple-400 transition-colors">
-                  <Icon icon="material-symbols:search" width="16" height="16" color="#856BFF" />
+                  <Icon icon="material-symbols:search" width="16" height="16" color="#434655" />
                   <input
                     type="text"
                     placeholder="Search user or project..."
@@ -1269,7 +1406,7 @@ const empRows = (showAllEmployees ? serviceDeliveryEmployees : serviceDeliveryEm
             <div className="flex flex-wrap items-center gap-2">
               {/* Search */}
               <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-1.5 bg-white focus-within:border-purple-400 transition-colors">
-                <Icon icon="material-symbols:search" width="14" height="14" color="#856BFF" />
+                <Icon icon="material-symbols:search" width="14" height="14" color="#434655" />
                 <input
                   type="text"
                   placeholder="Search project..."
