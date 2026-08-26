@@ -1312,15 +1312,22 @@ const empName = empObj?.Employee_Name || unitEmployee;
 
   <div className="overflow-x-auto">
     <table className="w-full text-sm">
-      <thead className="sticky top-0 z-10 bg-[#EFF4FF]">
-        <tr className="border-b border-gray-50" style={{ backgroundColor: '#EFF4FF' }}>
-          {["EMPLOYEE", "ROLE", "UTILIZATION", "STATUS"].map(h => (
-            <th key={h} className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-left text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">
-              {h}
-            </th>
-          ))}
-        </tr>
-      </thead>
+     <thead className="sticky top-0 z-10 bg-[#EFF4FF]">
+  <tr className="border-b border-gray-50" style={{ backgroundColor: '#EFF4FF' }}>
+    <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-left text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">
+      EMPLOYEE
+    </th>
+    <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-left text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">
+      ROLE
+    </th>
+    <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-left text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">
+      UTILIZATION
+    </th>
+    <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-center text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">
+      STATUS
+    </th>
+  </tr>
+</thead>
       <tbody>
         {paginatedEmpRows.length === 0 ? (
           <tr>

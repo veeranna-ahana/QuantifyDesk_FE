@@ -48,3 +48,20 @@
 .read-the-docs {
   color: #888;
 }
+
+button:focus {
+    outline: none !important;
+}
+
+button:focus-visible {
+    outline: none !important;
+}
+
+/* Or for all elements */
+*:focus {
+    outline: none !important;
+}
+
+*:focus-visible {
+    outline: none !important;
+}

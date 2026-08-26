@@ -9,7 +9,7 @@ import {
   exportEmployeeLevelExcel,
 } from "../api/recon.api";
 import { Icon } from '@iconify/react';
-import { DownloadOutlined } from "@ant-design/icons";
+// import { DownloadOutlined } from "@ant-design/icons";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 
 // ─── Number Formatting Helper ────────────────────────────────────
@@ -147,6 +147,10 @@ const UsersIcon = ({ className = "w-10 h-10" }) => (
 
 const FilterIcon = ({ className = "w-10 h-10" }) => (
   <Icon icon="material-symbols:filter-list" className={className} />
+);
+
+const DownloadIcon = ({ className = "w-4 h-4", color = "#ffffff" }) => (
+  <Icon icon="akar-icons:download" className={className} color={color} />
 );
 
 // ─── Reusable numbered pagination bar ────────────────────────────
@@ -1462,7 +1466,7 @@ const ReconPage = () => {
                         onClick={() => exportProjectLevelExcel(filters)}
                         className="flex items-center gap-1.5 px-3.5 py-2 bg-[#856BFF] hover:bg-[#7556ff] text-white rounded-lg text-xs font-semibold shadow-sm transition-colors"
                       >
-                        <DownloadOutlined />
+                        <DownloadIcon className="w-4 h-4" color="#ffffff" />
                         <span>Export Excel</span>
                       </button>
                       <span className="text-xs font-medium text-gray-400">{filteredProjects.length} projects</span>
@@ -1629,7 +1633,7 @@ const ReconPage = () => {
                         onClick={() => exportEmployeeLevelExcel(filters)}
                         className="flex items-center gap-1.5 px-3.5 py-2 bg-[#856BFF] hover:bg-[#775bf8] text-white rounded-lg text-xs font-semibold shadow-sm transition-colors"
                       >
-                        <DownloadOutlined />
+                        <DownloadIcon className="w-4 h-4" color="#ffffff" />
                         <span>Export Excel</span>
                       </button>
                       <span className="text-xs font-medium text-gray-400">Showing {filteredEmployees.length} assignments</span>
