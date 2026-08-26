@@ -165,7 +165,7 @@ const ProgressBar = ({ pct }) => {
       <div className="w-28 h-1.5 rounded-full bg-gray-100 mb-1">
         <div className="h-full rounded-full" style={{ width: `${Math.min(pct, 100)}%`, background: color }} />
       </div>
-      <span className="text-[10px]" style={{ color }}>{label}</span>
+      <span className="text-[11px] font-semibold" style={{ color }}>{label}</span>
     </div>
   );
 };
@@ -335,7 +335,8 @@ const UtilizationDashboard = () => {
   const rowsPerPage = 10;
   // Add these with your other useState declarations
 const [empCurrentPage, setEmpCurrentPage] = useState(1);
-const [empRowsPerPage, setEmpRowsPerPage] = useState(5);
+const [empRowsPerPage, setEmpRowsPerPage] = useState(7);
+const [empSearch, setEmpSearch] = useState("");
 
   // Add these state variables with the other useState declarations
 const [withinProjectPage, setWithinProjectPage] = useState(1);
@@ -519,18 +520,13 @@ useEffect(() => {
  
 // employee utilization - show ALL service delivery employees with pagination
 const empRows = useMemo(() => {
-  // Always use all employees, pagination will handle the display
   const employees = deliveryEmployees;
   
-  return employees.map(emp => {
-    // Get all assignments for this employee from tableData
+  // First, map employees to their data
+  const mappedEmployees = employees.map(emp => {
     const empAssignments = tableData.filter(row => row.user_name === emp.Employee_Name);
-    
-    // Calculate totals from assignments
     const totalUnits = empAssignments.reduce((sum, row) => sum + Number(row.units_assigned || 0), 0);
     const utilizedUnits = empAssignments.reduce((sum, row) => sum + Number(row.units_completed || 0), 0);
-    
-    // Calculate percentage from actual data
     const actualPct = totalUnits > 0 ? Math.round((utilizedUnits / totalUnits) * 100) : 0;
     
     return {
@@ -542,7 +538,19 @@ const empRows = useMemo(() => {
       utilizedUnits: utilizedUnits,
     };
   });
-}, [deliveryEmployees, tableData]);
+
+  // Then filter based on search
+  if (!empSearch.trim()) {
+    return mappedEmployees;
+  }
+  
+  const searchLower = empSearch.toLowerCase().trim();
+  return mappedEmployees.filter(emp => 
+    emp.name.toLowerCase().includes(searchLower) ||
+    emp.fullName.toLowerCase().includes(searchLower) ||
+    emp.role.toLowerCase().includes(searchLower)
+  );
+}, [deliveryEmployees, tableData, empSearch]); // ✅ Added empSearch as dependency
 
 // Paginated employee data
 const paginatedEmpRows = useMemo(() => {
@@ -551,9 +559,9 @@ const paginatedEmpRows = useMemo(() => {
 }, [empRows, empCurrentPage, empRowsPerPage]);
 
 // Add this useEffect
-useEffect(() => {
-  setEmpCurrentPage(1);
-}, [empRows]);
+// useEffect(() => {
+//   setEmpCurrentPage(1);
+// }, [empRows]);
 
   // unique employee names for filter dropdown
   const employeeOptions = [...new Set(tableData.map(r => r.user_name).filter(Boolean))].sort();
@@ -568,7 +576,30 @@ useEffect(() => {
   const totalPages = Math.ceil(filtered.length / rowsPerPage);
   const currentRows = filtered.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
 
-  const pageNums = Array.from({ length: Math.min(totalPages, 3) }, (_, i) => i + 1);
+  // Generate page numbers with ellipsis logic
+const pageNums = useMemo(() => {
+  const total = totalPages;
+  const current = currentPage;
+  const maxVisible = 3;
+  
+  if (total <= maxVisible) {
+    return Array.from({ length: total }, (_, i) => i + 1);
+  }
+  
+  let pages = [];
+  if (current <= 2) {
+    // Near the start
+    pages = [1, 2, 3];
+  } else if (current >= total - 1) {
+    // Near the end
+    pages = [total - 2, total - 1, total];
+  } else {
+    // Middle
+    pages = [current - 1, current, current + 1];
+  }
+  
+  return pages;
+}, [totalPages, currentPage]);
 
  if (loading || isEmployeeLoading) return (
   <div className="flex items-center justify-center min-h-[80vh] text-gray-400">
@@ -1037,132 +1068,176 @@ const empName = empObj?.Employee_Name || unitEmployee;
                 })()}
 
 
-                {/* All-project task table */}
-                {(() => {
-                  // resolve employee name from serviceDeliveryEmployees
-                 const empObj = deliveryEmployees.find(
-  e => String(e.Employee_ID) === String(unitEmployee)
-);
-const empName = empObj?.Employee_Name || unitEmployee;
-                  // use tableData (by-project endpoint) filtered by this employee — it has hours fields
-                  const empRows = tableData.filter(r => r.user_name === empName);
-                  const totalOverallPages = Math.ceil(empRows.length / overallEmpRowsPerPage);
-                  const currentOverallRows = empRows.slice(
-                    (overallEmpPage - 1) * overallEmpRowsPerPage,
-                    overallEmpPage * overallEmpRowsPerPage
-                  );
-                  const overallPageNums = Array.from(
-                    { length: Math.min(totalOverallPages, 3) },
-                    (_, i) => {
-                      if (totalOverallPages <= 3 || overallEmpPage <= 2) return i + 1;
-                      if (overallEmpPage >= totalOverallPages - 1) return totalOverallPages - 2 + i;
-                      return overallEmpPage - 1 + i;
-                    }
-                  );
+               {/* All-project task table */}
+{(() => {
+  // resolve employee name from serviceDeliveryEmployees
+  const empObj = deliveryEmployees.find(
+    e => String(e.Employee_ID) === String(unitEmployee)
+  );
+  const empName = empObj?.Employee_Name || unitEmployee;
+  // use tableData (by-project endpoint) filtered by this employee — it has hours fields
+  const empRows = tableData.filter(r => r.user_name === empName);
+  const totalOverallPages = Math.ceil(empRows.length / overallEmpRowsPerPage);
+  const currentOverallRows = empRows.slice(
+    (overallEmpPage - 1) * overallEmpRowsPerPage,
+    overallEmpPage * overallEmpRowsPerPage
+  );
+  
+  // Generate page numbers with ellipsis logic
+  const getOverallPageNumbers = () => {
+    const total = totalOverallPages;
+    const current = overallEmpPage;
+    const maxVisible = 3;
+    
+    if (total <= maxVisible) {
+      return Array.from({ length: total }, (_, i) => i + 1);
+    }
+    
+    let pages = [];
+    if (current <= 2) {
+      // Near the start
+      pages = [1, 2, 3];
+    } else if (current >= total - 1) {
+      // Near the end
+      pages = [total - 2, total - 1, total];
+    } else {
+      // Middle
+      pages = [current - 1, current, current + 1];
+    }
+    
+    return pages;
+  };
 
-                  return (
-                    <>
-                      <div className="overflow-x-auto mt-5">
-                        <table className="w-full text-sm">
-                          <thead className="sticky top-0 z-10 bg-[#EFF4FF]">
-                            <tr className="bg-[#EFF4FF] border-b border-gray-100" style={{ backgroundColor: '#EFF4FF' }} >
-                              {[
-                                "Employee Name", "Project Name", "Task Name",
-                                "Total Units", "Total Person Days",
-                                "Completed Units", "Completed Person Days",
-                                "Pending Units", "Pending Person Days",
-                                "Unit Utilization (%)", "Person Days Utilization (%)", "Hours Utilization (%)"
-                              ].map(h => (
-                                <th key={h} className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-2.5 text-left text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">{h}</th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {currentOverallRows.length === 0 ? (
-                              <tr><td colSpan={12} className="py-6 text-center text-gray-300">No tasks found</td></tr>
-                            ) : (
-                              currentOverallRows.map((t, i) => {
-                                const assignedUnits = Number(t.units_assigned || 0);
-                                const completedUnits = Number(t.units_completed || 0);
-                                const pendingUnits = Number(t.units_pending || 0);
-                                const assignedHrs = Number(t.hours_assigned || 0);
-                                const utilizedHrs = Number(t.hours_utilized || 0);
-                                const pendingHrs = Math.max(assignedHrs - utilizedHrs, 0);
-                                // person days = hours / 8
-                                const totalPD = parseFloat((assignedHrs / 8).toFixed(2));
-                                const completedPD = parseFloat((utilizedHrs / 8).toFixed(2));
-                                const pendingPD = parseFloat((pendingHrs / 8).toFixed(2));
-                                // utilization %
-                                const unitPct = assignedUnits > 0 ? Math.round((completedUnits / assignedUnits) * 100) : 0;
-                                const pdPct = totalPD > 0 ? Math.round((completedPD / totalPD) * 100) : 0;
-                                const hrsPct = assignedHrs > 0 ? Math.round((utilizedHrs / assignedHrs) * 100) : 0;
-                                return (
-                                  <tr key={i} className="border-b border-gray-50 hover:bg-gray-50/60">
-                                    <td className="px-4 py-2.5 font-semibold text-gray-700 text-[12px] whitespace-nowrap">{empName}</td>
-                                    <td className="px-4 py-2.5 text-[12px] text-gray-500">{t.project_name || "—"}</td>
-                                    <td className="px-4 py-2.5 font-semibold text-gray-700 text-[12px]">{t.task_name}</td>
-                                    <td className="px-4 py-2.5 text-center font-bold text-blue-600">{assignedUnits}</td>
-                                    <td className="px-4 py-2.5 text-center font-semibold text-slate-700">{totalPD}</td>
-                                    <td className="px-4 py-2.5 text-center font-bold text-emerald-500">{completedUnits}</td>
-                                    <td className="px-4 py-2.5 text-center font-semibold text-emerald-400">{completedPD}</td>
-                                    <td className="px-4 py-2.5 text-center font-bold" style={{ color: pendingUnits > 0 ? "#e74c3c" : "#00b894" }}>{pendingUnits}</td>
-                                    <td className="px-4 py-2.5 text-center font-semibold" style={{ color: pendingPD > 0 ? "#e74c3c" : "#00b894" }}>{pendingPD}</td>
-                                    <td className="px-4 py-2.5 text-center">
-                                      <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${unitPct >= 100 ? 'bg-emerald-50 text-emerald-600' : unitPct >= 50 ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-rose-500'}`}>
-                                        {unitPct}%
-                                      </span>
-                                    </td>
-                                    <td className="px-4 py-2.5 text-center">
-                                      <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${pdPct >= 100 ? 'bg-emerald-50 text-emerald-600' : pdPct >= 50 ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-rose-500'}`}>
-                                        {pdPct}%
-                                      </span>
-                                    </td>
-                                    <td className="px-4 py-2.5 text-center">
-                                      <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${hrsPct >= 100 ? 'bg-emerald-50 text-emerald-600' : hrsPct >= 50 ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-rose-500'}`}>
-                                        {hrsPct}%
-                                      </span>
-                                    </td>
-                                  </tr>
-                                );
-                              })
-                            )}
-                          </tbody>
-                        </table>
-                      </div>
+  const overallPageNums = getOverallPageNumbers();
 
-                      {/* Pagination */}
-                      <div className="flex items-center justify-between px-5 py-3 border-t border-gray-50" style={{ backgroundColor: '#EFF4FF' }}>
-                        <span className="text-[11px] text-[#434654]">
-                          Showing {empRows.length === 0 ? 0 : (overallEmpPage - 1) * overallEmpRowsPerPage + 1} to {Math.min(overallEmpPage * overallEmpRowsPerPage, empRows.length)} of {empRows.length} entries
-                        </span>
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => setOverallEmpPage(p => Math.max(1, p - 1))}
-                            disabled={overallEmpPage === 1}
-                            className="w-7 h-7 flex items-center justify-center rounded border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed text-xs"
-                          >‹</button>
-                          {overallPageNums.map(n => (
-                            <button key={n}
-                              onClick={() => setOverallEmpPage(n)}
-                              className={`w-7 h-7 flex items-center justify-center rounded text-[12px] font-semibold border transition-colors
-                              ${overallEmpPage === n
-                                  ? "bg-[#856BFF] text-white border-[#856BFF]"
-                                  : "border-gray-200 text-gray-500 hover:bg-gray-50"}`}
-                            >{n}</button>
-                          ))}
-                          {totalOverallPages > 3 && overallPageNums[overallPageNums.length - 1] < totalOverallPages && (
-                            <span className="text-gray-400 text-xs px-1">…</span>
-                          )}
-                          <button
-                            onClick={() => setOverallEmpPage(p => Math.min(totalOverallPages, p + 1))}
-                            disabled={overallEmpPage === totalOverallPages || totalOverallPages === 0}
-                            className="w-7 h-7 flex items-center justify-center rounded border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed text-xs"
-                          >›</button>
-                        </div>
-                      </div>
-                    </>
-                  );
-                })()}
+  return (
+    <>
+      <div className="overflow-x-auto mt-5">
+        <table className="w-full text-sm">
+          <thead className="sticky top-0 z-10 bg-[#EFF4FF]">
+            <tr className="bg-[#EFF4FF] border-b border-gray-100" style={{ backgroundColor: '#EFF4FF' }} >
+              {[
+                "Employee Name", "Project Name", "Task Name",
+                "Total Units", "Total Person Days",
+                "Completed Units", "Completed Person Days",
+                "Pending Units", "Pending Person Days",
+                "Unit Utilization (%)", "Person Days Utilization (%)", "Hours Utilization (%)"
+              ].map(h => (
+                <th key={h} className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-2.5 text-left text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {currentOverallRows.length === 0 ? (
+              <tr><td colSpan={12} className="py-6 text-center text-gray-300">No tasks found</td></tr>
+            ) : (
+              currentOverallRows.map((t, i) => {
+                const assignedUnits = Number(t.units_assigned || 0);
+                const completedUnits = Number(t.units_completed || 0);
+                const pendingUnits = Number(t.units_pending || 0);
+                const assignedHrs = Number(t.hours_assigned || 0);
+                const utilizedHrs = Number(t.hours_utilized || 0);
+                const pendingHrs = Math.max(assignedHrs - utilizedHrs, 0);
+                // person days = hours / 8
+                const totalPD = parseFloat((assignedHrs / 8).toFixed(2));
+                const completedPD = parseFloat((utilizedHrs / 8).toFixed(2));
+                const pendingPD = parseFloat((pendingHrs / 8).toFixed(2));
+                // utilization %
+                const unitPct = assignedUnits > 0 ? Math.round((completedUnits / assignedUnits) * 100) : 0;
+                const pdPct = totalPD > 0 ? Math.round((completedPD / totalPD) * 100) : 0;
+                const hrsPct = assignedHrs > 0 ? Math.round((utilizedHrs / assignedHrs) * 100) : 0;
+                return (
+                  <tr key={i} className="border-b border-gray-50 hover:bg-gray-50/60">
+                    <td className="px-4 py-2.5 font-semibold text-gray-700 text-[12px] whitespace-nowrap">{empName}</td>
+                    <td className="px-4 py-2.5 text-[12px] text-gray-500">{t.project_name || "—"}</td>
+                    <td className="px-4 py-2.5 font-semibold text-gray-700 text-[12px]">{t.task_name}</td>
+                    <td className="px-4 py-2.5 text-center font-bold text-blue-600">{assignedUnits}</td>
+                    <td className="px-4 py-2.5 text-center font-semibold text-slate-700">{totalPD}</td>
+                    <td className="px-4 py-2.5 text-center font-bold text-emerald-500">{completedUnits}</td>
+                    <td className="px-4 py-2.5 text-center font-semibold text-emerald-400">{completedPD}</td>
+                    <td className="px-4 py-2.5 text-center font-bold" style={{ color: pendingUnits > 0 ? "#e74c3c" : "#00b894" }}>{pendingUnits}</td>
+                    <td className="px-4 py-2.5 text-center font-semibold" style={{ color: pendingPD > 0 ? "#e74c3c" : "#00b894" }}>{pendingPD}</td>
+                    <td className="px-4 py-2.5 text-center">
+                      <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${unitPct >= 100 ? 'bg-emerald-50 text-emerald-600' : unitPct >= 50 ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-rose-500'}`}>
+                        {unitPct}%
+                      </span>
+                    </td>
+                    <td className="px-4 py-2.5 text-center">
+                      <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${pdPct >= 100 ? 'bg-emerald-50 text-emerald-600' : pdPct >= 50 ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-rose-500'}`}>
+                        {pdPct}%
+                      </span>
+                    </td>
+                    <td className="px-4 py-2.5 text-center">
+                      <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${hrsPct >= 100 ? 'bg-emerald-50 text-emerald-600' : hrsPct >= 50 ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-rose-500'}`}>
+                        {hrsPct}%
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pagination */}
+      <div className="flex items-center justify-between px-5 py-3 border-t border-gray-50" style={{ backgroundColor: '#EFF4FF' }}>
+        <span className="text-[11px] text-[#434654]">
+          Showing {empRows.length === 0 ? 0 : (overallEmpPage - 1) * overallEmpRowsPerPage + 1} to {Math.min(overallEmpPage * overallEmpRowsPerPage, empRows.length)} of {empRows.length} entries
+        </span>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setOverallEmpPage(p => Math.max(1, p - 1))}
+            disabled={overallEmpPage === 1}
+            className="w-7 h-7 flex items-center justify-center rounded border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed text-xs"
+          >‹</button>
+          
+          {/* Show first page if not in first 3 pages */}
+          {overallEmpPage > 3 && (
+            <>
+              <button
+                onClick={() => setOverallEmpPage(1)}
+                className="w-7 h-7 flex items-center justify-center rounded text-[12px] font-semibold border border-gray-200 text-gray-500 hover:bg-gray-50"
+              >
+                1
+              </button>
+              <span className="text-gray-400 text-xs px-1">…</span>
+            </>
+          )}
+          
+          {overallPageNums.map(n => (
+            <button key={n}
+              onClick={() => setOverallEmpPage(n)}
+              className={`w-7 h-7 flex items-center justify-center rounded text-[12px] font-semibold border transition-colors
+              ${overallEmpPage === n
+                  ? "bg-[#856BFF] text-white border-[#856BFF]"
+                  : "border-gray-200 text-gray-500 hover:bg-gray-50"}`}
+            >{n}</button>
+          ))}
+          
+          {/* Show last page if not in last 3 pages */}
+          {overallEmpPage < totalOverallPages - 2 && (
+            <>
+              <span className="text-gray-400 text-xs px-1">…</span>
+              <button
+                onClick={() => setOverallEmpPage(totalOverallPages)}
+                className="w-7 h-7 flex items-center justify-center rounded text-[12px] font-semibold border border-gray-200 text-gray-500 hover:bg-gray-50"
+              >
+                {totalOverallPages}
+              </button>
+            </>
+          )}
+          
+          <button
+            onClick={() => setOverallEmpPage(p => Math.min(totalOverallPages, p + 1))}
+            disabled={overallEmpPage === totalOverallPages || totalOverallPages === 0}
+            className="w-7 h-7 flex items-center justify-center rounded border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed text-xs"
+          >›</button>
+        </div>
+      </div>
+    </>
+  );
+})()}
 
               </div>
             ) : null
@@ -1205,19 +1280,54 @@ const empName = empObj?.Employee_Name || unitEmployee;
       </div>
       <div className="text-[11px] text-gray-400">Capacity and current load across teams</div>
     </div>
+     <div className="min-w-[200px]">
+    <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-1.5 h-[38px] bg-white focus-within:border-[#856BFF] transition-colors">
+      <Icon icon="material-symbols:search" width="16" height="16" color="#434655" />
+      <input
+        type="text"
+        placeholder="Search employee..."
+        value={empSearch}
+        onChange={(e) => {
+          setEmpSearch(e.target.value);
+          setEmpCurrentPage(1); // Reset to page 1 when searching
+        }}
+        className="w-full bg-transparent border-0 outline-none ring-0 shadow-none focus:border-0 focus:outline-none focus:ring-0 focus:shadow-none text-[13px] text-gray-600 placeholder-gray-400"
+        style={{ outline: 'none', border: 'none', boxShadow: 'none', WebkitAppearance: 'none' }}
+      />
+      {empSearch && (
+        <button
+          onClick={() => {
+            setEmpSearch('');
+            setEmpCurrentPage(1);
+          }}
+          className="text-gray-400 hover:text-gray-600 transition-colors shrink-0 p-0.5"
+          title="Clear search"
+        >
+          <Icon icon="material-symbols:close" width="16" height="16" />
+        </button>
+      )}
+    </div>
+  </div>
   </div>
 
   <div className="overflow-x-auto">
     <table className="w-full text-sm">
-      <thead className="sticky top-0 z-10 bg-[#EFF4FF]">
-        <tr className="border-b border-gray-50" style={{ backgroundColor: '#EFF4FF' }}>
-          {["EMPLOYEE", "ROLE", "UTILIZATION", "STATUS"].map(h => (
-            <th key={h} className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-left text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">
-              {h}
-            </th>
-          ))}
-        </tr>
-      </thead>
+     <thead className="sticky top-0 z-10 bg-[#EFF4FF]">
+  <tr className="border-b border-gray-50" style={{ backgroundColor: '#EFF4FF' }}>
+    <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-left text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">
+      EMPLOYEE
+    </th>
+    <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-left text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">
+      ROLE
+    </th>
+    <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-left text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">
+      UTILIZATION
+    </th>
+    <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-center text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">
+      STATUS
+    </th>
+  </tr>
+</thead>
       <tbody>
         {paginatedEmpRows.length === 0 ? (
           <tr>
@@ -1236,7 +1346,7 @@ const empName = empObj?.Employee_Name || unitEmployee;
                 utilizedUnits={r.utilizedUnits}
               />
             </td>
-            <td className="px-4 py-3">
+            <td className="px-4 py-3 text-center">
               <StatusDot pct={r.pct} />
             </td>
           </tr>
@@ -1249,8 +1359,9 @@ const empName = empObj?.Employee_Name || unitEmployee;
   {empRows.length > 0 && (
     <div className="flex items-center justify-between px-5 py-3 border-t border-gray-50" style={{ backgroundColor: '#EFF4FF' }}>
       <span className="text-[12px] text-[#434654] font-normal">
-        Showing {empRows.length === 0 ? 0 : (empCurrentPage - 1) * empRowsPerPage + 1} to {Math.min(empCurrentPage * empRowsPerPage, empRows.length)} of {empRows.length} entries
-      </span>
+  Showing {empRows.length === 0 ? 0 : (empCurrentPage - 1) * empRowsPerPage + 1} to {Math.min(empCurrentPage * empRowsPerPage, empRows.length)} of {empRows.length} entries
+  {empSearch && <span className="text-[#856BFF] ml-1">(filtered)</span>}
+</span>
       <div className="flex items-center gap-1">
         <button
           onClick={() => setEmpCurrentPage(p => Math.max(1, p - 1))}
@@ -1271,7 +1382,7 @@ const empName = empObj?.Employee_Name || unitEmployee;
             {n}
           </button>
         ))}
-        {getEmpTotalPages() > 3 && <span className="text-gray-400 text-xs px-1">…</span>}
+        {getEmpTotalPages() > 3}
         <button
           onClick={() => setEmpCurrentPage(p => Math.min(getEmpTotalPages(), p + 1))}
           disabled={empCurrentPage === getEmpTotalPages() || getEmpTotalPages() === 0}
@@ -1284,7 +1395,7 @@ const empName = empObj?.Employee_Name || unitEmployee;
   )}
 
   {/* View All Button */}
-  <div className="px-5 py-3 text-right border-t border-gray-50">
+  {/* <div className="px-5 py-3 text-right border-t border-gray-50">
     <button
       onClick={() => setShowAllEmployees(prev => !prev)}
       className="text-[12px] font-semibold text-[#856BFF] hover:text-purple-800 transition-colors"
@@ -1293,7 +1404,7 @@ const empName = empObj?.Employee_Name || unitEmployee;
         ? "Show less"
         : `View all ${deliveryEmployees.length} employees`}
     </button>
-  </div>
+  </div> */}
 </div>
 
          {/* Work Distribution Donut */}
@@ -1465,16 +1576,43 @@ const empName = empObj?.Employee_Name || unitEmployee;
                 disabled={currentPage === 1}
                 className="w-7 h-7 flex items-center justify-center rounded border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed text-xs"
               >‹</button>
+
+              {/* Show first page if not in first 3 pages */}
+              {currentPage > 3 && (
+                <>
+                  <button
+                    onClick={() => setCurrentPage(1)}
+                    className="w-7 h-7 flex items-center justify-center rounded text-[12px] font-semibold border border-gray-200 text-gray-500 hover:bg-gray-50"
+                  >
+                    1
+                  </button>
+                  <span className="text-gray-400 text-xs px-1">…</span>
+                </>
+              )}
+
               {pageNums.map(n => (
                 <button key={n}
                   onClick={() => setCurrentPage(n)}
                   className={`w-7 h-7 flex items-center justify-center rounded text-[12px] font-semibold border transition-colors
-                  ${currentPage === n
+        ${currentPage === n
                       ? "bg-[#856BFF] text-white border-[#856BFF]"
                       : "border-gray-200 text-gray-500 hover:bg-gray-50"}`}
                 >{n}</button>
               ))}
-              {totalPages > 3 && <span className="text-gray-400 text-xs px-1">…</span>}
+
+              {/* Show last page if not in last 3 pages */}
+              {currentPage < totalPages - 2 && (
+                <>
+                  <span className="text-gray-400 text-xs px-1">…</span>
+                  <button
+                    onClick={() => setCurrentPage(totalPages)}
+                    className="w-7 h-7 flex items-center justify-center rounded text-[12px] font-semibold border border-gray-200 text-gray-500 hover:bg-gray-50"
+                  >
+                    {totalPages}
+                  </button>
+                </>
+              )}
+
               <button
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages || totalPages === 0}

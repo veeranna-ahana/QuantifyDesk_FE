@@ -148,7 +148,7 @@ const Header = () => {
 
         {/* Bell */}
         <div className="relative">
-          <button
+          {/* <button
             onClick={handleBellOpen}
             className="relative w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
             style={{ padding: 0, border: 'none', background: 'transparent' }}
@@ -159,10 +159,10 @@ const Header = () => {
                 {unreadCount > 9 ? "9+" : unreadCount}
               </span>
             )}
-          </button>
+          </button> */}
 
           {/* Bell dropdown */}
-          {bellOpen && (
+          {/* {bellOpen && (
             <div className="absolute right-0 top-11 w-80 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50">
               <div className="flex items-center justify-between px-4 py-3 border-b border-gray-50">
                 <div className="flex items-center gap-2">
@@ -198,11 +198,11 @@ const Header = () => {
                 ))}
               </div>
             </div>
-          )}
+          )} */}
         </div>
 
         {/* Divider */}
-        <div className="w-px h-6 bg-gray-200" />
+        {/* <div className="w-px h-6 bg-gray-200" /> */}
 
         {/* User chip */}
         <div className="relative">
@@ -211,8 +211,8 @@ const Header = () => {
             className="flex items-center gap-2.5 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors"
           >
             {/* Avatar */}
-            <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[12px] font-bold shrink-0"
-              style={{ background: "linear-gradient(135deg,#6C5CE7,#a855f7)" }}>
+            <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[12px] font-bold shrink-0 bg-[#856BFF]"
+              >
               {initials}
             </div>
             {/* Name + ID */}
@@ -229,7 +229,7 @@ const Header = () => {
               <div className="px-4 py-3 border-b border-gray-50">
                 <div className="text-[13px] font-bold text-gray-800">{uName}</div>
                 <div className="text-[11px] text-gray-400">{uEmpId}</div>
-                <div className="text-[10px] text-purple-600 font-semibold mt-0.5 uppercase tracking-wide">{uRole}</div>
+                <div className="text-[10px] text-[856BFF] font-semibold mt-0.5 uppercase tracking-wide">{uRole}</div>
               </div>
               <button
                 onClick={handleLogout}

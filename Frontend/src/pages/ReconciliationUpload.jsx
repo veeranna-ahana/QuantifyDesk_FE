@@ -199,7 +199,7 @@ const ReconciliationUpload = ({ onUploadSuccess }) => {
         dataIndex: 'project_name',
         key: 'project_name',
         render: (text, record) => (
-            <span className="text-sm font-semibold text-gray-800">{text || record.project_code || 'Unknown'}</span>
+            <span className="text-sm font-medium text-[#191B23]">{text || record.project_code || 'Unknown'}</span>
         ),
     },
     {
@@ -208,11 +208,11 @@ const ReconciliationUpload = ({ onUploadSuccess }) => {
         width: 150,
         render: (_, record) =>
             record.project_exists ? (
-                <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-green-600">
+                <span className="inline-flex items-center gap-1.5 text-sm font-medium text-green-600">
                     <CheckCircleOutlined /> Validated
                 </span>
             ) : (
-                <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#BA1A1A]">
+                <span className="inline-flex items-center gap-1.5 text-sm font-medium text-[#BA1A1A]">
                     <CloseCircleOutlined /> Not Found — Create
                 </span>
             ),
@@ -224,7 +224,7 @@ const ReconciliationUpload = ({ onUploadSuccess }) => {
         align: 'center',
         width: 110,
         render: (hours) => (
-            <span className="text-sm font-bold text-gray-900">
+            <span className="text-sm font-medium text-gray-900">
                 {hours?.toFixed(1) || '0'} <span className="font-normal text-gray-400 text-xs">hrs</span>
             </span>
         ),
@@ -274,29 +274,95 @@ const expandedRowRender = (record) => {
         return <div className="text-sm text-gray-400 px-4 py-3">No employee details available</div>;
     }
     return (
-        <div className="bg-[#F5F5FA] rounded-lg p-4">
+        <div className="rounded-lg">
             <div className="text-[12px] font-semibold text-[#434654] uppercase tracking-wide mb-3 flex items-center gap-1.5">
                 <TeamOutlined /> Employee Breakdown
             </div>
-            <div className="bg-white rounded-lg border border-gray-100 overflow-hidden">
+            <div className="rounded-lg border border-[#C3C6D6] overflow-hidden">
                 <table className="w-full border-collapse">
                     <thead>
-                         <tr style={{ backgroundColor: '#EFF4FF' }}>
-                            <th className="text-left text-[11px] font-bold text-[#434654]uppercase px-4 py-2.5">Employee Code</th>
-                            <th className="text-left text-[11px] font-bold text-[#434654]uppercase px-4 py-2.5">Employee Name</th>
-                            <th className="text-right text-[11px] font-bold text-[#434654]uppercase px-4 py-2.5">Hours</th>
+                        <tr style={{ backgroundColor: '#F3F3FE' }}>
+                            <th className="text-left px-4 py-3" style={{
+                                fontFamily: 'Roboto, sans-serif',
+                                fontWeight: 500,
+                                fontSize: '11px',
+                                lineHeight: '14px',
+                                letterSpacing: '0px',
+                                verticalAlign: 'middle',
+                                textTransform: 'uppercase',
+                                color: '#434654',
+                                borderBottom: '1px solid #C3C6D6'
+                            }}>
+                                Employee Code
+                            </th>
+                            <th className="text-left px-4 py-3" style={{
+                                fontFamily: 'Roboto, sans-serif',
+                                fontWeight: 500,
+                                fontSize: '11px',
+                                lineHeight: '14px',
+                                letterSpacing: '0px',
+                                verticalAlign: 'middle',
+                                textTransform: 'uppercase',
+                                color: '#434654',
+                                borderBottom: '1px solid #C3C6D6'
+                            }}>
+                                Employee Name
+                            </th>
+                            <th className="text-right px-4 py-3" style={{
+                                fontFamily: 'Roboto, sans-serif',
+                                fontWeight: 500,
+                                fontSize: '11px',
+                                lineHeight: '14px',
+                                letterSpacing: '0px',
+                                verticalAlign: 'middle',
+                                textTransform: 'uppercase',
+                                color: '#434654',
+                                borderBottom: '1px solid #C3C6D6'
+                            }}>
+                                Hours
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
                         {record.employee_details.map((emp, idx) => (
-                            <tr key={emp.emp_id} className={idx !== record.employee_details.length - 1 ? 'border-b border-gray-100' : ''}>
+                            <tr key={emp.emp_id} className={idx !== record.employee_details.length - 1 ? 'border-b border-[#C3C6D6]' : ''}>
                                 <td className="px-4 py-2.5">
-                                    <span className="inline-block font-mono text-xs font-semibold text-gray-600 bg-gray-100 px-2 py-1 rounded-md">
+                                    <span className="inline-block px-2.5 py-1 rounded" style={{
+                                        fontFamily: 'Roboto, sans-serif',
+                                        fontWeight: 400,
+                                        fontSize: '12px',
+                                        lineHeight: '16px',
+                                        letterSpacing: '0px',
+                                        verticalAlign: 'middle',
+                                        color: '#191B23',
+                                        backgroundColor: '#EDEDF8',
+                                        border: '1px solid #C3C6D6'
+                                    }}>
                                         {emp.emp_id || 'N/A'}
                                     </span>
                                 </td>
-                                <td className="px-4 py-2.5 text-sm text-gray-700">{emp.name || 'Unknown'}</td>
-                                <td className="px-4 py-2.5 text-sm text-gray-700 text-right">{emp.hours?.toFixed(1) || '0'} hrs</td>
+                                <td className="px-4 py-2.5" style={{
+                                    fontFamily: 'Roboto, sans-serif',
+                                    fontWeight: 400,
+                                    fontSize: '14px',
+                                    lineHeight: '20px',
+                                    letterSpacing: '0px',
+                                    verticalAlign: 'middle',
+                                    color: '#191B23'
+                                }}>
+                                    {emp.name || 'Unknown'}
+                                </td>
+                                <td className="px-4 py-2.5 text-right" style={{
+                                    fontFamily: 'Roboto, sans-serif',
+                                    fontWeight: 400,
+                                    fontSize: '14px',
+                                    lineHeight: '20px',
+                                    letterSpacing: '0px',
+                                    verticalAlign: 'middle',
+                                    color: '#191B23'
+                                }}>
+                                    {emp.hours?.toFixed(1) || '0'} hrs
+                                </td>
                             </tr>
                         ))}
                     </tbody>
@@ -496,7 +562,7 @@ const expandedRowRender = (record) => {
             ) : hasData ? (
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
     <div className="flex items-center justify-between px-6 py-4">
-        <span className="font-semibold text-[#191B23]text-base">Project Validation Status</span>
+        <span className="font-semibold text-[#191B23] text-[20px]">Project Validation Status</span>
         <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-50 text-green-600 text-xs font-semibold">
                 <CheckCircleOutlined /> {foundProjects} Found
@@ -512,11 +578,20 @@ const expandedRowRender = (record) => {
         dataSource={projectStatusData}
         rowKey="project_code"
         pagination={{
-            pageSize: 10,
-            showSizeChanger: false,
-            showTotal: (total, range) => `Showing ${range[0]} to ${range[1]} of ${total} projects`,
-            className: 'custom-pagination',
-        }}
+    pageSize: 10,
+    showSizeChanger: false,
+    showTotal: (total, range) => `Showing ${range[0]} to ${range[1]} of ${total} projects`,
+    className: 'custom-pagination',
+    itemRender: (page, type, originalElement) => {
+        if (type === 'prev') {
+            return <span className="text-xs">‹</span>;
+        }
+        if (type === 'next') {
+            return <span className="text-xs">›</span>;
+        }
+        return originalElement;
+    },
+}}
         size="middle"
         scroll={{ x: 800 }}
         rowClassName={() => 'align-top'}
@@ -540,89 +615,121 @@ const expandedRowRender = (record) => {
 
             {/* Table look & feel overrides */}
            <style>{`
-
-           .ant-upload-drag {
-    background: white !important;
+    .ant-upload-drag {
+        background: white !important;
+    }
+    
+    /* Table Header - with exact specs */
+    .ant-table-thead > tr > th {
+    background: #EFF4FF !important;
+    color: #434654 !important;
+    font-weight: 700 !important;
+    font-size: 12px !important;
+    letter-spacing: 0.05em !important;
+    text-transform: uppercase !important;
+    vertical-align: middle !important;
+    border-bottom: 1px solid #f3f4f6 !important;
+    padding: 12px 16px !important;
 }
-   .ant-table-thead > tr > th {
-        background: #EFF4FF !important;
-        color: #434654 !important;
-        font-weight: 600 !important;
-        font-size: 14px !important;
-        line-height: 16px !important;
-        vertical-align: middle !important;
-        text-transform: uppercase !important;
-        border-bottom: none !important;
-        padding: 12px 16px !important;
-    }
+    
     .ant-table-tbody > tr > td {
-        border-bottom: 1px solid #f3f4f6 !important;
+        border-bottom: 1px solid #C3C6D6 !important;
         vertical-align: middle !important;
+        font-family: 'Roboto', sans-serif !important;
     }
-    .ant-table-expanded-row > td {
-        background: #ffffff !important;
-        padding: 0 24px 16px !important;
+    
+    /* Remove expanded row background and padding */
+    .ant-table-expanded-row > td,
+    .ant-table-expanded-row-level-1 > td {
+        background: transparent !important;
+        padding: 0 !important;
     }
-    .ant-pagination-item-active {
-        border-color: #856BFF !important;
-        background: #856BFF !important;
+    
+    .ant-table-expanded-row:hover > td,
+    .ant-table-expanded-row-level-1:hover > td {
+        background: transparent !important;
     }
-    .ant-pagination-item-active a {
-        color: #fff !important;
+    
+    .ant-table-expanded-row .ant-table-cell {
+        background: transparent !important;
+        padding: 0 !important;
     }
-       
-   /* Pagination Container Styles matching the image */
+    
+    /* Add padding to the inner content instead */
+    .ant-table-expanded-row .ant-table-cell > div {
+        padding: 12px 24px 16px 24px;
+    }
+    
+    /* Employee Code pill style */
+    .employee-code-pill {
+        font-family: 'Roboto', sans-serif !important;
+        font-weight: 400 !important;
+        font-size: 12px !important;
+        line-height: 16px !important;
+        letter-spacing: 0px !important;
+        vertical-align: middle !important;
+        color: #191B23 !important;
+        background-color: #EDEDF8 !important;
+        border: 1px solid #C3C6D6 !important;
+        padding: 4px 10px !important;
+        border-radius: 4px !important;
+        display: inline-block !important;
+    }
+    
+    /* Pagination - Match Assignment Overview */
     .custom-pagination {
         background: #EFF4FF !important;
-        padding: 16px 24px !important;
-        border-bottom-left-radius: 16px !important;
-        border-bottom-right-radius: 16px !important;
+        padding: 12px 20px !important;
+        border-top: 1px solid #C3C6D6 !important;
+        border-bottom-left-radius: 12px !important;
+        border-bottom-right-radius: 12px !important;
         display: flex !important;
         justify-content: space-between !important;
         align-items: center !important;
-        border: none !important;
         margin: 0 !important;
     }
     
     .custom-pagination .ant-pagination-total-text {
-        color: #6B7280 !important;
-        font-family: inherit !important;
+        color: #434654 !important;
+        font-family: 'Roboto', sans-serif !important;
         font-weight: 400 !important;
-        font-size: 13px !important;
+        font-size: 12px !important;
         margin-right: auto !important;
     }
     
-    .custom-pagination.ant-table-pagination {
-        display: flex !important;
-    }
-    
-    .custom-pagination .ant-pagination-item,
-    .custom-pagination .ant-pagination-prev,
-    .custom-pagination .ant-pagination-next {
+    .custom-pagination .ant-pagination-item {
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
-        border: none !important;
+        border: 1px solid #C3C6D6 !important;
         background: transparent !important;
         min-width: 28px !important;
-        height: 24px !important;
-        line-height: 24px !important;
-        margin: 0 4px !important;
+        height: 28px !important;
+        line-height: 28px !important;
+        margin: 0 2px !important;
+        border-radius: 4px !important;
         cursor: pointer !important;
+        transition: all 0.15s ease !important;
     }
     
     .custom-pagination .ant-pagination-item a {
-        color: #1F2937 !important;
+        color: #434654 !important;
+        font-family: 'Roboto', sans-serif !important;
         font-weight: 500 !important;
-        font-size: 13px !important;
-        padding: 0 4px !important;
+        font-size: 12px !important;
+        padding: 0 6px !important;
         transition: none !important;
     }
     
-    /* Active State (Purple Pill Button) */
+    .custom-pagination .ant-pagination-item:hover {
+        background: #f9fafb !important;
+        border-color: #C3C6D6 !important;
+    }
+    
     .custom-pagination .ant-pagination-item-active {
         background: #856BFF !important;
-        border-radius: 6px !important;
+        border-color: #856BFF !important;
+        border-radius: 4px !important;
     }
     
     .custom-pagination .ant-pagination-item-active a {
@@ -630,10 +737,30 @@ const expandedRowRender = (record) => {
         font-weight: 600 !important;
     }
     
-    /* Navigation Arrows */
+    .custom-pagination .ant-pagination-prev,
+    .custom-pagination .ant-pagination-next {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border: 1px solid #C3C6D6 !important;
+        background: transparent !important;
+        min-width: 28px !important;
+        height: 28px !important;
+        border-radius: 4px !important;
+        margin: 0 2px !important;
+        cursor: pointer !important;
+        transition: all 0.15s ease !important;
+    }
+    
+    .custom-pagination .ant-pagination-prev:hover,
+    .custom-pagination .ant-pagination-next:hover {
+        background: #f9fafb !important;
+        border-color: #C3C6D6 !important;
+    }
+    
     .custom-pagination .ant-pagination-prev .ant-pagination-item-link,
     .custom-pagination .ant-pagination-next .ant-pagination-item-link {
-        color: #1F2937 !important;
+        color: #434654 !important;
         border: none !important;
         background: transparent !important;
         font-size: 12px !important;
@@ -642,14 +769,17 @@ const expandedRowRender = (record) => {
         justify-content: center !important;
     }
     
-    /* Disabled Arrow State */
     .custom-pagination .ant-pagination-disabled .ant-pagination-item-link {
         color: #9CA3AF !important;
-        opacity: 0.6 !important;
+        opacity: 0.4 !important;
         cursor: not-allowed !important;
     }
     
-    /* Hide unneeded Ant utilities */
+    .custom-pagination .ant-pagination-disabled {
+        opacity: 0.4 !important;
+        cursor: not-allowed !important;
+    }
+    
     .custom-pagination .ant-pagination-options,
     .custom-pagination .ant-pagination-jump-prev,
     .custom-pagination .ant-pagination-jump-next {

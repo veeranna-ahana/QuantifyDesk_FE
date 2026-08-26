@@ -9,7 +9,7 @@ import {
   exportEmployeeLevelExcel,
 } from "../api/recon.api";
 import { Icon } from '@iconify/react';
-import { DownloadOutlined } from "@ant-design/icons";
+// import { DownloadOutlined } from "@ant-design/icons";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 
 // ─── Number Formatting Helper ────────────────────────────────────
@@ -147,6 +147,10 @@ const UsersIcon = ({ className = "w-10 h-10" }) => (
 
 const FilterIcon = ({ className = "w-10 h-10" }) => (
   <Icon icon="material-symbols:filter-list" className={className} />
+);
+
+const DownloadIcon = ({ className = "w-4 h-4", color = "#ffffff" }) => (
+  <Icon icon="akar-icons:download" className={className} color={color} />
 );
 
 // ─── Reusable numbered pagination bar ────────────────────────────
@@ -632,7 +636,7 @@ const ReconPage = () => {
     <div className="p-6 font-sans bg-[#FAF8FF] min-h-screen">
       {/* ── If Detail View is Active, Show Only Project Details ── */}
       {showDetailView ? (
-        <div className="px-0 pt-0">
+        <div className="px-0 pt-0 -mt-2">
           <button
             onClick={handleBackToDashboard}
             className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-[#6D5EF6] mb-4 transition"
@@ -951,9 +955,9 @@ const ReconPage = () => {
               </div>
 
               {/* Employee-wise Breakdown */}
-              <div className=" bg-[#FFFFFF] rounded-lg mt-6 px-2">
+              <div className=" bg-[#FFFFFF] rounded-lg mt-6 px-4 py-2">
                 <div className="flex items-center justify-between mb-3 flex-wrap gap-3">
-                  <span className="font-bold text-[#191B23] text-[18px]">Resource Breakdown &amp; Timesheets</span>
+                  <span className="font-semibold text-[#191B23] text-[20px]">Resource Breakdown &amp; Timesheets</span>
                   <div className="flex items-center gap-2">
                     <div className="relative">
                       <SearchIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -1157,7 +1161,7 @@ const ReconPage = () => {
                   <span className="w-7 h-7 rounded-md flex items-center justify-center text-[#856BFF] text-sm">
                     <Icon icon="material-symbols:assignment" width="22" height="22" color="#856BFF" />
                   </span>
-                  <span className="text-[17px] font-bold text-[#191B23]">Project Status</span>
+                  <span className="font-semibold text-[#191B23] text-[20px]">Project Status</span>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-4">
                   <div className="col-span-2 sm:col-span-1">
@@ -1192,7 +1196,7 @@ const ReconPage = () => {
                   <span className="w-7 h-7 rounded-md flex items-center justify-center text-[#856BFF] text-sm">
                     <Icon icon="material-symbols:schedule" width="22" height="22" color="#856BFF" />
                   </span>
-                  <span className="text-[17px] font-bold text-[#191B23]">Hours Summary</span>
+                  <span className="font-semibold text-[#191B23] text-[20px]">Hours Summary</span>
                 </div>
                 <div className="grid grid-cols-3 gap-3 mb-3">
                   <div>
@@ -1253,7 +1257,7 @@ const ReconPage = () => {
                 <span className="w-7 h-7 rounded-md bg-[#856BFF]/10 flex items-center justify-center text-[#856BFF] text-sm">
                   <Icon icon="material-symbols:pie-chart" width="22" height="22" color="#856BFF" />
                 </span>
-                <span className="text-[17px] font-bold text-[#191B23]">Utilization Breakdown</span>
+                <span className="font-semibold text-[#191B23] text-[20px]">Utilization Breakdown</span>
               </div>
 
               {utilizationPieData.length > 0 ? (
@@ -1317,7 +1321,7 @@ const ReconPage = () => {
           {/* ── Filters ── */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-6">
             <div className="flex items-center justify-between mb-4">
-              <span className="flex items-center gap-2 font-bold text-gray-900 text-sm">
+              <span className="flex items-center gap-2 font-semibold text-[#191B23] text-[20px]">
                 <Icon icon="solar:sort-outline" width="20" height="20" color="#856BFF" /> Search &amp; Filters
               </span>
               <button onClick={resetFilters} className="text-xs font-semibold text-[#856BFF] hover:text-[#7259e6]">
@@ -1462,7 +1466,7 @@ const ReconPage = () => {
                         onClick={() => exportProjectLevelExcel(filters)}
                         className="flex items-center gap-1.5 px-3.5 py-2 bg-[#856BFF] hover:bg-[#7556ff] text-white rounded-lg text-xs font-semibold shadow-sm transition-colors"
                       >
-                        <DownloadOutlined />
+                        <DownloadIcon className="w-4 h-4" color="#ffffff" />
                         <span>Export Excel</span>
                       </button>
                       <span className="text-xs font-medium text-gray-400">{filteredProjects.length} projects</span>
@@ -1532,13 +1536,10 @@ const ReconPage = () => {
                                 key={item.project_id || item.project_code}
                                 className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${rowBgClass}`}
                               >
-                                <td className="px-4 py-3">
-                                  <button
-                                    onClick={() => handleViewProjectDetails(item)}
-                                    className="text-xs font-semibold text-[#856BFF] hover:underline text-left"
-                                  >
+                                <td className="px-4 py-3 text-[14px] font-bold text-[#856BFF]">
+                                 
                                     {item.project_code || "—"}
-                                  </button>
+                                 
                                 </td>
                                 <td className="px-4 py-3 text-gray-800">{item.project_name}</td>
                                 <td className="px-4 py-3 text-right font-semibold text-gray-900 whitespace-nowrap">
@@ -1630,9 +1631,9 @@ const ReconPage = () => {
                       </div>
                       <button
                         onClick={() => exportEmployeeLevelExcel(filters)}
-                        className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-colors"
+                        className="flex items-center gap-1.5 px-3.5 py-2 bg-[#856BFF] hover:bg-[#775bf8] text-white rounded-lg text-xs font-semibold shadow-sm transition-colors"
                       >
-                        <DownloadOutlined />
+                        <DownloadIcon className="w-4 h-4" color="#ffffff" />
                         <span>Export Excel</span>
                       </button>
                       <span className="text-xs font-medium text-gray-400">Showing {filteredEmployees.length} assignments</span>
