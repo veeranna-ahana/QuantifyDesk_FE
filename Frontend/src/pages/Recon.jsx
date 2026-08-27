@@ -63,15 +63,53 @@ const StatusPill = ({ status, utilizationPct, inSystem = true, estimatedHours = 
 };
 
 // Plain-text status — used on the Employee Level table
-const StatusText = ({ status }) => {
-  const c = STATUS_STYLES[status] || STATUS_STYLES["On Track"];
+// const StatusText = ({ status }) => {
+//   const c = STATUS_STYLES[status] || STATUS_STYLES["On Track"];
+//   return (
+//     <span className="text-[11px] font-bold uppercase tracking-wide" style={{ color: c.text }}>
+//       {status}
+//     </span>
+//   );
+// };
+
+// Employee status pill — used on the Employee Level table
+const EmployeeStatusPill = ({ assignedHours, actualHours, status }) => {
+  let finalStatus = status;
+  
+  // Calculate utilization if both assigned and actual hours are available
+  const assigned = Number(assignedHours) || 0;
+  const actual = Number(actualHours) || 0;
+  
+  // Check if employee has assigned hours
+  if (assigned === 0 && actual === 0) {
+    finalStatus = "No Activity";
+  } else if (assigned === 0 && actual > 0) {
+    finalStatus = "Not Assigned";
+  } else if (assigned > 0) {
+    const utilizationPct = (actual / assigned) * 100;
+    if (utilizationPct > 100) {
+      finalStatus = "Over-utilized";
+    } else if (utilizationPct >= 70) {
+      finalStatus = "On Track";
+    } else if (utilizationPct >= 50) {
+      finalStatus = "Moderate";
+    } else if (utilizationPct > 0) {
+      finalStatus = "Under-utilized";
+    } else {
+      finalStatus = "No Activity";
+    }
+  }
+  
+  const c = STATUS_STYLES[finalStatus] || STATUS_STYLES["On Track"];
   return (
-    <span className="text-[11px] font-bold uppercase tracking-wide" style={{ color: c.text }}>
-      {status}
+    <span
+      className="inline-block px-2.5 py-1 rounded-md text-xs font-semibold whitespace-nowrap"
+      style={{ backgroundColor: c.bg, color: c.text }}
+    >
+      {finalStatus}
     </span>
   );
 };
-
 // ─── Custom Pie Chart Tooltip ────────────────────────────────────
 const CustomPieTooltip = ({ active, payload }) => {
   if (active && payload && payload.length) {
@@ -295,27 +333,29 @@ const ReconPage = () => {
   });
 
   // ─── Filtered Data with Search ─────────────────────────────────
-  const filteredProjects = useMemo(() => {
-    if (!projectSearch.trim()) return projectReconList;
-    const search = projectSearch.toLowerCase().trim();
-    return projectReconList.filter(
-      (item) =>
-        (item.project_code && item.project_code.toLowerCase().includes(search)) ||
-        (item.project_name && item.project_name.toLowerCase().includes(search))
-    );
-  }, [projectReconList, projectSearch]);
+ const filteredProjects = useMemo(() => {
+  if (!projectSearch.trim()) return projectReconList;
+  const search = projectSearch.toLowerCase().trim();
+  return projectReconList.filter(
+    (item) =>
+      (item.project_code && item.project_code.toLowerCase().includes(search)) ||
+      (item.project_name && item.project_name.toLowerCase().includes(search)) ||
+      (item.sub_category && item.sub_category.toLowerCase().includes(search)) // ✅ Added
+  );
+}, [projectReconList, projectSearch]);
 
   const filteredEmployees = useMemo(() => {
-    if (!employeeSearch.trim()) return employeeReconList;
-    const search = employeeSearch.toLowerCase().trim();
-    return employeeReconList.filter(
-      (item) =>
-        (item.employee_code && item.employee_code.toLowerCase().includes(search)) ||
-        (item.employee_name && item.employee_name.toLowerCase().includes(search)) ||
-        (item.project_code && item.project_code.toLowerCase().includes(search)) ||
-        (item.project_name && item.project_name.toLowerCase().includes(search))
-    );
-  }, [employeeReconList, employeeSearch]);
+  if (!employeeSearch.trim()) return employeeReconList;
+  const search = employeeSearch.toLowerCase().trim();
+  return employeeReconList.filter(
+    (item) =>
+      (item.employee_code && item.employee_code.toLowerCase().includes(search)) ||
+      (item.employee_name && item.employee_name.toLowerCase().includes(search)) ||
+      (item.project_code && item.project_code.toLowerCase().includes(search)) ||
+      (item.project_name && item.project_name.toLowerCase().includes(search)) ||
+      (item.sub_category && item.sub_category.toLowerCase().includes(search)) // ✅ Added
+  );
+}, [employeeReconList, employeeSearch]);
 
   const filteredResourceSummary = useMemo(() => {
     const list = projectDetail.employeeSummary || [];
@@ -527,6 +567,13 @@ const ReconPage = () => {
     fetchData();
   }, [fetchData]);
 
+  // Auto-switch to "By Resource" when Actual Hours is selected
+useEffect(() => {
+  if (detailMetric === "actual") {
+    setDetailChartTab("employee");
+  }
+}, [detailMetric]);
+
   // ─── Handlers ───────────────────────────────────────────────────
   const handleFilterChange = (field, val) => {
     setFilters((prev) => ({ ...prev, [field]: val }));
@@ -660,6 +707,13 @@ const ReconPage = () => {
                   <div className="flex items-center gap-3 mt-3">
                     <span className="bg-gray-100 text-[11px] font-medium text-gray-600 px-3 py-1 rounded">
                       CODE: {projectDetail.project?.project_code || "—"}
+                    </span>
+                    <span className="bg-gray-100 text-[11px] font-medium text-[#856BFF] px-3 py-1 rounded">
+                      SUB CATEGORY: {
+            projectDetail.project?.sub_category || 
+            projectDetail.project?.original_sub_category || 
+            "No Subcategory"
+        }
                     </span>
 
                     {projectDetail.project?.status && (
@@ -849,30 +903,36 @@ const ReconPage = () => {
                     </div>
 
                     {/* Breakdown Type Toggle */}
-                    <div className="flex items-center bg-gray-100 p-1 rounded-lg">
-                      <button
-                        onClick={() => setDetailChartTab("role")}
-                        className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
-                          detailChartTab === "role"
-                            ? "bg-white text-[#856BFF] shadow-sm"
-                            : "text-gray-500 hover:text-gray-800"
-                        }`}
-                        style={{ background: detailChartTab === 'role' ? '#fff' : 'transparent', border: 'none' }}
-                      >
-                        By Role
-                      </button>
-                      <button
-                        onClick={() => setDetailChartTab("employee")}
-                        className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
-                          detailChartTab === "employee"
-                            ? "bg-white text-[#856BFF] shadow-sm"
-                            : "text-gray-500 hover:text-gray-800"
-                        }`}
-                        style={{ background: detailChartTab === 'employee' ? '#fff' : 'transparent', border: 'none' }}
-                      >
-                        By Resource
-                      </button>
-                    </div>
+                    {/* Breakdown Type Toggle */}
+<div className="flex items-center bg-gray-100 p-1 rounded-lg">
+  {/* Only show "By Role" button when Estimated Hours is selected */}
+  {detailMetric === "estimated" && (
+    <button
+      onClick={() => setDetailChartTab("role")}
+      className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
+        detailChartTab === "role"
+          ? "bg-white text-[#856BFF] shadow-sm"
+          : "text-gray-500 hover:text-gray-800"
+      }`}
+      style={{ background: detailChartTab === 'role' ? '#fff' : 'transparent', border: 'none' }}
+    >
+      By Role
+    </button>
+  )}
+  
+  {/* Always show "By Resource" button */}
+  <button
+    onClick={() => setDetailChartTab("employee")}
+    className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
+      detailChartTab === "employee"
+        ? "bg-white text-[#856BFF] shadow-sm"
+        : "text-gray-500 hover:text-gray-800"
+    }`}
+    style={{ background: detailChartTab === 'employee' ? '#fff' : 'transparent', border: 'none' }}
+  >
+    By Resource
+  </button>
+</div>
                   </div>
                 </div>
 
@@ -897,7 +957,14 @@ const ReconPage = () => {
                                 <Cell key={`cell-proj-${index}`} fill={entry.color} />
                               ))}
                             </Pie>
-                            <Tooltip content={<CustomProjectDetailPieTooltip />} />
+                            <Tooltip 
+  content={<CustomProjectDetailPieTooltip />} 
+  wrapperStyle={{ 
+    zIndex: 1000,
+    pointerEvents: 'none'
+  }}
+  position={{ y: 0 }}
+/>
                           </PieChart>
                         </ResponsiveContainer>
                         {/* Donut Center Total Label */}
@@ -1077,16 +1144,12 @@ const ReconPage = () => {
                                   </div>
                                 </td>
                                 <td className="px-3 py-2.5">
-                                  <span
-                                    className="inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold"
-                                    style={{
-                                      backgroundColor: e.assignment_status === "Assigned" ? "#d1fae5" : "#fee2e2",
-                                      color: e.assignment_status === "Assigned" ? "#059669" : "#dc2626",
-                                    }}
-                                  >
-                                    {e.assignment_status || "Not Assigned"}
-                                  </span>
-                                </td>
+  <EmployeeStatusPill 
+    assignedHours={e.assigned_hours} 
+    actualHours={e.actual_hours}
+    status={e.assignment_status} 
+  />
+</td>
                                 <td className="px-3 py-2.5">
                                   <span
                                     className="inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold"
@@ -1280,7 +1343,14 @@ const ReconPage = () => {
                             <Cell key={`cell-${index}`} fill={entry.color} />
                           ))}
                         </Pie>
-                        <Tooltip content={<CustomPieTooltip />} />
+                        <Tooltip 
+  content={<CustomPieTooltip />}
+  wrapperStyle={{ 
+    zIndex: 1000,
+    pointerEvents: 'none'
+  }}
+  position={{ y: 0 }}
+/>
                       </PieChart>
                     </ResponsiveContainer>
                     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
@@ -1477,6 +1547,7 @@ const ReconPage = () => {
                     <table className="w-full border-collapse text-sm">
                       <thead className="sticky top-0 z-20 bg-[#EFF4FF]">
                         <tr className="border-b border-gray-200 bg-[#EFF4FF]" style={{ backgroundColor: '#EFF4FF' }}>
+                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-left text-[12px] font-semibold text-[#434654] uppercase whitespace-nowrap shadow-sm">Sub Category</th>
                           <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-left text-[12px] font-semibold text-[#434654] uppercase whitespace-nowrap shadow-sm">Project Code</th>
                           <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-left text-[12px] font-bold text-[#434654] uppercase whitespace-nowrap shadow-sm">Project Name</th>
                           <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-right text-[12px] font-bold text-[#434654] uppercase whitespace-nowrap shadow-sm">
@@ -1496,7 +1567,7 @@ const ReconPage = () => {
                       <tbody>
                         {paginatedProjects.length === 0 ? (
                           <tr>
-                            <td colSpan={8} className="text-center py-10 text-gray-400">
+                            <td colSpan={9} className="text-center py-10 text-gray-400">
                               No reconciliation records match current filters.
                             </td>
                           </tr>
@@ -1536,6 +1607,14 @@ const ReconPage = () => {
                                 key={item.project_id || item.project_code}
                                 className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${rowBgClass}`}
                               >
+                                <td className="px-4 py-3text-nowrap">
+                                  <span className={`inline-block font-mono text-[13px] font-medium px-2.5 py-1 rounded-md ${item.sub_category === 'No Subcategory' || !item.sub_category
+                                      ? 'text-gray-500 bg-gray-100 border border-gray-300'
+                                      : 'text-[#856BFF] bg-[#EDEDF8] border border-[#856BFF]/20'
+                                    }`}>
+                                    {item.sub_category || 'No Subcategory'}
+                                  </span>
+                                </td>
                                 <td className="px-4 py-3 text-[14px] font-bold text-[#856BFF]">
                                  
                                     {item.project_code || "—"}
@@ -1645,6 +1724,7 @@ const ReconPage = () => {
                       <thead className="sticky top-0 z-20 bg-[#EFF4FF]">
                         <tr className="border-b border-gray-200 bg-[#EFF4FF]" style={{ backgroundColor: '#EFF4FF' }}>
                           <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-left text-[12px] font-bold text-[#434654] uppercase whitespace-nowrap shadow-sm">Employee</th>
+                          <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-left text-[12px] font-bold text-[#434654] uppercase whitespace-nowrap shadow-sm">Sub Category</th>
                           {/* <th className="px-4 py-3 text-left text-[12px] font-bold text-[#434654] uppercase whitespace-nowrap">Reporting Manager</th> */}
                           <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-left text-[12px] font-bold text-[#434654] uppercase whitespace-nowrap shadow-sm">Project Code</th>
                           <th className="sticky top-0 z-20 bg-[#EFF4FF] px-4 py-3 text-right text-[12px] font-bold text-[#434654] uppercase whitespace-nowrap shadow-sm">Assigned (H)</th>
@@ -1657,7 +1737,7 @@ const ReconPage = () => {
                       <tbody>
                         {paginatedEmployees.length === 0 ? (
                           <tr>
-                            <td colSpan={8} className="text-center py-10 text-gray-400">
+                            <td colSpan={9} className="text-center py-10 text-gray-400">
                               No employee assignments found matching current filters.
                             </td>
                           </tr>
@@ -1701,6 +1781,15 @@ const ReconPage = () => {
                                   <div className="font-semibold text-gray-900">{item.employee_name}</div>
                                   <div className="text-[11px] text-gray-400">{item.employee_code || "—"}</div>
                                 </td>
+                                <td className="px-4 py-3">
+  <span className={`inline-block font-mono text-[12px] font-medium px-2.5 py-1 rounded-md ${
+    item.sub_category === 'No Subcategory' || !item.sub_category
+      ? 'text-gray-500 bg-gray-100 border border-gray-300' 
+      : 'text-[#856BFF] bg-[#EDEDF8] border border-[#856BFF]/20'
+  }`}>
+    {item.sub_category || 'No Subcategory'}
+  </span>
+</td>
                                 {/* <td className="px-4 py-3 text-gray-600">{item.reporting_manager || "—"}</td> */}
                                 <td className="px-4 py-3">
                                   <span className="text-xs text-gray-600">{item.project_code || "—"}</span>
@@ -1736,8 +1825,12 @@ const ReconPage = () => {
                                   </div>
                                 </td>
                                 <td className="px-4 py-3">
-                                  <StatusText status={item.status} />
-                                </td>
+  <EmployeeStatusPill 
+    assignedHours={item.assigned_hours} 
+    actualHours={item.actual_hours}
+    status={item.status} 
+  />
+</td>
                               </tr>
                             );
                           })

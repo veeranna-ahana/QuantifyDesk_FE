@@ -65,62 +65,78 @@ const ReconciliationUpload = ({ onUploadSuccess }) => {
         }
     };
 
-    const buildProjectStatusData = (details) => {
-        if (!details?.entries || details.entries.length === 0) {
-            setProjectStatusData([]);
-            return;
-        }
-        const projectMap = new Map();
-        details.entries.forEach(entry => {
-            const projectCode = entry.project_code || entry.original_project_code;
-            if (!projectCode) return;
-            if (!projectMap.has(projectCode)) {
-                projectMap.set(projectCode, {
-                    project_code: projectCode,
-                    project_name: entry.original_project_name || projectCode,
-                    project_exists: entry.project_found === 1 && !!entry.project_id,
-                    total_hours: 0,
-                    employee_count: new Set(),
-                    entry_count: 0,
-                    employee_details: []
-                });
-            }
-            const project = projectMap.get(projectCode);
-            project.total_hours += parseFloat(entry.hours || 0);
-
-            // ✅ Updated: Use emp_id from master.emp instead of user_id
-            const empId = entry.emp_id || entry.original_emp_code;
-            if (empId) {
-                project.employee_count.add(empId);
-                project.employee_details.push({
-                    emp_id: empId,
-                    name: entry.employee_name || 'Unknown', // Now from master.emp
-                    hours: parseFloat(entry.hours || 0)
-                });
-            }
-            project.entry_count += 1;
-        });
-
-        const data = Array.from(projectMap.values()).map(p => {
-            const empMap = new Map();
-            p.employee_details.forEach(emp => {
-                if (empMap.has(emp.emp_id)) {
-                    empMap.get(emp.emp_id).hours += emp.hours;
-                } else {
-                    empMap.set(emp.emp_id, { ...emp });
-                }
+   const buildProjectStatusData = (details) => {
+    if (!details?.entries || details.entries.length === 0) {
+        setProjectStatusData([]);
+        return;
+    }
+    const projectMap = new Map();
+    details.entries.forEach(entry => {
+        // ✅ FIX: Use a unique combination of project_code AND sub_category
+        // If subcategory is empty/null/undefined, use project_code as unique identifier
+        const subCategory = entry.project_sub_category || entry.original_sub_category || null;
+        const projectCode = entry.project_code || entry.original_project_code;
+        
+        // Create a unique key: if subcategory exists, use "projectCode||subCategory", else use projectCode alone
+        const uniqueKey = subCategory ? `${projectCode}||${subCategory}` : projectCode;
+        
+        if (!projectCode) return; // Skip entries without project code
+        
+        if (!projectMap.has(uniqueKey)) {
+            projectMap.set(uniqueKey, {
+                sub_category: subCategory || 'No Subcategory',
+                project_code: projectCode || 'N/A',
+                project_name: entry.original_project_name || projectCode || 'Unknown',
+                project_exists: !!entry.project_id && entry.project_found === 1,
+                sub_category_id: entry.sub_category_id,
+                total_hours: 0,
+                employee_count: new Set(),
+                entry_count: 0,
+                employee_details: [],
+                // Store the actual subcategory value for display
+                original_sub_category: subCategory
             });
-            p.employee_details = Array.from(empMap.values());
-            p.employee_count = p.employee_details.length;
-            return p;
-        });
+        }
+        const project = projectMap.get(uniqueKey);
+        project.total_hours += parseFloat(entry.hours || 0);
 
-        data.sort((a, b) => {
-            if (a.project_exists === b.project_exists) return a.project_code.localeCompare(b.project_code);
-            return a.project_exists ? 1 : -1;
+        // ✅ Updated: Use emp_id from master.emp instead of user_id
+        const empId = entry.emp_id || entry.original_emp_code;
+        if (empId) {
+            project.employee_count.add(empId);
+            project.employee_details.push({
+                emp_id: empId,
+                name: entry.employee_name || 'Unknown',
+                hours: parseFloat(entry.hours || 0)
+            });
+        }
+        project.entry_count += 1;
+    });
+
+    const data = Array.from(projectMap.values()).map(p => {
+        const empMap = new Map();
+        p.employee_details.forEach(emp => {
+            if (empMap.has(emp.emp_id)) {
+                empMap.get(emp.emp_id).hours += emp.hours;
+            } else {
+                empMap.set(emp.emp_id, { ...emp });
+            }
         });
-        setProjectStatusData(data);
-    };
+        p.employee_details = Array.from(empMap.values());
+        p.employee_count = p.employee_details.length;
+        return p;
+    });
+
+    // Sort: missing projects first, then by sub_category
+    data.sort((a, b) => {
+        if (a.project_exists === b.project_exists) {
+            // If both have same status, sort by sub_category
+            return a.sub_category.localeCompare(b.sub_category);
+        }
+        return a.project_exists ? 1 : -1;
+    });
+    setProjectStatusData(data);
+};
 
     const handleBatchChange = async (batchId) => {
         setSelectedBatchId(batchId);
@@ -182,14 +198,32 @@ const ReconciliationUpload = ({ onUploadSuccess }) => {
         showUploadList: false,
     };
 
-   const projectStatusColumns = [
+  const projectStatusColumns = [
+    {
+        title: 'Sub Category',
+        dataIndex: 'sub_category',
+        key: 'sub_category',
+        width: 200,
+        render: (text, record) => {
+            const isNoSubcategory = text === 'No Subcategory' || !record.original_sub_category;
+            return (
+                <span className={`inline-block font-mono text-[13px] font-medium px-2.5 py-1 rounded-md ${
+                    isNoSubcategory 
+                        ? 'text-gray-500 bg-gray-100 border border-gray-300' 
+                        : 'text-[#856BFF] bg-[#EDEDF8] border border-[#856BFF]/20'
+                }`}>
+                    {isNoSubcategory ? 'No Subcategory' : text}
+                </span>
+            );
+        },
+    },
     {
         title: 'Project Code',
         dataIndex: 'project_code',
         key: 'project_code',
         width: 190,
         render: (text) => (
-            <span className="inline-block font-mono text-[14px] font-medium  text-[#856BFF] bg-[#EDEDF8] border border-[#856BFF]/20 px-2.5 py-1 rounded-md">
+            <span className="inline-block font-mono text-[14px] font-medium text-[#434654] bg-gray-50 border border-gray-200 px-2.5 py-1 rounded-md">
                 {text || 'N/A'}
             </span>
         ),
@@ -246,37 +280,43 @@ const ReconciliationUpload = ({ onUploadSuccess }) => {
         key: 'actions',
         align: 'center',
         width: 130,
-        render: (_, record) => (
-            <button
-                onClick={() =>
-                    setExpandedProject(
-                        expandedProject === record.project_code ? null : record.project_code
-                    )
-                }
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#856BFF] hover:text-[#7259e6]"
-            >
-                {expandedProject === record.project_code ? (
-                    <>
-                        <EyeInvisibleOutlined /> Hide
-                    </>
-                ) : (
-                    <>
-                        <TeamOutlined /> Employees
-                    </>
-                )}
-            </button>
-        ),
+        render: (_, record) => {
+            const uniqueKey = `${record.project_code}-${record.sub_category}`;
+            const isExpanded = expandedProject === uniqueKey;
+            return (
+                <button
+                    onClick={() => {
+                        console.log('Toggle expand for:', record.sub_category); // Debug
+                        setExpandedProject(isExpanded ? null : uniqueKey);
+                    }}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#856BFF] hover:text-[#7259e6]"
+                >
+                    {isExpanded ? (
+                        <>
+                            <EyeInvisibleOutlined /> Hide
+                        </>
+                    ) : (
+                        <>
+                            <TeamOutlined /> Employees
+                        </>
+                    )}
+                </button>
+            );
+        },
     },
 ];
 
 const expandedRowRender = (record) => {
+    console.log('Expanded row render for:', record.sub_category, record.employee_details); // Debug
+    
     if (!record.employee_details || record.employee_details.length === 0) {
         return <div className="text-sm text-gray-400 px-4 py-3">No employee details available</div>;
     }
+    
     return (
         <div className="rounded-lg">
             <div className="text-[12px] font-semibold text-[#434654] uppercase tracking-wide mb-3 flex items-center gap-1.5">
-                <TeamOutlined /> Employee Breakdown
+                <TeamOutlined /> Employee Breakdown for {record.sub_category}
             </div>
             <div className="rounded-lg border border-[#C3C6D6] overflow-hidden">
                 <table className="w-full border-collapse">
@@ -372,8 +412,9 @@ const expandedRowRender = (record) => {
     );
 };
 
-    const foundProjects = projectStatusData.filter(p => p.project_exists).length;
-    const notFoundProjects = projectStatusData.filter(p => !p.project_exists).length;
+    // Around line 250-260, update these variables
+const foundProjects = projectStatusData.filter(p => p.project_exists).length;
+const notFoundProjects = projectStatusData.filter(p => !p.project_exists).length;
     const hasData = projectStatusData.length > 0;
     const selectedBatch = allBatches.find(b => b.id === selectedBatchId);
 
@@ -573,38 +614,44 @@ const expandedRowRender = (record) => {
         </div>
     </div>
 
-                   <Table
-        columns={projectStatusColumns}
-        dataSource={projectStatusData}
-        rowKey="project_code"
-        pagination={{
-    pageSize: 10,
-    showSizeChanger: false,
-    showTotal: (total, range) => `Showing ${range[0]} to ${range[1]} of ${total} projects`,
-    className: 'custom-pagination',
-    itemRender: (page, type, originalElement) => {
-        if (type === 'prev') {
-            return <span className="text-xs">‹</span>;
-        }
-        if (type === 'next') {
-            return <span className="text-xs">›</span>;
-        }
-        return originalElement;
-    },
-}}
-        size="middle"
-        scroll={{ x: 800 }}
-        rowClassName={() => 'align-top'}
-        expandable={{
-            expandedRowRender,
-            expandedRowKeys: expandedProject ? [expandedProject] : [],
-            onExpand: (expanded, record) =>
-                setExpandedProject(expanded ? record.project_code : null),
-            rowExpandable: (record) =>
-                record.employee_details && record.employee_details.length > 0,
-            showExpandColumn: false,
-        }}
-    />
+                  <Table
+    columns={projectStatusColumns}
+    dataSource={projectStatusData}
+    rowKey={(record) => `${record.project_code}-${record.sub_category}`}
+    pagination={{
+        pageSize: 10,
+        showSizeChanger: false,
+        showTotal: (total, range) => `Showing ${range[0]} to ${range[1]} of ${total} projects`,
+        className: 'custom-pagination',
+        itemRender: (page, type, originalElement) => {
+            if (type === 'prev') {
+                return <span className="text-xs">‹</span>;
+            }
+            if (type === 'next') {
+                return <span className="text-xs">›</span>;
+            }
+            return originalElement;
+        },
+    }}
+    size="middle"
+    scroll={{ x: 800 }}
+    rowClassName={() => 'align-top'}
+    expandable={{
+        expandedRowRender,
+        expandedRowKeys: expandedProject ? [expandedProject] : [],
+        onExpand: (expanded, record) => {
+            const uniqueKey = `${record.project_code}-${record.sub_category}`;
+            console.log('Expand:', expanded, uniqueKey); // Debug
+            setExpandedProject(expanded ? uniqueKey : null);
+        },
+        rowExpandable: (record) => {
+            const hasEmployees = record.employee_details && record.employee_details.length > 0;
+            console.log('Row expandable:', record.sub_category, hasEmployees); // Debug
+            return hasEmployees;
+        },
+        showExpandColumn: false,
+    }}
+/>
                 </div>
             ) : uploadResult && !loadingDetails ? (
                 <div className="bg-white rounded-xl border border-gray-200 text-center py-10">
