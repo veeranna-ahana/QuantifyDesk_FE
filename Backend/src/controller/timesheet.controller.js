@@ -65,14 +65,13 @@ const uploadTimesheet = async (req, res, next) => {
         // ─── 3. Get Employee ID from Token (master.emp) ──────────────
         const batchCode = generateBatchCode();
         let empId = null;
-        let uId = null; // Keep for backward compatibility with user_id
-        
+        let uId = null;
+
         const tokenEmpId = req.user?.emp_id;
         const tokenUserId = req.user?.id || req.user?.userid;
         
         console.log('🔍 Token data:', { tokenEmpId, tokenUserId });
         
-        // Method 1: Use emp_id from token (master.emp)
         if (tokenEmpId) {
             const empResult = await masterQuery(
                 `SELECT u_id, emp_id, emp_name FROM emp WHERE emp_id = ? AND flag = 'Active'`,
@@ -85,7 +84,6 @@ const uploadTimesheet = async (req, res, next) => {
             }
         }
         
-        // Method 2: Extract numeric ID from userid (e.g., "10998_ASC00089" → 10998)
         if (!empId && tokenUserId) {
             let numericId = tokenUserId;
             if (typeof numericId === 'string' && numericId.includes('_')) {
@@ -107,7 +105,6 @@ const uploadTimesheet = async (req, res, next) => {
             }
         }
         
-        // Method 3: Fallback - use admin user
         if (!empId) {
             console.warn('⚠️ SSO user not found in master.emp, using fallback admin');
             const fallbackEmp = await masterQuery(
@@ -128,7 +125,7 @@ const uploadTimesheet = async (req, res, next) => {
         console.log('✅ Final empId:', empId);
         console.log('✅ Final uId:', uId);
 
-        // ─── 4. Create Batch (using emp_id) ──────────────────────────
+        // ─── 4. Create Batch ──────────────────────────────────────────
         const batchResult = await query(
             `INSERT INTO timesheet_batches 
              (batch_code, uploaded_by, emp_id, file_name, total_records, status) 
@@ -139,10 +136,11 @@ const uploadTimesheet = async (req, res, next) => {
         const batchId = batchResult.insertId;
 
         // ─── 5. Get Existing Projects & Employees ────────────────────
-        const projects = await query(`SELECT id, project_code FROM projects WHERE project_code IS NOT NULL`);
+        // Get projects with their sub_category
+        const projects = await query(`SELECT id, project_code, sub_category FROM projects WHERE project_code IS NOT NULL`);
         const employees = await masterQuery(`SELECT u_id, emp_id, emp_name FROM emp WHERE flag = 'Active'`);
         
-        const projectMap = new Map(projects.map(p => [p.project_code, p.id]));
+        const projectMap = new Map(projects.map(p => [p.project_code, { id: p.id, sub_category: p.sub_category }]));
         const userMap = new Map(employees.map(e => [e.emp_id, e.u_id]));
 
         // ─── 6. Process Each Row ──────────────────────────────────────
@@ -159,6 +157,8 @@ const uploadTimesheet = async (req, res, next) => {
             const projectCode = String(row['Project Code'] || '').trim();
             const projectName = String(row['Project Name'] || '').trim();
             const clientName = String(row['Client Name'] || '').trim();
+            const subCategoryFromExcel = String(row['Sub Category'] || '').trim();
+            const subCategory = String(row['Sub Category'] || '').trim();
             
             const fromDate = parseDate(row['From Date']);
             const toDate = parseDate(row['To Date']);
@@ -169,7 +169,11 @@ const uploadTimesheet = async (req, res, next) => {
             }
             
             const employeeId = employeeCode ? userMap.get(employeeCode) || null : null;
-            const projectId = projectCode ? projectMap.get(projectCode) || null : null;
+            
+            // Get project info including sub_category
+            const projectInfo = projectCode ? projectMap.get(projectCode) || null : null;
+            const projectId = projectInfo ? projectInfo.id : null;
+            const projectSubCategory = projectInfo ? projectInfo.sub_category : null;
             
             if (employeeCode && !employeeId) {
                 missingEmployees.add(employeeCode);
@@ -179,7 +183,8 @@ const uploadTimesheet = async (req, res, next) => {
                 missingProjects.add(projectCode);
             }
 
-            const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+            // ✅ Updated to include all 7 days (Monday to Sunday)
+            const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
             let hasEntries = false;
             const baseYear = fromDate.year;
             const baseMonth = fromDate.month;
@@ -200,15 +205,15 @@ const uploadTimesheet = async (req, res, next) => {
                         String(entryDate.getDate()).padStart(2, '0');
                     
                     // ─── Check for duplicate ────────────────────────
-                    const existingEntry = await query(
-                        `SELECT id, hours FROM timesheet_entries 
-                         WHERE original_emp_code = ? 
-                         AND original_project_code = ? 
-                         AND entry_date = ? 
-                         AND day_of_week = ?`,
-                        [employeeCode, projectCode, formattedDate, day]
-                    );
-                    
+                   const existingEntry = await query(
+    `SELECT id, hours FROM timesheet_entries 
+     WHERE original_emp_code = ? 
+     AND original_project_code = ? 
+     AND entry_date = ? 
+     AND day_of_week = ?
+     AND (original_sub_category = ? OR (original_sub_category IS NULL AND ? IS NULL))`,
+    [employeeCode, projectCode, formattedDate, day, subCategory, subCategory]
+);
                     if (existingEntry.length > 0) {
                         duplicateEntries++;
                         duplicateDetails.push({
@@ -228,16 +233,35 @@ const uploadTimesheet = async (req, res, next) => {
                     if (!employeeId) reconStatus = 'missing_employee';
                     else if (!projectId) reconStatus = 'missing_project';
                     
-                    // ✅ UPDATED INSERT with emp_id
+                    // ─── INSERT with subcategory fields ──────────────
+                    // Use subcategory from project if available, otherwise from Excel
+                    const finalSubCategory = projectSubCategory || subCategoryFromExcel || null;
+                    
                     await query(
                         `INSERT INTO timesheet_entries 
-                         (batch_id, user_id, emp_id, original_emp_code, project_id, original_project_code, original_project_name, original_client_name,
-                          entry_date, hours, description, day_of_week, employee_found, project_found, reconciliation_status) 
-                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                         (batch_id, user_id, emp_id, original_emp_code, project_id, original_project_code, 
+                          original_project_name, original_client_name, original_sub_category, sub_category_id,
+                          entry_date, hours, description, day_of_week, employee_found, project_found, 
+                          reconciliation_status) 
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                         [
-                            batchId, employeeId, employeeCode, employeeCode, projectId, projectCode, projectName, clientName,
-                            formattedDate, hours, description, day,
-                            employeeId ? 1 : 0, projectId ? 1 : 0, reconStatus
+                            batchId, 
+                            employeeId, 
+                            employeeCode, 
+                            employeeCode, 
+                            projectId, 
+                            projectCode, 
+                            projectName, 
+                            clientName,
+                            finalSubCategory, // original_sub_category
+                            null, // sub_category_id (we don't have a separate table for this)
+                            formattedDate, 
+                            hours, 
+                            description, 
+                            day,
+                            employeeId ? 1 : 0, 
+                            projectId ? 1 : 0, 
+                            reconStatus
                         ]
                     );
                 }
@@ -328,7 +352,10 @@ const getBatches = async (req, res, next) => {
                 e.emp_id as uploaded_by_emp_id,
                 COUNT(te.id) as total_entries,
                 MIN(te.entry_date) as earliest_date,
-                MAX(te.entry_date) as latest_date
+                MAX(te.entry_date) as latest_date,
+                COUNT(DISTINCT te.sub_category_id) as total_subcategories,
+                COUNT(DISTINCT te.original_sub_category) as total_original_subcategories,
+                SUM(CASE WHEN te.sub_category_id IS NULL AND te.original_sub_category IS NOT NULL AND te.original_sub_category != '' THEN 1 ELSE 0 END) as missing_subcategory_entries
             FROM timesheet_batches tb
             LEFT JOIN master.emp e ON e.emp_id = tb.emp_id
             LEFT JOIN timesheet_entries te ON te.batch_id = tb.id
@@ -367,7 +394,7 @@ const getBatchDetails = async (req, res, next) => {
             return res.status(404).json({ message: "Batch not found" });
         }
         
-        // ✅ Updated to join with master.emp
+        // ✅ Updated to include subcategory from projects table
         const entries = await query(`
             SELECT 
                 te.*,
@@ -376,7 +403,10 @@ const getBatchDetails = async (req, res, next) => {
                 te.original_emp_code,
                 p.project_name, 
                 p.project_code,
-                te.original_project_name
+                p.sub_category as project_sub_category,
+                te.original_project_name,
+                te.original_client_name,
+                te.original_sub_category
             FROM timesheet_entries te
             LEFT JOIN master.emp e ON e.emp_id = te.emp_id
             LEFT JOIN projects p ON te.project_id = p.id
@@ -390,7 +420,12 @@ const getBatchDetails = async (req, res, next) => {
             unique_employees: new Set(entries.map(e => e.emp_id || e.original_emp_code)).size,
             unique_projects: new Set(entries.map(e => e.project_id || e.original_project_code)).size,
             missing_employees: entries.filter(e => e.employee_found === 0).length,
-            missing_projects: entries.filter(e => e.project_found === 0).length
+            missing_projects: entries.filter(e => e.project_found === 0).length,
+            // Subcategory summary
+            unique_subcategories: new Set(entries
+                .filter(e => e.project_sub_category || e.original_sub_category)
+                .map(e => e.project_sub_category || e.original_sub_category)
+            ).size
         };
         
         res.status(200).json({
