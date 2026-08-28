@@ -107,6 +107,8 @@ const CreateProjectModal = ({ onClose, onCreated }) => {
   const handleSubmit = async () => {
     if (!form.projectName.trim()) return setError('Project Name is required.');
     // if (!form.customer.trim()) return setError('Customer is required.');
+     // ─── ADD THIS VALIDATION ──────────────────────────────────────────────
+    if (!form.subCategory.trim()) return setError('Sub Category is required.');
     if (form.startDate && form.endDate && form.endDate < form.startDate) {
       return setError('End Date cannot be earlier than Start Date.');
     }
@@ -145,7 +147,7 @@ const CreateProjectModal = ({ onClose, onCreated }) => {
     { key: 'nbdId', label: 'NBD ID', required: false, placeholder: 'e.g. NBD-2024-001' },
     { key: 'o2dId', label: 'O2D ID', required: false, placeholder: 'e.g. O2D-2024-042' },
     { key: 'projectCode', label: 'Project Code', required: false, placeholder: 'e.g. PRJ-001' },
-    { key: 'subCategory', label: 'Sub Category', required: false, placeholder: 'e.g. Web App / Mobile' },
+    { key: 'subCategory', label: 'Sub Category', required: true, placeholder: 'e.g. Web App / Mobile' }, 
     { key: 'customer', label: 'Customer', required: false, placeholder: 'Client or company name' },
     { key: 'teamLead', label: 'Team Lead', required: false, placeholder: 'Select Team Lead', isSelect: true },
   ];
@@ -374,7 +376,7 @@ const EditProjectModal = ({ project, onClose, onUpdated }) => {
     { key: 'nbdId', label: 'NBD ID', required: false, placeholder: 'e.g. NBD-2024-001' },
     { key: 'o2dId', label: 'O2D ID', required: false, placeholder: 'e.g. O2D-2024-042' },
     { key: 'projectCode', label: 'Project Code', required: false, placeholder: 'e.g. PRJ-001' },
-    { key: 'subCategory', label: 'Sub Category', required: false, placeholder: 'e.g. Web App / Mobile' },
+    { key: 'subCategory', label: 'Sub Category', required: true, placeholder: 'e.g. Web App / Mobile' },
     { key: 'customer', label: 'Customer', required: false, placeholder: 'Client or company name' },
     { key: 'teamLead', label: 'Team Lead', required: false, placeholder: 'Select Team Lead', isSelect: true },
   ];

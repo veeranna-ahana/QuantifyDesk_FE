@@ -114,12 +114,23 @@ const EmployeeStatusPill = ({ assignedHours, actualHours, status }) => {
 const CustomPieTooltip = ({ active, payload }) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
-    const total = payload[0].chartData?.reduce((acc, curr) => acc + curr.count, 0) || payload[0].payload?.totalProjects || 1;
-    const pct = ((data.count / total) * 100).toFixed(1);
+    // Use the percentage from the data instead of recalculating
+    const pct = data.percentage !== undefined ? data.percentage.toFixed(2) : 
+                ((data.count / data.totalProjects) * 100).toFixed(2);
     return (
-      <div className="bg-white/95 backdrop-blur-sm border border-gray-100 p-2.5 rounded-xl shadow-lg text-xs z-50">
+      <div 
+        className="bg-white/95 backdrop-blur-sm border border-gray-100 p-2.5 rounded-xl shadow-lg text-xs"
+        style={{ 
+          zIndex: 9999,
+          position: 'relative',
+          minWidth: '150px',
+          maxWidth: '250px',
+          boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)',
+          transform: 'translateY(-10px)'
+        }}
+      >
         <div className="flex items-center gap-1.5 font-semibold text-gray-800">
-          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: data.color }} />
+          <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: data.color }} />
           <span>{data.name}</span>
         </div>
         <div className="mt-1 text-gray-500 font-medium">
@@ -370,42 +381,63 @@ const ReconPage = () => {
   }, [projectDetail.employeeSummary, resourceSearch]);
 
   // ─── Utilization Donut Chart Data ─────────────────────────────
-  const utilizationPieData = useMemo(() => {
-    let over = 0;
-    let utilized = 0;
-    let moderate = 0;
-    let under = 0;
-    let noEst = 0;
+const utilizationPieData = useMemo(() => {
+  let over = 0;
+  let utilized = 0;
+  let moderate = 0;
+  let under = 0;
+  let noEst = 0;
 
-    projectReconList.forEach((p) => {
-      const estimated = parseFloat(p.estimated_hours || 0);
-      const actual = parseFloat(p.actual_hours || 0);
-      if (!p.in_system || estimated === 0) {
-        noEst++;
-      } else {
-        const util = (actual / estimated) * 100;
-        if (util > 100) over++;
-        else if (util >= 70) utilized++;
-        else if (util >= 50) moderate++;
-        else under++;
-      }
-    });
-
-    const data = [
-      { name: "Over-utilized (>100%)", count: over, color: "#EF4444", shortName: "Over-utilized" },
-      { name: "Utilized (70%–90%)", count: utilized, color: "#10B981", shortName: "Utilized" },
-      { name: "Moderate (50%–70%)", count: moderate, color: "#0284C7", shortName: "Moderate" },
-      { name: "Under-utilized (<50%)", count: under, color: "#F59E0B", shortName: "Under-utilized" },
-    ];
-
-    if (noEst > 0) {
-      data.push({ name: "No Estimate / Other", count: noEst, color: "#94A3B8", shortName: "No Estimate" });
+  projectReconList.forEach((p) => {
+    const estimated = parseFloat(p.estimated_hours || 0);
+    const actual = parseFloat(p.actual_hours || 0);
+    if (!p.in_system || estimated === 0) {
+      noEst++;
+    } else {
+      const util = (actual / estimated) * 100;
+      if (util > 100) over++;
+      else if (util >= 70) utilized++;
+      else if (util >= 50) moderate++;
+      else under++;
     }
+  });
 
-    const filtered = data.filter((d) => d.count > 0);
-    const total = filtered.reduce((acc, curr) => acc + curr.count, 0);
-    return filtered.map((d) => ({ ...d, totalProjects: total }));
-  }, [projectReconList]);
+  const data = [
+    { name: "Over-utilized (>100%)", count: over, color: "#EF4444", shortName: "Over-utilized" },
+    { name: "Utilized (70%–100%)", count: utilized, color: "#10B981", shortName: "Utilized" },
+    { name: "Moderate (50%–70%)", count: moderate, color: "#0284C7", shortName: "Moderate" },
+    { name: "Under-utilized (<50%)", count: under, color: "#F59E0B", shortName: "Under-utilized" },
+  ];
+
+  if (noEst > 0) {
+    data.push({ name: "No Estimate", count: noEst, color: "#94A3B8", shortName: "No Estimate" });
+  }
+
+  const filtered = data.filter((d) => d.count > 0);
+  const total = filtered.reduce((acc, curr) => acc + curr.count, 0);
+  
+  // Calculate percentages with adjustment for the last item
+  const result = filtered.map((d, index, array) => {
+    const rawPct = (d.count / total) * 100;
+    let pct;
+    if (index === array.length - 1) {
+      // Last category: adjust to make total exactly 100%
+      const sumOthers = array.slice(0, -1).reduce((sum, item) => {
+        return sum + parseFloat(((item.count / total) * 100).toFixed(2));
+      }, 0);
+      pct = parseFloat((100 - sumOthers).toFixed(2));
+    } else {
+      pct = parseFloat(rawPct.toFixed(2));
+    }
+    return { 
+      ...d, 
+      totalProjects: total, 
+      percentage: pct  // ← This is the key addition
+    };
+  });
+  
+  return result;
+}, [projectReconList]);
 
   const totalUtilizedProjects = useMemo(() => {
     return utilizationPieData.reduce((acc, curr) => acc + curr.count, 0);
@@ -1202,7 +1234,7 @@ useEffect(() => {
           <div className="flex justify-between items-center flex-wrap gap-4 mb-6">
             <div>
               <h1 className="text-[24px] font-bold text-[#191B23] m-0">Recon Dashboard</h1>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-[16px] text-[#434654] mt-1">
                 Compare project estimates against actual hours logged in timesheets
               </p>
             </div>
@@ -1362,21 +1394,34 @@ useEffect(() => {
                   </div>
 
                   <div className="flex-1 w-full flex flex-col gap-1.5 justify-center">
-                    {utilizationPieData.map((item) => {
-                      const pct = totalUtilizedProjects > 0 ? ((item.count / totalUtilizedProjects) * 100).toFixed(0) : 0;
-                      return (
-                        <div key={item.name} className="flex items-center justify-between text-xs">
-                          <div className="flex items-center gap-1.5 min-w-0">
-                            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
-                            <span className="text-gray-600 truncate text-[11px]">{item.shortName}</span>
-                          </div>
-                          <div className="flex items-center gap-1 font-semibold text-gray-800 text-[11px] shrink-0 ml-2">
-                            <span>{item.count}</span>
-                            <span className="text-gray-400 font-normal">({pct}%)</span>
-                          </div>
-                        </div>
-                      );
-                    })}
+                    {utilizationPieData.map((item, index, array) => {
+  // Calculate percentage with 2 decimal places
+  const rawPct = (item.count / totalUtilizedProjects) * 100;
+  
+  let pct;
+  if (index === array.length - 1) {
+    // Last category: adjust to make total exactly 100%
+    const sumOthers = array.slice(0, -1).reduce((sum, d) => {
+      return sum + parseFloat(((d.count / totalUtilizedProjects) * 100).toFixed(2));
+    }, 0);
+    pct = (100 - sumOthers).toFixed(2);
+  } else {
+    pct = rawPct.toFixed(2);
+  }
+  
+  return (
+    <div key={item.name} className="flex items-center justify-between text-xs">
+      <div className="flex items-center gap-1.5 min-w-0">
+        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+        <span className="text-gray-600 truncate text-[11px]">{item.shortName}</span>
+      </div>
+      <div className="flex items-center gap-1 font-semibold text-gray-800 text-[11px] shrink-0 ml-2">
+        <span>{item.count}</span>
+        <span className="text-gray-400 font-normal">({pct}%)</span>
+      </div>
+    </div>
+  );
+})}
                   </div>
                 </div>
               ) : (
@@ -1772,7 +1817,7 @@ useEffect(() => {
                             } else if (utilizationPct > 0 && utilizationPct < 80) {
                               barColor = "#059669";
                               pctColor = "text-green-600";
-                              utilTag = "Optimized";
+                              utilTag = "Utilized";
                             }
 
                             return (

@@ -112,6 +112,7 @@ export default function EditProject() {
   const [customers, setCustomers] = useState([]);
   const [customersLoading, setCustomersLoading] = useState(false);
   const [customersError, setCustomersError] = useState('');
+  const [existingProjects, setExistingProjects] = useState([]);
 
 // ── Employee dropdown state ────────────────────────────────────────────────
 const dispatch = useDispatch();
@@ -140,6 +141,22 @@ useEffect(() => {
     setEmployees(deliveryEmployees);
   }
 }, [hrmsEmployees, deliveryEmployees]);
+
+// Fetch all projects for duplicate validation
+useEffect(() => {
+  const fetchProjects = async () => {
+    try {
+      const response = await axios.get(`${BASE_URL}/api/projects`, { 
+        headers: getHeaders() 
+      });
+      const projects = response.data?.data || response.data || [];
+      setExistingProjects(projects);
+    } catch (err) {
+      console.error('Failed to fetch projects for validation:', err);
+    }
+  };
+  fetchProjects();
+}, []);
 
 const employeeOptions = useMemo(() => {
   return employees.map(emp => {
@@ -184,14 +201,64 @@ const employeeOptions = useMemo(() => {
   };
 
   const validate = () => {
-    const e = {};
-    if (!form.projectName.trim()) e.projectName = 'Project Name is required.';
-    // if (!form.customer.trim()) e.customer = 'Customer is required.';
-    if (form.startDate && form.endDate && form.endDate < form.startDate) {
-      e.endDate = 'End Date cannot be earlier than Start Date.';
-    }
-    return e;
-  };
+  const e = {};
+  
+  // Required fields
+  if (!form.projectName.trim()) e.projectName = 'Project Name is required.';
+  if (!form.subCategory.trim()) e.subCategory = 'Sub Category is required.';
+  if (!form.nbdId.trim()) e.nbdId = 'NBD ID is required.';
+  if (!form.projectCode.trim()) e.projectCode = 'Project Code is required.';
+  
+  // ─── DUPLICATE CHECKS (Exclude Current Project) ──────────────────────────
+  const currentProjectId = project.id;
+  
+  // Check Project Name duplicate
+  const nameDuplicate = existingProjects.find(p => 
+    p.id !== currentProjectId && 
+    p.project_name && 
+    p.project_name.toLowerCase() === form.projectName.trim().toLowerCase()
+  );
+  if (nameDuplicate) {
+    e.projectName = `Project name "${form.projectName}" is already in use.`;
+  }
+  
+  // Check NBD ID duplicate
+  const nbdDuplicate = existingProjects.find(p => 
+    p.id !== currentProjectId && 
+    p.nbd_id && 
+    p.nbd_id.toLowerCase() === form.nbdId.trim().toLowerCase()
+  );
+  if (nbdDuplicate && form.nbdId.trim()) {
+    e.nbdId = `NBD ID "${form.nbdId}" is already in use.`;
+  }
+  
+  // Check Project Code duplicate
+  // const codeDuplicate = existingProjects.find(p => 
+  //   p.id !== currentProjectId && 
+  //   p.project_code && 
+  //   p.project_code.toLowerCase() === form.projectCode.trim().toLowerCase()
+  // );
+  // if (codeDuplicate && form.projectCode.trim()) {
+  //   e.projectCode = `Project Code "${form.projectCode}" is already in use.`;
+  // }
+  
+  // Check Sub Category duplicate (if needed)
+  const subCategoryDuplicate = existingProjects.find(p => 
+    p.id !== currentProjectId && 
+    p.sub_category && 
+    p.sub_category.toLowerCase() === form.subCategory.trim().toLowerCase()
+  );
+  if (subCategoryDuplicate && form.subCategory.trim()) {
+    e.subCategory = `Sub Category "${form.subCategory}" is already in use.`;
+  }
+  
+  // Date validation
+  if (form.startDate && form.endDate && form.endDate < form.startDate) {
+    e.endDate = 'End Date cannot be earlier than Start Date.';
+  }
+  
+  return e;
+};
 
   const handleSubmit = async () => {
     const e = validate();
@@ -249,18 +316,18 @@ const employeeOptions = useMemo(() => {
             <div className="space-y-4">
               {/* Project Name */}
               <div>
-                <Label required>Project Name</Label>
-                <input
-                  type="text"
-                  value={form.projectName}
-                  onChange={e => set('projectName', e.target.value)}
-                  placeholder="e.g., Q3 Infrastructure Optimization"
-                  className={`${inputCls} ${errors.projectName ? 'border-red-400 ring-2 ring-red-200' : ''}`}
-                />
-                {errors.projectName && (
-                  <p className="text-red-500 text-xs mt-1">{errors.projectName}</p>
-                )}
-              </div>
+  <Label required>Project Name</Label>
+  <input
+    type="text"
+    value={form.projectName}
+    onChange={e => set('projectName', e.target.value)}
+    placeholder="e.g., Q3 Infrastructure Optimization"
+    className={`${inputCls} ${errors.projectName ? 'border-red-400 ring-2 ring-red-200' : ''}`}
+  />
+  {errors.projectName && (
+    <p className="text-red-500 text-xs mt-1">{errors.projectName}</p>
+  )}
+</div>
 
               {/* Description */}
               <div>
@@ -282,15 +349,18 @@ const employeeOptions = useMemo(() => {
               {/* Row 1: NBD ID, O2D ID, Project Code */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <Label>NBD ID</Label>
-                  <input
-                    type="text"
-                    value={form.nbdId}
-                    onChange={e => set('nbdId', e.target.value)}
-                    placeholder="NBD-0000"
-                    className={inputClsLight}
-                  />
-                </div>
+  <Label required>NBD ID</Label>
+  <input
+    type="text"
+    value={form.nbdId}
+    onChange={e => set('nbdId', e.target.value)}
+    placeholder="NBD-0000"
+    className={`${inputClsLight} ${errors.nbdId ? 'border-red-400 ring-2 ring-red-200' : ''}`}
+  />
+  {errors.nbdId && (
+    <p className="text-red-500 text-xs mt-1">{errors.nbdId}</p>
+  )}
+</div>
                 <div>
                   <Label>O2D ID</Label>
                   <input
@@ -301,30 +371,37 @@ const employeeOptions = useMemo(() => {
                     className={inputClsLight}
                   />
                 </div>
-                <div>
-                  <Label>Project Code</Label>
-                  <input
-                    type="text"
-                    value={form.projectCode}
-                    onChange={e => set('projectCode', e.target.value)}
-                    placeholder="PRJ-8821"
-                    className={inputClsLight}
-                  />
-                </div>
+                 <div>
+  <Label required>Project Code</Label>
+  <input
+    type="text"
+    value={form.projectCode}
+    onChange={e => set('projectCode', e.target.value)}
+    placeholder="PRJ-8821"
+    className={`${inputClsLight} ${errors.projectCode ? 'border-red-400 ring-2 ring-red-200' : ''}`}
+  />
+  {errors.projectCode && (
+    <p className="text-red-500 text-xs mt-1">{errors.projectCode}</p>
+  )}
+</div>
+
               </div>
 
               {/* Row 2: Sub Category, Customer, Team Lead */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                  <Label>Sub Category</Label>
-                  <input
-                    type="text"
-                    value={form.subCategory}
-                    onChange={e => set('subCategory', e.target.value)}
-                    placeholder="Network Engineering"
-                    className={inputClsLight}
-                  />
-                </div>
+                  <div>
+  <Label required>Sub Category</Label>
+  <input
+    type="text"
+    value={form.subCategory}
+    onChange={e => set('subCategory', e.target.value)}
+    placeholder="Network Engineering"
+    className={`${inputClsLight} ${errors.subCategory ? 'border-red-400 ring-2 ring-red-200' : ''}`}
+  />
+  {errors.subCategory && (
+    <p className="text-red-500 text-xs mt-1">{errors.subCategory}</p>
+  )}
+</div>
                 <div>
                   <Label>Customer</Label>
                   {/* <input

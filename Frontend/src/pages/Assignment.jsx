@@ -1098,7 +1098,7 @@ const AssignmentScreen = () => {
         <h2 className="text-2xl font-extrabold text-slate-800 flex items-center gap-2">
           Task Allocation
         </h2>
-        <p className="text-sm text-slate-500 mt-1">
+        <p className="text-[16px] text-[#434654] mt-1">
           Manage workloads and assign personnel to active projects.
         </p>
       </div>
