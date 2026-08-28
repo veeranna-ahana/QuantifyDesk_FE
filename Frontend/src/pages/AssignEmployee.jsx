@@ -295,7 +295,7 @@ console.log('ADM employees:', deliveryEmployees.length);
   return (
     <div className="p-6 bg-[#FAF8FF] min-h-full font-sans">
       {/* Page Header - Sticky */}
-      <div className="sticky top-0 z-30  py-3 mb-4 -mt-4 border-b shadow-sm px-2 rounded-xl">
+      <div className="sticky top-0 z-30  bg-white py-3 mb-4 -mt-4 border-b shadow-sm px-2 rounded-xl">
         {/* Row 1: Back Button */}
         <div className="flex items-center mb-3">
           <button
@@ -308,7 +308,7 @@ console.log('ADM employees:', deliveryEmployees.length);
         </div>
 
         {/* Row 2: Title and Task Info */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap mb-3 ">
           <span className="px-2 py-0.5 rounded text-[10px] font-bold text-white uppercase" style={{ backgroundColor: rs.border }}>
             {roleInitials}
           </span>
@@ -325,10 +325,8 @@ console.log('ADM employees:', deliveryEmployees.length);
             </span>
           )}
         </div>
-      </div>
 
-      {/* KPI Cards - Updated to match app style */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+        <div className=" sticky top-0 z-30 grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
         {[
           { label: "PLANNED UNITS", value: modal.planned_units ?? 0 },
           { label: "EST. DAYS", value: modal.estimated_days ?? 0 },
@@ -341,7 +339,6 @@ console.log('ADM employees:', deliveryEmployees.length);
           </div>
         ))}
       </div>
-
       {/* Remaining Balance Strip - Updated colors */}
       <div className="bg-[#F5F3FF] border border-[#856BFF]/20 rounded-xl p-4 flex justify-around items-center text-center mb-6">
         {[
@@ -358,6 +355,12 @@ console.log('ADM employees:', deliveryEmployees.length);
           </React.Fragment>
         ))}
       </div>
+      </div>
+
+      {/* KPI Cards - Updated to match app style */}
+      
+
+      
 
       {/* New Assignment Form - Updated button colors */}
       {!isAdmin && (

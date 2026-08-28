@@ -165,6 +165,7 @@ const employeeOptions = useMemo(() => {
     const e = {};
     if (!form.projectName.trim()) e.projectName = 'Project Name is required.';
     // if (!form.customer.trim()) e.customer = 'Customer is required.';
+      if (!form.subCategory.trim()) e.subCategory = 'Sub Category is required.';
     if (!form.nbdId.trim()) e.nbdId = 'NBD ID is required.';
     if (!form.projectCode.trim()) e.projectCode = 'Project Code is required.';
     if (form.startDate && form.endDate && form.endDate < form.startDate) {
@@ -226,9 +227,9 @@ const employeeOptions = useMemo(() => {
           if (detail.nbd_id === form.nbdId.trim()) {
             fieldErrors.nbdId = 'This NBD ID is already in use';
           }
-          if (detail.project_code === form.projectCode.trim()) {
-            fieldErrors.projectCode = 'This project code is already in use';
-          }
+          // if (detail.project_code === form.projectCode.trim()) {
+          //   fieldErrors.projectCode = 'This project code is already in use';
+          // }
         });
       }
       setErrors(fieldErrors);
@@ -344,16 +345,20 @@ const employeeOptions = useMemo(() => {
 
               {/* Row 2: Sub Category, Customer, Team Lead */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                  <Label>Sub Category</Label>
-                  <input
-                    type="text"
-                    value={form.subCategory}
-                    onChange={e => set('subCategory', e.target.value)}
-                    placeholder="Network Engineering"
-                    className={inputClsLight}
-                  />
-                </div>
+                 <div>
+    {/* ─── CHANGE THIS LINE ────────────────────────────────────────────── */}
+    <Label required>Sub Category</Label>  {/* Added 'required' prop */}
+    <input
+      type="text"
+      value={form.subCategory}
+      onChange={e => set('subCategory', e.target.value)}
+      placeholder="Network Engineering"
+      className={`${inputClsLight} ${errors.subCategory ? 'border-red-400 ring-2 ring-red-200' : ''}`}
+    />
+    {errors.subCategory && (
+      <p className="text-red-500 text-xs mt-1">{errors.subCategory}</p>
+    )}
+  </div>
                 <div>
                   <Label>Customer</Label>
                 

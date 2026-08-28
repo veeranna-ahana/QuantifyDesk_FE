@@ -32,6 +32,11 @@ const createProject = async (req, res, next) => {
         message: 'Project name is required',
       });
     }
+    if (!subCategory) {
+      return res.status(400).json({
+        message: 'Sub Category is required',
+      });
+    }
 
     if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
       return res.status(400).json({
@@ -43,6 +48,19 @@ const createProject = async (req, res, next) => {
     const duplicateErrors = [];
     const duplicateDetails = [];
 
+     if (subCategory) {
+      const subCategoryCheck = await query(
+        'SELECT id, sub_category FROM projects WHERE sub_category = ?',
+        [subCategory]
+      );
+      if (subCategoryCheck.length > 0) {
+        duplicateErrors.push(`Sub Category "${subCategory}" is already in use`);
+        duplicateDetails.push({
+          id: subCategoryCheck[0].id,
+          sub_category: subCategoryCheck[0].sub_category,
+        });
+      }
+    }
     // Check project_name
     const nameCheck = await query(
       'SELECT id, project_name FROM projects WHERE project_name = ?',
@@ -72,19 +90,19 @@ const createProject = async (req, res, next) => {
     }
 
     // Check project_code (if provided)
-    if (projectCode) {
-      const codeCheck = await query(
-        'SELECT id, project_code FROM projects WHERE project_code = ?',
-        [projectCode]
-      );
-      if (codeCheck.length > 0) {
-        duplicateErrors.push(`Project code "${projectCode}" is already in use`);
-        duplicateDetails.push({
-          id: codeCheck[0].id,
-          project_code: codeCheck[0].project_code,
-        });
-      }
-    }
+    // if (projectCode) {
+    //   const codeCheck = await query(
+    //     'SELECT id, project_code FROM projects WHERE project_code = ?',
+    //     [projectCode]
+    //   );
+    //   if (codeCheck.length > 0) {
+    //     duplicateErrors.push(`Project code "${projectCode}" is already in use`);
+    //     duplicateDetails.push({
+    //       id: codeCheck[0].id,
+    //       project_code: codeCheck[0].project_code,
+    //     });
+    //   }
+    // }
 
     // If any duplicates found, return error
     if (duplicateErrors.length > 0) {
@@ -135,7 +153,7 @@ const createProject = async (req, res, next) => {
       // This is a fallback in case the unique constraint catches something
       return res.status(409).json({
         message: 'Duplicate entry found',
-        errors: ['A project with this name, NBD ID, or project code already exists'],
+        errors: ['A project with this name or NBD ID already exists'],
         details: [],
       });
     }
@@ -466,6 +484,22 @@ const updateProject = async (req, res, next) => {
     const duplicateErrors = [];
     const duplicateDetails = [];
 
+    // ─── ADD THIS DUPLICATE CHECK ─────────────────────────────────────────
+    // Check sub_category
+    if (updatedSubCategory && updatedSubCategory !== current.sub_category) {
+      const subCategoryCheck = await query(
+        'SELECT id, sub_category FROM projects WHERE sub_category = ? AND id != ?',
+        [updatedSubCategory, id]
+      );
+      if (subCategoryCheck.length > 0) {
+        duplicateErrors.push(`Sub Category "${updatedSubCategory}" is already in use`);
+        duplicateDetails.push({
+          id: subCategoryCheck[0].id,
+          sub_category: subCategoryCheck[0].sub_category,
+        });
+      }
+    }
+
     // Check project_name
     if (updatedName && updatedName !== current.project_name) {
       const nameCheck = await query(
@@ -497,19 +531,19 @@ const updateProject = async (req, res, next) => {
     }
 
     // Check project_code
-    if (updatedProjectCode && updatedProjectCode !== current.project_code) {
-      const codeCheck = await query(
-        'SELECT id, project_code FROM projects WHERE project_code = ? AND id != ?',
-        [updatedProjectCode, id]
-      );
-      if (codeCheck.length > 0) {
-        duplicateErrors.push(`Project code "${updatedProjectCode}" is already in use`);
-        duplicateDetails.push({
-          id: codeCheck[0].id,
-          project_code: codeCheck[0].project_code,
-        });
-      }
-    }
+    // if (updatedProjectCode && updatedProjectCode !== current.project_code) {
+    //   const codeCheck = await query(
+    //     'SELECT id, project_code FROM projects WHERE project_code = ? AND id != ?',
+    //     [updatedProjectCode, id]
+    //   );
+    //   if (codeCheck.length > 0) {
+    //     duplicateErrors.push(`Project code "${updatedProjectCode}" is already in use`);
+    //     duplicateDetails.push({
+    //       id: codeCheck[0].id,
+    //       project_code: codeCheck[0].project_code,
+    //     });
+    //   }
+    // }
 
     // If any duplicates found, return error
     if (duplicateErrors.length > 0) {
@@ -571,7 +605,7 @@ const updateProject = async (req, res, next) => {
     if (err.code === 'ER_DUP_ENTRY') {
       return res.status(409).json({
         message: 'Duplicate entry found',
-        errors: ['A project with this name, NBD ID, or project code already exists'],
+        errors: ['A project with this name or NBD ID already exists'],
         details: [],
       });
     }
