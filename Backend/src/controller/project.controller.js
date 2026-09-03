@@ -1,4 +1,34 @@
 const { query, projectCodeQuery } = require('../config/db');
+const axios = require('axios');
+
+// ============================================
+// CONFIGURATION
+// ============================================
+const PMS_CONFIG = {
+  baseUrl: 'http://172.16.20.61:5001',
+  timeout: 10000,
+};
+
+// ============================================
+// HELPER: Get headers with token from request
+// ============================================
+function getPMSHeaders(req) {
+  const headers = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  };
+  
+  // Forward the authorization token from the incoming request
+  const authHeader = req.headers.authorization;
+  if (authHeader) {
+    headers['Authorization'] = authHeader;
+  } else {
+    console.warn('⚠️ No authorization header found in request');
+  }
+  
+  return headers;
+}
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/projects
@@ -7,6 +37,9 @@ const { query, projectCodeQuery } = require('../config/db');
 // ─────────────────────────────────────────────────────────────────────────────
 const createProject = async (req, res, next) => {
   try {
+    console.log('📥 Creating new project...');
+    console.log('📋 Request Body:', req.body);
+    
     const {
       name,
       clientName,
@@ -20,21 +53,12 @@ const createProject = async (req, res, next) => {
       status,
       projectType,
       teamLead,
+      pmsProjectId,
     } = req.body;
 
-    // if (!name || !clientName) {
-    //   return res.status(400).json({
-    //     message: 'Project name and client name are required',
-    //   });
-    // }
-    if (!name) {
+    if (!name || !clientName) {
       return res.status(400).json({
-        message: 'Project name is required',
-      });
-    }
-    if (!subCategory) {
-      return res.status(400).json({
-        message: 'Sub Category is required',
+        message: 'Project name and client name are required',
       });
     }
 
@@ -44,23 +68,10 @@ const createProject = async (req, res, next) => {
       });
     }
 
-    // ─── Check for duplicates BEFORE insert ──────────────────────────────
+    // Check for duplicates
     const duplicateErrors = [];
     const duplicateDetails = [];
 
-     if (subCategory) {
-      const subCategoryCheck = await query(
-        'SELECT id, sub_category FROM projects WHERE sub_category = ?',
-        [subCategory]
-      );
-      if (subCategoryCheck.length > 0) {
-        duplicateErrors.push(`Sub Category "${subCategory}" is already in use`);
-        duplicateDetails.push({
-          id: subCategoryCheck[0].id,
-          sub_category: subCategoryCheck[0].sub_category,
-        });
-      }
-    }
     // Check project_name
     const nameCheck = await query(
       'SELECT id, project_name FROM projects WHERE project_name = ?',
@@ -74,7 +85,6 @@ const createProject = async (req, res, next) => {
       });
     }
 
-    // Check nbd_id (if provided)
     if (nbdId) {
       const nbdCheck = await query(
         'SELECT id, nbd_id FROM projects WHERE nbd_id = ?',
@@ -89,22 +99,34 @@ const createProject = async (req, res, next) => {
       }
     }
 
-    // Check project_code (if provided)
-    // if (projectCode) {
-    //   const codeCheck = await query(
-    //     'SELECT id, project_code FROM projects WHERE project_code = ?',
-    //     [projectCode]
-    //   );
-    //   if (codeCheck.length > 0) {
-    //     duplicateErrors.push(`Project code "${projectCode}" is already in use`);
-    //     duplicateDetails.push({
-    //       id: codeCheck[0].id,
-    //       project_code: codeCheck[0].project_code,
-    //     });
-    //   }
-    // }
+    if (projectCode) {
+      const codeCheck = await query(
+        'SELECT id, project_code FROM projects WHERE project_code = ?',
+        [projectCode]
+      );
+      if (codeCheck.length > 0) {
+        duplicateErrors.push(`Project code "${projectCode}" is already in use`);
+        duplicateDetails.push({
+          id: codeCheck[0].id,
+          project_code: codeCheck[0].project_code,
+        });
+      }
+    }
 
-    // If any duplicates found, return error
+    if (pmsProjectId) {
+      const pmsCheck = await query(
+        'SELECT id, pms_project_id FROM projects WHERE pms_project_id = ?',
+        [pmsProjectId]
+      );
+      if (pmsCheck.length > 0) {
+        duplicateErrors.push(`PMS Project ID "${pmsProjectId}" is already in use`);
+        duplicateDetails.push({
+          id: pmsCheck[0].id,
+          pms_project_id: pmsCheck[0].pms_project_id,
+        });
+      }
+    }
+
     if (duplicateErrors.length > 0) {
       return res.status(409).json({
         message: 'Duplicate entry found',
@@ -113,12 +135,13 @@ const createProject = async (req, res, next) => {
       });
     }
 
-    // ─── Insert new project ────────────────────────────────────────────────
+    // Insert new project
     const sql = `
       INSERT INTO projects
         (project_name, client_name, description, nbd_id, o2d_id,
-         project_code, sub_category, start_date, end_date, status, project_type, team_lead)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         project_code, sub_category, start_date, end_date, status, 
+         project_type, team_lead, pms_project_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const params = [
@@ -134,26 +157,25 @@ const createProject = async (req, res, next) => {
       status || 'New',
       projectType || null,
       teamLead || null,
+      pmsProjectId || null,
     ];
 
     const result = await query(sql, params);
 
-    // Return the full newly-created row
     const rows = await query(
       `SELECT id, project_name, client_name, description, nbd_id, o2d_id,
-              project_code, sub_category, start_date, end_date, status, project_type, team_lead
+              project_code, sub_category, start_date, end_date, status, 
+              project_type, team_lead, pms_project_id
        FROM projects WHERE id = ?`,
       [result.insertId]
     );
 
     return res.status(201).json(rows[0]);
   } catch (err) {
-    // Handle any unexpected MySQL errors
     if (err.code === 'ER_DUP_ENTRY') {
-      // This is a fallback in case the unique constraint catches something
       return res.status(409).json({
         message: 'Duplicate entry found',
-        errors: ['A project with this name or NBD ID already exists'],
+        errors: ['A project with this name, NBD ID, PMS Project ID, or project code already exists'],
         details: [],
       });
     }
@@ -183,6 +205,7 @@ const getAllProjects = async (req, res, next) => {
     p.project_type,
     p.team_lead,
     p.create_cr,
+    p.pms_project_id, -- New field
     COALESCE(SUM(e.total_hrs), 0) AS total_effort_hours,
     COALESCE(SUM(e.effort_days + e.buffer_days), 0) AS total_effort_days
 
@@ -205,7 +228,8 @@ const getAllProjects = async (req, res, next) => {
     p.status,
     p.project_type,
     p.team_lead,
-    p.create_cr
+    p.create_cr,
+    p.pms_project_id -- New field
 
   ORDER BY p.id ASC
 `;
@@ -688,6 +712,132 @@ const getCustomers = async (req, res, next) => {
     return next(err);
   }
 };
+
+// ============================================
+// 1. FETCH PMS PROJECTS (for dropdown - simplified)
+// ============================================
+const fetchPMSProjects = async (req, res, next) => {
+  try {
+    console.log('📥 Fetching PMS projects for dropdown...');
+    console.log('📋 Using Authorization:', req.headers.authorization ? '✅ Present' : '❌ Missing');
+    
+    const response = await axios.get(
+      `${PMS_CONFIG.baseUrl}/api/pms/getAllProjects`,
+      {
+        headers: getPMSHeaders(req),
+        timeout: PMS_CONFIG.timeout
+      }
+    );
+    
+    let projects = [];
+    if (Array.isArray(response.data)) {
+      projects = response.data;
+    } else if (response.data && Array.isArray(response.data.projects)) {
+      projects = response.data.projects;
+    } else if (response.data && Array.isArray(response.data.data)) {
+      projects = response.data.data;
+    } else {
+      return res.status(200).json([]);
+    }
+
+    const formattedProjects = projects.map(project => ({
+      pms_project_id: project.project_id || project.id,
+      title: project.project_title || project.title || project.name || '',
+    }));
+    
+    return res.status(200).json(formattedProjects);
+  } catch (err) {
+    console.error('❌ Error fetching PMS projects:', err.message);
+    return res.status(500).json({
+      message: 'Failed to fetch PMS projects',
+      error: err.message
+    });
+  }
+};
+// API to fetch project details from PMS including milestones and tasks
+const fetchPMSProjectDetails = async (req, res, next) => {
+  try {
+    const { projectId } = req.query;
+    
+    if (!projectId) {
+      return res.status(400).json({
+        message: 'Project ID is required'
+      });
+    }
+
+    // First, check if the project exists in your DB
+    const localProject = await query(
+      'SELECT id, project_name, pms_project_id FROM projects WHERE pms_project_id = ?',
+      [projectId]
+    );
+
+    if (localProject.length === 0) {
+      return res.status(404).json({
+        message: 'Project not found in quantify tool'
+      });
+    }
+
+    // ✅ FIX: Forward the authorization token to PMS
+    const authHeader = req.headers.authorization;
+    const headers = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    };
+    
+    if (authHeader) {
+      headers['Authorization'] = authHeader;
+      console.log('✅ Forwarding authorization token to PMS');
+    } else {
+      console.warn('⚠️ No authorization header found in request');
+    }
+
+    // Fetch from PMS with token
+    const response = await axios.get(
+      `http://172.16.20.61:5001/api/pms/getProjectDetails?projectId=${projectId}`,
+      { 
+        headers: headers,
+        timeout: 10000 
+      }
+    );
+
+    if (response.data) {
+      // Structure the response for FE
+      const projectDetails = {
+        project_id: localProject[0].id,
+        project_name: localProject[0].project_name,
+        pms_project_id: projectId,
+        milestones: response.data.milestoneDetails || response.data.milestones || [],
+        tasks: response.data.tasksDetails || response.data.tasks || []
+      };
+
+      return res.status(200).json(projectDetails);
+    } else {
+      return res.status(404).json({
+        message: 'Project details not found in PMS'
+      });
+    }
+  } catch (err) {
+    console.error('Error fetching PMS project details:', err.message);
+    
+    // Better error handling
+    if (err.response) {
+      console.error('PMS API Response Status:', err.response.status);
+      console.error('PMS API Response Data:', err.response.data);
+      
+      if (err.response.status === 401) {
+        return res.status(401).json({
+          message: 'Authentication failed with PMS API',
+          error: 'Invalid or expired token'
+        });
+      }
+    }
+    
+    return res.status(500).json({
+      message: 'Failed to fetch project details from PMS',
+      error: err.message
+    });
+  }
+};
 module.exports = {
   createProject,
   getAllProjects,
@@ -696,4 +846,6 @@ module.exports = {
   deleteEffortEstimate,
   updateProject,
   getCustomers,
+  fetchPMSProjects,
+  fetchPMSProjectDetails,
 };

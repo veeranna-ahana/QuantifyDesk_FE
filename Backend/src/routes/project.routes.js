@@ -10,14 +10,16 @@ const {
   deleteEffortEstimate,
   updateProject,
   getCustomers,
+  fetchPMSProjects,
+  fetchPMSProjectDetails
 } = require('../controller/project.controller');
 
 // ── Customer List ─────────────────────────────────────────────
 router.get('/customers', authMiddleware, getCustomers);
 
 // ── Project CRUD ──────────────────────────────────────────────
-router.post('/', authMiddleware,  createProject);
-router.get('/',  authMiddleware, getAllProjects);
+router.post('/',  createProject);
+router.get('/',   getAllProjects);
 router.put('/:id', authMiddleware, updateProject);
 
 // ── Effort Estimate ───────────────────────────────────────────
@@ -29,6 +31,10 @@ router.post  ('/:projectId/effort/bulk', authMiddleware,  upsertEffortEstimate);
 
 // DELETE /projects/:projectId/effort       — reset / clear estimate
 router.delete('/:projectId/effort', authMiddleware,  deleteEffortEstimate);
+// API to fetch all projects from PMS for dropdown
+router.get('/pms/projects', fetchPMSProjects);
+// API to fetch project details from PMS including milestones and tasks
+router.get('/pms/project-details', fetchPMSProjectDetails);
 
 module.exports = router;
 
