@@ -817,12 +817,127 @@ const AssignmentScreen = () => {
   const [effortByRole, setEffortByRole] = useState({});
   const [expandedRoles, setExpandedRoles] = useState({});
 
+  // ── PMS Project Data State ──────────────────────────────────────────────────
+  const [pmsProjectData, setPmsProjectData] = useState(null);
+  const [pmsLoading, setPmsLoading] = useState(false);
+  const [expandedMilestones, setExpandedMilestones] = useState({});
+  // taskDraft: { [taskId]: { role, taskType, units } } — per-task manual fields
+  const [taskDraft, setTaskDraft] = useState({});
+
   const toggleRole = (role) =>
     setExpandedRoles(prev => ({ ...prev, [role]: !prev[role] }));
+
+  const toggleMilestone = (mid) =>
+    setExpandedMilestones(prev => ({ ...prev, [mid]: !prev[mid] }));
+
+  const handleTaskDraft = (taskId, field, value) =>
+    setTaskDraft(prev => ({ ...prev, [taskId]: { ...(prev[taskId] || {}), [field]: value } }));
+
+  // \u2500\u2500 Auto-fetch PMS project details when project changes \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  useEffect(() => {
+    if (!selProject) { setPmsProjectData(null); return; }
+    setPmsLoading(true);
+    setPmsProjectData(null);
+    setTaskDraft({});
+    setExpandedMilestones({});
+
+    const selectedProjectObj = projects.find(p => String(p.id) === String(selProject));
+    const pmsProjectId = selectedProjectObj?.pms_project_id;
+
+    if (!pmsProjectId) {
+      // Project has no PMS project ID linked — show empty state
+      setPmsProjectData(null);
+      setPmsLoading(false);
+      return;
+    }
+
+    const fetchPmsDetails = async () => {
+      try {
+        const res = await axios.get(
+          `${BASE_URL}/api/projects/pms/project-details?projectId=${pmsProjectId}`,
+          { headers: getHeaders() }
+        );
+        const data = res.data;
+
+        // Normalize milestones: support both milestoneDetails and milestones arrays
+        const rawMilestones = data.milestoneDetails || data.milestones || [];
+        const rawTasks      = data.tasksDetails     || data.tasks      || [];
+
+        // Build a taskId → milestone map from rawTasks if milestones don’t embed tasks
+        const tasksByMilestone = {};
+        rawTasks.forEach(t => {
+          const mid = t.milestone_id || t.milestoneId || 'unassigned';
+          if (!tasksByMilestone[mid]) tasksByMilestone[mid] = [];
+          tasksByMilestone[mid].push({
+            id: String(t.task_id || t.id || t.taskId || Math.random()),
+            task_name:    t.task_title  || t.task_name  || t.title || t.name || 'Untitled Task',
+            description:  t.description || t.task_description || '',
+            assigned_to:  t.assigned_to || t.assignedTo || t.employee_name || '',
+            planned_start: t.planned_start_date || t.plannedStartDate || t.planned_start || '',
+            actual_start:  t.actual_start_date  || t.actualStartDate  || t.actual_start  || '',
+            planned_end:   t.planned_end_date   || t.plannedEndDate   || t.planned_end   || '',
+            actual_end:    t.actual_end_date    || t.actualEndDate    || t.actual_end    || '',
+            status:        (t.status || 'NOT STARTED').toUpperCase(),
+          });
+        });
+
+        // Normalize milestones array
+        const normalizedMilestones = rawMilestones.map(m => {
+          const mid = String(m.milestone_id || m.id || m.milestoneId || Math.random());
+          // Tasks may be embedded in the milestone or in the separate rawTasks list
+          const embeddedTasks = m.tasks || m.taskDetails || [];
+          const normalizedTasks = embeddedTasks.length > 0
+            ? embeddedTasks.map(t => ({
+                id: String(t.task_id || t.id || t.taskId || Math.random()),
+                task_name:    t.task_title  || t.task_name  || t.title || t.name || 'Untitled Task',
+                description:  t.description || t.task_description || '',
+                assigned_to:  t.assigned_to || t.assignedTo || t.employee_name || '',
+                planned_start: t.planned_start_date || t.plannedStartDate || t.planned_start || '',
+                actual_start:  t.actual_start_date  || t.actualStartDate  || t.actual_start  || '',
+                planned_end:   t.planned_end_date   || t.plannedEndDate   || t.planned_end   || '',
+                actual_end:    t.actual_end_date    || t.actualEndDate    || t.actual_end    || '',
+                status:        (t.status || 'NOT STARTED').toUpperCase(),
+              }))
+            : (tasksByMilestone[mid] || []);
+
+          return {
+            id: mid,
+            name: m.milestone_title || m.milestone_name || m.title || m.name || `Milestone ${mid}`,
+            status: (m.status || 'NOT STARTED').toUpperCase(),
+            planned_start: m.planned_start_date || m.plannedStartDate || m.planned_start || '',
+            planned_end:   m.planned_end_date   || m.plannedEndDate   || m.planned_end   || '',
+            actual_start:  m.actual_start_date  || m.actualStartDate  || m.actual_start  || '',
+            actual_end:    m.actual_end_date    || m.actualEndDate    || m.actual_end    || '',
+            description:   m.description || '',
+            tasks: normalizedTasks,
+          };
+        });
+
+        setPmsProjectData({
+          project_manager:      data.project_manager      || data.projectManager      || '',
+          project_approver:     data.project_approver     || data.projectApprover     || '',
+          project_coordinator:  data.project_coordinator  || data.projectCoordinator  || '',
+          version:              data.version              || '',
+          status:               (data.status              || '').toUpperCase(),
+          milestones: normalizedMilestones,
+        });
+      } catch (err) {
+        console.error('Failed to fetch PMS project details:', err);
+        setPmsProjectData(null);
+      } finally {
+        setPmsLoading(false);
+      }
+    };
+
+    fetchPmsDetails();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selProject, projects]);
 
   useEffect(() => {
     setExpandedRoles({});
   }, [selProject]);
+
+
 
   // ── Initial fetch: projects, catalog ────────────────────────────────
   useEffect(() => {
@@ -1274,6 +1389,246 @@ const AssignmentScreen = () => {
   </div>
 )}
       </div>
+
+      {/* PMS Tasks Section — auto-loaded on project select */}
+      {selProject && (
+        <div className="mb-6">
+
+          {/* Section heading */}
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Icon icon="material-symbols:list-alt" width="20" height="20" color="#856BFF" />
+              <span className="font-extrabold text-[15px] text-slate-800">PMS Task List</span>
+            </div>
+            {pmsProjectData && (
+              <span className="text-[11px] text-slate-400 font-semibold">
+                {pmsProjectData.milestones.reduce((s, m) => s + m.tasks.length, 0)} tasks across {pmsProjectData.milestones.length} milestones
+              </span>
+            )}
+          </div>
+
+          {/* Project Header Card */}
+          {pmsLoading ? (
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 flex items-center justify-center gap-3 text-slate-400 text-sm">
+              <svg className="animate-spin w-5 h-5 text-[#856BFF]" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+              </svg>
+              Loading tasks from PMS…
+            </div>
+          ) : pmsProjectData ? (
+            <>
+              {/* Project meta strip */}
+              <div className="bg-white border border-slate-200 rounded-2xl px-5 py-3.5 mb-4 flex flex-wrap items-center gap-x-8 gap-y-2">
+                <div className="flex items-center gap-2 text-xs">
+                  <Icon icon="material-symbols:person" width="15" height="15" color="#64748b" />
+                  <span className="text-slate-400 font-semibold">Project Manager</span>
+                  <span className="font-bold text-slate-700">{pmsProjectData.project_manager}</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs">
+                  <Icon icon="material-symbols:person" width="15" height="15" color="#64748b" />
+                  <span className="text-slate-400 font-semibold">Project Approver</span>
+                  <span className="font-bold text-slate-700">{pmsProjectData.project_approver}</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs">
+                  <Icon icon="material-symbols:person" width="15" height="15" color="#64748b" />
+                  <span className="text-slate-400 font-semibold">Coordinator</span>
+                  <span className="font-bold text-slate-700">{pmsProjectData.project_coordinator}</span>
+                </div>
+                <div className="ml-auto flex items-center gap-3">
+                  <span className="px-2.5 py-1 rounded-lg text-[10px] font-extrabold bg-[#EFF4FF] text-[#856BFF] border border-[#856BFF]/20">
+                    {pmsProjectData.version}
+                  </span>
+                  <span className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold border ${
+                    pmsProjectData.status === 'STARTED'
+                      ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
+                      : pmsProjectData.status === 'COMPLETED'
+                      ? 'bg-slate-100 text-slate-500 border-slate-200'
+                      : 'bg-amber-50 text-amber-600 border-amber-200'
+                  }`}>
+                    {pmsProjectData.status}
+                  </span>
+                </div>
+              </div>
+
+              {/* Milestone Accordions */}
+              <div className="flex flex-col gap-3">
+                {pmsProjectData.milestones.map(milestone => {
+                  const isOpen = !!expandedMilestones[milestone.id];
+                  const statusColor =
+                    milestone.status === 'COMPLETED'  ? 'bg-emerald-50 text-emerald-600 border-emerald-200' :
+                    milestone.status === 'STARTED'    ? 'bg-blue-50 text-blue-600 border-blue-200' :
+                                                        'bg-slate-100 text-slate-500 border-slate-200';
+                  return (
+                    <div key={milestone.id} className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+
+                      {/* Milestone header (clickable) */}
+                      <button
+                        onClick={() => toggleMilestone(milestone.id)}
+                        className="w-full flex items-center justify-between px-5 py-3.5 text-left hover:bg-slate-50/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-[#EFF4FF] flex items-center justify-center shrink-0">
+                            <Icon icon="material-symbols:flag" width="16" height="16" color="#856BFF" />
+                          </div>
+                          <div>
+                            <span className="font-extrabold text-sm text-slate-800">Milestone: {milestone.name}</span>
+                            <span className="ml-3 text-[10px] text-slate-400 font-semibold">{milestone.tasks.length} tasks</span>
+                          </div>
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold border ${statusColor}`}>
+                            {milestone.status}
+                          </span>
+                        </div>
+                        <svg
+                          className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-0' : '-rotate-90'}`}
+                          fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+
+                      {isOpen && (
+                        <div className="border-t border-slate-100">
+
+                          {/* Milestone detail info row */}
+                          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-0 divide-x divide-slate-100 border-b border-slate-100 bg-slate-50/60">
+                            {[
+                              { label: 'Status',         value: milestone.status },
+                              { label: 'Planned Start',  value: milestone.planned_start },
+                              { label: 'Planned End',    value: milestone.planned_end },
+                              { label: 'Actual Start',   value: milestone.actual_start || '—' },
+                              { label: 'Actual End',     value: milestone.actual_end   || '—' },
+                              { label: 'Description',    value: milestone.description },
+                            ].map(({ label, value }) => (
+                              <div key={label} className="px-4 py-2.5">
+                                <div className="text-[9px] font-extrabold text-slate-400 tracking-wider uppercase mb-0.5">{label}</div>
+                                <div className="text-[11px] font-bold text-slate-700 truncate" title={value}>{value}</div>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Tasks table */}
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-xs border-collapse">
+                              <thead>
+                                <tr className="border-b border-slate-100 font-bold text-[#434654] text-[10px] uppercase" style={{ backgroundColor: '#EFF4FF' }}>
+                                  <th className="py-2.5 px-4 text-left">Task Name</th>
+                                  <th className="py-2.5 px-4 text-left">Description</th>
+                                  <th className="py-2.5 px-4 text-left">Assigned To</th>
+                                  <th className="py-2.5 px-4 text-center">Planned Start</th>
+                                  <th className="py-2.5 px-4 text-center">Actual Start</th>
+                                  <th className="py-2.5 px-4 text-center">Planned End</th>
+                                  <th className="py-2.5 px-4 text-center">Actual End</th>
+                                  <th className="py-2.5 px-4 text-center">Status</th>
+                                  {/* Manager editable columns */}
+                                  <th className="py-2.5 px-4 text-center bg-[#F3F0FF] text-[#856BFF]">Role</th>
+                                  <th className="py-2.5 px-4 text-center bg-[#F3F0FF] text-[#856BFF]">Task Type</th>
+                                  <th className="py-2.5 px-4 text-center bg-[#F3F0FF] text-[#856BFF]">Units</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-100">
+                                {milestone.tasks.map(task => {
+                                  const draft = taskDraft[task.id] || {};
+                                  const taskTypeOptions = draft.role && catalog[draft.role] ? catalog[draft.role] : [];
+                                  const taskStatus = task.status;
+                                  const taskStatusCls =
+                                    taskStatus === 'COMPLETED'   ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                                    taskStatus === 'STARTED'     ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                                                                   'bg-slate-100 text-slate-500 border-slate-200';
+                                  return (
+                                    <tr key={task.id} className="bg-white hover:bg-slate-50/30 transition-colors">
+                                      <td className="py-3 px-4 font-semibold text-slate-800 whitespace-nowrap">{task.task_name}</td>
+                                      <td className="py-3 px-4 text-slate-400 max-w-[140px] truncate" title={task.description}>{task.description || '—'}</td>
+                                      <td className="py-3 px-4 text-slate-600 whitespace-nowrap">
+                                        <div className="flex items-center gap-1.5">
+                                          <div className="w-5 h-5 rounded-full bg-violet-100 text-[#856BFF] flex items-center justify-center text-[9px] font-bold shrink-0">
+                                            {task.assigned_to?.[0]?.toUpperCase() || '?'}
+                                          </div>
+                                          {task.assigned_to}
+                                        </div>
+                                      </td>
+                                      <td className="py-3 px-4 text-center text-slate-500">{task.planned_start}</td>
+                                      <td className="py-3 px-4 text-center text-slate-500">{task.actual_start || '—'}</td>
+                                      <td className="py-3 px-4 text-center text-slate-500">{task.planned_end}</td>
+                                      <td className="py-3 px-4 text-center text-slate-500">{task.actual_end || '—'}</td>
+                                      <td className="py-3 px-4 text-center">
+                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold border ${taskStatusCls}`}>
+                                          {taskStatus}
+                                        </span>
+                                      </td>
+
+                                      {/* ── Manager fields (editable) ── */}
+                                      <td className="py-3 px-3 bg-[#FAF8FF]">
+                                        <select
+                                          value={draft.role || ''}
+                                          onChange={e => handleTaskDraft(task.id, 'role', e.target.value)}
+                                          onClick={e => e.stopPropagation()}
+                                          className="w-32 px-2 py-1.5 border border-slate-200 rounded-lg text-[11px] font-semibold text-slate-700 bg-white outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+                                        >
+                                          <option value="">Select…</option>
+                                          {ROLE_ORDER.map(r => <option key={r} value={r}>{r}</option>)}
+                                        </select>
+                                      </td>
+                                      <td className="py-3 px-3 bg-[#FAF8FF]">
+                                        <select
+                                          value={draft.taskType || ''}
+                                          onChange={e => handleTaskDraft(task.id, 'taskType', e.target.value)}
+                                          onClick={e => e.stopPropagation()}
+                                          disabled={!draft.role || taskTypeOptions.length === 0}
+                                          className="w-36 px-2 py-1.5 border border-slate-200 rounded-lg text-[11px] font-semibold text-slate-700 bg-white outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                          <option value="">Select…</option>
+                                          {taskTypeOptions.map(t => <option key={t.id} value={t.task_name}>{t.task_name}</option>)}
+                                        </select>
+                                      </td>
+                                      <td className="py-3 px-3 bg-[#FAF8FF]">
+                                        <input
+                                          type="number" min="1" step="1" placeholder="0"
+                                          value={draft.units || ''}
+                                          onKeyDown={e => { if (['.',  'e', 'E', '+', '-'].includes(e.key)) e.preventDefault(); }}
+                                          onChange={e => handleTaskDraft(task.id, 'units', e.target.value.replace(/\D/g, ''))}
+                                          onClick={e => e.stopPropagation()}
+                                          className="w-16 px-2 py-1.5 border border-slate-200 rounded-lg text-[11px] font-semibold text-center text-slate-700 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+                                        />
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Save All button */}
+              <div className="flex justify-end mt-4">
+                <button
+                  onClick={() => {
+                    // TODO: POST /api/pms-assignments/bulk when backend is ready
+                    const filled = Object.entries(taskDraft).filter(([, d]) => d.role && d.taskType && d.units);
+                    if (filled.length === 0) { toast.error('Please fill Role, Task Type, and Units for at least one task.'); return; }
+                    toast.success(`${filled.length} task assignment(s) saved locally!`);
+                  }}
+                  className="flex items-center gap-2 bg-[#856BFF] hover:bg-[#7b5efd] text-white font-bold text-sm py-2.5 px-6 rounded-xl shadow-sm transition-all"
+                >
+                  <Icon icon="material-symbols:save" width="16" height="16" />
+                  Save All Assignments
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="bg-white border border-dashed border-slate-200 rounded-2xl p-6 flex flex-col items-center justify-center text-center gap-2">
+              <Icon icon="material-symbols:link-off" width="28" height="28" color="#cbd5e1" />
+              <p className="text-sm font-semibold text-slate-400">No PMS project linked</p>
+              <p className="text-xs text-slate-300">Link a PMS Project ID to this project in the <strong>Edit Project</strong> page to view milestones and tasks here.</p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Accordion role table list */}
       {selProject && (
