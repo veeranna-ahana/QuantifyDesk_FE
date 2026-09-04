@@ -34,7 +34,6 @@ const emptyRows = () =>
     bufferDays: '',
     bufferHrs: '',
     totalHrs: '',
-    units: '',
   }));
 
 // ── Chevron icon for select ───────────────────────────────────────────────────
@@ -164,25 +163,22 @@ export default function EffortEstimate() {
       const r = rows.find(row => row.role === role);
       const days = parseFloat(r?.days) || 0;
       const bufferDays = parseFloat(r?.bufferDays) || 0;
-      const units = parseInt(r?.units, 10) || 0;
 
-      const totalAssignedUnits = assignedList.reduce((s, a) => s + (Number(a.units_assigned) || 0), 0);
       const totalAssignedDays = assignedList.reduce((s, a) => s + (Number(a.estimated_days) || 0), 0);
       const totalAssignedHours = assignedList.reduce((s, a) => s + (Number(a.estimated_hours) || 0), 0);
+      const totalAssignedUnits = assignedList.reduce((s, a) => s + (Number(a.units_assigned) || 0), 0);
 
-      const isRemoved = days <= 0 || units <= 0;
-      const isUnderUnits = units < totalAssignedUnits;
+      const isRemoved = days <= 0;
       const isUnderDays = (days + bufferDays) < totalAssignedDays;
 
-      if (isRemoved || isUnderUnits || isUnderDays) {
+      if (isRemoved || isUnderDays) {
         blocked.push({
           role,
-          reason: isRemoved ? 'removed' : isUnderUnits ? 'under_units' : 'under_days',
+          reason: isRemoved ? 'removed' : 'under_days',
           assignedCount: assignedList.length,
           totalAssignedUnits,
           totalAssignedDays,
           totalAssignedHours,
-          newUnits: units,
           newDays: days,
           newBufferDays: bufferDays,
           assignments: assignedList,
@@ -246,9 +242,8 @@ export default function EffortEstimate() {
       bufferDays: acc.bufferDays + (parseFloat(r.bufferDays) || 0),
       bufferHrs: acc.bufferHrs + (parseFloat(r.bufferHrs) || 0),
       totalHrs: acc.totalHrs + (parseFloat(r.totalHrs) || 0),
-      units: acc.units + (parseFloat(r.units) || 0),
     }),
-    { days: 0, hrs: 0, bufferDays: 0, bufferHrs: 0, totalHrs: 0, units: 0 }
+    { days: 0, hrs: 0, bufferDays: 0, bufferHrs: 0, totalHrs: 0 }
   );
 
   // ── Submit ───────────────────────────────────────────────────────────────
@@ -259,27 +254,6 @@ export default function EffortEstimate() {
     const blocked = getBlockedRoles();
     if (blocked.length > 0) {
       setBlockedModalData(blocked);
-      return;
-    }
-
-    const missing = rows.filter(r => {
-      const hasDays = (parseFloat(r.days) || 0) > 0;
-      const hasBuf = (parseFloat(r.bufferDays) || 0) > 0;
-      const hasUnits = r.units && parseInt(r.units, 10) > 0;
-      return ((hasDays || hasBuf) && !hasUnits) || (hasUnits && !hasDays);
-    });
-
-    if (missing.length) {
-      const withUnitsNoEffort = missing.filter(r => {
-        const hasDays = (parseFloat(r.days) || 0) > 0;
-        const hasUnits = r.units && parseInt(r.units, 10) > 0;
-        return hasUnits && !hasDays;
-      });
-      if (withUnitsNoEffort.length) {
-        toast.error(`Effort Days required for: ${withUnitsNoEffort.map(r => r.role).join(', ')}`);
-      } else {
-        toast.error(`Units required for: ${missing.map(r => r.role).join(', ')}`);
-      }
       return;
     }
 
@@ -339,8 +313,6 @@ export default function EffortEstimate() {
       <br />
       <span className="font-normal #434655">(PERSON HRS)</span>
     </>,
-    'UNITS',
-    'UNIT LABEL'
   ];
 
   return (
@@ -478,21 +450,7 @@ export default function EffortEstimate() {
                         {r.totalHrs || '—'}
                       </td>
 
-                      {/* Units */}
-                      <td className="px-4 py-4 text-center">
-                        <NumInput
-                          value={r.units}
-                          readOnly={readOnly}
-                          step="1"
-                          integerOnly={true}
-                          onChange={val => handleChange(i, 'units', val)}
-                        />
-                      </td>
 
-                      {/* Unit Label */}
-                      <td className="px-4 py-4 #434655 text-xs whitespace-nowrap">
-                        {r.unitLabel || '—'}
-                      </td>
                     </tr>
                   );
                 })}
@@ -520,10 +478,7 @@ export default function EffortEstimate() {
                   <td className="sticky bottom-0 bg-gray-50 px-4 py-3 text-center text-sm font-bold text-emerald-500">
                     {totals.totalHrs > 0 ? `${totals.totalHrs} Hrs` : '0 Hrs'}
                   </td>
-                  <td className="sticky bottom-0 bg-gray-50 px-4 py-3 text-center text-sm font-semibold text-gray-700">
-                    {totals.units > 0 ? totals.units : '0'}
-                  </td>
-                  <td className="sticky bottom-0 bg-gray-50" />
+
                 </tr>
               </tfoot>
             </table>

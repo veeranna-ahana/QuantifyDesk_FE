@@ -82,6 +82,7 @@ export default function CreateProject() {
     endDate: '',
     projectType: '',
     status: 'New',
+    pmsProjectId: '',
   });
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
@@ -90,6 +91,10 @@ export default function CreateProject() {
   const [customers, setCustomers] = useState([]);
   const [customersLoading, setCustomersLoading] = useState(false);
   const [customersError, setCustomersError] = useState('');
+
+  // ── PMS Project dropdown state ─────────────────────────────────────────────
+  const [pmsProjects, setPmsProjects] = useState([]);
+  const [pmsProjectsLoading, setPmsProjectsLoading] = useState(false);
 
  // ── Employee dropdown state ────────────────────────────────────────────────
 const dispatch = useDispatch();
@@ -152,6 +157,23 @@ const employeeOptions = useMemo(() => {
     fetchCustomers();
   }, []);
 
+  // ── Fetch PMS Projects for dropdown ───────────────────────────────────────
+  useEffect(() => {
+    const fetchPmsProjects = async () => {
+      setPmsProjectsLoading(true);
+      try {
+        const res = await axios.get(`${BASE_URL}/api/projects/pms/projects`, { headers: getHeaders() });
+        const list = Array.isArray(res.data) ? res.data : [];
+        setPmsProjects(list);
+      } catch (err) {
+        console.error('Failed to fetch PMS projects:', err);
+      } finally {
+        setPmsProjectsLoading(false);
+      }
+    };
+    fetchPmsProjects();
+  }, []);
+
   const set = (field, val) => {
     setForm(prev => ({ ...prev, [field]: val }));
     setErrors(prev => ({
@@ -195,6 +217,7 @@ const employeeOptions = useMemo(() => {
         endDate: form.endDate || null,
         status: form.status,
         projectType: form.projectType,
+        pmsProjectId: form.pmsProjectId || null,
       },
       { headers: getHeaders() }
     );
@@ -346,8 +369,7 @@ const employeeOptions = useMemo(() => {
               {/* Row 2: Sub Category, Customer, Team Lead */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                  <div>
-    {/* ─── CHANGE THIS LINE ────────────────────────────────────────────── */}
-    <Label required>Sub Category</Label>  {/* Added 'required' prop */}
+    <Label required>Sub Category</Label>
     <input
       type="text"
       value={form.subCategory}
@@ -383,6 +405,31 @@ const employeeOptions = useMemo(() => {
                     options={employeeOptions}
                     loading={employeesLoading}
                   />
+                </div>
+              </div>
+
+              {/* Row 3: PMS Project ID */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <Label>PMS Project ID</Label>
+                  <div className="relative">
+                    <select
+                      value={form.pmsProjectId}
+                      onChange={e => set('pmsProjectId', e.target.value)}
+                      disabled={pmsProjectsLoading}
+                      className={`${inputClsLight} appearance-none pr-9 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed`}
+                    >
+                      <option value="">
+                        {pmsProjectsLoading ? 'Loading PMS projects…' : 'Select PMS Project'}
+                      </option>
+                      {pmsProjects.map(p => (
+                        <option key={p.pms_project_id} value={p.pms_project_id}>
+                          {p.pms_project_id ? `#${p.pms_project_id} — ` : ''}{p.title || p.name || 'Untitled'}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevDownIcon />
+                  </div>
                 </div>
               </div>
             </div>

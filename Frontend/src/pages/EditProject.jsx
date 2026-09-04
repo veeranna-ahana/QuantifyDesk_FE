@@ -104,6 +104,7 @@ export default function EditProject() {
     projectType: project.project_type || 'one time project - otp',
     status: project.status || 'New',
     createCR: project.create_cr || '',
+    pmsProjectId: project.pms_project_id ? String(project.pms_project_id) : '',
   });
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
@@ -113,6 +114,10 @@ export default function EditProject() {
   const [customersLoading, setCustomersLoading] = useState(false);
   const [customersError, setCustomersError] = useState('');
   const [existingProjects, setExistingProjects] = useState([]);
+
+  // ── PMS Project dropdown state ─────────────────────────────────────────────
+  const [pmsProjects, setPmsProjects] = useState([]);
+  const [pmsProjectsLoading, setPmsProjectsLoading] = useState(false);
 
 // ── Employee dropdown state ────────────────────────────────────────────────
 const dispatch = useDispatch();
@@ -189,6 +194,23 @@ const employeeOptions = useMemo(() => {
       }
     };
     fetchCustomers();
+  }, []);
+
+  // ── Fetch PMS Projects for dropdown ───────────────────────────────────────
+  useEffect(() => {
+    const fetchPmsProjects = async () => {
+      setPmsProjectsLoading(true);
+      try {
+        const res = await axios.get(`${BASE_URL}/api/projects/pms/projects`, { headers: getHeaders() });
+        const list = Array.isArray(res.data) ? res.data : [];
+        setPmsProjects(list);
+      } catch (err) {
+        console.error('Failed to fetch PMS projects:', err);
+      } finally {
+        setPmsProjectsLoading(false);
+      }
+    };
+    fetchPmsProjects();
   }, []);
 
   const set = (field, val) => {
@@ -442,6 +464,35 @@ const employeeOptions = useMemo(() => {
                     options={employeeOptions}
                     loading={employeesLoading}
                   />
+                </div>
+              </div>
+
+              {/* Row 3: PMS Project ID */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <Label>PMS Project ID</Label>
+                  <div className="relative">
+                    <select
+                      value={form.pmsProjectId}
+                      onChange={e => set('pmsProjectId', e.target.value)}
+                      disabled={pmsProjectsLoading}
+                      className={`${inputClsLight} appearance-none pr-9 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed`}
+                    >
+                      <option value="">
+                        {pmsProjectsLoading ? 'Loading PMS projects…' : 'Select PMS Project'}
+                      </option>
+                      {/* Show current value even if not in list */}
+                      {form.pmsProjectId && !pmsProjects.find(p => String(p.pms_project_id) === form.pmsProjectId) && (
+                        <option value={form.pmsProjectId}>PMS ID: {form.pmsProjectId}</option>
+                      )}
+                      {pmsProjects.map(p => (
+                        <option key={p.pms_project_id} value={p.pms_project_id}>
+                          {p.pms_project_id ? `#${p.pms_project_id} — ` : ''}{p.title || p.name || 'Untitled'}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevDownIcon />
+                  </div>
                 </div>
               </div>
             </div>
