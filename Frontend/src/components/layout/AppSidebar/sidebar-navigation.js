@@ -1,6 +1,6 @@
 // src/components/layout/AppSidebar/sidebar-navigation.js
 // Navigation config extracted from the sidebar component.
-// Mirrors the pattern in @UI/src/components/layout/AppSidebar/sidebar-navigation.ts
+// Mirrors the reference design: Dashboard, Projects, Daily Report
 
 /**
  * @typedef {Object} SidebarNavItemConfig
@@ -12,46 +12,26 @@
 
 /**
  * Role-based navigation map.
- * Keys match the normalised role string: "Admin" | "Manager" | "Employee"
+ * In accordance with the reference design, only the core 3 navigation items are shown.
  *
  * @type {Record<string, SidebarNavItemConfig[]>}
  */
 export const ROLE_NAVIGATION = {
   Admin: [
-    { to: '/quantificationnew', label: 'Utilization', icon: 'utilization' },
-    {
-      label: 'Reconciliation',
-      icon: 'reconciliation',
-      to: '/reconciliation',
-      children: [
-        { to: '/reconciliation/upload',    label: 'Timesheet Upload', icon: 'timesheetUpload' },
-        { to: '/reconciliation/dashboard', label: 'Recon Dashboard',  icon: 'reconDash'       },
-      ],
-    },
-    { to: '/dailyreport',  label: 'Daily Report',    icon: 'dailyReport'    },
-    { to: '/projects',     label: 'Projects',         icon: 'projects'       },
-    { to: '/assignments',  label: 'Task Allocation',  icon: 'taskAllocation' },
-    { to: '/users',        label: 'Employee',         icon: 'employee'       },
+    { to: '/dashboard',   label: 'Dashboard',    icon: 'dashboard'   },
+    { to: '/projects',    label: 'Projects',     icon: 'projects'    },
+    { to: '/dailyreport', label: 'Daily Report', icon: 'dailyReport' },
   ],
 
   Manager: [
-    { to: '/quantificationnew', label: 'Utilization', icon: 'utilization' },
-    {
-      label: 'Reconciliation',
-      icon: 'reconciliation',
-      to: '/reconciliation',
-      children: [
-        { to: '/reconciliation/upload',    label: 'Timesheet Upload', icon: 'timesheetUpload' },
-        { to: '/reconciliation/dashboard', label: 'Recon Dashboard',  icon: 'reconDash'       },
-      ],
-    },
-    { to: '/dailyreport', label: 'Daily Report',   icon: 'dailyReport'    },
-    { to: '/projects',    label: 'Projects',        icon: 'projects'       },
-    { to: '/assignments', label: 'Task Allocation', icon: 'taskAllocation' },
+    { to: '/dashboard',   label: 'Dashboard',    icon: 'dashboard'   },
+    { to: '/projects',    label: 'Projects',     icon: 'projects'    },
+    { to: '/dailyreport', label: 'Daily Report', icon: 'dailyReport' },
   ],
 
   Employee: [
-    { to: '/my-work',     label: 'My Work',     icon: 'myWork'      },
+    { to: '/dashboard',   label: 'Dashboard',    icon: 'dashboard'   },
+    { to: '/projects',    label: 'Projects',     icon: 'projects'    },
     { to: '/dailyreport', label: 'Daily Report', icon: 'dailyReport' },
   ],
 };

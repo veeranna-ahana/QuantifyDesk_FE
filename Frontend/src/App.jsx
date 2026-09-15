@@ -22,7 +22,7 @@ import AssignEmployee from './pages/AssignEmployee';
 import MyWork from './pages/MyWork';
 import UtilizationDashboard from './pages/UtilizationDashboard';
 import Approvals from './pages/Approvals';
-import DailyUpdatesReport from './pages/DailyUpdatesReport';
+import DailyUpdatesReport from './pages/DailyReport/DailyUpdatesReport';
 import ReconPage from './pages/Recon';
 import ReconciliationUpload from './pages/ReconciliationUpload';
 
