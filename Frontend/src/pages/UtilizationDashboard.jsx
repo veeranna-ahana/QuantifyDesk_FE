@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback,  useMemo  } from "react";
 import axios from "axios";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchHrmsEmployees, selectAllEmployees, selectEmployeesLoading } from "../store/slices/employeeSlice";
-import SearchableSelect from "../component/SearchableSelect";
+import SearchableSelect from '@/components/ui/SearchableSelect/SearchableSelect';
 import { DownloadOutlined, FileExcelOutlined } from "@ant-design/icons";
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer,

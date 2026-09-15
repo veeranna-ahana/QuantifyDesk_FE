@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import SearchableSelect from '../component/SearchableSelect';
+import SearchableSelect from '@/components/ui/SearchableSelect/SearchableSelect';
 import { Icon } from '@iconify/react';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;

@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import axios from "axios";
 import { useSelector } from "react-redux";
 import Cookies from "js-cookie";
-import SearchableSelect from "../component/SearchableSelect";
+import SearchableSelect from '@/components/ui/SearchableSelect/SearchableSelect';
 import { Icon } from '@iconify/react';
 
 // ── Role helper ───────────────────────────────────────────────────────────────

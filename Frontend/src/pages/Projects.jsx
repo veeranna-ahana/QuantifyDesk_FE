@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import { Icon } from '@iconify/react';
-import SearchableSelect from '../component/SearchableSelect';
+import SearchableSelect from '@/components/ui/SearchableSelect/SearchableSelect';
 
 // ── Role helper ───────────────────────────────────────────────────────────────
 const getUserRole = () => {

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from "react-redux";
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import SearchableSelect from '../component/SearchableSelect';
+import SearchableSelect from '@/components/ui/SearchableSelect/SearchableSelect';
 import { 
   fetchHrmsEmployees, 
   selectAllEmployees, 

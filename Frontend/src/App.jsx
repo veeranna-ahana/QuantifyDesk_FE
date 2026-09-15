@@ -4,9 +4,9 @@ import Cookies from 'js-cookie';
 import { Toaster } from 'react-hot-toast';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
-// import ProtectedRoute from './component/ProtectedRoute';
-import MainLayout from './layout/MainLayout';
-import './App.css';
+// import ProtectedRoute from '@/components/ui/ProtectedRoute/ProtectedRoute';
+import MainLayout from '@/components/layout/AppLayout/AppLayout';
+
 import Users from './pages/Users';
 import Projects from './pages/Projects'; // legacy — kept for other routes
 import ProjectsPage from './features/projects/pages/ProjectsPage';

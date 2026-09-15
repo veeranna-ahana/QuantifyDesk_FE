@@ -5,7 +5,7 @@ import axios from "axios";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchHrmsEmployees, selectAllEmployees, selectEmployeesLoading } from "../store/slices/employeeSlice";
 import Cookies from "js-cookie";
-import SearchableSelect from "../component/SearchableSelect";
+import SearchableSelect from '@/components/ui/SearchableSelect/SearchableSelect';
 import { Icon } from '@iconify/react';
 
 const getUserRole = () => {
