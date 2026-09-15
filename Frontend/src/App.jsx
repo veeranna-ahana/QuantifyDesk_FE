@@ -9,9 +9,9 @@ import MainLayout from '@/components/layout/AppLayout/AppLayout';
 
 import Users from './pages/Users';
 import Projects from './pages/Projects'; // legacy — kept for other routes
-import ProjectsPage from './features/projects/pages/ProjectsPage';
-import ProjectDetailsPage from './features/projects/pages/ProjectDetailsPage';
-import ImportProjectPage from './features/projects/pages/ImportProjectPage';
+import ProjectsPage from '@/pages/projects/ProjectsPage';
+import ProjectDetailsPage from '@/pages/projects/ProjectDetailsPage';
+import ImportProjectPage from '@/pages/projects/ImportProjectPage';
 import CreateProject from './pages/CreateProject';
 import EditProject from './pages/EditProject';
 import EffortEstimate from './pages/EffortEstimate';

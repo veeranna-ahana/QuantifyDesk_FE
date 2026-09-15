@@ -1,4 +1,4 @@
-// src/features/projects/pages/ProjectDetailsPage.jsx
+// src/pages/projects/ProjectDetailsPage.jsx
 import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";

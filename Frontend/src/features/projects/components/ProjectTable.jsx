@@ -3,11 +3,11 @@
 import React from "react";
 import { useSelector } from "react-redux";
 import { Eye } from "lucide-react";
-import { selectPaginatedProjects, selectLoading } from "../../../store/slices/projectsSlice";
-import ProjectStatusBadge from "./ProjectStatusBadge";
+import { selectPaginatedProjects, selectLoading } from "@/store/slices/projectsSlice";
+import { StatusBadge } from "@/components/ui/StatusBadge/StatusBadge";
 import { formatDateRange } from "../utils/formatProjectDate";
-import LoadingSkeleton from "./LoadingSkeleton";
-import EmptyProjects from "./EmptyProjects";
+import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton/LoadingSkeleton";
+import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
 
 // Columns config — widths constrain the Actions column to avoid blank space
 const COLUMNS = [
@@ -51,7 +51,7 @@ const ProjectTable = () => {
           ) : projects.length === 0 ? (
             <tr>
               <td colSpan={7}>
-                <EmptyProjects />
+                <EmptyState />
               </td>
             </tr>
           ) : (
@@ -90,7 +90,7 @@ const ProjectTable = () => {
 
                 {/* Status badge */}
                 <td className="py-[16.5px] pl-8 pr-4 w-[136px]">
-                  <ProjectStatusBadge status={project.status} />
+                  <StatusBadge status={project.status} />
                 </td>
 
                 {/* Planned Dates — 14px 400 #43474E */}

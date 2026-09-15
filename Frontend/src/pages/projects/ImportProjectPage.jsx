@@ -1,4 +1,4 @@
-// src/features/projects/pages/ImportProjectPage.jsx
+// src/pages/projects/ImportProjectPage.jsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 

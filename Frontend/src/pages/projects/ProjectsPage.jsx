@@ -1,17 +1,17 @@
-// src/features/projects/pages/ProjectsPage.jsx
+// src/pages/projects/ProjectsPage.jsx
 import React, { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 
-import ProjectsHeader    from "../components/ProjectsHeader";
-import ProjectTable      from "../components/ProjectTable";
-import ProjectPagination from "../components/ProjectPagination";
+import ProjectsHeader from "@/features/projects/components/ProjectsHeader";
+import ProjectTable   from "@/features/projects/components/ProjectTable";
+import Pagination     from "@/components/ui/Pagination/Pagination";
 import {
   setProjects,
   setLoading,
   setError,
-} from "../../../store/slices/projectsSlice";
-import { getProjects } from "../services/projectsService";
+} from "@/store/slices/projectsSlice";
+import { getProjects } from "@/features/projects/services/projectsService";
 
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
@@ -43,7 +43,7 @@ const ProjectsPage = () => {
       {/* Table Container — exact spec: border #C4C6CF, border-radius 8px, shadow */}
       <div className="w-full bg-white border border-[#C4C6CF] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] rounded-lg overflow-hidden box-border">
         <ProjectTable />
-        <ProjectPagination />
+        <Pagination />
       </div>
     </div>
   );
