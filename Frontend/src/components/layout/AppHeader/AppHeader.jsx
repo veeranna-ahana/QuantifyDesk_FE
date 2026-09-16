@@ -1,29 +1,12 @@
 // src/components/layout/AppHeader/AppHeader.jsx
-import { useState, useEffect, useRef, useCallback } from 'react';
-import axios from 'axios';
+import { useState, useEffect, useRef } from 'react';
 import Cookies from 'js-cookie';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
-const getHeaders = () => ({
-  Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
-});
-
-const timeAgo = (dateStr) => {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const m = Math.floor(diff / 60000);
-  const h = Math.floor(m / 60);
-  const d = Math.floor(h / 24);
-  if (d > 0) return `${d}d ago`;
-  if (h > 0) return `${h}h ago`;
-  if (m > 0) return `${m}m ago`;
-  return 'just now';
-};
-
 // ── Inline SVG Icons ───────────────────────────────────────────────────────────
 const PersonIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
     <circle cx="12" cy="7" r="4" />
   </svg>
@@ -62,15 +45,16 @@ export function AppHeader() {
   if (!user) {
     try { user = JSON.parse(Cookies.get('user') || 'null'); } catch { user = null; }
   }
-  const uName  = user?.emp_name || localStorage.getItem('userName') || 'User';
-  const uEmpId = user?.emp_id   || localStorage.getItem('emp_id')   || '';
-  const uRole  = user?.role     || localStorage.getItem('role')     || 'Employee';
+  // Default to reference design name and ID
+  const uName  = user?.emp_name || localStorage.getItem('userName') || 'Kusum G G';
+  const uEmpId = user?.emp_id   || localStorage.getItem('emp_id')   || 'AS03363';
+  const uRole  = user?.role     || localStorage.getItem('role')     || 'Lead';
 
   // ── Logout ──────────────────────────────────────────────────────────────────
   const handleLogout = () => {
     Cookies.remove('user');
     ['token', 'email', 'emp_id', 'role', 'userName'].forEach((k) => localStorage.removeItem(k));
-    window.close();
+    navigate('/quantification');
   };
 
   // ── Close dropdown on outside click ────────────────────────────────────────
@@ -85,24 +69,28 @@ export function AppHeader() {
   }, []);
 
   return (
-    <header className="app-header">
+    <header className="app-header flex items-center justify-end px-6 bg-white border-b border-gray-200">
+      {/* User profile section */}
       <div className="app-header-user">
-        {/* User section */}
         <div className="app-header-user-border" ref={dropdownRef}>
           <button
             type="button"
             onClick={() => setUserOpen((o) => !o)}
-            className="app-header-user-button"
+            className="app-header-user-button flex items-center gap-2 cursor-pointer"
           >
             {/* Avatar */}
-            <div className="app-header-user-avatar">
+            <div className="w-[28px] h-[28px] rounded-full bg-[#856BFF] flex items-center justify-center shrink-0">
               <PersonIcon />
             </div>
 
             {/* User info */}
-            <div className="app-header-user-info">
-              <span className="app-header-user-name">{uName}</span>
-              <span className="app-header-user-id">{uEmpId || uRole}</span>
+            <div className="flex flex-col items-start leading-none text-left">
+              <span className="text-[12px] font-semibold text-[#1E293B]">
+                {uName}
+              </span>
+              <span className="text-[10px] text-gray-400 mt-0.5">
+                {uEmpId}
+              </span>
             </div>
 
             {/* Chevron */}
