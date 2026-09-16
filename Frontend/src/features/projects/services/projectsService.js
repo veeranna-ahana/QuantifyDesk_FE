@@ -23,7 +23,9 @@ export const getProjects = () =>
 export const getProjectById = (id) =>
   new Promise((resolve, reject) => {
     setTimeout(() => {
-      const project = mockProjects.find((p) => p.id === id);
+      const project = mockProjects.find(
+        (p) => String(p.id) === String(id) || p.pmsId === id
+      );
       project ? resolve(project) : reject(new Error(`Project ${id} not found`));
     }, 300);
   });
