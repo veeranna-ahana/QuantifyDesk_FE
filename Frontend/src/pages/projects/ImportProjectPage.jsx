@@ -1,6 +1,7 @@
 // src/pages/projects/ImportProjectPage.jsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import TaskInfoPage from "./TaskInfoPage";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Stepper
@@ -19,18 +20,19 @@ const Stepper = ({ active }) => (
     {/* Steps row */}
     <div className="relative z-10 flex flex-row justify-between items-start p-0 h-full">
       {STEPS.map((step, i) => {
-        const isActive = i === active;
+        const isActive   = i === active;
+        const isComplete = i < active;
         return (
           <div key={step.num} className="flex flex-col items-center gap-2">
             {/* Circle */}
             <div
               className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-                isActive ? "bg-[#856BFF]" : "bg-[#DEE3E8]"
+                isActive || isComplete ? "bg-[#856BFF]" : "bg-[#DEE3E8]"
               }`}
             >
               <span
                 className={`font-roboto font-semibold text-xs leading-4 tracking-[0.6px] ${
-                  isActive ? "text-white" : "text-[#545F72]"
+                  isActive || isComplete ? "text-white" : "text-[#545F72]"
                 }`}
               >
                 {step.num}
@@ -39,7 +41,7 @@ const Stepper = ({ active }) => (
             {/* Label */}
             <span
               className={`font-roboto text-xs leading-4 tracking-[0.6px] whitespace-nowrap ${
-                isActive ? "font-semibold text-[#856BFF]" : "font-normal text-[#545F72]"
+                isActive || isComplete ? "font-semibold text-[#856BFF]" : "font-normal text-[#545F72]"
               }`}
             >
               {step.label}
@@ -136,6 +138,12 @@ const SyncIcon = () => (
 const ImportProjectPage = () => {
   const navigate = useNavigate();
 
+  // ── Multi-step state ───────────────────────────────────────────────────────
+  const [currentStep, setCurrentStep] = useState(0);
+
+  const goNext = () => setCurrentStep((s) => Math.min(s + 1, STEPS.length - 1));
+  const goBack = () => setCurrentStep((s) => Math.max(s - 1, 0));
+
   // PMS sync state
   const [pmsId, setPmsId]       = useState("");
   const [synced, setSynced]     = useState(false);
@@ -182,9 +190,9 @@ const ImportProjectPage = () => {
     setSyncing(false);
   };
 
-  const handleCancel  = () => navigate("/projects");
+  const handleCancel    = () => navigate("/projects");
   const handleSaveDraft = () => { console.log("Save Draft", { pmsId, pmsData, form }); };
-  const handleNext    = () => { console.log("Next →", { pmsId, pmsData, form }); };
+  const handleNext      = () => goNext();
 
   // ── Project Type options ───────────────────────────────────────────────────
   const projectTypeOptions = [
@@ -211,12 +219,20 @@ const ImportProjectPage = () => {
 
         {/* Stepper */}
         <div className="w-full max-w-[2058px]">
-          <Stepper active={0} />
+          <Stepper active={currentStep} />
         </div>
       </div>
 
-      {/* ── Form card ── */}
-      <div className="box-border flex flex-col items-start px-4  py-2 gap-4 w-full max-w-[2058px] bg-white border border-[#E5E7EB] rounded-lg">
+      {/* ── Step 1: Task Info ── */}
+      {currentStep === 1 && (
+        <TaskInfoPage
+          onCancel={handleCancel}
+          onNext={goNext}
+        />
+      )}
+
+      {/* ── Step 0: Project Info form card ── */}
+      {currentStep === 0 && <div className="box-border flex flex-col items-start px-4  py-2 gap-4 w-full max-w-[2058px] bg-white border border-[#E5E7EB] rounded-lg">
         <div className="flex flex-col items-start p-0 gap-3 w-full">
           {/* ── Row 0: PMS ID ── */}
           <div className="w-full">
@@ -389,18 +405,19 @@ const ImportProjectPage = () => {
             />
           </div>
         </div>
-      </div>
+      </div>}
 
-      {/* ── Footer Actions ── */}
-      <div className="box-border flex flex-row justify-between items-center py-2 px-0 gap-2 w-full max-w-[1058px] border-t border-[#DFE1E6]">
+      {/* ── Step 0 footer ── */}
+      {currentStep === 0 && (
+        <div className="box-border flex flex-row justify-between items-center py-2 px-0 gap-2 w-full max-w-[1058px] border-t border-[#DFE1E6]">
         {/* Cancel */}
-        <button
-          id="import-cancel-btn"
-          onClick={handleCancel}
+            <button
+              id="import-cancel-btn"
+              onClick={handleCancel}
           className="box-border flex justify-center items-center px-4 py-1.5 h-9 bg-transparent border-none rounded font-roboto font-normal text-sm leading-5 text-[#42526E] hover:text-[#171C20] hover:bg-gray-100 cursor-pointer transition-colors"
-        >
-          Cancel
-        </button>
+            >
+              Cancel
+            </button>
 
         {/* Right actions */}
         <div className="flex flex-row gap-3">
@@ -414,22 +431,20 @@ const ImportProjectPage = () => {
           </button>
 
           {/* Next */}
-          <button
-            id="import-next-btn"
-            onClick={handleNext}
-            className="flex flex-row items-center justify-center px-4 py-2 gap-2 h-11 bg-[#856BFF] hover:bg-[#7457fc] rounded border-none cursor-pointer transition-colors"
-          >
-            <span className="font-roboto font-semibold text-base leading-5 text-white">
-              Next
-            </span>
-            {/* Arrow icon */}
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="5" y1="12" x2="19" y2="12" />
-              <polyline points="12 5 19 12 12 19" />
-            </svg>
-          </button>
+            <button
+              id="import-next-btn"
+              onClick={handleNext}
+              className="flex flex-row items-center justify-center px-4 py-2 gap-2 h-11 bg-[#856BFF] hover:bg-[#7457fc] rounded border-none cursor-pointer transition-colors"
+            >
+              <span className="font-roboto font-semibold text-base leading-5 text-white">Next</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12" />
+                <polyline points="12 5 19 12 12 19" />
+              </svg>
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
