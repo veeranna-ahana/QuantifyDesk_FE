@@ -318,7 +318,7 @@ function ProjectCard({ project, globalTab, searchQuery }) {
         </div>
 
         {/* Row 2: Lead, Team, Timeline, Active Tasks */}
-        <div className="flex flex-wrap items-center gap-1.5 mt-1.5 text-[12px] text-gray-500">
+        <div className="flex flex-wrap items-center gap-1.5 mt-1.5 text-[10px] text-gray-500">
           <span>
             Lead: <span className="text-gray-700 font-medium">{project.lead}</span>
           </span>

@@ -329,7 +329,7 @@ const EffortDetailsTab = ({ project, isEditing = false, onNext, onCancel }) => {
                 {group.members.map((member) => (
                   <tr
                     key={member.id}
-                    className="hover:bg-[#F9FAFB] transition-colors border-b border-gray-100"
+                    className="hover:bg-[#F9FAFB] transition-colors border-b border-gray-50"
                   >
                     {/* Member Name */}
                     <td className="py-3 px-6 text-gray-800 font-normal">

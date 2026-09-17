@@ -320,8 +320,8 @@ const ProjectInfoTab = ({
   };
 
   return (
-    <div className="p-6 text-sm">
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-x-4 gap-y-4">
+    <div className="p-2 text-sm">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-x-4 gap-y-1">
 
         {/* PMS ID */}
         <div className="col-span-3">
@@ -475,19 +475,19 @@ const ProjectInfoTab = ({
                 handleChange('description', e.target.value)
               }
               placeholder="Enter project description..."
-              rows={4}
+              rows={2}
             />
           ) : (
             <ReadTextarea
               value={formData.description || disp.description}
-              rows={4}
+              rows={2}
             />
           )}
         </div>
       </div>
 
       {/* ── Footer Actions ── */}
-      <div className="flex items-center justify-end gap-4 mt-6 pt-4">
+      <div className="flex items-center justify-end gap-2 mt-3 pt-2">
         {isEditing ? (
           <>
             <button

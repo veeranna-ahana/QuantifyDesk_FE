@@ -150,10 +150,10 @@ const ProjectDetailsPage = () => {
   const endDateStr = endDt ? formatDate(endDt) : "Oct 15, 2024";
 
   return (
-    <div className="min-h-full bg-[#FAF8FF] p-6 font-sans">
+    <div className="min-h-full bg-[#FAF8FF] p-2 font-sans">
 
       {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm font-semibold text-gray-500 mb-4">
+      <div className="flex items-center gap-2 text-sm font-semibold text-gray-500 mb-1">
         <button onClick={() => navigate("/projects")} className="hover:text-[#6D4AFF] transition-colors">
           Projects
         </button>
@@ -162,9 +162,9 @@ const ProjectDetailsPage = () => {
       </div>
 
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-5">
+      <div className="flex flex-col md:flex-row md:items-start justify-between mb-1">
         <div>
-          <div className="flex items-center gap-3 mb-2">
+          <div className="flex items-center ">
             <h1 className="text-2xl font-extrabold text-gray-900 m-0">{projName}</h1>
             <span className="px-2.5 py-1 text-xs font-bold rounded-full bg-green-100 text-green-700 flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-green-600"></span>
@@ -172,20 +172,20 @@ const ProjectDetailsPage = () => {
             </span>
           </div>
 
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm font-medium text-gray-500">
-            <div className="flex items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm font-medium text-gray-500">
+            <div className="flex items-center gap-2">
               <span className="text-gray-400 font-bold">#</span>
               {pmsId}
             </div>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1">
               <Folder size={14} className="text-gray-400" />
               {clientName}
             </div>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1">
               <User size={14} className="text-gray-400" />
               {owner}
             </div>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1">
               <Calendar size={14} className="text-gray-400" />
               {startDateStr} - {endDateStr}
             </div>
@@ -206,14 +206,14 @@ const ProjectDetailsPage = () => {
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200 flex gap-6 overflow-x-auto mb-1 hide-scrollbar">
+      <div className="border-b border-gray-200 flex gap-3 overflow-x-auto mb-2.5 hide-scrollbar">
         {tabs.map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={`pb-3 text-[13px] font-semibold transition-colors whitespace-nowrap relative ${activeTab === tab
-                ? "text-[#856BFF]"
-                : "text-gray-500 hover:text-gray-700"
+              ? "text-[#856BFF]"
+              : "text-gray-500 hover:text-gray-700"
               }`}
           >
             {tab}
@@ -226,7 +226,7 @@ const ProjectDetailsPage = () => {
 
       {/* Tab Content */}
       {activeTab === "Project Info" ? (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-90">
           <ProjectInfoTab
             project={project}
             isEditing={isEditing}

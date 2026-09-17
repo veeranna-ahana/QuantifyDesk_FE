@@ -1015,7 +1015,7 @@ const Projects = () => {
       </div>
 
       {/* ── Table card ── */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-90 flex flex-col">
         {/* ── Table Card Header with Search & Filters ── */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-wrap gap-3">
           <div className="flex items-center gap-2">
