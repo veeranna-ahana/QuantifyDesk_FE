@@ -192,8 +192,8 @@ const ProjectDetailsPage = () => {
           </div>
         </div>
 
-        {/* Action Button: Edit Project (shown in View mode on all tabs) */}
-        {!isEditing && (
+        {/* Action Button: Edit Project (shown in View mode on Project Info tab only) */}
+        {!isEditing && activeTab === "Project Info" && (
           <button
             id="edit-project-btn"
             onClick={() => setIsEditing(true)}
