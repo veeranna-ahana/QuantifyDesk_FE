@@ -526,9 +526,7 @@ function ProjectCard({ project, globalTab, searchQuery }) {
                 <th className="text-left px-4 py-3 text-[11.5px] font-semibold text-[#5A6A85] whitespace-nowrap border-b border-[#E2E8F0] min-w-[110px]">
                   Status
                 </th>
-                <th className="text-left px-4 py-3 text-[11.5px] font-semibold text-[#5A6A85] whitespace-nowrap border-b border-[#E2E8F0] min-w-[110px]">
-                  Progress %
-                </th>
+
               </tr>
             </thead>
             <tbody>
@@ -603,10 +601,7 @@ function ProjectCard({ project, globalTab, searchQuery }) {
                       <StatusPill status={task.status} />
                     </td>
 
-                    {/* Progress % */}
-                    <td className="px-4 py-3.5 align-top">
-                      <ProgressCell pct={task.progressPct} status={task.status} />
-                    </td>
+
                   </tr>
                 ))
               )}
@@ -654,7 +649,7 @@ export default function DailyUpdatesReport() {
     toast.success('Exporting daily report (CSV/Excel)...');
     try {
       const csvRows = [
-        ['Project', 'Task Name', 'Classification', 'Owner', 'Planned Start', 'Planned End', 'Status', 'Progress %'],
+        ['Project', 'Task Name', 'Classification', 'Owner', 'Planned Start', 'Planned End', 'Status'],
       ];
       MOCK_PROJECTS.forEach(proj => {
         proj.tasks.forEach(t => {
@@ -666,7 +661,6 @@ export default function DailyUpdatesReport() {
             t.plannedStart,
             t.plannedEnd,
             t.status,
-            `${t.progressPct}%`,
           ]);
         });
       });
