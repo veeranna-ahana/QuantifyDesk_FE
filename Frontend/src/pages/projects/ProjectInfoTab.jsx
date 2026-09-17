@@ -321,24 +321,24 @@ const ProjectInfoTab = ({
 
   return (
     <div className="p-6 text-sm">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-x-4 gap-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-x-4 gap-y-4">
 
         {/* PMS ID */}
-        <div className="col-span-1">
+        <div className="col-span-3">
           <FieldLabel>PMS ID</FieldLabel>
           <ReadInput value={disp.pmsId} />
         </div>
 
-        <div className="col-span-3 hidden md:block" />
+        <div className="col-span-9 hidden md:block" />
 
         {/* Project Name */}
-        <div className="col-span-1 md:col-span-2">
+        <div className="col-span-12 md:col-span-4">
           <FieldLabel>Project Name*</FieldLabel>
           <ReadInput value={disp.projectName} />
         </div>
 
         {/* Project Type */}
-        <div className="col-span-1">
+        <div className="col-span-12 md:col-span-4">
           <FieldLabel>Project Type</FieldLabel>
 
           {isEditing ? (
@@ -358,19 +358,19 @@ const ProjectInfoTab = ({
         </div>
 
         {/* Customer Name */}
-        <div className="col-span-1">
+        <div className="col-span-12 md:col-span-4">
           <FieldLabel>Customer Name</FieldLabel>
           <ReadSelect value={disp.customer} />
         </div>
 
         {/* Presale ID */}
-        <div className="col-span-1">
+        <div className="col-span-12 md:col-span-3">
           <FieldLabel>Presale ID</FieldLabel>
           <ReadInput value={disp.presaleId} />
         </div>
 
         {/* NBD ID */}
-        <div className="col-span-1">
+        <div className="col-span-12 md:col-span-3">
           <FieldLabel>NBD ID</FieldLabel>
 
           {isEditing ? (
@@ -388,7 +388,7 @@ const ProjectInfoTab = ({
         </div>
 
         {/* O2D ID */}
-        <div className="col-span-1">
+        <div className="col-span-12 md:col-span-3">
           <FieldLabel>O2D ID</FieldLabel>
 
           {isEditing ? (
@@ -406,7 +406,7 @@ const ProjectInfoTab = ({
         </div>
 
         {/* Project Code */}
-        <div className="col-span-1">
+        <div className="col-span-12 md:col-span-3">
           <FieldLabel>Project Code</FieldLabel>
 
           {isEditing ? (
@@ -426,7 +426,7 @@ const ProjectInfoTab = ({
         </div>
 
         {/* Sub Category */}
-        <div className="col-span-1">
+        <div className="col-span-12 md:col-span-3">
           <FieldLabel>Sub Category</FieldLabel>
 
           {isEditing ? (
@@ -446,25 +446,25 @@ const ProjectInfoTab = ({
         </div>
 
         {/* Start Date */}
-        <div className="col-span-1">
+        <div className="col-span-12 md:col-span-3">
           <FieldLabel>Start Date</FieldLabel>
           <ReadInput value={disp.startDate} />
         </div>
 
         {/* End Date */}
-        <div className="col-span-1">
+        <div className="col-span-12 md:col-span-3">
           <FieldLabel>End Date</FieldLabel>
           <ReadInput value={disp.endDate} />
         </div>
 
         {/* Project Status */}
-        <div className="col-span-1">
+        <div className="col-span-12 md:col-span-3">
           <FieldLabel>Project Status</FieldLabel>
           <ReadSelect value={disp.status} />
         </div>
 
         {/* Description */}
-        <div className="col-span-1 md:col-span-4">
+        <div className="col-span-12">
           <FieldLabel>Description</FieldLabel>
 
           {isEditing ? (

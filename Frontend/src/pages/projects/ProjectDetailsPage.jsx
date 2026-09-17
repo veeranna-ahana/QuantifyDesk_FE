@@ -192,8 +192,8 @@ const ProjectDetailsPage = () => {
           </div>
         </div>
 
-        {/* Action Button: Edit Project (shown only in View mode on Project Info tab) */}
-        {!isEditing && activeTab === "Project Info" && (
+        {/* Action Button: Edit Project (shown in View mode on all tabs) */}
+        {!isEditing && (
           <button
             id="edit-project-btn"
             onClick={() => setIsEditing(true)}
@@ -206,7 +206,7 @@ const ProjectDetailsPage = () => {
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200 flex gap-6 overflow-x-auto mb-4 hide-scrollbar">
+      <div className="border-b border-gray-200 flex gap-6 overflow-x-auto mb-1 hide-scrollbar">
         {tabs.map((tab) => (
           <button
             key={tab}

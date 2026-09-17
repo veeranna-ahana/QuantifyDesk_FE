@@ -1046,7 +1046,7 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
       </div>
 
       {/* ── Milestones Accordion Cards List ── */}
-      <div className="space-y-3">
+      <div className="space-y-2">
         {filteredMilestones.length === 0 ? (
           <div className="bg-white rounded-xl p-10 text-center border border-gray-100 text-gray-400 text-sm">
             No milestones or tasks found matching your filters.
@@ -1418,11 +1418,11 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
           />
 
           {/* Right-docked slide-over panel */}
-          <div className="fixed inset-y-0 right-0 max-w-full flex pl-4 sm:pl-6 pointer-events-none z-50">
+          <div className="fixed inset-y-0 right-0 max-w-full flex pointer-events-none z-50">
             <div className="w-screen max-w-[430px] bg-white shadow-[-12px_0_35px_rgba(0,0,0,0.12)] border-l border-gray-200 flex flex-col h-full pointer-events-auto animate-in slide-in-from-right duration-200">
               
               {/* Header (fixed at top) */}
-              <div className="flex-shrink-0 px-5 py-3.5 border-b border-gray-100 bg-white">
+              <div className="flex-shrink-0 px-5 py-2 border-b border-gray-100 bg-white">
                 <div className="flex items-center justify-between">
                   <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-bold bg-[#F4F0FF] text-[#7C5CFC]">
                     <RotateCw size={12} className="text-[#7C5CFC]" />
@@ -1438,7 +1438,7 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
                   </button>
                 </div>
 
-                <h2 className="text-lg font-bold text-gray-900 mt-2 mb-0.5">
+                <h2 className="text-lg font-bold text-gray-900 mt-1 mb-0.5">
                   Edit Task Details
                 </h2>
                 <p className="text-xs font-medium text-gray-500 m-0 truncate">
@@ -1447,10 +1447,10 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
               </div>
 
               {/* Scrollable Content Body (Compactly optimized for 100% zoom) */}
-              <div className="flex-1 overflow-y-auto px-5 py-3.5 space-y-3.5 scrollbar-thin">
+              <div className="flex-1 overflow-y-auto px-5 py-2.5 space-y-2.5 scrollbar-thin">
                 {/* Read-only Info Card */}
-                <div className="bg-[#F8F9FE] border border-[#EDE9FE]/80 rounded-xl p-3 text-xs">
-                  <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+                <div className="bg-[#F8F9FE] border border-[#EDE9FE]/80 rounded-xl p-2.5 text-xs">
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-1">
                     <div>
                       <div className="text-[11px] font-medium text-gray-400">Milestone</div>
                       <div className="text-[12.5px] font-bold text-gray-900 mt-0.5 leading-snug">
@@ -1521,14 +1521,14 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
                 </div>
 
                 {/* Form Fields */}
-                <form id="edit-task-details-form" onSubmit={handleSaveEditedTask} className="space-y-3">
+                <form id="edit-task-details-form" onSubmit={handleSaveEditedTask} className="space-y-2">
                   <div>
                     <label className="block text-xs font-semibold text-gray-700 mb-1">Role</label>
                     <div className="relative">
                       <select
                         value={editFormData.role}
                         onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value })}
-                        className="w-full appearance-none px-3 py-2 border border-gray-300 rounded-lg text-xs text-gray-900 bg-white outline-none focus:border-[#856BFF] focus:ring-1 focus:ring-[#856BFF] cursor-pointer"
+                        className="w-full appearance-none px-3 py-1.5 border border-gray-300 rounded-lg text-xs text-gray-900 bg-white outline-none focus:border-[#856BFF] focus:ring-1 focus:ring-[#856BFF] cursor-pointer"
                       >
                         <option value="Business Analyst">Business Analyst</option>
                         <option value="Lead">Lead</option>
@@ -1549,7 +1549,7 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
                       <select
                         value={editFormData.taskType}
                         onChange={(e) => setEditFormData({ ...editFormData, taskType: e.target.value })}
-                        className="w-full appearance-none px-3 py-2 border border-gray-300 rounded-lg text-xs text-gray-900 bg-white outline-none focus:border-[#856BFF] focus:ring-1 focus:ring-[#856BFF] cursor-pointer"
+                        className="w-full appearance-none px-3 py-1.5 border border-gray-300 rounded-lg text-xs text-gray-900 bg-white outline-none focus:border-[#856BFF] focus:ring-1 focus:ring-[#856BFF] cursor-pointer"
                       >
                         <option value="Analysis">Analysis</option>
                         <option value="Development">Development</option>
@@ -1573,14 +1573,14 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
                       type="text"
                       value={editFormData.unit}
                       onChange={(e) => setEditFormData({ ...editFormData, unit: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs text-gray-900 bg-white outline-none focus:border-[#856BFF] focus:ring-1 focus:ring-[#856BFF]"
+                      className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs text-gray-900 bg-white outline-none focus:border-[#856BFF] focus:ring-1 focus:ring-[#856BFF]"
                     />
                   </div>
                 </form>
               </div>
 
               {/* Fixed Footer (Always 100% visible at bottom, never cut off!) */}
-              <div className="flex-shrink-0 px-5 py-3 bg-white border-t border-gray-100 flex items-center justify-end gap-3 shadow-[0_-2px_10px_rgba(0,0,0,0.03)]">
+              <div className="flex-shrink-0 px-5 py-2 bg-white border-t border-gray-100 flex items-center justify-end gap-3 shadow-[0_-2px_10px_rgba(0,0,0,0.03)]">
                 <button
                   type="button"
                   onClick={() => setEditingTask(null)}

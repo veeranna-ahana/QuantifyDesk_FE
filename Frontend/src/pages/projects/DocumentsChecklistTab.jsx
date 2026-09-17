@@ -208,7 +208,7 @@ const DocumentsChecklistTab = ({ project, isEditing = false, onSave, onCancel })
             className="flex items-center gap-1.5 px-4 py-2 bg-[#856BFF] hover:bg-[#7354fd] text-white text-sm font-semibold rounded-lg shadow-sm transition-colors whitespace-nowrap cursor-pointer border-none"
           >
             <Plus size={15} />
-            + Add Document
+             Add Document
           </button>
         )}
       </div>
