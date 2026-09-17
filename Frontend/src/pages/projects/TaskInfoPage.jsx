@@ -2,8 +2,8 @@
 // Step 2 — Task Information
 // Used inside the ImportProjectPage multi-step shell.
 
-import React, { useMemo, useState } from 'react';
-import { Pencil, ChevronRight, Filter, Search } from 'lucide-react';
+import React, { useMemo, useState, useCallback } from 'react';
+import { ChevronRight, Filter, Search } from 'lucide-react';
 
 import './TaskInfoPage.css';
 import {
@@ -11,6 +11,221 @@ import {
   MOCK_TASK_SUMMARY,
   MOCK_PROJECT_CONTEXT,
 } from '@/features/projects/mock/mockTasks';
+
+// ── Role / Task-type option lists ─────────────────────────────
+const ROLE_OPTIONS = [
+  'Business Analyst',
+  'Developer',
+  'QA Engineer',
+  'Project Manager',
+  'DevOps Engineer',
+  'Designer',
+];
+
+const TASK_TYPE_OPTIONS = [
+  'Analysis',
+  'Development',
+  'Testing',
+  'Review',
+  'Deployment',
+  'Design',
+];
+
+// ── ChevronDown icon (select arrow) ──────────────────────────
+const SelectChevron = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M7 10L12 15L17 10" stroke="#6b7280" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+// ── X close button icon ───────────────────────────────────────
+const CloseIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M1 1L13 13M13 1L1 13" stroke="#545F72" strokeWidth="1.5" strokeLinecap="round" />
+  </svg>
+);
+
+// ── FMS badge icon (small purple task icon) ───────────────────
+const FmsIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="1.5" y="1.5" width="9" height="9" rx="1.5" stroke="#9333ea" strokeWidth="1" />
+    <path d="M3.5 6h5M3.5 8h3" stroke="#9333ea" strokeWidth="1" strokeLinecap="round" />
+  </svg>
+);
+
+// ── Edit Task Drawer ──────────────────────────────────────────
+function EditTaskDrawer({ task, editValues, onChange, onCancel, onSave }) {
+  if (!task) return null;
+
+  return (
+    <>
+      {/* Overlay */}
+      <div className="ti-drawer-overlay" onClick={onCancel} />
+
+      {/* Drawer panel */}
+      <div className="ti-drawer" role="dialog" aria-modal="true" aria-label="Edit Task Details">
+
+        {/* ── Header ─────────────────────────────────────────── */}
+        <div className="ti-drawer-header">
+          {/* Left: task id badge + title + pms info */}
+          <div className="ti-drawer-header-info">
+            {/* Task-id badge row */}
+            <div className="ti-drawer-badge-row">
+              <span className="ti-drawer-task-badge">
+                <FmsIcon />
+                <span className="ti-drawer-task-badge-text">{task.taskId}</span>
+              </span>
+            </div>
+
+            {/* Title */}
+            <div className="ti-drawer-title">Edit Task Details</div>
+
+            {/* Milestone · PMS line */}
+            <div className="ti-drawer-subtitle">
+              <span className="ti-drawer-subtitle-item">Milestone: {task.milestone ?? 'Phase 1: Discovery'}</span>
+              <span className="ti-drawer-subtitle-sep">·</span>
+              <span className="ti-drawer-subtitle-item">FMS ({MOCK_PROJECT_CONTEXT.pmsId})</span>
+            </div>
+          </div>
+
+          {/* Close button */}
+          <button className="ti-drawer-close" onClick={onCancel} aria-label="Close drawer">
+            <CloseIcon />
+          </button>
+        </div>
+
+        {/* ── Scrollable body ────────────────────────────────── */}
+        <div className="ti-drawer-body">
+
+          {/* ── Section 1: PMS Task Info (read-only) ─────────── */}
+          <div className="ti-drawer-section">
+
+            {/* 2-column grid */}
+            <div className="ti-drawer-grid">
+
+              {/* Row 1 */}
+              <div className="ti-drawer-field">
+                <span className="ti-df-label">Milestone</span>
+                <span className="ti-df-value">{task.milestone ?? 'Phase 1: Discovery'}</span>
+              </div>
+              <div className="ti-drawer-field">
+                <span className="ti-df-label">Task Title</span>
+                <span className="ti-df-value">{task.title}</span>
+              </div>
+
+              {/* Row 2 */}
+              <div className="ti-drawer-field">
+                <span className="ti-df-label">Task Owner</span>
+                <span className="ti-df-value">{task.owner}</span>
+              </div>
+              <div className="ti-drawer-field">
+                <span className="ti-df-label">Status</span>
+                <span className="ti-df-value">{task.status}</span>
+              </div>
+
+              {/* Row 3 — dates */}
+              <div className="ti-drawer-field">
+                <span className="ti-df-label">Planned Start</span>
+                <span className="ti-df-value ti-df-value--sm">{task.plannedStart}</span>
+              </div>
+              <div className="ti-drawer-field">
+                <span className="ti-df-label">Actual Start</span>
+                <span className="ti-df-value ti-df-value--sm">{task.actualStart}</span>
+              </div>
+
+              {/* Row 4 — end dates */}
+              <div className="ti-drawer-field">
+                <span className="ti-df-label">Planned End</span>
+                <span className="ti-df-value ti-df-value--sm">{task.plannedEnd}</span>
+              </div>
+              <div className="ti-drawer-field">
+                <span className="ti-df-label">Actual End</span>
+                <span className="ti-df-value ti-df-value--sm">{task.actualEnd ?? '—'}</span>
+              </div>
+
+              {/* Risk Category — full width */}
+              <div className="ti-drawer-field ti-drawer-field--full">
+                <span className="ti-df-label">Risk Category</span>
+                <span className="ti-df-value">{task.riskCategory || '—'}</span>
+              </div>
+
+            </div>{/* /grid */}
+
+            {/* Remark — below grid */}
+            <div className="ti-drawer-field ti-drawer-field--remark">
+              <span className="ti-df-label">Remark</span>
+              <span className="ti-df-value">{task.remark || 'Completed ahead of schedule.'}</span>
+            </div>
+
+          </div>{/* /section 1 */}
+
+          {/* ── Section 2: AlphaPM Task Attributes (Editable) ── */}
+          <div className="ti-drawer-editable">
+
+            {/* Role */}
+            <div className="ti-de-field">
+              <label className="ti-de-label" htmlFor="drawer-role">Role</label>
+              <div className="ti-de-select-wrap">
+                <select
+                  id="drawer-role"
+                  className="ti-de-select"
+                  value={editValues.role}
+                  onChange={e => onChange('role', e.target.value)}
+                >
+                  <option value="" disabled>Business Analyst</option>
+                  {ROLE_OPTIONS.map(r => <option key={r} value={r}>{r}</option>)}
+                </select>
+                <span className="ti-de-chevron"><SelectChevron /></span>
+              </div>
+            </div>
+
+            {/* Task Type */}
+            <div className="ti-de-field">
+              <label className="ti-de-label" htmlFor="drawer-tasktype">Task Type</label>
+              <div className="ti-de-select-wrap">
+                <select
+                  id="drawer-tasktype"
+                  className="ti-de-select"
+                  value={editValues.taskType}
+                  onChange={e => onChange('taskType', e.target.value)}
+                >
+                  <option value="" disabled>Analysis</option>
+                  {TASK_TYPE_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+                <span className="ti-de-chevron"><SelectChevron /></span>
+              </div>
+            </div>
+
+            {/* Unit */}
+            <div className="ti-de-field">
+              <label className="ti-de-label" htmlFor="drawer-unit">Unit</label>
+              <div className="ti-de-input-wrap">
+                <input
+                  id="drawer-unit"
+                  type="number"
+                  min="0"
+                  className="ti-de-input"
+                  placeholder="98"
+                  value={editValues.unit}
+                  onChange={e => onChange('unit', e.target.value)}
+                />
+              </div>
+            </div>
+
+          </div>{/* /section 2 */}
+
+        </div>{/* /body */}
+
+        {/* ── Footer ─────────────────────────────────────────── */}
+        <div className="ti-drawer-footer">
+          <button className="ti-drawer-btn-cancel" onClick={onCancel}>Cancel</button>
+          <button className="ti-drawer-btn-save" onClick={onSave}>Save</button>
+        </div>
+
+      </div>{/* /drawer */}
+    </>
+  );
+}
 
 // ── Mini SVG icons ────────────────────────────────────────────
 
@@ -97,7 +312,7 @@ function TaskStatusPill({ status }) {
 
 const PAGE_SIZE = 6;
 
-function TaskTable({ tasks }) {
+function TaskTable({ tasks, onEditTask }) {
   return (
     <div className="ti-table-scroll">
       <table className="ti-task-table">
@@ -176,7 +391,12 @@ function TaskTable({ tasks }) {
                 <span className="ti-cell-text ti-cell-text--alloc">{t.unit}</span>
               </td>
               <td className="ti-td ti-td--action">
-                <button className="ti-edit-btn" title="Edit task" aria-label={`Edit ${t.taskId}`}>
+                <button
+                  className="ti-edit-btn"
+                  title="Edit task"
+                  aria-label={`Edit ${t.taskId}`}
+                  onClick={() => onEditTask(t)}
+                >
                   <EditIcon />
                 </button>
               </td>
@@ -190,7 +410,7 @@ function TaskTable({ tasks }) {
 
 // ── Milestone accordion item ──────────────────────────────────
 
-function MilestoneItem({ milestone, defaultExpanded = false }) {
+function MilestoneItem({ milestone, defaultExpanded = false, onEditTask }) {
   const [expanded, setExpanded] = useState(defaultExpanded);
 
   return (
@@ -212,7 +432,7 @@ function MilestoneItem({ milestone, defaultExpanded = false }) {
       </button>
 
       {/* Task table */}
-      {expanded && <TaskTable tasks={milestone.tasks} />}
+      {expanded && <TaskTable tasks={milestone.tasks} onEditTask={onEditTask} />}
     </div>
   );
 }
@@ -234,6 +454,32 @@ function pageNumbers(current, total) {
 export default function TaskInfoPage({ onCancel, onNext }) {
   const [search, setSearch] = useState('');
   const [taskPage, setTaskPage] = useState(1);
+
+  // ── Drawer state ────────────────────────────────────────────
+  const [drawerTask, setDrawerTask] = useState(null);
+  const [editValues, setEditValues] = useState({ role: '', taskType: '', unit: '' });
+
+  const openDrawer = useCallback((task) => {
+    setDrawerTask(task);
+    setEditValues({
+      role:     task.role     ?? '',
+      taskType: task.taskType ?? '',
+      unit:     task.unit     ?? '',
+    });
+  }, []);
+
+  const closeDrawer = useCallback(() => setDrawerTask(null), []);
+
+  const handleFieldChange = useCallback((field, value) => {
+    setEditValues(prev => ({ ...prev, [field]: value }));
+  }, []);
+
+  const handleSave = useCallback(() => {
+    // In a real app: dispatch update to store / API here
+    console.log('Saving task edits for', drawerTask?.taskId, editValues);
+    closeDrawer();
+  }, [drawerTask, editValues, closeDrawer]);
+  // ────────────────────────────────────────────────────────────
 
   const { totalTasks, completed, inProgress, notStarted,
           totalMilestones, milestonesCompleted } = MOCK_TASK_SUMMARY;
@@ -259,6 +505,17 @@ export default function TaskInfoPage({ onCancel, onNext }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, width: '100%' }}>
+
+      {/* ── Edit Task Drawer ── */}
+      {drawerTask && (
+        <EditTaskDrawer
+          task={drawerTask}
+          editValues={editValues}
+          onChange={handleFieldChange}
+          onCancel={closeDrawer}
+          onSave={handleSave}
+        />
+      )}
 
       {/* ── Task Information card (header + toolbar + badges) ── */}
       <div className="ti-card">
@@ -356,6 +613,7 @@ export default function TaskInfoPage({ onCancel, onNext }) {
                 key={m.id}
                 milestone={m}
                 defaultExpanded={idx === 0}  /* first milestone expanded by default */
+                onEditTask={openDrawer}
               />
             ))
           )}
