@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Search,
   SlidersHorizontal,
@@ -767,7 +767,7 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
     );
   };
 
-  // Open Edit Task Details modal
+  // Open Edit Task Details slide-over panel
   const openEditModal = (task, milestone) => {
     setEditingTask({
       ...task,
@@ -776,7 +776,7 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
       phase: task.phase || (milestone.id === 'm-1' ? 'Phase 1: Discovery' : milestone.name),
       ownerFull: task.ownerFull || (task.owner === 'Sarah J.' ? 'Sarah Jenkins' : task.owner),
       remark: task.remark || 'Completed ahead of schedule.',
-      riskCategory: task.riskCategory || '--',
+      riskCategory: task.riskCategory || 'No Dependency',
     });
     setEditFormData({
       role: getFullRoleName(task.role),
@@ -785,7 +785,18 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
     });
   };
 
-  // Save changes from Edit Task Details modal
+  // Close slide-over panel on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && editingTask) {
+        setEditingTask(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [editingTask]);
+
+  // Save changes from Edit Task Details slide-over panel
   const handleSaveEditedTask = (e) => {
     e?.preventDefault?.();
     if (!editingTask) return;
@@ -1085,7 +1096,7 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
                 {isExpanded && (
                   <div className="border-t border-gray-100">
                     <div className="overflow-x-auto relative w-full scrollbar-thin">
-                      <table className="w-full text-left border-collapse text-xs min-w-[1320px]">
+                      <table className={`w-full text-left border-collapse text-xs ${isEditing ? 'min-w-[1400px]' : 'min-w-[1260px]'}`}>
                         <thead>
                           <tr className="bg-[#F8F9FB] border-b border-gray-100 text-[#5E6C84] font-bold">
                             {/* Checkbox column - shown only in Edit Mode */}
@@ -1111,14 +1122,15 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
                             <th className="py-3 px-3.5 whitespace-nowrap">Planned End</th>
                             <th className="py-3 px-3.5 whitespace-nowrap">Actual Start</th>
                             <th className="py-3 px-3.5 whitespace-nowrap">Actual End</th>
-                            <th className="py-3 px-3.5 whitespace-nowrap text-[#856BFF]">Allocation</th>
+                            <th className="py-3 px-3.5 whitespace-nowrap">Allocation</th>
                             <th className="py-3 px-3.5 whitespace-nowrap">Status</th>
+                            {/* All task data columns visible in both View and Edit modes */}
                             <th className="py-3 px-3.5 whitespace-nowrap">Risk Category</th>
                             <th className="py-3 px-3.5 whitespace-nowrap">Remark</th>
-                            <th className="py-3 px-3.5 whitespace-nowrap">Role</th>
-                            <th className="py-3 px-3.5 whitespace-nowrap">Task Type</th>
-                            <th className="py-3 px-3.5 whitespace-nowrap">Unit</th>
-                            {/* Action column - shown only in Edit Mode, FIXED / STICKY on right */}
+                            <th className="py-3 px-3.5 whitespace-nowrap text-[#856BFF]">Role</th>
+                            <th className="py-3 px-3.5 whitespace-nowrap text-[#856BFF]">Task Type</th>
+                            <th className="py-3 px-3.5 whitespace-nowrap text-[#856BFF]">Unit</th>
+                            {/* Action column - FIXED / STICKY on right in Edit Mode */}
                             {isEditing && (
                               <th className="py-3 px-3.5 whitespace-nowrap text-center sticky right-0 z-20 bg-[#F8F9FB] shadow-[-6px_0_8px_-4px_rgba(0,0,0,0.06)] border-l border-gray-200/80 min-w-[70px] w-[70px]">
                                 Action
@@ -1142,9 +1154,9 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
                                 key={task.id}
                                 className="group hover:bg-gray-50/70 transition-colors"
                               >
-                                {/* Checkbox - Edit Mode only */}
+                                {/* Checkbox column - shown only in Edit Mode */}
                                 {isEditing && (
-                                  <td className="py-3 px-3.5">
+                                  <td className="py-3 px-3.5 w-8">
                                     <input
                                       type="checkbox"
                                       checked={!!selectedTasks[task.id]}
@@ -1190,7 +1202,7 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
                                 </td>
 
                                 {/* Allocation */}
-                                <td className="py-3 px-3.5 font-medium text-gray-800 whitespace-nowrap">
+                                <td className="py-3 px-3.5 font-bold text-gray-900 whitespace-nowrap">
                                   {task.allocation}
                                 </td>
 
@@ -1222,9 +1234,9 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
                                       />
                                     </div>
                                   ) : (
-                                    <div className="flex items-center gap-1">
+                                    <div className="inline-flex items-center gap-1.5 text-gray-700 font-normal">
                                       <span>{task.riskCategory || 'No Dependency'}</span>
-                                      <ChevronDown size={13} className="text-gray-400" />
+                                      <ChevronDown size={12} className="text-gray-400" />
                                     </div>
                                   )}
                                 </td>
@@ -1242,28 +1254,40 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
                                       className="bg-white hover:bg-gray-50 focus:bg-white border border-transparent hover:border-gray-200 focus:border-[#856BFF] rounded px-2 py-1 text-xs text-gray-700 outline-none w-32 placeholder-gray-400 transition-colors"
                                     />
                                   ) : (
-                                    <span className={task.remark ? 'text-gray-700' : 'text-gray-400'}>
+                                    <span className={task.remark ? "text-gray-700 font-normal" : "text-gray-400"}>
                                       {task.remark || 'Add remark...'}
                                     </span>
                                   )}
                                 </td>
 
                                 {/* Role */}
-                                <td className="py-3 px-3.5 text-gray-700 font-medium whitespace-nowrap">
+                                <td
+                                  onClick={() => isEditing && openEditModal(task, milestone)}
+                                  title={isEditing ? "Click to edit task role, type & unit" : undefined}
+                                  className={`py-3 px-3.5 text-gray-700 font-medium whitespace-nowrap ${isEditing ? 'cursor-pointer hover:text-[#856BFF]' : ''}`}
+                                >
                                   {getRoleAbbr(task.role)}
                                 </td>
 
                                 {/* Task Type */}
-                                <td className="py-3 px-3.5 text-gray-700 font-medium whitespace-nowrap">
+                                <td
+                                  onClick={() => isEditing && openEditModal(task, milestone)}
+                                  title={isEditing ? "Click to edit task role, type & unit" : undefined}
+                                  className={`py-3 px-3.5 text-gray-700 font-medium whitespace-nowrap ${isEditing ? 'cursor-pointer hover:text-[#856BFF]' : ''}`}
+                                >
                                   {task.taskType || 'Analysis'}
                                 </td>
 
                                 {/* Unit */}
-                                <td className="py-3 px-3.5 text-gray-800 font-medium whitespace-nowrap">
+                                <td
+                                  onClick={() => isEditing && openEditModal(task, milestone)}
+                                  title={isEditing ? "Click to edit task role, type & unit" : undefined}
+                                  className={`py-3 px-3.5 text-gray-800 font-medium whitespace-nowrap ${isEditing ? 'cursor-pointer hover:text-[#856BFF]' : ''}`}
+                                >
                                   {task.unit ?? 12}
                                 </td>
 
-                                {/* Action (Edit button) - FIXED STICKY COLUMN in Edit Mode */}
+                                {/* Action (Edit button) - FIXED STICKY COLUMN */}
                                 {isEditing && (
                                   <td className="py-3 px-3.5 text-center whitespace-nowrap sticky right-0 z-10 bg-white group-hover:bg-[#F8F9FB] shadow-[-6px_0_8px_-4px_rgba(0,0,0,0.06)] border-l border-gray-200/80 min-w-[70px] w-[70px]">
                                     <button
@@ -1383,179 +1407,197 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
         </div>
       )}
 
-      {/* ── Edit Task Details Modal (Figma UI/UX Design) ── */}
+      {/* ── Edit Task Details Slide-Over Section (Right Side of Screen, Optimized for 100% Zoom) ── */}
       {editingTask && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-[2px] p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[440px] overflow-hidden border border-gray-100 animate-in fade-in zoom-in-95 duration-150">
-            
-            {/* Modal Header */}
-            <div className="p-6 pb-0">
-              <div className="flex items-center justify-between">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-[#F4F0FF] text-[#7C5CFC]">
-                  <RotateCw size={13} className="text-[#7C5CFC]" />
-                  {editingTask.id}
-                </span>
+        <div className="fixed inset-0 z-50 overflow-hidden" role="dialog" aria-modal="true">
+          {/* Subtle backdrop overlay (transparent enough to keep the entire web screen visible) */}
+          <div
+            className="fixed inset-0 bg-black/15 transition-opacity duration-200"
+            onClick={() => setEditingTask(null)}
+            aria-hidden="true"
+          />
+
+          {/* Right-docked slide-over panel */}
+          <div className="fixed inset-y-0 right-0 max-w-full flex pl-4 sm:pl-6 pointer-events-none z-50">
+            <div className="w-screen max-w-[430px] bg-white shadow-[-12px_0_35px_rgba(0,0,0,0.12)] border-l border-gray-200 flex flex-col h-full pointer-events-auto animate-in slide-in-from-right duration-200">
+              
+              {/* Header (fixed at top) */}
+              <div className="flex-shrink-0 px-5 py-3.5 border-b border-gray-100 bg-white">
+                <div className="flex items-center justify-between">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-bold bg-[#F4F0FF] text-[#7C5CFC]">
+                    <RotateCw size={12} className="text-[#7C5CFC]" />
+                    {editingTask.id}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setEditingTask(null)}
+                    className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-1.5 rounded-lg transition-colors cursor-pointer bg-transparent border-none"
+                    aria-label="Close"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+
+                <h2 className="text-lg font-bold text-gray-900 mt-2 mb-0.5">
+                  Edit Task Details
+                </h2>
+                <p className="text-xs font-medium text-gray-500 m-0 truncate">
+                  Milestone: {editingTask.milestoneName || 'Planning & Initiation'} &bull; {projName} ({pmsId})
+                </p>
+              </div>
+
+              {/* Scrollable Content Body (Compactly optimized for 100% zoom) */}
+              <div className="flex-1 overflow-y-auto px-5 py-3.5 space-y-3.5 scrollbar-thin">
+                {/* Read-only Info Card */}
+                <div className="bg-[#F8F9FE] border border-[#EDE9FE]/80 rounded-xl p-3 text-xs">
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+                    <div>
+                      <div className="text-[11px] font-medium text-gray-400">Milestone</div>
+                      <div className="text-[12.5px] font-bold text-gray-900 mt-0.5 leading-snug">
+                        {editingTask.phase || 'Phase 1: Discovery'}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-[11px] font-medium text-gray-400">Task Title</div>
+                      <div className="text-[12.5px] font-bold text-gray-900 mt-0.5 leading-snug">
+                        {editingTask.title}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="text-[11px] font-medium text-gray-400">Task Owner</div>
+                      <div className="text-[12.5px] font-bold text-gray-900 mt-0.5 leading-snug">
+                        {editingTask.ownerFull || 'Sarah Jenkins'}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-[11px] font-medium text-gray-400">Status</div>
+                      <div className="text-[12.5px] font-bold text-gray-900 mt-0.5 leading-snug">
+                        {editingTask.status}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="text-[11px] font-medium text-gray-400">Planned Start</div>
+                      <div className="text-[12.5px] font-bold text-gray-900 mt-0.5 leading-snug">
+                        {editingTask.plannedStart}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-[11px] font-medium text-gray-400">Actual Start</div>
+                      <div className="text-[12.5px] font-bold text-gray-900 mt-0.5 leading-snug">
+                        {editingTask.actualStart || '-'}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="text-[11px] font-medium text-gray-400">Planned End</div>
+                      <div className="text-[12.5px] font-bold text-gray-900 mt-0.5 leading-snug">
+                        {editingTask.plannedEnd}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-[11px] font-medium text-gray-400">Actual End</div>
+                      <div className="text-[12.5px] font-bold text-gray-900 mt-0.5 leading-snug">
+                        {editingTask.actualEnd || '-'}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="text-[11px] font-medium text-gray-400">Risk Category</div>
+                      <div className="text-[12.5px] font-bold text-gray-900 mt-0.5 leading-snug">
+                        {editingTask.riskCategory || '--'}
+                      </div>
+                    </div>
+                    <div></div>
+
+                    <div className="col-span-2">
+                      <div className="text-[11px] font-medium text-gray-400">Remark</div>
+                      <div className="text-[12.5px] font-bold text-gray-900 mt-0.5 leading-snug">
+                        {editingTask.remark || 'Completed ahead of schedule.'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Form Fields */}
+                <form id="edit-task-details-form" onSubmit={handleSaveEditedTask} className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">Role</label>
+                    <div className="relative">
+                      <select
+                        value={editFormData.role}
+                        onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value })}
+                        className="w-full appearance-none px-3 py-2 border border-gray-300 rounded-lg text-xs text-gray-900 bg-white outline-none focus:border-[#856BFF] focus:ring-1 focus:ring-[#856BFF] cursor-pointer"
+                      >
+                        <option value="Business Analyst">Business Analyst</option>
+                        <option value="Lead">Lead</option>
+                        <option value="Frontend Developer">Frontend Developer</option>
+                        <option value="Backend Developer">Backend Developer</option>
+                        <option value="UI/UX Designer">UI/UX Designer</option>
+                        <option value="QA Engineer">QA Engineer</option>
+                        <option value="Project Manager">Project Manager</option>
+                        <option value="DevOps Engineer">DevOps Engineer</option>
+                      </select>
+                      <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">Task Type</label>
+                    <div className="relative">
+                      <select
+                        value={editFormData.taskType}
+                        onChange={(e) => setEditFormData({ ...editFormData, taskType: e.target.value })}
+                        className="w-full appearance-none px-3 py-2 border border-gray-300 rounded-lg text-xs text-gray-900 bg-white outline-none focus:border-[#856BFF] focus:ring-1 focus:ring-[#856BFF] cursor-pointer"
+                      >
+                        <option value="Analysis">Analysis</option>
+                        <option value="Development">Development</option>
+                        <option value="Design">Design</option>
+                        <option value="Testing">Testing</option>
+                        <option value="Review">Review</option>
+                        <option value="Deployment">Deployment</option>
+                        <option value="Documentation">Documentation</option>
+                        <option value="Meeting">Meeting</option>
+                        <option value="Planning">Planning</option>
+                        <option value="Infra">Infra</option>
+                        <option value="Security">Security</option>
+                      </select>
+                      <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">Unit</label>
+                    <input
+                      type="text"
+                      value={editFormData.unit}
+                      onChange={(e) => setEditFormData({ ...editFormData, unit: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs text-gray-900 bg-white outline-none focus:border-[#856BFF] focus:ring-1 focus:ring-[#856BFF]"
+                    />
+                  </div>
+                </form>
+              </div>
+
+              {/* Fixed Footer (Always 100% visible at bottom, never cut off!) */}
+              <div className="flex-shrink-0 px-5 py-3 bg-white border-t border-gray-100 flex items-center justify-end gap-3 shadow-[0_-2px_10px_rgba(0,0,0,0.03)]">
                 <button
                   type="button"
                   onClick={() => setEditingTask(null)}
-                  className="text-gray-400 hover:text-gray-600 p-1 rounded-md transition-colors cursor-pointer bg-transparent border-none"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-
-              <h2 className="text-xl font-extrabold text-gray-900 mt-2.5 mb-1">
-                Edit Task Details
-              </h2>
-              <p className="text-xs font-medium text-gray-500 m-0">
-                Milestone: {editingTask.milestoneName || 'Planning & Initiation'} &bull; {projName} ({pmsId})
-              </p>
-            </div>
-
-            {/* Read-only Info Card */}
-            <div className="px-6 pt-4">
-              <div className="bg-[#F8F9FE] border border-[#EDE9FE]/80 rounded-xl p-4 text-xs">
-                <div className="grid grid-cols-2 gap-x-4 gap-y-3.5">
-                  <div>
-                    <div className="text-[11px] font-medium text-gray-400">Milestone</div>
-                    <div className="text-[13px] font-bold text-gray-900 mt-0.5">
-                      {editingTask.phase || 'Phase 1: Discovery'}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-[11px] font-medium text-gray-400">Task Title</div>
-                    <div className="text-[13px] font-bold text-gray-900 mt-0.5">
-                      {editingTask.title}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="text-[11px] font-medium text-gray-400">Task Owner</div>
-                    <div className="text-[13px] font-bold text-gray-900 mt-0.5">
-                      {editingTask.ownerFull || 'Sarah Jenkins'}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-[11px] font-medium text-gray-400">Status</div>
-                    <div className="text-[13px] font-bold text-gray-900 mt-0.5">
-                      {editingTask.status}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="text-[11px] font-medium text-gray-400">Planned Start</div>
-                    <div className="text-[13px] font-bold text-gray-900 mt-0.5">
-                      {editingTask.plannedStart}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-[11px] font-medium text-gray-400">Actual Start</div>
-                    <div className="text-[13px] font-bold text-gray-900 mt-0.5">
-                      {editingTask.actualStart || '-'}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="text-[11px] font-medium text-gray-400">Planned End</div>
-                    <div className="text-[13px] font-bold text-gray-900 mt-0.5">
-                      {editingTask.plannedEnd}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-[11px] font-medium text-gray-400">Actual End</div>
-                    <div className="text-[13px] font-bold text-gray-900 mt-0.5">
-                      {editingTask.actualEnd || '-'}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="text-[11px] font-medium text-gray-400">Risk Category</div>
-                    <div className="text-[13px] font-bold text-gray-900 mt-0.5">
-                      {editingTask.riskCategory || '--'}
-                    </div>
-                  </div>
-                  <div></div>
-
-                  <div className="col-span-2">
-                    <div className="text-[11px] font-medium text-gray-400">Remark</div>
-                    <div className="text-[13px] font-bold text-gray-900 mt-0.5">
-                      {editingTask.remark || 'Completed ahead of schedule.'}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Form Fields */}
-            <form onSubmit={handleSaveEditedTask} className="px-6 pt-4 pb-6 space-y-3.5">
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">Role</label>
-                <div className="relative">
-                  <select
-                    value={editFormData.role}
-                    onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value })}
-                    className="w-full appearance-none px-3.5 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-900 bg-white outline-none focus:border-[#856BFF] focus:ring-1 focus:ring-[#856BFF] cursor-pointer"
-                  >
-                    <option value="Business Analyst">Business Analyst</option>
-                    <option value="Lead">Lead</option>
-                    <option value="Frontend Developer">Frontend Developer</option>
-                    <option value="Backend Developer">Backend Developer</option>
-                    <option value="UI/UX Designer">UI/UX Designer</option>
-                    <option value="QA Engineer">QA Engineer</option>
-                    <option value="Project Manager">Project Manager</option>
-                    <option value="DevOps Engineer">DevOps Engineer</option>
-                  </select>
-                  <ChevronDown size={16} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">Task Type</label>
-                <div className="relative">
-                  <select
-                    value={editFormData.taskType}
-                    onChange={(e) => setEditFormData({ ...editFormData, taskType: e.target.value })}
-                    className="w-full appearance-none px-3.5 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-900 bg-white outline-none focus:border-[#856BFF] focus:ring-1 focus:ring-[#856BFF] cursor-pointer"
-                  >
-                    <option value="Analysis">Analysis</option>
-                    <option value="Development">Development</option>
-                    <option value="Design">Design</option>
-                    <option value="Testing">Testing</option>
-                    <option value="Review">Review</option>
-                    <option value="Deployment">Deployment</option>
-                    <option value="Documentation">Documentation</option>
-                  </select>
-                  <ChevronDown size={16} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">Unit</label>
-                <input
-                  type="text"
-                  value={editFormData.unit}
-                  onChange={(e) => setEditFormData({ ...editFormData, unit: e.target.value })}
-                  className="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-900 bg-white outline-none focus:border-[#856BFF] focus:ring-1 focus:ring-[#856BFF]"
-                />
-              </div>
-
-              {/* Modal Actions */}
-              <div className="flex items-center justify-end gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setEditingTask(null)}
-                  className="px-6 py-2.5 rounded-lg border border-gray-300 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer bg-white"
+                  className="px-5 py-2 rounded-lg border border-gray-300 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer bg-white"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-7 py-2.5 rounded-lg bg-[#856BFF] hover:bg-[#7354fd] text-sm font-semibold text-white transition-colors cursor-pointer border-none shadow-sm"
+                  form="edit-task-details-form"
+                  className="px-6 py-2 rounded-lg bg-[#856BFF] hover:bg-[#7354fd] text-xs font-semibold text-white transition-colors cursor-pointer border-none shadow-sm"
                 >
                   Save
                 </button>
               </div>
-            </form>
+
+            </div>
           </div>
         </div>
       )}

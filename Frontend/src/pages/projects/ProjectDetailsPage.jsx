@@ -139,7 +139,7 @@ const ProjectDetailsPage = () => {
   const pmsId = project?.pms_id || project?.pmsId || "PMS-9021";
   const clientName = project?.client_name || project?.customer || "Ahana IT";
   const owner = project?.team_lead || project?.owner || "Sarah J.";
-  
+
   const formatDate = (dateStr) => {
     if (!dateStr) return "";
     return new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
@@ -151,7 +151,7 @@ const ProjectDetailsPage = () => {
 
   return (
     <div className="min-h-full bg-[#FAF8FF] p-6 font-sans">
-      
+
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm font-semibold text-gray-500 mb-4">
         <button onClick={() => navigate("/projects")} className="hover:text-[#6D4AFF] transition-colors">
@@ -162,7 +162,7 @@ const ProjectDetailsPage = () => {
       </div>
 
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-8">
+      <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-5">
         <div>
           <div className="flex items-center gap-3 mb-2">
             <h1 className="text-2xl font-extrabold text-gray-900 m-0">{projName}</h1>
@@ -171,7 +171,7 @@ const ProjectDetailsPage = () => {
               {projStatus}
             </span>
           </div>
-          
+
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm font-medium text-gray-500">
             <div className="flex items-center gap-1.5">
               <span className="text-gray-400 font-bold">#</span>
@@ -191,13 +191,13 @@ const ProjectDetailsPage = () => {
             </div>
           </div>
         </div>
-        
+
         {/* Action Button: Edit Project (shown only in View mode on Project Info tab) */}
         {!isEditing && activeTab === "Project Info" && (
           <button
             id="edit-project-btn"
             onClick={() => setIsEditing(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-[#856BFF] hover:bg-[#7354fd] text-white text-sm font-semibold rounded-lg shadow-sm transition-colors whitespace-nowrap cursor-pointer"
+            className="flex items-center gap-2 px-4 py-2.5 bg-[#856BFF] hover:bg-[#7354fd] text-white text-sm font-semibold rounded-lg shadow-sm transition-colors whitespace-nowrap cursor-pointer border-none"
           >
             <Edit size={16} />
             Edit Project
@@ -206,16 +206,15 @@ const ProjectDetailsPage = () => {
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200 flex gap-6 overflow-x-auto mb-6 hide-scrollbar">
+      <div className="border-b border-gray-200 flex gap-6 overflow-x-auto mb-4 hide-scrollbar">
         {tabs.map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`pb-3 text-[13px] font-semibold transition-colors whitespace-nowrap relative ${
-              activeTab === tab
+            className={`pb-3 text-[13px] font-semibold transition-colors whitespace-nowrap relative ${activeTab === tab
                 ? "text-[#856BFF]"
                 : "text-gray-500 hover:text-gray-700"
-            }`}
+              }`}
           >
             {tab}
             {activeTab === tab && (
