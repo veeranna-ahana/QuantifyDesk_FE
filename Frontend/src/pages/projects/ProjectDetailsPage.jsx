@@ -165,31 +165,34 @@ const ProjectDetailsPage = () => {
       <div className="flex flex-col md:flex-row md:items-start justify-between mb-1">
         <div>
           <div className="flex items-center ">
-            <h1 className="text-2xl font-extrabold text-gray-900 m-0">{projName}</h1>
+            <h2 className="text-2xl font-bold text-gray-900 m-0">{projName}</h2>
             <span className="px-2.5 py-1 text-xs font-bold rounded-full bg-green-100 text-green-700 flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-600"></span>
+              <span className="w-1.5 h-1.5 rounded-full bg-green-600 "></span>
               {projStatus}
             </span>
           </div>
 
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm font-medium text-gray-500">
-            <div className="flex items-center gap-2">
-              <span className="text-gray-400 font-bold">#</span>
-              {pmsId}
-            </div>
-            <div className="flex items-center gap-1">
-              <Folder size={14} className="text-gray-400" />
-              {clientName}
-            </div>
-            <div className="flex items-center gap-1">
-              <User size={14} className="text-gray-400" />
-              {owner}
-            </div>
-            <div className="flex items-center gap-1">
-              <Calendar size={14} className="text-gray-400" />
-              {startDateStr} - {endDateStr}
-            </div>
-          </div>
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs font-normal text-gray-500">
+  <div className="flex items-center gap-2">
+    <span className="text-gray-400 ">#</span>
+    {pmsId}
+  </div>
+
+  <div className="flex items-center gap-1">
+    <Folder size={14} className="text-gray-400" />
+    {clientName}
+  </div>
+
+  <div className="flex items-center gap-1">
+    <User size={14} className="text-gray-400" />
+    {owner}
+  </div>
+
+  <div className="flex items-center gap-1">
+    <Calendar size={14} className="text-gray-400" />
+    {startDateStr} - {endDateStr}
+  </div>
+</div>
         </div>
 
         {/* Action Button: Edit Project (shown in View mode on Project Info tab only) */}

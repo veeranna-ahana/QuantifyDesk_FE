@@ -51,38 +51,35 @@ function ClassificationBadge({ classification }) {
 
   if (norm.includes('LAST COMPLETED')) {
     return (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[5px] bg-[#EAFBF3] text-[#059669] border border-[#10B981]/25 whitespace-nowrap">
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[5px] bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0] text-[10.5px] font-bold tracking-wider whitespace-nowrap">
         <Check size={12} strokeWidth={2.8} className="text-[#059669] shrink-0" />
-        <div className="flex flex-col text-left leading-[1.05]">
-          <span className="text-[9px] font-bold tracking-wider text-[#059669]">LAST</span>
-          <span className="text-[9px] font-bold tracking-wider text-[#059669]">COMPLETED</span>
-        </div>
+        <span>LAST COMPLETED</span>
       </span>
     );
   }
 
   if (norm.includes('IN-PROGRESS') || norm.includes('IN_PROGRESS') || norm.includes('PROGRESS')) {
     return (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#EEF2FF] text-[#6366F1] border border-[#C7D2FE] text-[10px] font-bold tracking-wider whitespace-nowrap">
-        <span className="w-1.5 h-1.5 rounded-full bg-[#6366F1] shrink-0" />
-        IN-PROGRESS
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[5px] bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE] text-[10.5px] font-bold tracking-wider whitespace-nowrap">
+        <RotateCcw size={11} strokeWidth={2.5} className="text-[#2563EB] shrink-0" />
+        <span>IN-PROGRESS</span>
       </span>
     );
   }
 
   if (norm.includes('BLOCKED')) {
     return (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#FEF2F2] text-[#DC2626] border border-[#FCA5A5]/60 text-[10px] font-bold tracking-wider whitespace-nowrap">
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[5px] bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA] text-[10.5px] font-bold tracking-wider whitespace-nowrap">
         <span className="w-1.5 h-1.5 rounded-full bg-[#DC2626] shrink-0" />
-        BLOCKED
+        <span>BLOCKED</span>
       </span>
     );
   }
 
   return (
-    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#F1F5F9] text-[#64748B] text-[10px] font-bold tracking-wider whitespace-nowrap">
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[5px] bg-[#F8FAFC] text-[#64748B] border border-[#E2E8F0] text-[10.5px] font-bold tracking-wider whitespace-nowrap">
       <span className="w-1.5 h-1.5 rounded-full bg-[#64748B] shrink-0" />
-      {norm || 'NOT STARTED'}
+      <span>{norm || 'NOT STARTED'}</span>
     </span>
   );
 }
@@ -100,7 +97,7 @@ function StatusPill({ status }) {
   }
   if (norm.includes('completed')) {
     return (
-      <span className="inline-flex items-center justify-center px-3.5 py-1 rounded-full text-[11.5px] font-medium bg-[#EAFBF3] text-[#10B981] whitespace-nowrap">
+      <span className="inline-flex items-center justify-center px-3.5 py-1 rounded-full text-[11.5px] font-medium bg-[#EAFBF3] text-[#856BFF] whitespace-nowrap">
         Completed
       </span>
     );
@@ -127,7 +124,7 @@ function ProgressCell({ pct, status }) {
 
   let barColor = '#2563EB'; // Blue
   if (isCompleted) {
-    barColor = '#10B981'; // Green
+    barColor = '#856BFF'; // Green
   } else if (isWarning) {
     barColor = '#F59E0B'; // Amber / Orange
   }
@@ -203,8 +200,8 @@ function ActualVarianceCell({ line1, line2, badge }) {
       {badge && (
         <div className="mt-1">
           {badge.type === 'success' && (
-            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#EAFBF3] text-[#10B981] text-[10px] font-semibold">
-              <Zap size={10} className="fill-[#10B981]" />
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#EAFBF3] text-[#856BFF] text-[10px] font-semibold">
+              <Zap size={10} className="fill-[#856BFF]" />
               <span>{badge.label}</span>
             </span>
           )}
@@ -276,213 +273,222 @@ function ProjectCard({ project, globalTab, searchQuery }) {
     <div className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.03)] overflow-hidden mb-5 transition-all">
       {/* ── Project Header ── */}
       <div className="px-5 pt-3.5 pb-3 border-b border-gray-100">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        {/* Row 1: Left (Name, ID, Status) & Right (Milestone Label) */}
+        <div className="flex items-center justify-between gap-3">
           {/* Left: Name, ID, Schedule Badge */}
-          <div className="flex flex-wrap items-center gap-2.5">
+          <div className="flex items-center gap-2.5 flex-wrap">
             <span className="text-[16px] font-bold text-[#1E293B] tracking-tight">
               {project.name}
             </span>
-            <span className="px-2 py-0.5 rounded bg-[#F1F5F9] text-[#64748B] text-[10.5px] font-medium tracking-wide">
+            <span className="px-2 py-0.5 rounded border border-[#E2E8F0] bg-[#F8FAFC] text-[#64748B] text-[10.5px] font-medium tracking-wide">
               {project.projectCode}
             </span>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#EAFBF3] text-[#10B981] border border-[#10B981]/25 text-[10.5px] font-semibold">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]" />
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-[#EAFBF3] text-[#059669] text-[10.5px] font-semibold">
               {project.statusTag}
             </span>
           </div>
 
-          {/* Right: Milestone + Progress Bar + Chevron */}
-          <div className="flex items-center gap-3">
-            <span className="text-[11px] text-gray-400 font-medium">
-              Overall Project Milestone
+          {/* Right: Milestone Label */}
+          <span className="text-[11px] text-gray-400 font-medium shrink-0">
+            Overall Project Milestone
+          </span>
+        </div>
+
+        {/* Row 2: Left (Lead, Team, Timeline, Tasks) & Right (Progress Bar + Chevron) */}
+        <div className="flex items-center justify-between gap-3 mt-1.5">
+          {/* Left: Lead, Team, Timeline, Active Tasks */}
+          <div className="flex items-center gap-1.5 flex-wrap text-[10.5px] text-gray-500">
+            <span>
+              Lead: <span className="text-gray-700 font-medium">{project.lead}</span>
             </span>
-            <div className="flex items-center gap-2">
-              <div className="w-[85px] h-[6px] rounded-full bg-gray-100 overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-all duration-500"
-                  style={{ width: `${project.milestoneCompletion}%`, backgroundColor: '#6366F1' }}
-                />
-              </div>
-              <span className="text-[12px] font-bold text-[#1E293B] whitespace-nowrap">
-                {project.milestoneCompletion}% Completed
+            <span className="text-gray-300 mx-1">•</span>
+            <span>
+              Team :{' '}
+              <span className="text-[#6366F1] font-semibold cursor-pointer hover:underline">
+                {project.teamMembersCount} Members
               </span>
+            </span>
+            <span className="text-gray-300 mx-1">•</span>
+            <span>
+              Timeline: <span className="text-gray-700 font-medium">{project.timeline}</span>
+            </span>
+            <span className="text-gray-300 mx-1">•</span>
+            <span>
+              <span className="text-gray-700 font-semibold">{project.activeTasksCount}</span> Active Tasks
+            </span>
+          </div>
+
+          {/* Right: % Completed + Progress Bar + Chevron */}
+          <div className="flex items-center gap-2.5 shrink-0">
+            <span className="text-[12px] font-bold text-[#1E293B] whitespace-nowrap">
+              {project.milestoneCompletion}% Completed
+            </span>
+            <div className="w-[85px] h-[6px] rounded-full bg-gray-100 overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-500"
+                style={{ width: `${project.milestoneCompletion}%`, backgroundColor: '#6366F1' }}
+              />
             </div>
             <button
               onClick={() => setCollapsed(c => !c)}
-              className="w-6 h-6 rounded flex items-center justify-center hover:bg-gray-100 transition-colors flex-shrink-0 text-gray-400"
+              className="w-5 h-5 rounded flex items-center justify-center hover:bg-gray-100 transition-colors flex-shrink-0 text-gray-400"
               title={collapsed ? 'Expand' : 'Collapse'}
             >
               {collapsed ? <ChevronDown size={15} /> : <ChevronUp size={15} />}
             </button>
           </div>
         </div>
-
-        {/* Row 2: Lead, Team, Timeline, Active Tasks */}
-        <div className="flex flex-wrap items-center gap-1.5 mt-1.5 text-[10px] text-gray-500">
-          <span>
-            Lead: <span className="text-gray-700 font-medium">{project.lead}</span>
-          </span>
-          <span className="text-gray-300 mx-1">•</span>
-          <span>
-            Team :{' '}
-            <span className="text-[#6366F1] font-semibold cursor-pointer hover:underline">
-              {project.teamMembersCount} Members
-            </span>
-          </span>
-          <span className="text-gray-300 mx-1">•</span>
-          <span>
-            Timeline: <span className="text-gray-700 font-medium">{project.timeline}</span>
-          </span>
-          <span className="text-gray-300 mx-1">•</span>
-          <span>
-            <span className="text-gray-700 font-semibold">{project.activeTasksCount}</span> Active Tasks
-          </span>
-        </div>
       </div>
 
-      {/* ── Sub-Navigation / Filter Bar (Figma Design) ── */}
+      {/* ── Sub-Navigation / Filter Bar (Figma Container: width 970px, height 30px) ── */}
       {!collapsed && (
-        <div className="flex flex-wrap items-center gap-4 px-5 py-3 border-b border-gray-100 bg-white">
-          {/* Left: Unified Segmented Pill Container */}
-          <div className="inline-flex items-center gap-0.5 p-1 bg-[#F8FAFC] border border-[#E2E8F0] rounded-full overflow-x-auto">
-            {/* All Task */}
-            <button
-              onClick={() => setProjectFilter('all')}
-              className={`flex items-center gap-1 px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
-                projectFilter === 'all'
-                  ? 'bg-[#6366F1] text-white shadow-sm'
-                  : 'text-[#475569] hover:text-[#1E293B]'
-              }`}
-            >
-              <span>All Task ({counts.all})</span>
-            </button>
+        <div className="px-5 py-2.5 border-b border-gray-100 bg-white">
+          <div className="w-[970px] max-w-full h-[30px] flex items-center">
+            {/* Frame 427321925 (w: 900, h: 30, gap: 13px) */}
+            <div className="w-[900px] max-w-full h-[30px] flex items-center gap-[13px] overflow-x-auto flex-nowrap [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+              {/* Background+Border Container (w: 587, h: 30, r: 8px, border: 1px, p: 2px, bg: #F1F5F9) */}
+              <div className="w-[587px] h-[30px] rounded-[8px] border border-[#E2E8F0] bg-[#F1F5F9] p-[2px] inline-flex items-center shrink-0 box-border">
+                {/* All Task (w: 91, h: 24, r: 8px, p: 4px 8px, bg: #856BFF) */}
+                <button
+                  onClick={() => setProjectFilter('all')}
+                  className={`w-[91px] h-[24px] px-[8px] py-[4px] rounded-[8px] text-[11.5px] font-semibold whitespace-nowrap transition-all flex items-center justify-center shrink-0 ${
+                    projectFilter === 'all'
+                      ? 'bg-[#856BFF] text-white shadow-sm'
+                      : 'text-[#475569] hover:text-[#1E293B]'
+                  }`}
+                >
+                  <span>All Task ({counts.all})</span>
+                </button>
 
-            {/* In Progress */}
-            <button
-              onClick={() => setProjectFilter('in-progress')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
-                projectFilter === 'in-progress'
-                  ? 'bg-[#6366F1] text-white shadow-sm font-semibold'
-                  : 'text-[#475569] hover:text-[#1E293B]'
-              }`}
-            >
-              <span>In Progress</span>
-              <span
-                className={`px-1.5 py-0.5 rounded-full text-[10.5px] font-bold ${
-                  projectFilter === 'in-progress'
-                    ? 'bg-white/20 text-white'
-                    : 'bg-[#F1F5F9] text-[#64748B]'
-                }`}
-              >
-                {counts.inProgress}
-              </span>
-            </button>
+                {/* In Progress (w: 110, h: 24, gap: 4px, r: 6px, p: 4px 10px) */}
+                <button
+                  onClick={() => setProjectFilter('in-progress')}
+                  className={`w-[110px] h-[24px] px-[10px] py-[4px] rounded-[6px] text-[11.5px] font-medium whitespace-nowrap transition-all flex items-center justify-center gap-[4px] shrink-0 ${
+                    projectFilter === 'in-progress'
+                      ? 'bg-[#856BFF] text-white shadow-sm font-semibold'
+                      : 'text-[#475569] hover:text-[#1E293B]'
+                  }`}
+                >
+                  <span>In Progress</span>
+                  <span
+                    className={`px-1.5 py-0.5 rounded-full text-[10.5px] font-bold ${
+                      projectFilter === 'in-progress'
+                        ? 'bg-white/20 text-white'
+                        : 'bg-[#F1F5F9] text-[#64748B]'
+                    }`}
+                  >
+                    {counts.inProgress}
+                  </span>
+                </button>
 
-            {/* Last Completed */}
-            <button
-              onClick={() => setProjectFilter('last-completed')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
-                projectFilter === 'last-completed'
-                  ? 'bg-[#6366F1] text-white shadow-sm font-semibold'
-                  : 'text-[#475569] hover:text-[#1E293B]'
-              }`}
-            >
-              <span>Last Completed</span>
-              <span
-                className={`px-1.5 py-0.5 rounded-full text-[10.5px] font-bold ${
-                  projectFilter === 'last-completed'
-                    ? 'bg-white/20 text-white'
-                    : 'bg-[#EAFBF3] text-[#10B981]'
-                }`}
-              >
-                {counts.lastCompleted}
-              </span>
-            </button>
+                {/* Last Completed (w: 133, h: 24, gap: 4px, r: 6px, p: 4px 10px) */}
+                <button
+                  onClick={() => setProjectFilter('last-completed')}
+                  className={`w-[133px] h-[24px] px-[10px] py-[4px] rounded-[6px] text-[11.5px] font-medium whitespace-nowrap transition-all flex items-center justify-center gap-[4px] shrink-0 ${
+                    projectFilter === 'last-completed'
+                      ? 'bg-[#856BFF] text-white shadow-sm font-semibold'
+                      : 'text-[#475569] hover:text-[#1E293B]'
+                  }`}
+                >
+                  <span>Last Completed</span>
+                  <span
+                    className={`px-1.5 py-0.5 rounded-full text-[10.5px] font-bold ${
+                      projectFilter === 'last-completed'
+                        ? 'bg-white/20 text-white'
+                        : 'bg-[#EAFBF3] text-[#059669]'
+                    }`}
+                  >
+                    {counts.lastCompleted}
+                  </span>
+                </button>
 
-            {/* Total Completed */}
-            <button
-              onClick={() => setProjectFilter('total-completed')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
-                projectFilter === 'total-completed'
-                  ? 'bg-[#6366F1] text-white shadow-sm font-semibold'
-                  : 'text-[#475569] hover:text-[#1E293B]'
-              }`}
-            >
-              <span>Total Completed</span>
-              <span
-                className={`px-1.5 py-0.5 rounded-full text-[10.5px] font-bold ${
-                  projectFilter === 'total-completed'
-                    ? 'bg-white/20 text-white'
-                    : 'bg-[#EAFBF3] text-[#10B981]'
-                }`}
-              >
-                {counts.totalCompleted}
-              </span>
-            </button>
+                {/* Total Completed (w: 137, h: 24, gap: 4px, r: 6px, p: 4px 10px) */}
+                <button
+                  onClick={() => setProjectFilter('total-completed')}
+                  className={`w-[137px] h-[24px] px-[10px] py-[4px] rounded-[6px] text-[11.5px] font-medium whitespace-nowrap transition-all flex items-center justify-center gap-[4px] shrink-0 ${
+                    projectFilter === 'total-completed'
+                      ? 'bg-[#856BFF] text-white shadow-sm font-semibold'
+                      : 'text-[#475569] hover:text-[#1E293B]'
+                  }`}
+                >
+                  <span>Total Completed</span>
+                  <span
+                    className={`px-1.5 py-0.5 rounded-full text-[10.5px] font-bold ${
+                      projectFilter === 'total-completed'
+                        ? 'bg-white/20 text-white'
+                        : 'bg-[#EAFBF3] text-[#059669]'
+                    }`}
+                  >
+                    {counts.totalCompleted}
+                  </span>
+                </button>
 
-            {/* Not Started */}
-            <button
-              onClick={() => setProjectFilter('not-started')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
-                projectFilter === 'not-started'
-                  ? 'bg-[#6366F1] text-white shadow-sm font-semibold'
-                  : 'text-[#475569] hover:text-[#1E293B]'
-              }`}
-            >
-              <span>Not Started</span>
-              <span
-                className={`px-1.5 py-0.5 rounded-full text-[10.5px] font-bold ${
-                  projectFilter === 'not-started'
-                    ? 'bg-white/20 text-white'
-                    : 'bg-[#EFF6FF] text-[#2563EB]'
-                }`}
-              >
-                {counts.notStarted}
-              </span>
-            </button>
-          </div>
+                {/* Not Started (w: 110, h: 24, gap: 4px, r: 6px, p: 4px 10px) */}
+                <button
+                  onClick={() => setProjectFilter('not-started')}
+                  className={`w-[110px] h-[24px] px-[10px] py-[4px] rounded-[6px] text-[11.5px] font-medium whitespace-nowrap transition-all flex items-center justify-center gap-[4px] shrink-0 ${
+                    projectFilter === 'not-started'
+                      ? 'bg-[#856BFF] text-white shadow-sm font-semibold'
+                      : 'text-[#475569] hover:text-[#1E293B]'
+                  }`}
+                >
+                  <span>Not Started</span>
+                  <span
+                    className={`px-1.5 py-0.5 rounded-full text-[10.5px] font-bold ${
+                      projectFilter === 'not-started'
+                        ? 'bg-white/20 text-white'
+                        : 'bg-[#EFF6FF] text-[#2563EB]'
+                    }`}
+                  >
+                    {counts.notStarted}
+                  </span>
+                </button>
+              </div>
 
-          <div className="w-px h-6 bg-gray-200 shrink-0"></div>
+              {/* Divider */}
+              <div className="w-px h-[20px] bg-[#E2E8F0] shrink-0" />
 
-          {/* Right: Alert filters */}
-          <div className="flex items-center gap-2.5 overflow-x-auto">
-            {/* Blockers */}
-            <button
-              onClick={() => setProjectFilter(projectFilter === 'blockers' ? 'all' : 'blockers')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
-                projectFilter === 'blockers'
-                  ? 'ring-2 ring-[#D97706] ring-offset-1 bg-[#FFFBEB] border-[#FCD34D] text-[#D97706]'
-                  : 'border-[#FCD34D] bg-[#FFFBEB] text-[#D97706] hover:opacity-90'
-              }`}
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-[#D97706] shrink-0" />
-              <span>Blockers ({counts.blockers})</span>
-            </button>
+              {/* Right: Container (w: 286, h: 26, gap: 6px) */}
+              <div className="w-[286px] h-[26px] flex items-center gap-[6px] shrink-0">
+                {/* Blockers (w: 94, h: 26, r: 8px, gap: 4px, p: 4px 8px) */}
+                <button
+                  onClick={() => setProjectFilter(projectFilter === 'blockers' ? 'all' : 'blockers')}
+                  className={`w-[94px] h-[26px] px-[8px] py-[4px] rounded-[8px] text-[11px] font-semibold border whitespace-nowrap transition-all flex items-center justify-center gap-[4px] shrink-0 ${
+                    projectFilter === 'blockers'
+                      ? 'ring-2 ring-[#D97706] ring-offset-1 bg-[#FFFBEB] border-[#FCD34D] text-[#D97706]'
+                      : 'border-[#FCD34D] bg-[#FFFBEB] text-[#D97706] hover:opacity-90'
+                  }`}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#D97706] shrink-0" />
+                  <span>Blockers ({counts.blockers})</span>
+                </button>
 
-            {/* Delayed */}
-            <button
-              onClick={() => setProjectFilter(projectFilter === 'delayed' ? 'all' : 'delayed')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
-                projectFilter === 'delayed'
-                  ? 'ring-2 ring-[#DC2626] ring-offset-1 bg-[#FEF2F2] border-[#FCA5A5] text-[#DC2626]'
-                  : 'border-[#FCA5A5] bg-[#FEF2F2] text-[#DC2626] hover:opacity-90'
-              }`}
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-[#DC2626] shrink-0" />
-              <span>Delayed ({counts.delayed})</span>
-            </button>
+                {/* Delayed (w: 89, h: 26, r: 8px, gap: 4px, p: 4px 8px, border: #FFE4E6, bg: #FFF1F299) */}
+                <button
+                  onClick={() => setProjectFilter(projectFilter === 'delayed' ? 'all' : 'delayed')}
+                  className={`w-[89px] h-[26px] px-[8px] py-[4px] rounded-[8px] text-[11px] font-semibold border whitespace-nowrap transition-all flex items-center justify-center gap-[4px] shrink-0 ${
+                    projectFilter === 'delayed'
+                      ? 'ring-2 ring-[#DC2626] ring-offset-1 bg-[#FFF1F299] border-[#FFE4E6] text-[#DC2626]'
+                      : 'border-[#FFE4E6] bg-[#FFF1F299] text-[#DC2626] hover:opacity-90'
+                  }`}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#DC2626] shrink-0" />
+                  <span>Delayed ({counts.delayed})</span>
+                </button>
 
-            {/* Due Today */}
-            <button
-              onClick={() => setProjectFilter(projectFilter === 'due-today' ? 'all' : 'due-today')}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-medium transition-all ${
-                projectFilter === 'due-today'
-                  ? 'text-[#1E293B] font-semibold bg-gray-100'
-                  : 'text-[#64748B] hover:text-[#1E293B]'
-              }`}
-            >
-              <span>Due Today ({counts.dueToday})</span>
-            </button>
+                {/* Due Today */}
+                <button
+                  onClick={() => setProjectFilter(projectFilter === 'due-today' ? 'all' : 'due-today')}
+                  className={`h-[26px] px-[8px] py-[4px] rounded-[8px] text-[11px] font-medium whitespace-nowrap transition-all flex items-center justify-center shrink-0 ${
+                    projectFilter === 'due-today'
+                      ? 'text-[#1E293B] font-semibold bg-gray-100'
+                      : 'text-[#64748B] hover:text-[#1E293B]'
+                  }`}
+                >
+                  <span>Due Today ({counts.dueToday})</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -490,43 +496,36 @@ function ProjectCard({ project, globalTab, searchQuery }) {
       {/* ── Table Matrix (with Figma custom horizontal scrollbar) ── */}
       {!collapsed && (
         <div className="figma-table-scroll pb-2">
-          <table className="w-full text-[12px] border-collapse" style={{ minWidth: 1060 }}>
+          <table className="w-full text-[12px] border-collapse" style={{ minWidth: 1403 }}>
             <thead>
-              <tr style={{ backgroundColor: '#F4F7FB' }}>
-                <th className="text-left px-4 py-3 text-[11.5px] font-semibold text-[#5A6A85] whitespace-nowrap border-b border-[#E2E8F0] w-[145px]">
-                  <div className="leading-tight">
-                    <div>Task</div>
-                    <div>Classification</div>
-                  </div>
+              <tr style={{ backgroundColor: '#EFF4FF', height: '38px' }} className="border-b border-[#E2E8F0]">
+                <th className="text-left px-[16px] py-[10px] text-[11.5px] font-semibold text-[#5A6A85] whitespace-nowrap border-b border-[#E2E8F0] w-[155px]">
+                  Task Classification
                 </th>
-                <th className="text-left px-4 py-3 text-[11.5px] font-semibold text-[#5A6A85] whitespace-nowrap border-b border-[#E2E8F0] min-w-[220px]">
+                <th className="text-left px-[16px] py-[10px] text-[11.5px] font-semibold text-[#5A6A85] whitespace-nowrap border-b border-[#E2E8F0] min-w-[210px]">
                   Task
                 </th>
-                <th className="text-left px-4 py-3 text-[11.5px] font-semibold text-[#5A6A85] whitespace-nowrap border-b border-[#E2E8F0] min-w-[125px]">
+                <th className="text-left px-[16px] py-[10px] text-[11.5px] font-semibold text-[#5A6A85] whitespace-nowrap border-b border-[#E2E8F0] min-w-[130px]">
                   Owner
                 </th>
-                <th className="text-left px-4 py-3 text-[11.5px] font-semibold text-[#5A6A85] whitespace-nowrap border-b border-[#E2E8F0] min-w-[100px]">
+                <th className="text-left px-[16px] py-[10px] text-[11.5px] font-semibold text-[#5A6A85] whitespace-nowrap border-b border-[#E2E8F0] min-w-[100px]">
+                  Role
+                </th>
+                <th className="text-left px-[16px] py-[10px] text-[11.5px] font-semibold text-[#5A6A85] whitespace-nowrap border-b border-[#E2E8F0] min-w-[110px]">
+                  Task Type
+                </th>
+                <th className="text-left px-[16px] py-[10px] text-[11.5px] font-semibold text-[#5A6A85] whitespace-nowrap border-b border-[#E2E8F0] min-w-[85px]">
+                  Unit
+                </th>
+                <th className="text-left px-[16px] py-[10px] text-[11.5px] font-semibold text-[#5A6A85] whitespace-nowrap border-b border-[#E2E8F0] min-w-[105px]">
                   Risk Category
                 </th>
-                <th className="text-left px-4 py-3 text-[11.5px] font-semibold text-[#5A6A85] whitespace-nowrap border-b border-[#E2E8F0] min-w-[240px]">
-                  Remarks
+                <th className="text-left px-[16px] py-[10px] text-[11.5px] font-semibold text-[#5A6A85] whitespace-nowrap border-b border-[#E2E8F0] min-w-[115px]">
+                  Planned Date
                 </th>
-                <th className="text-left px-4 py-3 text-[11.5px] font-semibold text-[#5A6A85] whitespace-nowrap border-b border-[#E2E8F0] min-w-[115px]">
-                  <div className="leading-tight">
-                    <div>Planned</div>
-                    <div>Date</div>
-                  </div>
+                <th className="text-left px-[16px] py-[10px] text-[11.5px] font-semibold text-[#5A6A85] whitespace-nowrap border-b border-[#E2E8F0] min-w-[100px]">
+                  Actual Date
                 </th>
-                <th className="text-left px-4 py-3 text-[11.5px] font-semibold text-[#5A6A85] whitespace-nowrap border-b border-[#E2E8F0] min-w-[130px]">
-                  <div className="leading-tight">
-                    <div>Actual &</div>
-                    <div>Variance</div>
-                  </div>
-                </th>
-                <th className="text-left px-4 py-3 text-[11.5px] font-semibold text-[#5A6A85] whitespace-nowrap border-b border-[#E2E8F0] min-w-[110px]">
-                  Status
-                </th>
-
               </tr>
             </thead>
             <tbody>
@@ -543,65 +542,72 @@ function ProjectCard({ project, globalTab, searchQuery }) {
                     className="border-b border-[#F1F5F9] hover:bg-[#F8FAFC] transition-colors"
                   >
                     {/* Classification */}
-                    <td className="px-4 py-3.5 align-top">
+                    <td className="px-[16px] py-[12px] align-top">
                       <ClassificationBadge classification={task.classification} />
                     </td>
 
                     {/* Task Title */}
-                    <td className="px-4 py-3.5 align-top">
+                    <td className="px-[16px] py-[12px] align-top">
                       <div className="font-medium text-[#1E293B] text-[12.5px] leading-snug">
                         {task.taskName}
                       </div>
-                    </td>
-
-                    {/* Owner */}
-                    <td className="px-4 py-3.5 align-top">
-                      <div className="font-medium text-[#1E293B] text-[12px] whitespace-nowrap">
-                        {task.ownerName}
-                      </div>
-                      {task.ownerRole && (
-                        <div className="text-[11px] text-[#8C98A9] mt-0.5 whitespace-nowrap">
-                          {task.ownerRole}
+                      {task.taskCode && (
+                        <div className="text-[11px] text-[#94A3B8] mt-0.5">
+                          {task.taskCode}
                         </div>
                       )}
                     </td>
 
-                    {/* Risk Category */}
-                    <td className="px-4 py-3.5 align-top">
-                      <div className="inline-flex items-center justify-center px-2.5 py-1 rounded-[5px] bg-[#F1F5F9] text-[#64748B] text-[11px] font-medium min-w-[32px]">
-                        {task.riskCategory || 'NA'}
+                    {/* Owner */}
+                    <td className="px-[16px] py-[12px] align-top">
+                      <div className="font-medium text-[#1E293B] text-[12px] whitespace-nowrap">
+                        {task.ownerName}
                       </div>
                     </td>
 
-                    {/* Remarks */}
-                    <td className="px-4 py-3.5 align-top max-w-[280px]">
-                      <RemarksCell
-                        text={task.remarks}
-                        prefix={task.remarksPrefix}
-                        prefixColor={task.remarksPrefixColor}
-                      />
+                    {/* Role */}
+                    <td className="px-[16px] py-[12px] align-top">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-[6px] bg-[#F1F5F9] border border-[#E2E8F0] text-[#475569] text-[11px] font-medium whitespace-nowrap">
+                        {task.role || task.ownerRole || 'Fullstack'}
+                      </span>
+                    </td>
+
+                    {/* Task Type */}
+                    <td className="px-[16px] py-[12px] align-top">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-[6px] bg-[#F1F5F9] text-[#475569] text-[11px] font-medium whitespace-nowrap">
+                        {task.taskType || 'Development'}
+                      </span>
+                    </td>
+
+                    {/* Unit */}
+                    <td className="px-[16px] py-[12px] align-top">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-[6px] bg-[#F1F5F9] border border-[#E2E8F0] text-[#475569] text-[11px] font-medium whitespace-nowrap">
+                        {task.unit || '1 Unit'}
+                      </span>
+                    </td>
+
+                    {/* Risk Category */}
+                    <td className="px-[16px] py-[12px] align-top">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-[6px] bg-[#F1F5F9] text-[#64748B] text-[11px] font-medium whitespace-nowrap">
+                        {task.riskCategory || 'NA'}
+                      </span>
                     </td>
 
                     {/* Planned Date */}
-                    <td className="px-4 py-3.5 align-top">
-                      <PlannedDateCell start={task.plannedStart} end={task.plannedEnd} />
+                    <td className="px-[16px] py-[12px] align-top">
+                      <div className="text-[11px] leading-[1.35] whitespace-nowrap">
+                        <div className="text-[#1E293B] font-medium">{task.plannedStart}</div>
+                        <div className="text-[#94A3B8] mt-0.5">— {task.plannedEnd}</div>
+                      </div>
                     </td>
 
-                    {/* Actual & Variance */}
-                    <td className="px-4 py-3.5 align-top">
-                      <ActualVarianceCell
-                        line1={task.actualLine1}
-                        line2={task.actualLine2}
-                        badge={task.varianceBadge}
-                      />
+                    {/* Actual Date */}
+                    <td className="px-[16px] py-[12px] align-top">
+                      <div className="text-[11px] leading-[1.35] whitespace-nowrap">
+                        <div className="text-[#1E293B] font-medium">{task.actualLine1 || '—'}</div>
+                        <div className="text-[#94A3B8] mt-0.5">{task.actualLine2 || ''}</div>
+                      </div>
                     </td>
-
-                    {/* Status */}
-                    <td className="px-4 py-3.5 align-top">
-                      <StatusPill status={task.status} />
-                    </td>
-
-
                   </tr>
                 ))
               )}
@@ -755,14 +761,14 @@ export default function DailyUpdatesReport() {
             value={MOCK_METRICS.lastCompleted}
             icon={ShieldCheck}
             iconBg="#ECFDF5"
-            iconColor="#10B981"
+            iconColor="#856BFF"
           />
           <StatCard
             label="Total Completed"
             value={MOCK_METRICS.totalCompleted}
             icon={ClipboardCheck}
             iconBg="#ECFDF5"
-            iconColor="#10B981"
+            iconColor="#856BFF"
           />
         </div>
 
@@ -783,7 +789,7 @@ export default function DailyUpdatesReport() {
                   }`}
                 >
                   {isActive && tab.key === 'In Progress' && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] shrink-0" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#856BFF] shrink-0" />
                   )}
                   <span>{tab.label}</span>
                   <span
