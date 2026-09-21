@@ -2,6 +2,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import TaskInfoPage from "./TaskInfoPage";
+import EffortEstimatePage from "./EffortEstimatePage";
+import DocumentChecklistPage from "./DocumentChecklistPage";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Stepper
@@ -190,9 +192,14 @@ const ImportProjectPage = () => {
     setSyncing(false);
   };
 
-  const handleCancel    = () => navigate("/projects");
-  const handleSaveDraft = () => { console.log("Save Draft", { pmsId, pmsData, form }); };
-  const handleNext      = () => goNext();
+  const handleCancel       = () => navigate("/projects");
+  const handleSaveDraft    = () => { console.log("Save Draft", { pmsId, pmsData, form }); };
+  const handleNext         = () => goNext();
+  const handleCreateProject = () => {
+    console.log("Create Project — submitting all steps.");
+    alert("Project created successfully!");
+    navigate("/projects");
+  };
 
   // ── Project Type options ───────────────────────────────────────────────────
   const projectTypeOptions = [
@@ -228,6 +235,22 @@ const ImportProjectPage = () => {
         <TaskInfoPage
           onCancel={handleCancel}
           onNext={goNext}
+        />
+      )}
+
+      {/* ── Step 2: Effort Estimate ── */}
+      {currentStep === 2 && (
+        <EffortEstimatePage
+          onCancel={handleCancel}
+          onNext={goNext}
+        />
+      )}
+
+      {/* ── Step 3: Document Checklist ── */}
+      {currentStep === 3 && (
+        <DocumentChecklistPage
+          onCancel={handleCancel}
+          onCreate={handleCreateProject}
         />
       )}
 

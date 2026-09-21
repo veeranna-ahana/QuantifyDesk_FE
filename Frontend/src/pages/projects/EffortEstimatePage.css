@@ -1,0 +1,438 @@
+/* ============================================================
+   src/pages/projects/EffortEstimatePage.css
+   Scoped styles for the Effort Estimate step (Step 3) of Import Project.
+   All classes prefixed with  .ee-  to avoid global collisions.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap');
+
+/* ── Page wrapper ────────────────────────────────────────────── */
+
+.ee-page {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+}
+
+/* ── Main card ───────────────────────────────────────────────── */
+
+.ee-card {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 16px;
+  gap: 16px;
+  width: 100%;
+  background: #ffffff;
+  border-radius: 8px;
+}
+
+/* ── Card header row (title + context bar) ───────────────────── */
+
+.ee-card-header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  height: 36px;
+}
+
+.ee-card-title {
+  margin: 0;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 28px;
+  letter-spacing: -0.2px;
+  color: #002045;
+}
+
+/* Context bar: FMS | PMS ID */
+.ee-context-bar {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 8px 16px;
+  gap: 8px;
+  height: 36px;
+  background: #eff4f9;
+  border: 1px solid #c4c6cf;
+  box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+  white-space: nowrap;
+}
+
+.ee-context-fms {
+  font-family: 'Roboto', sans-serif;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.6px;
+  color: #171c20;
+}
+
+.ee-context-divider {
+  width: 1px;
+  height: 16px;
+  background: #c4c6cf;
+  flex-shrink: 0;
+}
+
+.ee-context-pms {
+  font-family: 'Roboto', sans-serif;
+  font-weight: 400;
+  font-size: 13px;
+  line-height: 18px;
+  color: #545f72;
+}
+
+/* ── Table container ─────────────────────────────────────────── */
+
+.ee-table {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #c4c6cf;
+  box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.03);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+/* ── Table header row ────────────────────────────────────────── */
+
+.ee-thead {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 8px;
+  width: 100%;
+  height: 44px;
+  background: #eff4ff;
+  border-bottom: 1px solid rgba(195, 198, 214, 0.3);
+  flex-shrink: 0;
+}
+
+.ee-th {
+  font-family: 'Roboto', sans-serif;
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.6px;
+  text-transform: capitalize;
+  color: #434655;
+  flex: 1;
+  padding: 14px 16px;
+}
+
+.ee-th--name   { flex: 2; text-align: left; }
+.ee-th--center { flex: 1; text-align: center; }
+
+/* ── Table body ──────────────────────────────────────────────── */
+
+.ee-tbody {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+/* ── Role header row ─────────────────────────────────────────── */
+
+.ee-role-header {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  width: 100%;
+  height: 40px;
+  background: #faf8ff;
+  border-bottom: 1px solid #c4c6cf;
+  flex-shrink: 0;
+}
+
+.ee-role-name {
+  font-family: 'Roboto', sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 24px;
+  color: #171c20;
+}
+
+/* "+ Add Member" button in role header */
+.ee-add-member-btn {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 24px;
+  color: #002045;
+  transition: opacity 120ms ease;
+}
+
+.ee-add-member-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.ee-add-member-btn:not(:disabled):hover { opacity: 0.75; }
+
+/* ── Member data rows ────────────────────────────────────────── */
+
+.ee-member-row {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 16px;
+  width: 100%;
+  min-height: 40px;
+  border-bottom: 1px solid #c4c6cf;
+  flex-shrink: 0;
+  transition: background 100ms ease;
+}
+
+.ee-member-row:last-of-type { /* keep border on all; total row handles its own */ }
+.ee-member-row:hover { background: #fafbff; }
+.ee-member-row--pending { background: #fefefe; }
+
+/* Individual cells */
+.ee-cell {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.ee-cell--name   { flex: 2; justify-content: flex-start; }
+.ee-cell--center { flex: 1; justify-content: center; }
+.ee-cell--actions {
+  gap: 4px;
+  justify-content: center;
+}
+
+/* Member name text */
+.ee-member-name {
+  font-family: 'Roboto', sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 24px;
+  color: #171c20;
+}
+
+/* Computed hrs text */
+.ee-hrs-text {
+  font-family: 'Roboto', sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 24px;
+  color: #434654;
+  text-align: right;
+}
+
+/* ── Effort / Buffer days input ──────────────────────────────── */
+
+.ee-days-input {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 4px 8px;
+  width: 62px;
+  height: 32px;
+  background: #ffffff;
+  border: 1px solid #c3c6d6;
+  border-radius: 6px;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 24px;
+  color: #000000;
+  text-align: center;
+  outline: none;
+  transition: border-color 150ms ease;
+  -moz-appearance: textfield;
+}
+
+.ee-days-input::-webkit-inner-spin-button,
+.ee-days-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+.ee-days-input:focus { border-color: #856bff; }
+
+/* ── Pending row: Add Member select ─────────────────────────── */
+
+.ee-add-member-select-wrap {
+  position: relative;
+  width: 167px;
+  height: 32px;
+}
+
+.ee-add-member-select {
+  box-sizing: border-box;
+  width: 100%;
+  height: 32px;
+  padding: 4px 32px 4px 8px;
+  background: #ffffff;
+  border: 1px solid #c3c6d6;
+  border-radius: 8px;
+  appearance: none;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 24px;
+  color: #64748b;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 150ms ease;
+}
+
+.ee-add-member-select:focus { border-color: #856bff; }
+.ee-add-member-select option { color: #171c20; }
+
+.ee-add-member-chevron {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+}
+
+/* ── Confirm / Cancel icon buttons ──────────────────────────── */
+
+.ee-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 25px;
+  height: 25px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: background 120ms ease;
+}
+
+.ee-icon-btn:hover { background: rgba(0, 0, 0, 0.06); }
+
+/* ── TOTAL row ───────────────────────────────────────────────── */
+
+.ee-total-row {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 13px 16px;
+  width: 100%;
+  min-height: 50px;
+  background: #eff4ff;
+  position: relative;
+}
+
+.ee-total-label {
+  flex: 2;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 24px;
+  color: #171c20;
+}
+
+.ee-total-cell {
+  flex: 1;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 24px;
+  color: #171c20;
+  text-align: center;
+}
+
+.ee-total-cell--muted { color: #94a3b8; }
+
+/* ── Footer ─────────────────────────────────────────────────── */
+
+.ee-footer {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  gap: 16px;
+  width: 100%;
+  border-top: 1px solid #dfe1e6;
+  margin-top: 0;
+}
+
+.ee-footer-right {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+
+.ee-btn-cancel {
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 6.5px 16px 7.5px;
+  height: 44px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  font-family: 'Roboto', sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 20px;
+  color: #42526e;
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+
+.ee-btn-cancel:hover { background: #f1f5f9; }
+
+.ee-btn-next {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  padding: 7.5px 16px 8.5px;
+  gap: 8px;
+  height: 44px;
+  background: #856bff;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 16px;
+  letter-spacing: 0.6px;
+  color: #ffffff;
+  transition: background 150ms ease;
+  white-space: nowrap;
+}
+
+.ee-btn-next:hover { background: #7457fc; }
