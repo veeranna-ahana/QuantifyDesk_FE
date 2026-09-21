@@ -710,7 +710,44 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
     taskType: 'Analysis',
     unit: '98',
   });
+  const [bulkUpdateOpen, setBulkUpdateOpen] = useState(false);
+  const [bulkUpdateData, setBulkUpdateData] = useState({
+    status: 'Completed',
+    owner: 'Sarah J.',
+    allocation: '100%',
+  });
   const pageSize = 10;
+
+  const handleOpenBulkUpdate = () => {
+    setBulkUpdateOpen(true);
+  };
+
+  const handleApplyBulkUpdate = (e) => {
+    e?.preventDefault?.();
+    const selectedIds = Object.keys(selectedTasks).filter((id) => selectedTasks[id]);
+    setMilestones((prev) =>
+      prev.map((m) => ({
+        ...m,
+        tasks: m.tasks.map((t) => {
+          if (selectedIds.length === 0 || selectedIds.includes(t.id)) {
+            return {
+              ...t,
+              status: bulkUpdateData.status || t.status,
+              owner: bulkUpdateData.owner || t.owner,
+              allocation: bulkUpdateData.allocation || t.allocation,
+            };
+          }
+          return t;
+        }),
+      }))
+    );
+    toast.success(
+      selectedIds.length > 0
+        ? `Successfully updated ${selectedIds.length} tasks!`
+        : 'Successfully updated tasks!'
+    );
+    setBulkUpdateOpen(false);
+  };
 
   // Toggle card expansion
   const toggleMilestone = (id) => {
@@ -915,17 +952,17 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
     <div className="space-y-4 font-sans text-gray-800">
 
       {/* ── Filter & Search Bar Container ── */}
-      <div className="bg-white rounded-xl p-4 sm:p-5 border border-[#DFE1E6] shadow-sm mb-4">
+      <div className="bg-white rounded-xl p-4 border border-[#DFE1E6] shadow-sm mb-4">
         
-        {/* Row 1: Search, Milestone Dropdown, Filter Button */}
-        <div className="flex flex-wrap items-center gap-3">
+        {/* Row 1: Search + Milestone + Filter | Bulk Update (single row, no wrapping) */}
+        <div className="flex flex-nowrap items-center gap-3 min-w-0">
           
           {/* Search Input */}
-          <div className="relative w-full sm:w-[360px]">
+          <div className="relative flex-shrink-0 w-[220px]">
             <Search
-              size={16}
+              size={14}
               strokeWidth={2}
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#64748B] pointer-events-none"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-[#64748B] pointer-events-none"
             />
             <input
               type="text"
@@ -934,20 +971,20 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
                 setSearchQuery(e.target.value);
                 setCurrentPage(1);
               }}
-              placeholder="Search tasks..."
-              className="box-border w-full h-10 pl-9 pr-3.5 border border-[#DFE1E6] rounded-lg bg-white text-sm text-[#1E293B] placeholder-[#94A3B8] outline-none focus:border-[#856BFF] transition-colors font-normal"
+              placeholder="Search by task..."
+              className="box-border w-full h-[30px] pl-8 pr-3 border border-[#DFE1E6] rounded-lg bg-white text-xs text-[#1E293B] placeholder-[#94A3B8] outline-none focus:border-[#856BFF] transition-colors font-normal"
             />
           </div>
 
           {/* Milestone Dropdown Filter */}
-          <div className="relative">
+          <div className="relative flex-shrink-0">
             <select
               value={selectedMilestoneFilter}
               onChange={(e) => {
                 setSelectedMilestoneFilter(e.target.value);
                 setCurrentPage(1);
               }}
-              className="box-border appearance-none h-10 pl-4 pr-9 border border-[#DFE1E6] rounded-lg bg-white text-[#475569] font-medium text-sm outline-none focus:border-[#856BFF] cursor-pointer transition-colors"
+              className="box-border appearance-none h-[30px] pl-3 pr-8 border border-[#DFE1E6] rounded-lg bg-white text-[#475569] font-medium text-xs outline-none focus:border-[#856BFF] cursor-pointer transition-colors"
             >
               <option value="ALL">Milestone</option>
               {milestones.map((m) => (
@@ -957,9 +994,9 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
               ))}
             </select>
             <ChevronDown
-              size={16}
+              size={14}
               strokeWidth={2.2}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#5E6C84] pointer-events-none"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#5E6C84] pointer-events-none"
             />
           </div>
 
@@ -978,67 +1015,80 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
               setStatusFilter(next);
               setCurrentPage(1);
             }}
-            className="box-border flex items-center gap-2 h-10 px-4 border border-[#856BFF] rounded-lg bg-white text-[#856BFF] font-semibold text-sm hover:bg-[#F3F0FF]/40 transition-colors cursor-pointer"
+            className="flex-shrink-0 box-border flex items-center gap-1.5 h-[30px] px-3 border border-[#DFE1E6] rounded-lg bg-white text-[#475569] font-semibold text-xs hover:bg-gray-50 transition-colors cursor-pointer"
           >
-            <SlidersHorizontal size={14} className="text-[#856BFF]" />
+            <SlidersHorizontal size={13} className="text-[#475569]" />
             <span>Filter</span>
+          </button>
+
+          {/* Spacer pushes Bulk Update to the right */}
+          <div className="flex-1 min-w-0" />
+
+          {/* Bulk Update Button — right-aligned */}
+          <button
+            type="button"
+            id="bulk-update-btn"
+            onClick={handleOpenBulkUpdate}
+            className="flex-shrink-0 box-border flex items-center gap-1.5 h-[24px] px-[10px] bg-[#856BFF] hover:bg-[#7354fd] text-white text-xs font-semibold rounded-[6px] transition-colors cursor-pointer border-none whitespace-nowrap shadow-sm"
+          >
+            Bulk Update
           </button>
 
         </div>
 
         {/* ── Row 2: Summary & Metrics Badges Bar ── */}
-        <div className="flex flex-wrap items-center gap-2.5 mt-3.5 pt-0.5 text-xs">
+        <div className="flex flex-wrap items-center gap-2 mt-3 text-xs">
           
           {/* Milestones Completed Badge */}
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#FAF5FF] border border-[#E9D8FD] text-[#7C3AED] font-semibold">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#FAF5FF] border border-[#E9D8FD] text-[#7C3AED] font-semibold whitespace-nowrap">
             <span className="w-1.5 h-1.5 rounded-full bg-[#7C3AED]"></span>
-            <span>Milestones: 3/8 Completed (38%)</span>
+            <span>Milestones: {completedMilestonesCount}/{totalMilestonesCount} Completed ({milestonesPercent}%)</span>
           </div>
 
           {/* Tasks Count Badge */}
           <div
             onClick={() => setStatusFilter('ALL')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-xs cursor-pointer transition-colors ${
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs cursor-pointer transition-colors whitespace-nowrap ${
               statusFilter === 'ALL'
-                ? 'bg-[#F1F5F9] border-[#E2E8F0] text-[#334155]'
+                ? 'bg-[#F1F5F9] border-[#E2E8F0] text-[#334155] font-semibold'
                 : 'bg-white border-[#E2E8F0] text-[#334155] hover:bg-gray-50'
             }`}
           >
             <span className="w-1.5 h-1.5 rounded-sm bg-[#64748B]"></span>
-            <span>Tasks: <span className="font-bold text-[#1E293B]">145</span></span>
+            <span>Tasks: <span className="font-bold text-[#1E293B]">{totalTasksCount}</span></span>
           </div>
 
           {/* Completed Badge */}
           <div
             onClick={() => setStatusFilter(statusFilter === 'Completed' ? 'ALL' : 'Completed')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#ECFDF5] border border-[#A7F3D0] text-[#065F46] font-semibold cursor-pointer transition-colors ${
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#ECFDF5] border border-[#A7F3D0] text-[#065F46] font-semibold cursor-pointer transition-colors whitespace-nowrap ${
               statusFilter === 'Completed' ? 'ring-1 ring-[#10B981]' : 'hover:opacity-90'
             }`}
           >
             <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>
-            <span>Completed: 69 (48%)</span>
+            <span>Completed: {completedTasksCount} ({completedPercent}%)</span>
           </div>
 
           {/* In Progress Badge */}
           <div
             onClick={() => setStatusFilter(statusFilter === 'In Progress' ? 'ALL' : 'In Progress')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#FFFBEB] border border-[#FDE68A] text-[#92400E] font-semibold cursor-pointer transition-colors ${
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#FFFBEB] border border-[#FDE68A] text-[#92400E] font-semibold cursor-pointer transition-colors whitespace-nowrap ${
               statusFilter === 'In Progress' ? 'ring-1 ring-[#F59E0B]' : 'hover:opacity-90'
             }`}
           >
             <span className="w-1.5 h-1.5 rounded-sm bg-[#F59E0B]"></span>
-            <span>In Progress: 19</span>
+            <span>In Progress: {inProgressTasksCount}</span>
           </div>
 
           {/* Not Started Badge */}
           <div
             onClick={() => setStatusFilter(statusFilter === 'Not Started' ? 'ALL' : 'Not Started')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#F8FAFC] border border-[#E2E8F0] text-[#475569] font-semibold cursor-pointer transition-colors ${
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#F8FAFC] border border-[#E2E8F0] text-[#475569] font-semibold cursor-pointer transition-colors whitespace-nowrap ${
               statusFilter === 'Not Started' ? 'ring-1 ring-[#94A3B8]' : 'hover:opacity-90'
             }`}
           >
             <span className="w-1.5 h-1.5 rounded-full bg-[#94A3B8]"></span>
-            <span>Not Started: 57</span>
+            <span>Not Started: {notStartedTasksCount}</span>
           </div>
 
         </div>
@@ -1384,28 +1434,26 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
         </div>
       </div>
 
-      {/* ── Footer Actions (shown only in Edit mode) ── */}
-      {isEditing && (
-        <div className="flex items-center justify-end gap-4 mt-4 pt-4 border-t border-gray-100">
-          <button
-            type="button"
-            id="task-info-cancel-btn"
-            onClick={onCancel}
-            className="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-800 transition-colors cursor-pointer bg-transparent border-none"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            id="task-info-next-btn"
-            onClick={onNext}
-            className="flex items-center gap-1.5 px-6 py-2.5 bg-[#856BFF] hover:bg-[#7354fd] text-white text-sm font-semibold rounded-lg shadow-sm transition-colors cursor-pointer border-none"
-          >
-            <span>Next:</span>
-            <ArrowRight size={16} />
-          </button>
-        </div>
-      )}
+      {/* ── Footer Actions: Cancel & Next always visible per Figma ── */}
+      <div className="flex items-center justify-end gap-3 mt-4 pt-3 border-t border-gray-100">
+        <button
+          type="button"
+          id="task-info-cancel-btn"
+          onClick={onCancel}
+          className="px-5 py-2 text-sm font-semibold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer bg-white"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          id="task-info-next-btn"
+          onClick={onNext}
+          className="flex items-center gap-1.5 px-5 py-2 bg-[#856BFF] hover:bg-[#7354fd] text-white text-sm font-semibold rounded-lg shadow-sm transition-colors cursor-pointer border-none"
+        >
+          <span>Next:</span>
+          <ArrowRight size={15} />
+        </button>
+      </div>
 
       {/* ── Edit Task Details Slide-Over Section (Right Side of Screen, Optimized for 100% Zoom) ── */}
       {editingTask && (
@@ -1597,6 +1645,101 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
                 </button>
               </div>
 
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ── Bulk Update Modal ── */}
+      {bulkUpdateOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" role="dialog" aria-modal="true">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/20 transition-opacity duration-200"
+            onClick={() => setBulkUpdateOpen(false)}
+            aria-hidden="true"
+          />
+          {/* Modal Panel */}
+          <div className="relative bg-white rounded-xl shadow-xl border border-gray-200 w-full max-w-[380px] mx-4 flex flex-col z-10 animate-in fade-in zoom-in-95 duration-150">
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
+              <h3 className="text-sm font-bold text-gray-900">Bulk Update Tasks</h3>
+              <button
+                type="button"
+                onClick={() => setBulkUpdateOpen(false)}
+                className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-1.5 rounded-lg transition-colors cursor-pointer bg-transparent border-none"
+                aria-label="Close"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Body */}
+            <form id="bulk-update-form" onSubmit={handleApplyBulkUpdate} className="px-5 py-4 space-y-3">
+              <p className="text-xs text-gray-500 mb-2">
+                Apply changes to{' '}
+                <span className="font-bold text-gray-800">
+                  {Object.values(selectedTasks).filter(Boolean).length > 0
+                    ? `${Object.values(selectedTasks).filter(Boolean).length} selected task(s)`
+                    : 'all tasks'}
+                </span>
+              </p>
+
+              {/* Status field */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Status</label>
+                <div className="relative">
+                  <select
+                    value={bulkUpdateData.status}
+                    onChange={(e) => setBulkUpdateData({ ...bulkUpdateData, status: e.target.value })}
+                    className="w-full appearance-none px-3 py-1.5 border border-gray-300 rounded-lg text-xs text-gray-900 bg-white outline-none focus:border-[#856BFF] focus:ring-1 focus:ring-[#856BFF] cursor-pointer"
+                  >
+                    <option value="Completed">Completed</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Not Started">Not Started</option>
+                  </select>
+                  <ChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                </div>
+              </div>
+
+              {/* Owner field */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Owner</label>
+                <input
+                  type="text"
+                  value={bulkUpdateData.owner}
+                  onChange={(e) => setBulkUpdateData({ ...bulkUpdateData, owner: e.target.value })}
+                  className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs text-gray-900 bg-white outline-none focus:border-[#856BFF] focus:ring-1 focus:ring-[#856BFF]"
+                />
+              </div>
+
+              {/* Allocation field */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Allocation %</label>
+                <input
+                  type="text"
+                  value={bulkUpdateData.allocation}
+                  onChange={(e) => setBulkUpdateData({ ...bulkUpdateData, allocation: e.target.value })}
+                  className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs text-gray-900 bg-white outline-none focus:border-[#856BFF] focus:ring-1 focus:ring-[#856BFF]"
+                />
+              </div>
+            </form>
+
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-3 px-5 py-3 border-t border-gray-100 bg-gray-50/50 rounded-b-xl">
+              <button
+                type="button"
+                onClick={() => setBulkUpdateOpen(false)}
+                className="px-4 py-1.5 text-xs font-semibold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer bg-white"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="bulk-update-form"
+                className="px-5 py-1.5 text-xs font-semibold text-white bg-[#856BFF] hover:bg-[#7354fd] rounded-lg transition-colors cursor-pointer border-none shadow-sm"
+              >
+                Apply
+              </button>
             </div>
           </div>
         </div>

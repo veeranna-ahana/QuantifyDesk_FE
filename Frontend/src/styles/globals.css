@@ -203,14 +203,14 @@ a:hover {
 
 .sidebar-nav-item.active,
 .sidebar-nav-item-active {
-  background-color: #F0EEFF !important;
-  color: #6366F1 !important;
+  background-color: #F4F0FF !important;
+  color: #856BFF !important;
   font-weight: 600;
 }
 
 .sidebar-nav-item.active .sidebar-nav-item-icon,
 .sidebar-nav-item-active .sidebar-nav-item-icon {
-  color: #6366F1;
+  color: #856BFF;
 }
 
 .sidebar-nav-item-sub {

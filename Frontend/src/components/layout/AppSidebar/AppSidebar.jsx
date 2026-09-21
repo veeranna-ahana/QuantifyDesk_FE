@@ -190,6 +190,8 @@ export function AppSidebar() {
 
   const links = ROLE_NAVIGATION[userRole] ?? ROLE_NAVIGATION.Employee;
 
+  const location = useLocation();
+
   return (
     <aside className="sidebar">
       {/* ── Logo ── */}
@@ -212,17 +214,25 @@ export function AppSidebar() {
               key={item.to}
               to={item.to}
               className={({ isActive }) =>
-                ['sidebar-nav-item', isActive ? 'sidebar-nav-item-active' : ''].join(' ')
+                [
+                  'sidebar-nav-item',
+                  isActive || location.pathname.startsWith(item.to)
+                    ? 'sidebar-nav-item-active'
+                    : '',
+                ].join(' ')
               }
             >
-              {({ isActive }) => (
-                <>
-                  <span className="sidebar-nav-item-icon">
-                    <Icon name={item.icon} size={20} />
-                  </span>
-                  <span className="sidebar-nav-item-label">{item.label}</span>
-                </>
-              )}
+              {({ isActive }) => {
+                const active = isActive || location.pathname.startsWith(item.to);
+                return (
+                  <>
+                    <span className="sidebar-nav-item-icon">
+                      <Icon name={item.icon} size={20} />
+                    </span>
+                    <span className="sidebar-nav-item-label">{item.label}</span>
+                  </>
+                );
+              }}
             </NavLink>
           )
         )}

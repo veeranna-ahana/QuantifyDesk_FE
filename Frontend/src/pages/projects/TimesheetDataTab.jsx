@@ -298,7 +298,7 @@ const TimesheetDataTab = ({ project }) => {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[1300px]">
             <thead>
-              <tr className="bg-[#F8FAFC] border-b border-gray-200 text-[#475467] text-[12px] font-semibold uppercase tracking-wider">
+              <tr className="bg-[#F8FAFC] border-b border-gray-200 text-[#475467] text-[12px] font-semibold">
                 <th className="py-3 px-4 whitespace-nowrap">EMP ID</th>
                 <th className="py-3 px-4 whitespace-nowrap">Emp Name</th>
                 <th className="py-3 px-4 whitespace-nowrap">Designation</th>

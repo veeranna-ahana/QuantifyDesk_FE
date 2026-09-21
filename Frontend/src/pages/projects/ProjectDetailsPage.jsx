@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { Calendar, Edit, Folder, User, Check } from "lucide-react";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { Calendar, Edit, User, Building2 } from "lucide-react";
 import toast from "react-hot-toast";
 import axios from "axios";
 import { getProjectById } from "@/features/projects/services/projectsService";
 import ProjectInfoTab from "./ProjectInfoTab";
+import ProjectOverviewTab from "./ProjectOverviewTab";
 import TaskInfoTab from "./TaskInfoTab";
 import EffortDetailsTab from "./EffortDetailsTab";
 import DocumentsChecklistTab from "./DocumentsChecklistTab";
@@ -13,9 +14,10 @@ import TimesheetDataTab from "./TimesheetDataTab";
 const ProjectDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("Project Info");
+  const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "Project Info");
   const [isEditing, setIsEditing] = useState(false);
   const [currentFormData, setCurrentFormData] = useState(null);
 
@@ -33,8 +35,7 @@ const ProjectDetailsPage = () => {
     const fetchProject = async () => {
       try {
         setLoading(true);
-        // Using getProjectById from the service (which has mock data)
-        const data = await getProjectById(id);
+        const data = await getProjectById(id || 1);
         if (isMounted) setProject(data);
       } catch (err) {
         console.error(err);
@@ -124,7 +125,7 @@ const ProjectDetailsPage = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full min-h-[400px]">
+      <div className="flex items-center justify-center h-full min-h-[300px]">
         <svg className="animate-spin w-6 h-6 text-[#856BFF]" fill="none" viewBox="0 0 24 24">
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
@@ -133,7 +134,7 @@ const ProjectDetailsPage = () => {
     );
   }
 
-  // Fallback defaults for displaying metadata based on the design
+  // Exact fallback defaults matching Figma design
   const projName = project?.project_name || project?.projectName || project?.name || "FMS";
   const projStatus = project?.status || "Completed";
   const pmsId = project?.pms_id || project?.pmsId || "PMS-9021";
@@ -150,125 +151,134 @@ const ProjectDetailsPage = () => {
   const endDateStr = endDt ? formatDate(endDt) : "Oct 15, 2024";
 
   return (
-    <div className="min-h-full bg-[#FAF8FF] p-2 font-sans">
+    <div className="w-full max-w-[1106px] mx-auto px-6 py-1.5 font-sans flex flex-col gap-2 box-border bg-[#FAF8FF]">
 
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm font-semibold text-gray-500 mb-1">
-        <button onClick={() => navigate("/projects")} className="hover:text-[#6D4AFF] transition-colors">
-          Projects
-        </button>
-        <span className="text-gray-400">›</span>
-        <span className="text-gray-700">View / Edit Project</span>
-      </div>
-
-      {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-start justify-between mb-1">
-        <div>
-          <div className="flex items-center ">
-            <h2 className="text-2xl font-bold text-gray-900 m-0">{projName}</h2>
-            <span className="px-2.5 py-1 text-xs font-bold rounded-full bg-green-100 text-green-700 flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-600 "></span>
-              {projStatus}
-            </span>
+      {/* Frame 427321890: Header & Metadata + Tabs (width 1058, compact gap) */}
+      <div className="w-full max-w-[1058px] flex flex-col gap-1 shrink-0">
+        {/* Frame 427321892: White Header & Metadata Card (1058) */}
+        <div className="w-full max-w-[1058px] bg-white rounded-lg py-2 px-4 flex flex-col gap-1 border border-[#E2E8F0] shadow-sm box-border">
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-1.5 text-xs text-gray-500 leading-none">
+            <button
+              onClick={() => navigate("/projects")}
+              className="hover:text-[#856BFF] transition-colors bg-transparent border-none p-0 cursor-pointer text-xs font-normal text-gray-500"
+            >
+              Projects
+            </button>
+            <span className="text-gray-400">›</span>
+            <span className="text-gray-900 font-bold">View / Edit Project</span>
           </div>
 
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs font-normal text-gray-500">
-  <div className="flex items-center gap-2">
-    <span className="text-gray-400 ">#</span>
-    {pmsId}
-  </div>
+          {/* Title & Metadata Row (Container: width 1058, justify-between) */}
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col justify-center">
+              {/* Title & Status Badge Row (gap 8) */}
+              <div className="flex items-center gap-2 h-[30px]">
+                <h2 className="text-[22px] font-bold text-[#1E293B] m-0 leading-none">{projName}</h2>
+                {/* Status Badge: Background+Border (width 92, height 20, rounded 4, padding 2px 8px, gap 4) */}
+                <span className="inline-flex items-center justify-center gap-1.5 w-[92px] h-[20px] rounded-[4px] bg-[#E6F8EF] border border-[#B7EB8F] text-[#10B981] text-[11px] font-semibold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>
+                  {projStatus}
+                </span>
+              </div>
 
-  <div className="flex items-center gap-1">
-    <Folder size={14} className="text-gray-400" />
-    {clientName}
-  </div>
+              {/* Metadata Row (gap 16px) */}
+              <div className="flex items-center gap-4 text-xs font-normal text-[#64748B] pt-[2px]">
+                <div className="flex items-center gap-1">
+                  <span className="text-gray-400 font-bold">#</span>
+                  <span>{pmsId}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Building2 size={13} className="text-gray-400 shrink-0" />
+                  <span>{clientName}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <User size={13} className="text-gray-400 shrink-0" />
+                  <span>{owner}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Calendar size={13} className="text-gray-400 shrink-0" />
+                  <span>{startDateStr} - {endDateStr}</span>
+                </div>
+              </div>
+            </div>
 
-  <div className="flex items-center gap-1">
-    <User size={14} className="text-gray-400" />
-    {owner}
-  </div>
-
-  <div className="flex items-center gap-1">
-    <Calendar size={14} className="text-gray-400" />
-    {startDateStr} - {endDateStr}
-  </div>
-</div>
+            {/* Action Button: Edit Project (shown in both view and edit modes in Figma) */}
+            <button
+              id="edit-project-btn"
+              onClick={() => setIsEditing(!isEditing)}
+              className="flex items-center gap-2 px-4 py-2 bg-[#856BFF] hover:bg-[#7354fd] text-white text-xs font-semibold rounded-lg shadow-sm transition-colors whitespace-nowrap cursor-pointer border-none"
+            >
+              <Edit size={14} />
+              Edit Project
+            </button>
+          </div>
         </div>
 
-        {/* Action Button: Edit Project (shown in View mode on Project Info tab only) */}
-        {!isEditing && activeTab === "Project Info" && (
-          <button
-            id="edit-project-btn"
-            onClick={() => setIsEditing(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-[#856BFF] hover:bg-[#7354fd] text-white text-sm font-semibold rounded-lg shadow-sm transition-colors whitespace-nowrap cursor-pointer border-none"
-          >
-            <Edit size={16} />
-            Edit Project
-          </button>
-        )}
-      </div>
-
-      {/* Tabs */}
-      <div className="border-b border-gray-200 flex gap-3 overflow-x-auto mb-2.5 hide-scrollbar">
-        {tabs.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`pb-3 text-[13px] font-semibold transition-colors whitespace-nowrap relative ${activeTab === tab
-              ? "text-[#856BFF]"
-              : "text-gray-500 hover:text-gray-700"
+        {/* TopAppBar: Tabs Bar (width 1058, compact, border-bottom 1px solid #E2E8F0) */}
+        <div className="w-full max-w-[1058px] flex items-center gap-6 border-b border-[#E2E8F0] overflow-x-auto hide-scrollbar bg-[#FAF8FF]">
+          {tabs.map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`pt-1 pb-1.5 text-[13px] font-medium transition-colors whitespace-nowrap relative cursor-pointer border-none bg-transparent ${
+                activeTab === tab
+                  ? "text-[#856BFF] border-b-2 border-[#856BFF] font-semibold"
+                  : "text-gray-500 hover:text-gray-800"
               }`}
-          >
-            {tab}
-            {activeTab === tab && (
-              <span className="absolute bottom-0 left-0 w-full h-[3px] bg-[#856BFF] rounded-t-full"></span>
-            )}
-          </button>
-        ))}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Tab Content */}
-      {activeTab === "Project Info" ? (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-90">
-          <ProjectInfoTab
+      {/* Tab Content Container (width 1058) */}
+      <div className="w-full max-w-[1058px]">
+        {activeTab === "Project Overview" ? (
+          <ProjectOverviewTab project={project} />
+        ) : activeTab === "Project Info" ? (
+          <div className="bg-white rounded-lg border border-[#E2E8F0] p-3 px-4 box-border shadow-none">
+            <ProjectInfoTab
+              project={project}
+              isEditing={isEditing}
+              onEdit={() => setIsEditing(true)}
+              onSave={handleSave}
+              onCancel={handleCancel}
+              onNext={(data) => handleNext("Task Info", data)}
+              onFormChange={setCurrentFormData}
+            />
+          </div>
+        ) : activeTab === "Task Info" ? (
+          <TaskInfoTab
             project={project}
             isEditing={isEditing}
             onEdit={() => setIsEditing(true)}
-            onSave={handleSave}
             onCancel={handleCancel}
-            onNext={(data) => handleNext("Task Info", data)}
-            onFormChange={setCurrentFormData}
+            onNext={() => handleNext("Effort Details")}
           />
-        </div>
-      ) : activeTab === "Task Info" ? (
-        <TaskInfoTab
-          project={project}
-          isEditing={isEditing}
-          onEdit={() => setIsEditing(true)}
-          onCancel={handleCancel}
-          onNext={() => handleNext("Effort Details")}
-        />
-      ) : activeTab === "Effort Details" ? (
-        <EffortDetailsTab
-          project={project}
-          isEditing={isEditing}
-          onCancel={handleCancel}
-          onNext={() => handleNext("Documents Checklist")}
-        />
-      ) : activeTab === "Documents Checklist" ? (
-        <DocumentsChecklistTab
-          project={project}
-          isEditing={isEditing}
-          onCancel={handleCancel}
-          onSave={() => handleSave(currentFormData)}
-        />
-      ) : activeTab === "Timesheet Data" ? (
-        <TimesheetDataTab project={project} isEditing={isEditing} />
-      ) : (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-10 text-center text-gray-400 text-sm font-medium">
-          {activeTab} content is not available yet.
-        </div>
-      )}
+        ) : activeTab === "Effort Details" ? (
+          <EffortDetailsTab
+            project={project}
+            isEditing={isEditing}
+            onCancel={handleCancel}
+            onNext={() => handleNext("Documents Checklist")}
+          />
+        ) : activeTab === "Documents Checklist" ? (
+          <DocumentsChecklistTab
+            project={project}
+            isEditing={isEditing}
+            onCancel={handleCancel}
+            onSave={() => handleSave(currentFormData)}
+          />
+        ) : activeTab === "Timesheet Data" ? (
+          <TimesheetDataTab project={project} isEditing={isEditing} />
+        ) : (
+          <div className="bg-white rounded-lg border border-[#E2E8F0] p-8 text-center text-gray-400 text-sm font-medium">
+            {activeTab} content is not available yet.
+          </div>
+        )}
+      </div>
 
     </div>
   );
