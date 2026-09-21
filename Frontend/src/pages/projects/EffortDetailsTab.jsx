@@ -181,7 +181,7 @@ const EffortDetailsTab = ({ project, isEditing = false, onNext, onCancel }) => {
         <table className="effort-details-table">
           <thead>
             <tr>
-              <th style={{ width: isEditing ? '22%' : '25%' }}>Role</th>
+              <th >Role</th>
               <th style={{ width: isEditing ? '13%' : '15%' }}>Effort(Days)</th>
               <th style={{ width: isEditing ? '12%' : '15%' }}>In Hrs</th>
               <th style={{ width: isEditing ? '13%' : '15%' }}>Buffer(Days)</th>
