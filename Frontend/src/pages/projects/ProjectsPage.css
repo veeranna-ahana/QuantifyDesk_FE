@@ -5,8 +5,6 @@
    with  .prj-  to avoid global collisions.
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap');
-
 /* ── Page wrapper ──────────────────────────────────────────── */
 
 .prj-page {
@@ -36,13 +34,13 @@
 
 .prj-heading {
   margin: 0;
-  font-family: 'Roboto', sans-serif;
+  font-family: var(--font-sans);
   font-style: normal;
   font-weight: 700;
   font-size: 24px;
   line-height: 36px;
   letter-spacing: -0.75px;
-  color: #0f172a;
+  color: var(--color-neutral-900);
 }
 
 /* ── Import button ──────────────────────────────────────────── */
@@ -58,14 +56,14 @@
   white-space: nowrap;
   flex-shrink: 0;
 
-  background: #7062e4;
-  box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);
+  background: var(--color-brand-button);
+  box-shadow: var(--shadow-1);
   border-radius: 4px;
   border: none;
   outline: none;
   cursor: pointer;
 
-  font-family: 'Roboto', sans-serif;
+  font-family: var(--font-sans);
   font-weight: 500;
   font-size: 14px;
   line-height: 20px;
@@ -73,8 +71,8 @@
   transition: background 150ms ease;
 }
 
-.prj-import-btn:hover  { background: #5d51c7; }
-.prj-import-btn:active { background: #4e44b0; }
+.prj-import-btn:hover  { background: var(--color-brand-button-hover); }
+.prj-import-btn:active { background: var(--color-brand-button-active); }
 
 .prj-import-btn-icon {
   width: 16px;
@@ -94,8 +92,8 @@
   gap: 12px;
   width: 100%;
 
-  background: #ffffff;
-  border: 1px solid rgba(226, 232, 240, 0.9);
+  background: var(--color-surface-default);
+  border: 1px solid var(--color-border-subtle-alpha);
   border-radius: 12px;
   flex-shrink: 0;
 }
@@ -115,7 +113,7 @@
   transform: translateY(-50%);
   width: 16px;
   height: 16px;
-  color: #94a3b8;
+  color: var(--color-neutral-400);
   pointer-events: none;
   flex-shrink: 0;
 }
@@ -125,21 +123,21 @@
   width: 100%;
   height: 34px;
   padding: 9px 16px 10px 36px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: var(--color-surface-default);
+  border: 1px solid var(--color-border-subtle);
   border-radius: 8px;
   outline: none;
 
-  font-family: 'Roboto', sans-serif;
+  font-family: var(--font-sans);
   font-weight: 400;
   font-size: 14px;
   line-height: 16px;
-  color: #0f172a;
+  color: var(--color-neutral-900);
   transition: border-color 150ms ease;
 }
 
-.prj-search-input::placeholder { color: #94a3b8; }
-.prj-search-input:focus         { border-color: #856bff; }
+.prj-search-input::placeholder { color: var(--color-neutral-400); }
+.prj-search-input:focus         { border-color: var(--color-border-focus); }
 
 /* Filter pills */
 .prj-filters {
@@ -164,26 +162,26 @@
   cursor: pointer;
   white-space: nowrap;
 
-  font-family: 'Roboto', sans-serif;
+  font-family: var(--font-sans);
   font-size: 12px;
   line-height: 16px;
   transition: background 150ms ease;
 }
 
 .prj-filter-pill--active {
-  background: #856bff;
-  color: #ffffff;
+  background: var(--color-brand-primary);
+  color: var(--color-neutral-0);
   font-weight: 600;
 }
 
 .prj-filter-pill--inactive {
-  background: #f1f5f9;
-  color: #475569;
+  background: var(--color-status-neutral-background);
+  color: var(--color-status-neutral-text);
   font-weight: 500;
 }
 
 .prj-filter-pill--inactive:hover {
-  background: #e2e8f0;
+  background: var(--color-border-subtle);
 }
 
 /* ── Data table card ────────────────────────────────────────── */
@@ -193,9 +191,9 @@
   display: flex;
   flex-direction: column;
   width: 100%;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);
+  background: var(--color-surface-default);
+  border: 1px solid var(--color-border-subtle);
+  box-shadow: var(--shadow-1);
   border-radius: 12px;
   overflow: hidden;
   flex-shrink: 0;
@@ -210,25 +208,25 @@
   width: 100%;
   border-collapse: collapse;
   min-width: 900px;
-  font-family: 'Roboto', sans-serif;
+  font-family: var(--font-sans);
 }
 
 /* Header row */
 .prj-table-head {
-  background: #eff4ff;
-  border-bottom: 1px solid rgba(226, 232, 240, 0.9);
+  background: var(--color-surface-table-header-light);
+  border-bottom: 1px solid var(--color-border-subtle-alpha);
 }
 
 .prj-th {
   height: 38px;
   padding: 6px 12px;
-  font-family: 'Roboto', sans-serif;
+  font-family: var(--font-sans);
   font-weight: 600;
   font-size: 12px;
   line-height: 18px;
   letter-spacing: 0.3px;
   text-transform: capitalize;
-  color: #475569;
+  color: var(--color-status-neutral-text);
   text-align: left;
   white-space: nowrap;
 }

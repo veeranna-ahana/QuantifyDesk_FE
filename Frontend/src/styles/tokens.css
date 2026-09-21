@@ -18,6 +18,25 @@
   --color-brand-primary: #856bff;
   --color-brand-primary-hover: #7458f5;
   --color-brand-primary-light: #ede9ff;
+  --color-brand-button: #7062e4;
+  --color-brand-button-hover: #5d51c7;
+  --color-brand-button-active: #4e44b0;
+
+  /* ── Existing page-level aliases ── */
+  --color-brand-purple: #6c5ce7;
+  --color-brand-purple-light: #eef0ff;
+  --color-surface-form: #f8f9fa;
+  --color-surface-table-header: #1e272e;
+  --color-surface-table-row-border: #f0f0f0;
+  --color-text-legacy-primary: #333333;
+  --color-text-legacy-muted: #666666;
+  --color-text-legacy-placeholder: #999999;
+  --color-border-form: #dddddd;
+  --color-accent-danger: #ff0000;
+  --color-accent-success: #27ae60;
+  --color-accent-warning: #ff8800;
+  --color-accent-error: #ff4444;
+  --color-accent-error-strong: #e74c3c;
 
   /* ── Neutral Scale ── */
   --color-neutral-0: #ffffff;
@@ -47,6 +66,11 @@
   --color-border-default: #c3c6d7;
   --color-border-subtle: #e2e8f0;
   --color-border-focus: #856bff;
+  --color-border-subtle-alpha: rgba(226, 232, 240, 0.9);
+  --color-border-figma: #c4c6cf;
+  --color-surface-context: #eff4f9;
+  --color-surface-table-header-light: #eff4ff;
+  --color-text-navy: #002045;
 
   /* ── Sidebar ── */
   --color-sidebar-active: #856bff;
@@ -83,6 +107,9 @@
   --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.05);
   --shadow-2: 0 4px 12px rgba(0, 0, 0, 0.12);
   --shadow-3: 0 12px 32px rgba(0, 0, 0, 0.16);
+  --shadow-page-card: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --shadow-form-card: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --shadow-toast: 0 6px 24px rgba(0, 0, 0, 0.18);
 
   /* ── Motion ── */
   --duration-fast: 100ms;

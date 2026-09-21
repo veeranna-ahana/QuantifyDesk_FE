@@ -225,12 +225,12 @@ const handleUpdate = async () => {
 console.log("updates",updates);
 
   return (
-    <div style={{ padding: "10px 20px", maxWidth: "1200px", margin: "0 auto" }}>
-      <h2 style={{ marginBottom: "15px", color: "#333" }}>Daily Updates</h2>
-      <form onSubmit={handleSubmit} style={formStyle}>
-        <div style={formRowStyle}>
-          <div style={formGroupStyle}>
-            <label style={labelStyle}>Select Project</label>
+    <div className="legacy-page legacy-page--daily-update">
+      <h2 className="legacy-heading">Daily Updates</h2>
+      <form onSubmit={handleSubmit} className="legacy-form legacy-form--compact">
+        <div className="legacy-form-row legacy-form-row--compact">
+          <div className="legacy-form-group">
+            <label className="legacy-form-label">Select Project</label>
             <SearchableSelect
               value={selectedProject}
               onChange={setSelectedProject}
@@ -238,8 +238,8 @@ console.log("updates",updates);
               options={projects.map(p => ({ value: String(p.id), label: p.name || p.project_name }))}
             />
           </div>
-          <div style={formGroupStyle}>
-  <label style={labelStyle}>Select Role</label>
+            <div className="legacy-form-group">
+          <label className="legacy-form-label">Select Role</label>
   <SearchableSelect
     value={selectedRole}
     onChange={val => { setSelectedRole(val); }}
@@ -250,8 +250,8 @@ console.log("updates",updates);
 </div>
 
 
-          <div style={formGroupStyle}>
-            <label style={labelStyle}>Select Task</label>
+          <div className="legacy-form-group">
+            <label className="legacy-form-label">Select Task</label>
             <SearchableSelect
               value={selectedTask}
               onChange={setSelectedTask}
@@ -263,19 +263,19 @@ console.log("updates",updates);
           </div>
         </div>
 
-        <div style={formRowStyle}>
-          <div style={formGroupStyle}>
-            <label style={labelStyle}>Date (dd-mm-yyyy)</label>
+        <div className="legacy-form-row legacy-form-row--compact">
+          <div className="legacy-form-group">
+            <label className="legacy-form-label">Date (dd-mm-yyyy)</label>
             <input
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              style={inputStyle}
+              className="legacy-form-input legacy-form-input--compact"
             />
           </div>
 
-          <div style={formGroupStyle}>
-            <label style={labelStyle}>Units Completed</label>
+          <div className="legacy-form-group">
+            <label className="legacy-form-label">Units Completed</label>
             <input
               type="number"
               placeholder="Units Completed"
@@ -284,66 +284,57 @@ console.log("updates",updates);
               step="1"
               onKeyDown={(e) => { if (e.key === '.' || e.key === 'e' || e.key === 'E' || e.key === '+' || e.key === '-') e.preventDefault(); }}
               onChange={(e) => setUnitsCompleted(e.target.value.replace(/\D/g, ''))}
-              style={inputStyle}
+              className="legacy-form-input legacy-form-input--compact"
             />
           </div>
 
-          <div style={formGroupStyle}>
-            <label style={labelStyle}>Hours Spent</label>
+          <div className="legacy-form-group">
+            <label className="legacy-form-label">Hours Spent</label>
             <input
               type="number"
               placeholder="Hours Spent"
               value={hoursSpent}
               onChange={(e) => setHoursSpent(e.target.value)}
-              style={inputStyle}
+              className="legacy-form-input legacy-form-input--compact"
               min="0"
               step="0.5"
             />
           </div>
-          <div style={formGroupStyle}>
-  <label style={labelStyle}>Remarks</label>
+            <div className="legacy-form-group">
+          <label className="legacy-form-label">Remarks</label>
   <input
     type="text"
     placeholder="Enter Remarks"
     value={remarks}
     onChange={(e) => setRemarks(e.target.value)}
-    style={inputStyle}
+    className="legacy-form-input legacy-form-input--compact"
   />
 </div>
 
         </div>
 
-        <button type="submit" style={submitButtonStyle}>
+        <button type="submit" className="legacy-button-submit legacy-button-submit--compact">
           Add Update
         </button>
       </form>
 
       {/* My Updates Table */}
             {/* My Updates Table */}
-            <div style={{ marginTop: "15px" }}>
-        <h3 style={{ marginBottom: "10px", color: "#333" }}>My Updates</h3>
+      <div className="legacy-dashboard-section">
+        <h3 className="legacy-dashboard-subheading">My Updates</h3>
 
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <div style={{ maxHeight: "150px", overflowY: "auto", width: "100%", maxWidth: "1000px" }}>
-            <table style={tableStyle}>
-              <thead style={{ position: "sticky", top: 0, zIndex: 1 }}>
+        <div className="legacy-table-center">
+          <div className="legacy-table-scroll legacy-table-scroll--daily legacy-table-daily-card">
+            <table className="legacy-table">
+              <thead className="legacy-table-head">
                 <tr>
-                  {/* <th style={thStyle}>ID</th> */}
-                  {/* <th style={thStyle}>Task ID</th> */}
-                  <th style={thStyle}>Project</th>
-                  <th style={thStyle}>Role</th>
-                  <th style={thStyle}>Task</th>
-                  <th style={thStyle}>Date</th>
-                  <th style={thStyle}>Units</th>
-                  <th style={thStyle}>Hours</th>
-                  <th style={thStyle}>Remarks</th>                  
-                  <th style={thStyle}>Action</th>
+                  <th>Project</th><th>Role</th><th>Task</th><th>Date</th><th>Units</th><th>Hours</th><th>Remarks</th><th>Action</th>
                 </tr>
               </thead>
               <tbody>
                 {updates.map((u) => (
                   <tr key={u.id}>
-                    <td style={tdStyle}>
+                    <td>
                       {editId === u.id ? (
                         <input
                           // value={editData.project_id}
@@ -351,42 +342,42 @@ console.log("updates",updates);
                           onChange={(e) =>
                             setEditData({ ...editData, project_name: e.target.value })
                           }
-                          style={inputStyle}
+                          className="legacy-form-input legacy-form-input--compact"
                         />
                       ) : (
                         u.project_name
                       )}
                     </td>
 
-                    <td style={tdStyle}>
+                    <td>
                       {editId === u.id ? (
                         <input
                           value={editData.role}
                           onChange={(e) =>
                             setEditData({ ...editData, role: e.target.value })
                           }
-                          style={inputStyle}
+                          className="legacy-form-input legacy-form-input--compact"
                         />
                       ) : (
                         u.role
                       )}
                     </td>
 
-                    <td style={tdStyle}>
+                    <td>
                       {editId === u.id ? (
                         <input
                           value={editData.task_name}
                           onChange={(e) =>
                             setEditData({ ...editData, task_name: e.target.value })
                           }
-                          style={inputStyle}
+                          className="legacy-form-input legacy-form-input--compact"
                         />
                       ) : (
                         u.task_name
                       )}
                     </td>
 
-                    <td style={tdStyle}>
+                    <td>
                       {editId === u.id ? (
                         <input
                           type="date"
@@ -394,14 +385,14 @@ console.log("updates",updates);
                           onChange={(e) =>
                             setEditData({ ...editData, date: e.target.value })
                           }
-                          style={inputStyle}
+                          className="legacy-form-input legacy-form-input--compact"
                         />
                       ) : (
                         formatDate(u.date)
                       )}
                     </td>
 
-                    <td style={tdStyle}>
+                    <td>
                       {editId === u.id ? (
                         <input
                           type="number"
@@ -412,14 +403,14 @@ console.log("updates",updates);
                           onChange={(e) =>
                             setEditData({ ...editData, units_completed: e.target.value.replace(/\D/g, '') })
                           }
-                          style={inputStyle}
+                          className="legacy-form-input legacy-form-input--compact"
                         />
                       ) : (
                         u.units_completed
                       )}
                     </td>
 
-                    <td style={tdStyle}>
+                    <td>
                       {editId === u.id ? (
                         <input
                           type="number"
@@ -427,39 +418,39 @@ console.log("updates",updates);
                           onChange={(e) =>
                             setEditData({ ...editData, hours_spent: e.target.value })
                           }
-                          style={inputStyle}
+                          className="legacy-form-input legacy-form-input--compact"
                         />
                       ) : (
                         u.hours_spent
                       )}
                     </td>
 
-                    <td style={tdStyle}>
+                    <td>
                       {editId === u.id ? (
                         <input
                           value={editData.remarks || ""}
                           onChange={(e) =>
                             setEditData({ ...editData, remarks: e.target.value })
                           }
-                          style={inputStyle}
+                          className="legacy-form-input legacy-form-input--compact"
                         />
                       ) : (
                         u.remarks
                       )}
                     </td>
 
-                    <td style={tdStyle}>
+                    <td>
                       {editId === u.id ? (
                         <>
                           <button
                             onClick={handleUpdate}
-                            style={{ ...deleteButtonStyle, backgroundColor: "#28a745" }}
+                            className="legacy-action-button legacy-action-button--update"
                           >
                             Update
                           </button>
                           <button
                             onClick={() => setEditId(null)}
-                            style={{ ...deleteButtonStyle, marginLeft: "5px" }}
+                            className="legacy-action-button legacy-action-button--delete"
                           >
                             Cancel
                           </button>
@@ -468,13 +459,13 @@ console.log("updates",updates);
                         <>
                           <button
                             onClick={() => handleEdit(u)}
-                            style={{ ...deleteButtonStyle, backgroundColor: "#007bff" }}
+                            className="legacy-action-button legacy-action-button--edit"
                           >
                             Edit
                           </button>
                           <button
                             onClick={() => handleDelete(u.id)}
-                            style={{ ...deleteButtonStyle, marginLeft: "5px" }}
+                            className="legacy-action-button legacy-action-button--delete"
                           >
                             Delete
                           </button>
@@ -491,96 +482,6 @@ console.log("updates",updates);
       </div>
     </div>
   );
-};
-
-// Styles
-const formStyle = {
-    backgroundColor: "#f8f9fa",
-    padding: "20px",
-    borderRadius: "8px",
-    boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-    marginBottom: "15px",
-  };
-
-  const formRowStyle = {
-    display: "flex",
-    gap: "15px",
-    marginBottom: "15px",
-    flexWrap: "wrap",
-  };
-const formGroupStyle = {
-  flex: "1",
-  minWidth: "200px",
-};
-
-const labelStyle = {
-  display: "block",
-  marginBottom: "8px",
-  fontWeight: "600",
-  color: "#333",
-  fontSize: "14px",
-};
-
-const inputStyle = {
-  width: "100%",
-  padding: "12px",
-  border: "1px solid #ddd",
-  borderRadius: "4px",
-  fontSize: "16px",
-  boxSizing: "border-box",
-  transition: "border-color 0.3s",
-};
-
-const selectStyle = {
-  ...inputStyle,
-  backgroundColor: "white",
-  cursor: "pointer",
-};
-
-const submitButtonStyle = {
-  padding: "12px 30px",
-  backgroundColor: "#ff0000",
-  color: "white",
-  border: "none",
-  borderRadius: "4px",
-  fontSize: "16px",
-  fontWeight: "600",
-  cursor: "pointer",
-  transition: "background-color 0.3s",
-  marginTop: "10px",
-};
-
-const tableStyle = {
-    width: "100%",
-    borderCollapse: "collapse",
-    backgroundColor: "white",
-    boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-    borderRadius: "8px",
-  };
-
-  const thStyle = {
-    backgroundColor: "#1e272e",
-    color: "white",
-    padding: "10px",
-    textAlign: "center",
-    fontWeight: "600",
-  };
-
-  const tdStyle = {
-    padding: "10px",
-    borderBottom: "1px solid #eee",
-    color: "#333",
-  };
-
-const deleteButtonStyle = {
-  padding: "6px 12px",
-  backgroundColor: "#ff4d4f",
-  color: "white",
-  border: "none",
-  borderRadius: "4px",
-  fontSize: "12px",
-  cursor: "pointer",
-  transition: "background-color 0.3s",
 };
 
 export default DailyUpdates;

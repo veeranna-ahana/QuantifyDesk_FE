@@ -1143,3 +1143,190 @@ a:hover {
   background-color: var(--color-surface-muted);
 }
 
+/* ----------------------------------------
+   Shared legacy page primitives
+   Values are aliases to the existing UI, kept here so page implementations
+   share one source without changing their visual contract.
+---------------------------------------- */
+
+.legacy-page {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.legacy-page--daily-update {
+  max-width: 1200px;
+  padding: 10px 20px;
+}
+
+.legacy-heading {
+  margin: 0 0 8px;
+  color: var(--color-text-primary);
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.legacy-heading-block {
+  margin-bottom: 30px;
+}
+
+.legacy-heading-underline {
+  width: 60px;
+  height: 4px;
+  border-radius: 2px;
+  background-color: var(--color-accent-danger);
+}
+
+.legacy-form {
+  margin-bottom: 30px;
+  padding: 20px;
+  border: 1px solid var(--color-surface-table-row-border);
+  border-radius: 12px;
+  background-color: var(--color-surface-form);
+  box-shadow: var(--shadow-page-card);
+}
+
+.legacy-form--compact {
+  margin-bottom: 15px;
+  border-radius: 8px;
+  box-shadow: var(--shadow-form-card);
+}
+
+.legacy-form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.legacy-form-row--compact { margin-bottom: 15px; }
+
+.legacy-form-group {
+  flex: 1;
+  min-width: 200px;
+}
+
+.legacy-form-label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--color-text-legacy-primary);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.legacy-form-input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--color-border-form);
+  border-radius: 8px;
+  outline: none;
+  font-size: 16px;
+  transition: border-color 0.3s;
+}
+
+.legacy-form-input--compact {
+  padding: 12px;
+  border-radius: 4px;
+}
+
+.legacy-button-danger,
+.legacy-button-submit {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  background-color: var(--color-accent-danger);
+  color: var(--color-neutral-0);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  white-space: nowrap;
+}
+
+.legacy-button-submit--compact {
+  margin-top: 10px;
+  padding: 12px 30px;
+  border-radius: 4px;
+}
+
+.legacy-table-card,
+.legacy-state {
+  overflow: hidden;
+  border: 1px solid var(--color-surface-table-row-border);
+  border-radius: 12px;
+  background-color: var(--color-neutral-0);
+  box-shadow: var(--shadow-page-card);
+}
+
+.legacy-state {
+  padding: 40px;
+  color: var(--color-text-legacy-placeholder);
+  font-size: 16px;
+  text-align: center;
+}
+
+.legacy-table-scroll { max-height: 500px; overflow-y: auto; }
+.legacy-table-scroll--users { max-height: 360px; }
+.legacy-table-scroll--daily { max-height: 150px; }
+.legacy-table-scroll--daily { width: 100%; max-width: 1000px; }
+.legacy-table-daily-card { overflow: hidden; border-radius: 8px; background-color: var(--color-neutral-0); box-shadow: var(--shadow-form-card); }
+
+.legacy-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.legacy-table-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.legacy-table th {
+  padding: 16px;
+  background-color: var(--color-surface-table-header);
+  color: var(--color-neutral-0);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.legacy-table td {
+  padding: 16px;
+  color: var(--color-text-legacy-primary);
+  font-size: 14px;
+}
+
+.legacy-table tbody tr { border-bottom: 1px solid var(--color-surface-table-row-border); }
+.legacy-table-muted { color: #9e9e9e; }
+.legacy-table-badge { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+.legacy-inline-actions { display: inline-flex; gap: 5px; }
+.legacy-action-button { padding: 6px 12px; border: none; border-radius: 4px; color: var(--color-neutral-0); font-size: 12px; cursor: pointer; transition: background-color 0.3s; }
+.legacy-action-button--delete { background-color: #ff4d4f; }
+.legacy-action-button--update { background-color: #28a745; }
+.legacy-action-button--edit { background-color: #007bff; }
+
+.legacy-dashboard-section { margin-top: 40px; }
+.legacy-dashboard-subheading { margin: 0 0 20px; color: var(--color-text-legacy-primary); font-size: 24px; font-weight: 600; }
+.legacy-dashboard-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 20px; }
+.legacy-dashboard-card { display: flex; align-items: center; gap: 16px; padding: 24px; border: 1px solid var(--color-surface-table-row-border); border-radius: 12px; background-color: var(--color-neutral-0); box-shadow: var(--shadow-page-card); }
+.legacy-dashboard-icon { display: flex; width: 60px; height: 60px; align-items: center; justify-content: center; border-radius: 12px; background-color: var(--color-surface-form); font-size: 36px; }
+.legacy-dashboard-content { flex: 1; }
+.legacy-dashboard-label { margin-bottom: 8px; color: var(--color-text-legacy-muted); font-size: 14px; font-weight: 500; }
+.legacy-dashboard-value { color: var(--color-text-legacy-primary); font-size: 32px; font-weight: 700; }
+.legacy-dashboard-table { max-height: 500px; overflow-y: auto; }
+.legacy-dashboard-table thead { position: sticky; top: 0; z-index: 1; }
+.legacy-dashboard-table th { text-transform: none; }
+.legacy-dashboard-utilization { color: var(--color-neutral-0) !important; font-weight: 600; }
+.legacy-page-loading { padding: 20px; text-align: center; }
+.legacy-page-loading-text { color: var(--color-text-legacy-muted); font-size: 18px; }
+.legacy-dashboard-no-data { padding: 20px; }
+.legacy-table-center { display: flex; flex-direction: column; align-items: center; }
+

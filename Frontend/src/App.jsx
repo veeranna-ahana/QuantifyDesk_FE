@@ -36,15 +36,15 @@ function App() {
         toastOptions={{
           duration: 3500,
           style: {
-            borderRadius: '10px',
+            borderRadius: 'var(--radius-md)',
             fontWeight: 700,
-            fontSize: '14px',
+            fontSize: 'var(--font-size-body)',
             minWidth: '280px',
             maxWidth: '420px',
-            boxShadow: '0 6px 24px rgba(0,0,0,0.18)',
+            boxShadow: 'var(--shadow-toast)',
           },
-          success: { style: { background: '#27ae60', color: '#fff' } },
-          error:   { style: { background: '#e74c3c', color: '#fff' } },
+          success: { style: { background: 'var(--color-accent-success)', color: 'var(--color-neutral-0)' } },
+          error:   { style: { background: 'var(--color-accent-error-strong)', color: 'var(--color-neutral-0)' } },
         }}
       />
       <Routes>
