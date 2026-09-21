@@ -439,7 +439,7 @@ a:hover {
   font-family: var(--font-sans);
   color: var(--color-neutral-800);
   background: var(--color-surface-app);
-  padding: 20px;
+  padding: 12px;
   border-radius: var(--radius-lg);
 }
 
@@ -448,8 +448,8 @@ a:hover {
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 14px;
+  gap: 10px;
+  margin-bottom: 8px;
 }
 
 .dur-toolbar-title {
@@ -489,8 +489,8 @@ a:hover {
   background: #0e7c86;
   color: #fff;
   border-radius: var(--radius-md);
-  padding: 12px 18px;
-  margin-bottom: 12px;
+  padding: 8px 14px;
+  margin-bottom: 8px;
 }
 
 .dur-date-strip-date {
@@ -529,12 +529,12 @@ a:hover {
   color: #fff;
   text-align: left;
   font-weight: 600;
-  padding: 10px 12px;
+  padding: 7px 12px;
   white-space: nowrap;
 }
 
 .dur-table tbody td {
-  padding: 10px 12px;
+  padding: 7px 12px;
   border-bottom: 1px solid #eef1f3;
   vertical-align: top;
 }

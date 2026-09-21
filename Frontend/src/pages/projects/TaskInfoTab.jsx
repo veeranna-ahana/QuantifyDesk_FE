@@ -676,20 +676,20 @@ const getFullRoleName = (role) => {
 const renderTaskStatusBadge = (status) => {
   if (status === 'Completed') {
     return (
-      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#E6F8EF] text-[#10B981] border border-[#B7EB8F]/40 whitespace-nowrap">
+      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-semibold bg-[#E6F8EF] text-[#10B981] border border-[#B7EB8F]/40 whitespace-nowrap">
         Completed
       </span>
     );
   }
   if (status === 'In Progress') {
     return (
-      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#FEF6E9] text-[#D97706] border border-[#FDE68A]/40 whitespace-nowrap">
+      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-semibold bg-[#FEF6E9] text-[#D97706] border border-[#FDE68A]/40 whitespace-nowrap">
         In Progress
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#F3F4F6] text-[#6B7280] border border-gray-200/50 whitespace-nowrap">
+    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-semibold bg-[#F3F4F6] text-[#6B7280] border border-gray-200/50 whitespace-nowrap">
       Not Started
     </span>
   );
@@ -703,7 +703,6 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
   const [selectedMilestoneFilter, setSelectedMilestoneFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedTasks, setSelectedTasks] = useState({});
   const [editingTask, setEditingTask] = useState(null);
   const [editFormData, setEditFormData] = useState({
     role: 'Business Analyst',
@@ -711,41 +710,46 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
     unit: '98',
   });
   const [bulkUpdateOpen, setBulkUpdateOpen] = useState(false);
-  const [bulkUpdateData, setBulkUpdateData] = useState({
-    status: 'Completed',
-    owner: 'Sarah J.',
-    allocation: '100%',
-  });
+  const [bulkUpdateRows, setBulkUpdateRows] = useState([]);
   const pageSize = 10;
 
   const handleOpenBulkUpdate = () => {
+    setBulkUpdateRows(
+      filteredMilestones
+        .flatMap((milestone) =>
+          milestone.tasks.map((task) => ({
+            ...task,
+            milestoneId: milestone.id,
+            milestoneName: milestone.name,
+          }))
+        )
+        .slice(0, pageSize)
+    );
     setBulkUpdateOpen(true);
   };
 
   const handleApplyBulkUpdate = (e) => {
     e?.preventDefault?.();
-    const selectedIds = Object.keys(selectedTasks).filter((id) => selectedTasks[id]);
+    const updatedRowsById = new Map(bulkUpdateRows.map((task) => [task.id, task]));
     setMilestones((prev) =>
       prev.map((m) => ({
         ...m,
         tasks: m.tasks.map((t) => {
-          if (selectedIds.length === 0 || selectedIds.includes(t.id)) {
+          const updatedTask = updatedRowsById.get(t.id);
+          if (updatedTask) {
             return {
               ...t,
-              status: bulkUpdateData.status || t.status,
-              owner: bulkUpdateData.owner || t.owner,
-              allocation: bulkUpdateData.allocation || t.allocation,
+              owner: updatedTask.owner,
+              role: updatedTask.role,
+              taskType: updatedTask.taskType,
+              unit: updatedTask.unit,
             };
           }
           return t;
         }),
       }))
     );
-    toast.success(
-      selectedIds.length > 0
-        ? `Successfully updated ${selectedIds.length} tasks!`
-        : 'Successfully updated tasks!'
-    );
+    toast.success(`Successfully updated ${bulkUpdateRows.length} tasks!`);
     setBulkUpdateOpen(false);
   };
 
@@ -755,27 +759,6 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
       ...prev,
       [id]: !prev[id],
     }));
-  };
-
-  // Toggle individual task selection
-  const toggleSelectTask = (taskId) => {
-    setSelectedTasks((prev) => ({
-      ...prev,
-      [taskId]: !prev[taskId],
-    }));
-  };
-
-  // Toggle select all tasks in milestone
-  const toggleSelectAllMilestone = (milestoneId, checkAll) => {
-    const ms = milestones.find((m) => m.id === milestoneId);
-    if (!ms) return;
-    setSelectedTasks((prev) => {
-      const next = { ...prev };
-      ms.tasks.forEach((t) => {
-        next[t.id] = checkAll;
-      });
-      return next;
-    });
   };
 
   // Handle inline change for risk category in Edit mode
@@ -923,23 +906,23 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
   const renderMilestoneStatusBadge = (milestone) => {
     if (milestone.status === 'Completed') {
       return (
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#E6F8EF] text-[#10B981] border border-[#B7EB8F]/40 whitespace-nowrap">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold bg-[#E6F8EF] text-[#10B981] border border-[#B7EB8F]/40 whitespace-nowrap">
+          <span className="w-1 h-1 rounded-full bg-[#10B981]"></span>
           Completed ({milestone.completedCount}/{milestone.totalCount}) - {milestone.percentage}%
         </span>
       );
     }
     if (milestone.status === 'In Progress') {
       return (
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#FEF6E9] text-[#D97706] border border-[#FDE68A]/40 whitespace-nowrap">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#D97706]"></span>
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold bg-[#FEF6E9] text-[#D97706] border border-[#FDE68A]/40 whitespace-nowrap">
+          <span className="w-1 h-1 rounded-full bg-[#D97706]"></span>
           In Progress ({milestone.completedCount}/{milestone.totalCount}) - {milestone.percentage}%
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#F3F4F6] text-[#6B7280] border border-gray-200/50 whitespace-nowrap">
-        <span className="w-1.5 h-1.5 rounded-full bg-[#9CA3AF]"></span>
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold bg-[#F3F4F6] text-[#6B7280] border border-gray-200/50 whitespace-nowrap">
+        <span className="w-1 h-1 rounded-full bg-[#9CA3AF]"></span>
         Not Started ({milestone.completedCount}/{milestone.totalCount}) - {milestone.percentage}%
       </span>
     );
@@ -948,17 +931,144 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
   const projName = project?.project_name || project?.projectName || project?.name || 'FMS';
   const pmsId = project?.pms_id || project?.pmsId || 'PMS-9021';
 
+  if (bulkUpdateOpen) {
+    return (
+      <div className="min-h-[430px] bg-[#F9F7FF] font-sans text-[#1E293B]">
+        <div className="overflow-hidden rounded-lg border border-[#E2E8F0] bg-white">
+          <div className="flex items-center justify-between border-b border-[#E2E8F0] bg-[#F8F9FB] px-3 py-2">
+            <div>
+              <h3 className="m-0 text-[13px] font-bold text-[#1E293B]">Bulk Update Tasks</h3>
+              <p className="m-0 mt-0.5 text-[10px] text-[#64748B]">
+                Update role, task type, and unit for {bulkUpdateRows.length} task{bulkUpdateRows.length === 1 ? '' : 's'}.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setBulkUpdateOpen(false)}
+              className="border-none bg-transparent p-1 text-[#94A3B8] transition-colors hover:text-[#475569]"
+              aria-label="Close bulk update"
+            >
+              <X size={15} />
+            </button>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[760px] border-collapse text-left text-[10px]">
+              <thead>
+                <tr className="border-b border-[#E2E8F0] bg-[#F8F9FB] text-[#5E6C84]">
+                  <th className="w-[31%] px-2.5 py-1.5 font-bold">Task</th>
+                  <th className="w-[20%] px-2.5 py-1.5 font-bold">Milestone</th>
+                  <th className="w-[14%] px-2.5 py-1.5 font-bold">Owner</th>
+                  <th className="w-[15%] px-2.5 py-1.5 font-bold">Role</th>
+                  <th className="w-[15%] px-2.5 py-1.5 font-bold">Task Type</th>
+                  <th className="w-[5%] px-2.5 py-1.5 font-bold">Unit</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#EDF0F5]">
+                {bulkUpdateRows.map((task) => (
+                  <tr key={task.id} className="h-[34px] hover:bg-[#FBFAFF]">
+                    <td className="bg-[#F8FAFC] px-2.5 py-1 text-[#64748B]">
+                      <div className="font-medium">{task.title}</div>
+                      <div className="text-[9px] text-[#94A3B8]">{task.id}</div>
+                    </td>
+                    <td className="bg-[#F8FAFC] px-2.5 py-1 text-[#94A3B8]">{task.milestoneName}</td>
+                    <td className="bg-[#F8FAFC] px-2.5 py-1 text-[#94A3B8]">{task.owner}</td>
+                    <td className="px-2.5 py-1">
+                      <select
+                        value={getFullRoleName(task.role)}
+                        onChange={(e) =>
+                          setBulkUpdateRows((rows) =>
+                            rows.map((row) => (row.id === task.id ? { ...row, role: e.target.value } : row))
+                          )
+                        }
+                        className="h-[24px] w-full appearance-none rounded border border-[#CBD5E1] bg-white px-2 text-[10px] text-[#334155] outline-none focus:border-[#856BFF]"
+                      >
+                        <option>Business Analyst</option>
+                        <option>Lead</option>
+                        <option>Frontend Developer</option>
+                        <option>Backend Developer</option>
+                        <option>UI/UX Designer</option>
+                        <option>QA Engineer</option>
+                        <option>Project Manager</option>
+                        <option>DevOps Engineer</option>
+                      </select>
+                    </td>
+                    <td className="px-2.5 py-1">
+                      <select
+                        value={task.taskType || 'Analysis'}
+                        onChange={(e) =>
+                          setBulkUpdateRows((rows) =>
+                            rows.map((row) => (row.id === task.id ? { ...row, taskType: e.target.value } : row))
+                          )
+                        }
+                        className="h-[24px] w-full appearance-none rounded border border-[#CBD5E1] bg-white px-2 text-[10px] text-[#334155] outline-none focus:border-[#856BFF]"
+                      >
+                        <option>Analysis</option>
+                        <option>Development</option>
+                        <option>Design</option>
+                        <option>Testing</option>
+                        <option>Review</option>
+                        <option>Deployment</option>
+                        <option>Documentation</option>
+                        <option>Meeting</option>
+                        <option>Planning</option>
+                        <option>Infra</option>
+                        <option>Security</option>
+                      </select>
+                    </td>
+                    <td className="min-w-[54px] px-2.5 py-1">
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={task.unit ?? ''}
+                        onChange={(e) =>
+                          setBulkUpdateRows((rows) =>
+                            rows.map((row) => (row.id === task.id ? { ...row, unit: e.target.value } : row))
+                          )
+                        }
+                        className="h-[24px] w-full rounded border border-[#CBD5E1] bg-white px-2 text-center text-[10px] text-[#334155] outline-none focus:border-[#856BFF]"
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="flex items-center justify-end gap-2 border-t border-[#E2E8F0] px-3 py-2">
+            <button
+              type="button"
+              onClick={() => setBulkUpdateOpen(false)}
+              className="h-[30px] rounded-md border border-[#E2E8F0] bg-white px-4 text-[10px] font-semibold text-[#475569] transition-colors hover:bg-[#F8FAFC]"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleApplyBulkUpdate}
+              className="flex h-[30px] items-center gap-1.5 rounded-md border-none bg-[#856BFF] px-3 text-[10px] font-semibold text-white transition-colors hover:bg-[#7354FD]"
+            >
+              <Check size={12} />
+              Bulk Update Tasks
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-4 font-sans text-gray-800">
+    <div className="space-y-2.5 font-sans text-gray-800">
 
       {/* ── Filter & Search Bar Container ── */}
-      <div className="bg-white rounded-xl p-4 border border-[#DFE1E6] shadow-sm mb-4">
+      <div className="bg-white rounded-lg p-2.5 border border-[#E2E8F0] shadow-none mb-2.5">
         
         {/* Row 1: Search + Milestone + Filter | Bulk Update (single row, no wrapping) */}
-        <div className="flex flex-nowrap items-center gap-3 min-w-0">
+        <div className="flex flex-nowrap items-center gap-2 min-w-0">
           
           {/* Search Input */}
-          <div className="relative flex-shrink-0 w-[220px]">
+          <div className="relative flex-shrink-0 w-[226px]">
             <Search
               size={14}
               strokeWidth={2}
@@ -972,7 +1082,7 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
                 setCurrentPage(1);
               }}
               placeholder="Search by task..."
-              className="box-border w-full h-[30px] pl-8 pr-3 border border-[#DFE1E6] rounded-lg bg-white text-xs text-[#1E293B] placeholder-[#94A3B8] outline-none focus:border-[#856BFF] transition-colors font-normal"
+              className="box-border w-full h-[28px] pl-8 pr-3 border border-[#E2E8F0] rounded-md bg-white text-[11px] text-[#1E293B] placeholder-[#94A3B8] outline-none focus:border-[#856BFF] transition-colors font-normal"
             />
           </div>
 
@@ -984,7 +1094,7 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
                 setSelectedMilestoneFilter(e.target.value);
                 setCurrentPage(1);
               }}
-              className="box-border appearance-none h-[30px] pl-3 pr-8 border border-[#DFE1E6] rounded-lg bg-white text-[#475569] font-medium text-xs outline-none focus:border-[#856BFF] cursor-pointer transition-colors"
+              className="box-border appearance-none h-[28px] pl-3 pr-8 border border-[#E2E8F0] rounded-md bg-white text-[#475569] font-medium text-[11px] outline-none focus:border-[#856BFF] cursor-pointer transition-colors"
             >
               <option value="ALL">Milestone</option>
               {milestones.map((m) => (
@@ -1015,7 +1125,7 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
               setStatusFilter(next);
               setCurrentPage(1);
             }}
-            className="flex-shrink-0 box-border flex items-center gap-1.5 h-[30px] px-3 border border-[#DFE1E6] rounded-lg bg-white text-[#475569] font-semibold text-xs hover:bg-gray-50 transition-colors cursor-pointer"
+            className="flex-shrink-0 box-border flex items-center gap-1.5 h-[28px] px-3 border border-[#E2E8F0] rounded-md bg-white text-[#475569] font-semibold text-[11px] hover:bg-gray-50 transition-colors cursor-pointer"
           >
             <SlidersHorizontal size={13} className="text-[#475569]" />
             <span>Filter</span>
@@ -1024,23 +1134,26 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
           {/* Spacer pushes Bulk Update to the right */}
           <div className="flex-1 min-w-0" />
 
-          {/* Bulk Update Button — right-aligned */}
-          <button
-            type="button"
-            id="bulk-update-btn"
-            onClick={handleOpenBulkUpdate}
-            className="flex-shrink-0 box-border flex items-center gap-1.5 h-[24px] px-[10px] bg-[#856BFF] hover:bg-[#7354fd] text-white text-xs font-semibold rounded-[6px] transition-colors cursor-pointer border-none whitespace-nowrap shadow-sm"
-          >
-            Bulk Update
-          </button>
+          {/* Bulk Update Button — right-aligned in edit mode */}
+          {isEditing && (
+            <button
+              type="button"
+              id="bulk-update-btn"
+              onClick={handleOpenBulkUpdate}
+              className="flex-shrink-0 box-border flex items-center justify-center gap-2 w-[109.8px] h-[34px] px-3 bg-[#856BFF] hover:bg-[#7354fd] text-white text-[11px] font-semibold rounded-md transition-colors cursor-pointer border-none whitespace-nowrap shadow-sm opacity-100"
+              style={{ width: '109.8px', height: '34px', gap: '8px', opacity: 1, transform: 'rotate(0deg)' }}
+            >
+              Bulk Update
+            </button>
+          )}
 
         </div>
 
         {/* ── Row 2: Summary & Metrics Badges Bar ── */}
-        <div className="flex flex-wrap items-center gap-2 mt-3 text-xs">
+        <div className="flex flex-wrap items-center gap-1.5 mt-2 text-[10px]">
           
           {/* Milestones Completed Badge */}
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#FAF5FF] border border-[#E9D8FD] text-[#7C3AED] font-semibold whitespace-nowrap">
+          <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#FAF5FF] border border-[#E9D8FD] text-[#7C3AED] font-semibold whitespace-nowrap">
             <span className="w-1.5 h-1.5 rounded-full bg-[#7C3AED]"></span>
             <span>Milestones: {completedMilestonesCount}/{totalMilestonesCount} Completed ({milestonesPercent}%)</span>
           </div>
@@ -1048,7 +1161,7 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
           {/* Tasks Count Badge */}
           <div
             onClick={() => setStatusFilter('ALL')}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs cursor-pointer transition-colors whitespace-nowrap ${
+            className={`flex items-center gap-1 px-2 py-0.5 rounded-md border text-[10px] cursor-pointer transition-colors whitespace-nowrap ${
               statusFilter === 'ALL'
                 ? 'bg-[#F1F5F9] border-[#E2E8F0] text-[#334155] font-semibold'
                 : 'bg-white border-[#E2E8F0] text-[#334155] hover:bg-gray-50'
@@ -1061,7 +1174,7 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
           {/* Completed Badge */}
           <div
             onClick={() => setStatusFilter(statusFilter === 'Completed' ? 'ALL' : 'Completed')}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#ECFDF5] border border-[#A7F3D0] text-[#065F46] font-semibold cursor-pointer transition-colors whitespace-nowrap ${
+            className={`flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#ECFDF5] border border-[#A7F3D0] text-[#065F46] font-semibold cursor-pointer transition-colors whitespace-nowrap ${
               statusFilter === 'Completed' ? 'ring-1 ring-[#10B981]' : 'hover:opacity-90'
             }`}
           >
@@ -1072,7 +1185,7 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
           {/* In Progress Badge */}
           <div
             onClick={() => setStatusFilter(statusFilter === 'In Progress' ? 'ALL' : 'In Progress')}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#FFFBEB] border border-[#FDE68A] text-[#92400E] font-semibold cursor-pointer transition-colors whitespace-nowrap ${
+            className={`flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#FFFBEB] border border-[#FDE68A] text-[#92400E] font-semibold cursor-pointer transition-colors whitespace-nowrap ${
               statusFilter === 'In Progress' ? 'ring-1 ring-[#F59E0B]' : 'hover:opacity-90'
             }`}
           >
@@ -1083,7 +1196,7 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
           {/* Not Started Badge */}
           <div
             onClick={() => setStatusFilter(statusFilter === 'Not Started' ? 'ALL' : 'Not Started')}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#F8FAFC] border border-[#E2E8F0] text-[#475569] font-semibold cursor-pointer transition-colors whitespace-nowrap ${
+            className={`flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#F8FAFC] border border-[#E2E8F0] text-[#475569] font-semibold cursor-pointer transition-colors whitespace-nowrap ${
               statusFilter === 'Not Started' ? 'ring-1 ring-[#94A3B8]' : 'hover:opacity-90'
             }`}
           >
@@ -1096,7 +1209,7 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
       </div>
 
       {/* ── Milestones Accordion Cards List ── */}
-      <div className="space-y-2">
+      <div className="space-y-1">
         {filteredMilestones.length === 0 ? (
           <div className="bg-white rounded-xl p-10 text-center border border-gray-100 text-gray-400 text-sm">
             No milestones or tasks found matching your filters.
@@ -1108,23 +1221,23 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
             return (
               <div
                 key={milestone.id}
-                className="bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden transition-all duration-200"
+                className="bg-white rounded-lg border border-[#E2E8F0] shadow-none overflow-hidden transition-all duration-200"
               >
                 {/* ── Card Header (Accordion toggle) ── */}
                 <div
                   onClick={() => toggleMilestone(milestone.id)}
-                  className="flex items-center justify-between px-5 py-3.5 cursor-pointer hover:bg-gray-50/70 transition-colors select-none"
+                  className="flex items-center justify-between px-3 py-1.5 cursor-pointer hover:bg-gray-50/70 transition-colors select-none"
                 >
-                  <div className="flex flex-wrap items-center gap-2.5">
+                  <div className="flex flex-wrap items-center gap-1.5">
                     {/* Blue Calendar/Clipboard Icon */}
-                    <div className="w-7 h-7 rounded-md bg-[#EFF4FF] flex items-center justify-center text-[#3B82F6]">
-                      <ClipboardList size={16} />
+                    <div className="w-4 h-4 rounded-sm bg-[#EFF4FF] flex items-center justify-center text-[#3B82F6]">
+                      <ClipboardList size={10} />
                     </div>
 
-                    <span className="text-gray-400 font-medium text-sm">
+                    <span className="text-gray-400 font-medium text-[10px]">
                       Milestone Name:
                     </span>
-                    <span className="font-bold text-gray-900 text-sm">
+                    <span className="font-bold text-gray-900 text-[10px]">
                       {milestone.name}
                     </span>
 
@@ -1135,9 +1248,9 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
                   {/* Right chevron */}
                   <div className="text-gray-400 pl-2">
                     {isExpanded ? (
-                      <ChevronDown size={18} />
+                      <ChevronDown size={14} />
                     ) : (
-                      <ChevronRight size={18} />
+                      <ChevronRight size={14} />
                     )}
                   </div>
                 </div>
@@ -1146,43 +1259,30 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
                 {isExpanded && (
                   <div className="border-t border-gray-100">
                     <div className="overflow-x-auto relative w-full scrollbar-thin">
-                      <table className={`w-full text-left border-collapse text-xs ${isEditing ? 'min-w-[1400px]' : 'min-w-[1260px]'}`}>
+                      <table className={`w-full text-left border-collapse text-[10px] ${isEditing ? 'min-w-[760px]' : 'min-w-[1040px]'}`}>
                         <thead>
                           <tr className="bg-[#F8F9FB] border-b border-gray-100 text-[#5E6C84] font-bold">
-                            {/* Checkbox column - shown only in Edit Mode */}
-                            {isEditing && (
-                              <th className="py-3 px-3.5 w-8">
-                                <input
-                                  type="checkbox"
-                                  checked={
-                                    milestone.tasks.length > 0 &&
-                                    milestone.tasks.every((t) => !!selectedTasks[t.id])
-                                  }
-                                  onChange={(e) =>
-                                    toggleSelectAllMilestone(milestone.id, e.target.checked)
-                                  }
-                                  className="w-3.5 h-3.5 rounded accent-[#856BFF] cursor-pointer"
-                                />
-                              </th>
+                            <th className="py-1.5 px-2.5 whitespace-nowrap">Task ID</th>
+                            <th className="py-1.5 px-2.5 whitespace-nowrap">Task Title</th>
+                            <th className="py-1.5 px-2.5 whitespace-nowrap">Owner</th>
+                            <th className="py-1.5 px-2.5 whitespace-nowrap">Planned Start</th>
+                            <th className="py-1.5 px-2.5 whitespace-nowrap">Planned End</th>
+                            <th className="py-1.5 px-2.5 whitespace-nowrap">Actual Start</th>
+                            <th className="py-1.5 px-2.5 whitespace-nowrap">Actual End</th>
+                            <th className="py-1.5 px-2.5 whitespace-nowrap">Allocation</th>
+                            {!isEditing && (
+                              <>
+                                <th className="py-1.5 px-2.5 whitespace-nowrap">Status</th>
+                                <th className="py-1.5 px-2.5 whitespace-nowrap">Risk Category</th>
+                                <th className="py-1.5 px-2.5 whitespace-nowrap">Remark</th>
+                                <th className="py-1.5 px-2.5 whitespace-nowrap text-[#856BFF]">Role</th>
+                                <th className="py-1.5 px-2.5 whitespace-nowrap text-[#856BFF]">Task Type</th>
+                                <th className="py-1.5 px-2.5 whitespace-nowrap text-[#856BFF]">Unit</th>
+                              </>
                             )}
-                            <th className="py-3 px-3.5 whitespace-nowrap">Task ID</th>
-                            <th className="py-3 px-3.5 whitespace-nowrap">Task Title</th>
-                            <th className="py-3 px-3.5 whitespace-nowrap">Owner</th>
-                            <th className="py-3 px-3.5 whitespace-nowrap">Planned Start</th>
-                            <th className="py-3 px-3.5 whitespace-nowrap">Planned End</th>
-                            <th className="py-3 px-3.5 whitespace-nowrap">Actual Start</th>
-                            <th className="py-3 px-3.5 whitespace-nowrap">Actual End</th>
-                            <th className="py-3 px-3.5 whitespace-nowrap">Allocation</th>
-                            <th className="py-3 px-3.5 whitespace-nowrap">Status</th>
-                            {/* All task data columns visible in both View and Edit modes */}
-                            <th className="py-3 px-3.5 whitespace-nowrap">Risk Category</th>
-                            <th className="py-3 px-3.5 whitespace-nowrap">Remark</th>
-                            <th className="py-3 px-3.5 whitespace-nowrap text-[#856BFF]">Role</th>
-                            <th className="py-3 px-3.5 whitespace-nowrap text-[#856BFF]">Task Type</th>
-                            <th className="py-3 px-3.5 whitespace-nowrap text-[#856BFF]">Unit</th>
                             {/* Action column - FIXED / STICKY on right in Edit Mode */}
                             {isEditing && (
-                              <th className="py-3 px-3.5 whitespace-nowrap text-center sticky right-0 z-20 bg-[#F8F9FB] shadow-[-6px_0_8px_-4px_rgba(0,0,0,0.06)] border-l border-gray-200/80 min-w-[70px] w-[70px]">
+                              <th className="py-1.5 px-2.5 whitespace-nowrap text-center sticky right-0 z-20 bg-[#F8F9FB] shadow-[-6px_0_8px_-4px_rgba(0,0,0,0.06)] border-l border-gray-200/80 min-w-[58px] w-[58px]">
                                 Action
                               </th>
                             )}
@@ -1192,7 +1292,7 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
                           {milestone.tasks.length === 0 ? (
                             <tr>
                               <td
-                                colSpan={isEditing ? 16 : 14}
+                                colSpan={isEditing ? 9 : 14}
                                 className="py-6 text-center text-gray-400 text-xs"
                               >
                                 No tasks available for this milestone.
@@ -1204,138 +1304,84 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
                                 key={task.id}
                                 className="group hover:bg-gray-50/70 transition-colors"
                               >
-                                {/* Checkbox column - shown only in Edit Mode */}
-                                {isEditing && (
-                                  <td className="py-3 px-3.5 w-8">
-                                    <input
-                                      type="checkbox"
-                                      checked={!!selectedTasks[task.id]}
-                                      onChange={() => toggleSelectTask(task.id)}
-                                      className="w-3.5 h-3.5 rounded accent-[#856BFF] cursor-pointer"
-                                    />
-                                  </td>
-                                )}
-
                                 {/* Task ID */}
-                                <td className="py-3 px-3.5 font-normal text-gray-500 whitespace-nowrap">
+                                <td className="py-2 px-3.5 font-normal text-gray-500 whitespace-nowrap">
                                   {task.id}
                                 </td>
 
                                 {/* Task Title */}
-                                <td className="py-3 px-3.5 font-bold text-gray-900 whitespace-nowrap">
+                                <td className="py-2 px-3.5 font-bold text-gray-900 whitespace-nowrap">
                                   {task.title}
                                 </td>
 
                                 {/* Owner */}
-                                <td className="py-3 px-3.5 text-gray-600 whitespace-nowrap">
+                                <td className="py-2 px-3.5 text-gray-600 whitespace-nowrap">
                                   {task.owner}
                                 </td>
 
                                 {/* Planned Start */}
-                                <td className="py-3 px-3.5 text-gray-600 whitespace-nowrap">
+                                <td className="py-2 px-3.5 text-gray-600 whitespace-nowrap">
                                   {task.plannedStart}
                                 </td>
 
                                 {/* Planned End */}
-                                <td className="py-3 px-3.5 text-gray-600 whitespace-nowrap">
+                                <td className="py-2 px-3.5 text-gray-600 whitespace-nowrap">
                                   {task.plannedEnd}
                                 </td>
 
                                 {/* Actual Start */}
-                                <td className="py-3 px-3.5 text-gray-600 whitespace-nowrap">
+                                <td className="py-2 px-3.5 text-gray-600 whitespace-nowrap">
                                   {task.actualStart || '-'}
                                 </td>
 
                                 {/* Actual End */}
-                                <td className="py-3 px-3.5 text-gray-600 whitespace-nowrap">
+                                <td className="py-2 px-3.5 text-gray-600 whitespace-nowrap">
                                   {task.actualEnd || '-'}
                                 </td>
 
                                 {/* Allocation */}
-                                <td className="py-3 px-3.5 font-bold text-gray-900 whitespace-nowrap">
+                                <td className="py-2 px-3.5 font-bold text-gray-900 whitespace-nowrap">
                                   {task.allocation}
                                 </td>
 
-                                {/* Status */}
-                                <td className="py-3 px-3.5 whitespace-nowrap">
-                                  {renderTaskStatusBadge(task.status)}
-                                </td>
+                                {!isEditing && (
+                                  <>
+                                    {/* Status */}
+                                    <td className="py-2 px-3.5 whitespace-nowrap">
+                                      {renderTaskStatusBadge(task.status)}
+                                    </td>
 
-                                {/* Risk Category */}
-                                <td className="py-3 px-3.5 whitespace-nowrap text-gray-700">
-                                  {isEditing ? (
-                                    <div className="relative inline-block">
-                                      <select
-                                        value={task.riskCategory || 'No Dependency'}
-                                        onChange={(e) =>
-                                          handleRiskCategoryChange(milestone.id, task.id, e.target.value)
-                                        }
-                                        className="appearance-none bg-white hover:bg-gray-50 border border-gray-200 rounded px-2.5 py-1 pr-6 text-xs text-gray-700 font-medium cursor-pointer outline-none focus:border-[#856BFF]"
-                                      >
-                                        <option value="No Dependency">No Dependency</option>
-                                        <option value="Low Dependency">Low Dependency</option>
-                                        <option value="Medium Risk">Medium Risk</option>
-                                        <option value="High Risk">High Risk</option>
-                                        <option value="Blocked">Blocked</option>
-                                      </select>
-                                      <ChevronDown
-                                        size={12}
-                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-                                      />
-                                    </div>
-                                  ) : (
-                                    <div className="inline-flex items-center gap-1.5 text-gray-700 font-normal">
-                                      <span>{task.riskCategory || 'No Dependency'}</span>
-                                      <ChevronDown size={12} className="text-gray-400" />
-                                    </div>
-                                  )}
-                                </td>
+                                    {/* Risk Category */}
+                                    <td className="py-2 px-3.5 whitespace-nowrap text-gray-700">
+                                      <div className="inline-flex items-center gap-1.5 text-gray-700 font-normal">
+                                        <span>{task.riskCategory || 'No Dependency'}</span>
+                                        <ChevronDown size={12} className="text-gray-400" />
+                                      </div>
+                                    </td>
 
-                                {/* Remark */}
-                                <td className="py-3 px-3.5 whitespace-nowrap">
-                                  {isEditing ? (
-                                    <input
-                                      type="text"
-                                      value={task.remark || ''}
-                                      placeholder="Add remark..."
-                                      onChange={(e) =>
-                                        handleRemarkChange(milestone.id, task.id, e.target.value)
-                                      }
-                                      className="bg-white hover:bg-gray-50 focus:bg-white border border-transparent hover:border-gray-200 focus:border-[#856BFF] rounded px-2 py-1 text-xs text-gray-700 outline-none w-32 placeholder-gray-400 transition-colors"
-                                    />
-                                  ) : (
-                                    <span className={task.remark ? "text-gray-700 font-normal" : "text-gray-400"}>
-                                      {task.remark || 'Add remark...'}
-                                    </span>
-                                  )}
-                                </td>
+                                    {/* Remark */}
+                                    <td className="py-3 px-3.5 whitespace-nowrap">
+                                      <span className={task.remark ? "text-gray-700 font-normal" : "text-gray-400"}>
+                                        {task.remark || 'Add remark...'}
+                                      </span>
+                                    </td>
 
-                                {/* Role */}
-                                <td
-                                  onClick={() => isEditing && openEditModal(task, milestone)}
-                                  title={isEditing ? "Click to edit task role, type & unit" : undefined}
-                                  className={`py-3 px-3.5 text-gray-700 font-medium whitespace-nowrap ${isEditing ? 'cursor-pointer hover:text-[#856BFF]' : ''}`}
-                                >
-                                  {getRoleAbbr(task.role)}
-                                </td>
+                                    {/* Role */}
+                                    <td className="py-3 px-3.5 text-gray-700 font-medium whitespace-nowrap">
+                                      {getRoleAbbr(task.role)}
+                                    </td>
 
-                                {/* Task Type */}
-                                <td
-                                  onClick={() => isEditing && openEditModal(task, milestone)}
-                                  title={isEditing ? "Click to edit task role, type & unit" : undefined}
-                                  className={`py-3 px-3.5 text-gray-700 font-medium whitespace-nowrap ${isEditing ? 'cursor-pointer hover:text-[#856BFF]' : ''}`}
-                                >
-                                  {task.taskType || 'Analysis'}
-                                </td>
+                                    {/* Task Type */}
+                                    <td className="py-3 px-3.5 text-gray-700 font-medium whitespace-nowrap">
+                                      {task.taskType || 'Analysis'}
+                                    </td>
 
-                                {/* Unit */}
-                                <td
-                                  onClick={() => isEditing && openEditModal(task, milestone)}
-                                  title={isEditing ? "Click to edit task role, type & unit" : undefined}
-                                  className={`py-3 px-3.5 text-gray-800 font-medium whitespace-nowrap ${isEditing ? 'cursor-pointer hover:text-[#856BFF]' : ''}`}
-                                >
-                                  {task.unit ?? 12}
-                                </td>
+                                    {/* Unit */}
+                                    <td className="py-3 px-3.5 text-gray-800 font-medium whitespace-nowrap">
+                                      {task.unit ?? 12}
+                                    </td>
+                                  </>
+                                )}
 
                                 {/* Action (Edit button) - FIXED STICKY COLUMN */}
                                 {isEditing && (
@@ -1434,26 +1480,28 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
         </div>
       </div>
 
-      {/* ── Footer Actions: Cancel & Next always visible per Figma ── */}
-      <div className="flex items-center justify-end gap-3 mt-4 pt-3 border-t border-gray-100">
-        <button
-          type="button"
-          id="task-info-cancel-btn"
-          onClick={onCancel}
-          className="px-5 py-2 text-sm font-semibold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer bg-white"
-        >
-          Cancel
-        </button>
-        <button
-          type="button"
-          id="task-info-next-btn"
-          onClick={onNext}
-          className="flex items-center gap-1.5 px-5 py-2 bg-[#856BFF] hover:bg-[#7354fd] text-white text-sm font-semibold rounded-lg shadow-sm transition-colors cursor-pointer border-none"
-        >
-          <span>Next:</span>
-          <ArrowRight size={15} />
-        </button>
-      </div>
+      {/* ── Footer Actions ── */}
+      {isEditing && (
+        <div className="flex items-center justify-end gap-2 mt-2.5 pt-2.5 border-t border-gray-100">
+          <button
+            type="button"
+            id="task-info-cancel-btn"
+            onClick={onCancel}
+            className="px-4 py-1.5 text-[11px] font-semibold text-gray-600 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors cursor-pointer bg-white"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            id="task-info-next-btn"
+            onClick={onNext}
+            className="flex items-center gap-1 px-4 py-1.5 bg-[#856BFF] hover:bg-[#7354fd] text-[11px] font-semibold text-white rounded-md shadow-sm transition-colors cursor-pointer border-none"
+          >
+            <span>Next:</span>
+            <ArrowRight size={13} />
+          </button>
+        </div>
+      )}
 
       {/* ── Edit Task Details Slide-Over Section (Right Side of Screen, Optimized for 100% Zoom) ── */}
       {editingTask && (
@@ -1649,102 +1697,6 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
           </div>
         </div>
       )}
-      {/* ── Bulk Update Modal ── */}
-      {bulkUpdateOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" role="dialog" aria-modal="true">
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 bg-black/20 transition-opacity duration-200"
-            onClick={() => setBulkUpdateOpen(false)}
-            aria-hidden="true"
-          />
-          {/* Modal Panel */}
-          <div className="relative bg-white rounded-xl shadow-xl border border-gray-200 w-full max-w-[380px] mx-4 flex flex-col z-10 animate-in fade-in zoom-in-95 duration-150">
-            {/* Header */}
-            <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
-              <h3 className="text-sm font-bold text-gray-900">Bulk Update Tasks</h3>
-              <button
-                type="button"
-                onClick={() => setBulkUpdateOpen(false)}
-                className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-1.5 rounded-lg transition-colors cursor-pointer bg-transparent border-none"
-                aria-label="Close"
-              >
-                <X size={16} />
-              </button>
-            </div>
-
-            {/* Body */}
-            <form id="bulk-update-form" onSubmit={handleApplyBulkUpdate} className="px-5 py-4 space-y-3">
-              <p className="text-xs text-gray-500 mb-2">
-                Apply changes to{' '}
-                <span className="font-bold text-gray-800">
-                  {Object.values(selectedTasks).filter(Boolean).length > 0
-                    ? `${Object.values(selectedTasks).filter(Boolean).length} selected task(s)`
-                    : 'all tasks'}
-                </span>
-              </p>
-
-              {/* Status field */}
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">Status</label>
-                <div className="relative">
-                  <select
-                    value={bulkUpdateData.status}
-                    onChange={(e) => setBulkUpdateData({ ...bulkUpdateData, status: e.target.value })}
-                    className="w-full appearance-none px-3 py-1.5 border border-gray-300 rounded-lg text-xs text-gray-900 bg-white outline-none focus:border-[#856BFF] focus:ring-1 focus:ring-[#856BFF] cursor-pointer"
-                  >
-                    <option value="Completed">Completed</option>
-                    <option value="In Progress">In Progress</option>
-                    <option value="Not Started">Not Started</option>
-                  </select>
-                  <ChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                </div>
-              </div>
-
-              {/* Owner field */}
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">Owner</label>
-                <input
-                  type="text"
-                  value={bulkUpdateData.owner}
-                  onChange={(e) => setBulkUpdateData({ ...bulkUpdateData, owner: e.target.value })}
-                  className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs text-gray-900 bg-white outline-none focus:border-[#856BFF] focus:ring-1 focus:ring-[#856BFF]"
-                />
-              </div>
-
-              {/* Allocation field */}
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">Allocation %</label>
-                <input
-                  type="text"
-                  value={bulkUpdateData.allocation}
-                  onChange={(e) => setBulkUpdateData({ ...bulkUpdateData, allocation: e.target.value })}
-                  className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs text-gray-900 bg-white outline-none focus:border-[#856BFF] focus:ring-1 focus:ring-[#856BFF]"
-                />
-              </div>
-            </form>
-
-            {/* Footer */}
-            <div className="flex items-center justify-end gap-3 px-5 py-3 border-t border-gray-100 bg-gray-50/50 rounded-b-xl">
-              <button
-                type="button"
-                onClick={() => setBulkUpdateOpen(false)}
-                className="px-4 py-1.5 text-xs font-semibold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer bg-white"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                form="bulk-update-form"
-                className="px-5 py-1.5 text-xs font-semibold text-white bg-[#856BFF] hover:bg-[#7354fd] rounded-lg transition-colors cursor-pointer border-none shadow-sm"
-              >
-                Apply
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
     </div>
   );
 };

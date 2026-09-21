@@ -26,20 +26,20 @@ import {
 // ── Stat Card Component ────────────────────────────────────────────────────────
 function StatCard({ label, value, icon: IconComponent, iconBg, iconColor }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-[0_1px_3px_rgba(0,0,0,0.03)] px-4 py-3 flex items-center justify-between min-w-0 transition-all hover:shadow-md">
+    <div className="bg-white rounded-xl border border-gray-100 shadow-[0_1px_3px_rgba(0,0,0,0.03)] px-3.5 py-2.5 flex items-center justify-between min-w-0 transition-all hover:shadow-md">
       <div className="min-w-0">
-        <div className="text-[11.5px] text-gray-500 font-medium leading-none mb-1.5 whitespace-nowrap">
+        <div className="text-[11px] text-gray-500 font-medium leading-none mb-1.5 whitespace-nowrap">
           {label}
         </div>
-        <div className="text-[24px] font-bold text-[#1E293B] leading-none">
+        <div className="text-[22px] font-bold text-[#1E293B] leading-none">
           {value}
         </div>
       </div>
       <div
-        className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+        className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
         style={{ backgroundColor: iconBg, color: iconColor }}
       >
-        <IconComponent size={20} strokeWidth={2.2} />
+        <IconComponent size={18} strokeWidth={2.2} />
       </div>
     </div>
   );
@@ -270,9 +270,9 @@ function ProjectCard({ project, globalTab, searchQuery }) {
   const counts = project.tabCounts;
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.03)] overflow-hidden mb-5 transition-all">
+    <div className="bg-white rounded-xl border border-gray-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.03)] overflow-hidden mb-3.5 transition-all">
       {/* ── Project Header ── */}
-      <div className="px-5 pt-3.5 pb-3 border-b border-gray-100">
+      <div className="px-4 pt-2.5 pb-2 border-b border-gray-100">
         {/* Row 1: Left (Name, ID, Status) & Right (Milestone Label) */}
         <div className="flex items-center justify-between gap-3">
           {/* Left: Name, ID, Schedule Badge */}
@@ -342,7 +342,7 @@ function ProjectCard({ project, globalTab, searchQuery }) {
 
       {/* ── Sub-Navigation / Filter Bar (Figma Container: width 970px, height 30px) ── */}
       {!collapsed && (
-        <div className="px-5 py-2.5 border-b border-gray-100 bg-white">
+        <div className="px-4 py-1.5 border-b border-gray-100 bg-white">
           <div className="w-[970px] max-w-full h-[30px] flex items-center">
             {/* Frame 427321925 (w: 900, h: 30, gap: 13px) */}
             <div className="w-[900px] max-w-full h-[30px] flex items-center gap-[13px] overflow-x-auto flex-nowrap [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
@@ -498,23 +498,23 @@ function ProjectCard({ project, globalTab, searchQuery }) {
         <div className="figma-table-scroll pb-2">
           <table className="w-full text-[12px] border-collapse" style={{ minWidth: 1403 }}>
             <thead>
-              <tr style={{ backgroundColor: '#EFF4FF', height: '38px' }} className="border-b border-[#E2E8F0]">
-                <th className="text-left px-[16px] py-[10px] text-[11.5px] font-semibold text-[#5A6A85] whitespace-nowrap border-b border-[#E2E8F0] w-[155px]">
-                  Task Classification
+              <tr className="bg-[#F8FAFC]">
+                <th className="text-left px-[12px] py-[8px] text-[11.5px] font-semibold text-[#5A6A85] whitespace-nowrap border-b border-[#E2E8F0] min-w-[135px]">
+                  Classification
                 </th>
-                <th className="text-left px-[16px] py-[10px] text-[11.5px] font-semibold text-[#5A6A85] whitespace-nowrap border-b border-[#E2E8F0] min-w-[210px]">
-                  Task
+                <th className="text-left px-[12px] py-[8px] text-[11.5px] font-semibold text-[#5A6A85] border-b border-[#E2E8F0] min-w-[200px]">
+                  Task Title
                 </th>
-                <th className="text-left px-[16px] py-[10px] text-[11.5px] font-semibold text-[#5A6A85] whitespace-nowrap border-b border-[#E2E8F0] min-w-[130px]">
+                <th className="text-left px-[12px] py-[8px] text-[11.5px] font-semibold text-[#5A6A85] whitespace-nowrap border-b border-[#E2E8F0] min-w-[130px]">
                   Owner
                 </th>
-                <th className="text-left px-[16px] py-[10px] text-[11.5px] font-semibold text-[#5A6A85] whitespace-nowrap border-b border-[#E2E8F0] min-w-[100px]">
+                <th className="text-left px-[12px] py-[8px] text-[11.5px] font-semibold text-[#5A6A85] whitespace-nowrap border-b border-[#E2E8F0] min-w-[95px]">
                   Role
                 </th>
-                <th className="text-left px-[16px] py-[10px] text-[11.5px] font-semibold text-[#5A6A85] whitespace-nowrap border-b border-[#E2E8F0] min-w-[110px]">
+                <th className="text-left px-[12px] py-[8px] text-[11.5px] font-semibold text-[#5A6A85] whitespace-nowrap border-b border-[#E2E8F0] min-w-[100px]">
                   Task Type
                 </th>
-                <th className="text-left px-[16px] py-[10px] text-[11.5px] font-semibold text-[#5A6A85] whitespace-nowrap border-b border-[#E2E8F0] min-w-[85px]">
+                <th className="text-left px-[12px] py-[8px] text-[11.5px] font-semibold text-[#5A6A85] whitespace-nowrap border-b border-[#E2E8F0] min-w-[80px]">
                   Unit
                 </th>
                 <th className="text-left px-[16px] py-[10px] text-[11.5px] font-semibold text-[#5A6A85] whitespace-nowrap border-b border-[#E2E8F0] min-w-[105px]">
@@ -542,12 +542,12 @@ function ProjectCard({ project, globalTab, searchQuery }) {
                     className="border-b border-[#F1F5F9] hover:bg-[#F8FAFC] transition-colors"
                   >
                     {/* Classification */}
-                    <td className="px-[16px] py-[12px] align-top">
+                    <td className="px-[12px] py-[7px] align-top">
                       <ClassificationBadge classification={task.classification} />
                     </td>
 
                     {/* Task Title */}
-                    <td className="px-[16px] py-[12px] align-top">
+                    <td className="px-[12px] py-[7px] align-top">
                       <div className="font-medium text-[#1E293B] text-[12.5px] leading-snug">
                         {task.taskName}
                       </div>
@@ -559,42 +559,42 @@ function ProjectCard({ project, globalTab, searchQuery }) {
                     </td>
 
                     {/* Owner */}
-                    <td className="px-[16px] py-[12px] align-top">
+                    <td className="px-[12px] py-[7px] align-top">
                       <div className="font-medium text-[#1E293B] text-[12px] whitespace-nowrap">
                         {task.ownerName}
                       </div>
                     </td>
 
                     {/* Role */}
-                    <td className="px-[16px] py-[12px] align-top">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-[6px] bg-[#F1F5F9] border border-[#E2E8F0] text-[#475569] text-[11px] font-medium whitespace-nowrap">
+                    <td className="px-[12px] py-[7px] align-top">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-[6px] bg-[#F1F5F9] border border-[#E2E8F0] text-[#475569] text-[11px] font-medium whitespace-nowrap">
                         {task.role || task.ownerRole || 'Fullstack'}
                       </span>
                     </td>
 
                     {/* Task Type */}
-                    <td className="px-[16px] py-[12px] align-top">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-[6px] bg-[#F1F5F9] text-[#475569] text-[11px] font-medium whitespace-nowrap">
+                    <td className="px-[12px] py-[7px] align-top">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-[6px] bg-[#F1F5F9] text-[#475569] text-[11px] font-medium whitespace-nowrap">
                         {task.taskType || 'Development'}
                       </span>
                     </td>
 
                     {/* Unit */}
-                    <td className="px-[16px] py-[12px] align-top">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-[6px] bg-[#F1F5F9] border border-[#E2E8F0] text-[#475569] text-[11px] font-medium whitespace-nowrap">
+                    <td className="px-[12px] py-[7px] align-top">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-[6px] bg-[#F1F5F9] border border-[#E2E8F0] text-[#475569] text-[11px] font-medium whitespace-nowrap">
                         {task.unit || '1 Unit'}
                       </span>
                     </td>
 
                     {/* Risk Category */}
-                    <td className="px-[16px] py-[12px] align-top">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-[6px] bg-[#F1F5F9] text-[#64748B] text-[11px] font-medium whitespace-nowrap">
+                    <td className="px-[12px] py-[7px] align-top">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-[6px] bg-[#F1F5F9] text-[#64748B] text-[11px] font-medium whitespace-nowrap">
                         {task.riskCategory || 'NA'}
                       </span>
                     </td>
 
                     {/* Planned Date */}
-                    <td className="px-[16px] py-[12px] align-top">
+                    <td className="px-[12px] py-[7px] align-top">
                       <div className="text-[11px] leading-[1.35] whitespace-nowrap">
                         <div className="text-[#1E293B] font-medium">{task.plannedStart}</div>
                         <div className="text-[#94A3B8] mt-0.5">— {task.plannedEnd}</div>
@@ -602,7 +602,7 @@ function ProjectCard({ project, globalTab, searchQuery }) {
                     </td>
 
                     {/* Actual Date */}
-                    <td className="px-[16px] py-[12px] align-top">
+                    <td className="px-[12px] py-[7px] align-top">
                       <div className="text-[11px] leading-[1.35] whitespace-nowrap">
                         <div className="text-[#1E293B] font-medium">{task.actualLine1 || '—'}</div>
                         <div className="text-[#94A3B8] mt-0.5">{task.actualLine2 || ''}</div>
@@ -687,9 +687,9 @@ export default function DailyUpdatesReport() {
 
   return (
     <div className="min-h-full bg-[#F5F7FA] font-sans">
-      <div className="px-6 py-5">
+      <div className="px-5 py-3">
         {/* ── Page Header: Title + Date Switcher ── */}
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-5">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
           <h1 className="text-[22px] font-bold text-[#1E293B] tracking-tight m-0">
             Daily Report
           </h1>
@@ -734,7 +734,7 @@ export default function DailyUpdatesReport() {
         </div>
 
         {/* ── Metric Summary Cards (5 across) ── */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5 mb-5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 mb-3">
           <StatCard
             label="Total Projects"
             value={MOCK_METRICS.totalProjects}
@@ -773,7 +773,7 @@ export default function DailyUpdatesReport() {
         </div>
 
         {/* ── Global Filter & Action Bar ── */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-[0_1px_3px_rgba(0,0,0,0.03)] px-4 py-2.5 mb-5 flex flex-wrap items-center justify-between gap-4">
+        <div className="bg-white rounded-xl border border-gray-100 shadow-[0_1px_3px_rgba(0,0,0,0.03)] px-3.5 py-2 mb-3.5 flex flex-wrap items-center justify-between gap-3">
           {/* Status Tabs */}
           <div className="flex items-center gap-2 overflow-x-auto">
             {MOCK_GLOBAL_TABS.map(tab => {

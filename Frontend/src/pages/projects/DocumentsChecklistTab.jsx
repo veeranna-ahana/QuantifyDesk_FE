@@ -173,7 +173,7 @@ const DocumentsChecklistTab = ({ project, isEditing = false, onSave, onCancel })
   };
 
   return (
-    <div className="space-y-4 font-sans">
+    <div className="space-y-3 font-sans">
       {/* Edit Link Modal */}
       {editLinkDoc && (
         <EditLinkModal
@@ -187,11 +187,11 @@ const DocumentsChecklistTab = ({ project, isEditing = false, onSave, onCancel })
       <div className="flex items-center justify-between gap-3">
         {/* Upload Progress */}
         <div className="flex items-center gap-3 text-sm font-semibold text-gray-800">
-          <div className="flex items-center gap-1.5 text-emerald-600 font-medium">
-            <Check size={16} strokeWidth={2.5} />
+          <div className="flex items-center gap-1.5 text-emerald-600 font-medium text-xs">
+            <Check size={15} strokeWidth={2.5} />
             <span>{uploadedCount} of {totalCount} documents uploaded</span>
           </div>
-          <div className="w-40 sm:w-56 h-2 bg-gray-200 rounded-full overflow-hidden">
+          <div className="w-36 sm:w-48 h-1.5 bg-gray-200 rounded-full overflow-hidden">
             <div
               className="h-full bg-emerald-500 rounded-full transition-all duration-300"
               style={{ width: `${(uploadedCount / totalCount) * 100}%` }}
@@ -205,9 +205,9 @@ const DocumentsChecklistTab = ({ project, isEditing = false, onSave, onCancel })
             type="button"
             id="add-document-btn"
             onClick={handleOpenAddModal}
-            className="flex items-center gap-1.5 px-4 py-2 bg-[#856BFF] hover:bg-[#7354fd] text-white text-sm font-semibold rounded-lg shadow-sm transition-colors whitespace-nowrap cursor-pointer border-none"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#856BFF] hover:bg-[#7354fd] text-white text-xs font-semibold rounded-lg shadow-sm transition-colors whitespace-nowrap cursor-pointer border-none"
           >
-            <Plus size={15} />
+            <Plus size={14} />
              Add Document
           </button>
         )}
@@ -218,47 +218,47 @@ const DocumentsChecklistTab = ({ project, isEditing = false, onSave, onCancel })
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-[#F8FAFC] border-b border-gray-200 text-[#475467] text-[13px] font-semibold">
-                <th className="py-3.5 px-6 font-semibold w-[28%]">Document Name</th>
-                <th className="py-3.5 px-4 font-semibold w-[13%]">Version</th>
-                <th className="py-3.5 px-4 font-semibold w-[16%]">Uploaded By</th>
-                <th className="py-3.5 px-4 font-semibold w-[15%]">Upload Date</th>
-                <th className="py-3.5 px-4 font-semibold w-[13%]">Status</th>
-                <th className="py-3.5 px-6 font-semibold text-right w-[15%]">Actions</th>
+              <tr className="bg-[#F8FAFC] border-b border-gray-200 text-[#475467] text-[12px] font-semibold">
+                <th className="py-2.5 px-5 font-semibold w-[28%]">Document Name</th>
+                <th className="py-2.5 px-3 font-semibold w-[13%]">Version</th>
+                <th className="py-2.5 px-3 font-semibold w-[16%]">Uploaded By</th>
+                <th className="py-2.5 px-3 font-semibold w-[15%]">Upload Date</th>
+                <th className="py-2.5 px-3 font-semibold w-[13%]">Status</th>
+                <th className="py-2.5 px-5 font-semibold text-right w-[15%]">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 text-sm">
+            <tbody className="divide-y divide-gray-100 text-xs">
               {documents.map((doc) => {
                 const IconComponent = doc.icon;
                 return (
                   <tr key={doc.id} className="hover:bg-[#F9FAFB] transition-colors group">
                     {/* Document Name */}
-                    <td className="py-3 px-6 text-gray-900 font-medium">
-                      <div className="flex items-center gap-2.5">
-                        <IconComponent size={16} className="text-[#856BFF] shrink-0" />
+                    <td className="py-2 px-5 text-gray-900 font-medium">
+                      <div className="flex items-center gap-2">
+                        <IconComponent size={15} className="text-[#856BFF] shrink-0" />
                         <span className="truncate">{doc.name}</span>
                       </div>
                     </td>
 
                     {/* Version */}
-                    <td className="py-3 px-4 font-mono text-xs text-gray-600">{doc.version}</td>
+                    <td className="py-2 px-3 font-mono text-[11px] text-gray-600">{doc.version}</td>
 
                     {/* Uploaded By */}
-                    <td className="py-3 px-4 text-gray-700 font-normal">{doc.uploadedBy}</td>
+                    <td className="py-2 px-3 text-gray-700 font-normal">{doc.uploadedBy}</td>
 
                     {/* Upload Date */}
-                    <td className="py-3 px-4 text-gray-500 font-normal whitespace-nowrap">{doc.uploadDate}</td>
+                    <td className="py-2 px-3 text-gray-500 font-normal whitespace-nowrap">{doc.uploadDate}</td>
 
                     {/* Status Pill */}
-                    <td className="py-3 px-4">
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <td className="py-2 px-3">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                         {doc.status}
                       </span>
                     </td>
 
                     {/* Actions */}
-                    <td className="py-3 px-6">
+                    <td className="py-2 px-5">
                       <div className="flex items-center justify-end gap-2">
                         {/* View external link — always visible */}
                         <button

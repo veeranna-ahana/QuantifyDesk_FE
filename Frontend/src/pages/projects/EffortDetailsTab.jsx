@@ -180,15 +180,15 @@ const EffortDetailsTab = ({ project, isEditing = false, onNext, onCancel }) => {
         <table className="w-full text-left border-collapse">
           {/* Table Header */}
           <thead>
-            <tr className="bg-[#F8FAFC] border-b border-gray-200 text-[#475467] text-[13px] font-semibold">
-              <th className={`py-3.5 px-6 font-semibold text-left ${isEditing ? 'w-[22%]' : 'w-[25%]'}`}>Role</th>
-              <th className={`py-3.5 px-4 font-semibold text-center ${isEditing ? 'w-[13%]' : 'w-[15%]'}`}>Effort(Days)</th>
-              <th className={`py-3.5 px-4 font-semibold text-center ${isEditing ? 'w-[12%]' : 'w-[15%]'}`}>In Hrs</th>
-              <th className={`py-3.5 px-4 font-semibold text-center ${isEditing ? 'w-[13%]' : 'w-[15%]'}`}>Buffer(Days)</th>
-              <th className={`py-3.5 px-4 font-semibold text-center ${isEditing ? 'w-[12%]' : 'w-[15%]'}`}>In Hrs</th>
-              <th className={`py-3.5 px-4 font-semibold text-center ${isEditing ? 'w-[12%]' : 'w-[15%]'}`}>Total Hrs</th>
+            <tr className="bg-[#F8FAFC] border-b border-[#C3C6D64D] text-[#475467] text-xs font-semibold">
+              <th className={`py-1.5 px-6 font-semibold text-left ${isEditing ? 'w-[22%]' : 'w-[25%]'}`}>Role</th>
+              <th className={`py-1.5 px-4 font-semibold text-center ${isEditing ? 'w-[13%]' : 'w-[15%]'}`}>Effort(Days)</th>
+              <th className={`py-1.5 px-4 font-semibold text-center ${isEditing ? 'w-[12%]' : 'w-[15%]'}`}>In Hrs</th>
+              <th className={`py-1.5 px-4 font-semibold text-center ${isEditing ? 'w-[13%]' : 'w-[15%]'}`}>Buffer(Days)</th>
+              <th className={`py-1.5 px-4 font-semibold text-center ${isEditing ? 'w-[12%]' : 'w-[15%]'}`}>In Hrs</th>
+              <th className={`py-1.5 px-4 font-semibold text-center ${isEditing ? 'w-[12%]' : 'w-[15%]'}`}>Total Hrs</th>
               {isEditing && (
-                <th className="py-3.5 px-4 font-semibold text-center w-[16%]">Action</th>
+                <th className="py-1.5 px-4 font-semibold text-center w-[16%]">Action</th>
               )}
             </tr>
           </thead>
@@ -199,13 +199,13 @@ const EffortDetailsTab = ({ project, isEditing = false, onNext, onCancel }) => {
               <React.Fragment key={group.id}>
                 {/* Role Group Header Row */}
                 <tr className="bg-white border-y border-gray-100">
-                  <td className="py-3 px-6 font-bold text-gray-900 text-[14px]">
+                  <td className="py-1 px-6 font-bold text-gray-900 text-xs">
                     {group.roleCategory}
                   </td>
                   <td colSpan={isEditing ? 5 : 5}></td>
                   {/* + Add Member button in Action column (Edit mode only) */}
                   {isEditing && (
-                    <td className="py-3 px-4 text-center">
+                    <td className="py-1 px-4 text-center">
                       <button
                         type="button"
                         onClick={() => handleStartAddMember(group.id)}
@@ -222,7 +222,7 @@ const EffortDetailsTab = ({ project, isEditing = false, onNext, onCancel }) => {
                 {isEditing && addingGroupId === group.id && (
                   <tr className="bg-[#FAF8FF]/60 border-b border-purple-100 animate-in fade-in duration-150">
                     {/* Role Dropdown */}
-                    <td className="py-2.5 px-6">
+                    <td className="py-1.5 px-6">
                       <div className="relative inline-block w-full max-w-[180px]">
                         <select
                           value={newMemberData.name}
@@ -248,7 +248,7 @@ const EffortDetailsTab = ({ project, isEditing = false, onNext, onCancel }) => {
                     </td>
 
                     {/* Effort(Days) Input Box */}
-                    <td className="py-2.5 px-4 text-center">
+                    <td className="py-1.5 px-4 text-center">
                       <div className="flex justify-center items-center">
                         <input
                           type="text"
@@ -260,18 +260,18 @@ const EffortDetailsTab = ({ project, isEditing = false, onNext, onCancel }) => {
                               effortDays: e.target.value.replace(/\D/g, ''),
                             })
                           }
-                          className="w-14 h-8 text-center text-sm font-medium text-[#475467] rounded-md border border-[#CBD5E1] bg-white outline-none focus:border-[#856BFF] focus:ring-1 focus:ring-[#856BFF]"
+                          className="w-14 h-6 text-center text-xs font-medium text-[#475467] rounded-md border border-[#CBD5E1] bg-white outline-none focus:border-[#856BFF] focus:ring-1 focus:ring-[#856BFF]"
                         />
                       </div>
                     </td>
 
                     {/* Effort In Hrs */}
-                    <td className="py-2.5 px-4 text-center text-[#475467] text-xs font-normal">
+                    <td className="py-1.5 px-4 text-center text-[#475467] text-xs font-normal">
                       {newMemberData.effortDays ? `${Number(newMemberData.effortDays) * 8} hrs` : '000 hrs'}
                     </td>
 
                     {/* Buffer(Days) Input Box */}
-                    <td className="py-2.5 px-4 text-center">
+                    <td className="py-1.5 px-4 text-center">
                       <div className="flex justify-center items-center">
                         <input
                           type="text"
@@ -283,23 +283,23 @@ const EffortDetailsTab = ({ project, isEditing = false, onNext, onCancel }) => {
                               bufferDays: e.target.value.replace(/\D/g, ''),
                             })
                           }
-                          className="w-14 h-8 text-center text-sm font-medium text-[#475467] rounded-md border border-[#CBD5E1] bg-white outline-none focus:border-[#856BFF] focus:ring-1 focus:ring-[#856BFF]"
+                          className="w-14 h-6 text-center text-xs font-medium text-[#475467] rounded-md border border-[#CBD5E1] bg-white outline-none focus:border-[#856BFF] focus:ring-1 focus:ring-[#856BFF]"
                         />
                       </div>
                     </td>
 
                     {/* Buffer In Hrs */}
-                    <td className="py-2.5 px-4 text-center text-[#475467] text-xs font-normal">
+                    <td className="py-1.5 px-4 text-center text-[#475467] text-xs font-normal">
                       {newMemberData.bufferDays ? `${Number(newMemberData.bufferDays) * 8} hrs` : '00 hrs'}
                     </td>
 
                     {/* Total Hrs */}
-                    <td className="py-2.5 px-4 text-center text-[#475467] text-xs font-normal">
+                    <td className="py-1.5 px-4 text-center text-[#475467] text-xs font-normal">
                       {(Number(newMemberData.effortDays) || 0) * 8 + (Number(newMemberData.bufferDays) || 0) * 8} hrs
                     </td>
 
                     {/* Actions: Cancel (X) & Save (Check) */}
-                    <td className="py-2.5 px-4 text-center">
+                    <td className="py-1.5 px-4 text-center">
                       <div className="flex items-center justify-center gap-2">
                         {/* Red Cancel Button */}
                         <button
@@ -332,12 +332,12 @@ const EffortDetailsTab = ({ project, isEditing = false, onNext, onCancel }) => {
                     className="hover:bg-[#F9FAFB] transition-colors border-b border-gray-50"
                   >
                     {/* Member Name */}
-                    <td className="py-3 px-6 text-gray-800 font-normal">
+                    <td className="py-1.5 px-6 text-gray-800 font-normal">
                       {member.name}
                     </td>
 
                     {/* Effort(Days) Box: Input in Edit mode, styled read box in View mode */}
-                    <td className="py-3 px-4 text-center">
+                    <td className="py-1.5 px-4 text-center">
                       <div className="flex justify-center items-center">
                         {isEditing ? (
                           <input
@@ -347,10 +347,10 @@ const EffortDetailsTab = ({ project, isEditing = false, onNext, onCancel }) => {
                             onChange={(e) =>
                               handleValueChange(group.id, member.id, 'effortDays', e.target.value.replace(/\D/g, ''))
                             }
-                            className="w-14 h-8 text-center text-sm font-medium text-[#475467] rounded-md border border-[#CBD5E1] bg-[#F8FAFC] hover:bg-white focus:bg-white focus:border-[#856BFF] focus:ring-1 focus:ring-[#856BFF] outline-none transition-all cursor-text"
+                            className="w-14 h-6 text-center text-xs font-medium text-[#475467] rounded-md border border-[#CBD5E1] bg-[#F8FAFC] hover:bg-white focus:bg-white focus:border-[#856BFF] focus:ring-1 focus:ring-[#856BFF] outline-none transition-all cursor-text"
                           />
                         ) : (
-                          <div className="w-14 h-8 flex items-center justify-center text-sm font-medium text-[#475467] rounded-md border border-[#CBD5E1] bg-[#F8FAFC]">
+                          <div className="w-14 h-6 flex items-center justify-center text-xs font-medium text-[#475467] rounded-md border border-[#CBD5E1] bg-[#F8FAFC]">
                             {member.effortDays}
                           </div>
                         )}
@@ -358,12 +358,12 @@ const EffortDetailsTab = ({ project, isEditing = false, onNext, onCancel }) => {
                     </td>
 
                     {/* Effort In Hrs */}
-                    <td className="py-3 px-4 text-center text-[#475467] font-normal">
+                    <td className="py-1.5 px-4 text-center text-[#475467] font-normal">
                       {member.effortHrs} hrs
                     </td>
 
                     {/* Buffer(Days) Box: Input in Edit mode, styled read box in View mode */}
-                    <td className="py-3 px-4 text-center">
+                    <td className="py-1.5 px-4 text-center">
                       <div className="flex justify-center items-center">
                         {isEditing ? (
                           <input
@@ -373,10 +373,10 @@ const EffortDetailsTab = ({ project, isEditing = false, onNext, onCancel }) => {
                             onChange={(e) =>
                               handleValueChange(group.id, member.id, 'bufferDays', e.target.value.replace(/\D/g, ''))
                             }
-                            className="w-14 h-8 text-center text-sm font-medium text-[#475467] rounded-md border border-[#CBD5E1] bg-[#F8FAFC] hover:bg-white focus:bg-white focus:border-[#856BFF] focus:ring-1 focus:ring-[#856BFF] outline-none transition-all cursor-text"
+                            className="w-14 h-6 text-center text-xs font-medium text-[#475467] rounded-md border border-[#CBD5E1] bg-[#F8FAFC] hover:bg-white focus:bg-white focus:border-[#856BFF] focus:ring-1 focus:ring-[#856BFF] outline-none transition-all cursor-text"
                           />
                         ) : (
-                          <div className="w-14 h-8 flex items-center justify-center text-sm font-medium text-[#475467] rounded-md border border-[#CBD5E1] bg-[#F8FAFC]">
+                          <div className="w-14 h-6 flex items-center justify-center text-xs font-medium text-[#475467] rounded-md border border-[#CBD5E1] bg-[#F8FAFC]">
                             {member.bufferDays}
                           </div>
                         )}
@@ -384,18 +384,18 @@ const EffortDetailsTab = ({ project, isEditing = false, onNext, onCancel }) => {
                     </td>
 
                     {/* Buffer In Hrs */}
-                    <td className="py-3 px-4 text-center text-[#475467] font-normal">
+                    <td className="py-1.5 px-4 text-center text-[#475467] font-normal">
                       {member.bufferHrs} hrs
                     </td>
 
                     {/* Total Hrs */}
-                    <td className="py-3 px-4 text-center text-[#475467] font-normal">
+                    <td className="py-1.5 px-4 text-center text-[#475467] font-normal">
                       {member.totalHrs} hrs
                     </td>
 
                     {/* Action Column (Edit mode only) */}
                     {isEditing && (
-                      <td className="py-3 px-4 text-center">
+                      <td className="py-1.5 px-4 text-center">
                         <div className="flex items-center justify-center gap-3">
                           <button
                             type="button"
@@ -422,14 +422,14 @@ const EffortDetailsTab = ({ project, isEditing = false, onNext, onCancel }) => {
             ))}
 
             {/* TOTAL Row */}
-            <tr className="bg-[#EEF2F6] border-t-2 border-gray-200 text-gray-900 font-bold text-sm">
-              <td className="py-3.5 px-6 font-bold tracking-wide">TOTAL</td>
-              <td className="py-3.5 px-4 text-center font-bold">{DEFAULT_TOTALS.effortDaysHrs}</td>
-              <td className="py-3.5 px-4 text-center font-bold">{DEFAULT_TOTALS.effortHrs}</td>
-              <td className="py-3.5 px-4 text-center font-bold">{DEFAULT_TOTALS.bufferDaysHrs}</td>
-              <td className="py-3.5 px-4 text-center font-bold">{DEFAULT_TOTALS.bufferHrs}</td>
-              <td className="py-3.5 px-4 text-center font-bold">{isEditing ? '' : '270 hrs'}</td>
-              {isEditing && <td className="py-3.5 px-4"></td>}
+            <tr className="bg-[#EFF4FF] border-t-2 border-gray-200 text-gray-900 font-bold text-sm">
+              <td className="py-1.5 px-6 font-bold tracking-wide">TOTAL</td>
+              <td className="py-1.5 px-4 text-center font-bold">{DEFAULT_TOTALS.effortDaysHrs}</td>
+              <td className="py-1.5 px-4 text-center font-bold">{DEFAULT_TOTALS.effortHrs}</td>
+              <td className="py-1.5 px-4 text-center font-bold">{DEFAULT_TOTALS.bufferDaysHrs}</td>
+              <td className="py-1.5 px-4 text-center font-bold">{DEFAULT_TOTALS.bufferHrs}</td>
+              <td className="py-1.5 px-4 text-center font-bold">{isEditing ? '' : '270 hrs'}</td>
+              {isEditing && <td className="py-1.5 px-4"></td>}
             </tr>
           </tbody>
         </table>
@@ -437,12 +437,12 @@ const EffortDetailsTab = ({ project, isEditing = false, onNext, onCancel }) => {
 
       {/* Footer Actions (Edit mode only matching Attachment 5) */}
       {isEditing && (
-        <div className="flex items-center justify-end gap-4 px-6 py-4 border-t border-gray-100 bg-white">
+        <div className="flex items-center justify-end gap-3 px-4 py-2 border-t border-gray-100 bg-white">
           <button
             type="button"
             id="effort-details-cancel-btn"
             onClick={onCancel}
-            className="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-800 transition-colors cursor-pointer bg-transparent border-none"
+            className="px-3 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-800 transition-colors cursor-pointer bg-transparent border-none"
           >
             Cancel
           </button>
@@ -450,7 +450,7 @@ const EffortDetailsTab = ({ project, isEditing = false, onNext, onCancel }) => {
             type="button"
             id="effort-details-next-btn"
             onClick={onNext}
-            className="flex items-center gap-1.5 px-6 py-2.5 bg-[#856BFF] hover:bg-[#7354fd] text-white text-sm font-semibold rounded-lg shadow-sm transition-colors cursor-pointer border-none"
+            className="flex items-center gap-1.5 px-5 py-2 bg-[#856BFF] hover:bg-[#7354fd] text-xs font-semibold rounded-lg shadow-sm transition-colors cursor-pointer border-none"
           >
             <span>Next:</span>
             <ArrowRight size={16} />

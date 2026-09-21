@@ -215,15 +215,15 @@ const TimesheetDataTab = ({ project }) => {
   const totalRecords = 145; // Matching design "Showing 1-10 of 145 records"
 
   return (
-    <div className="space-y-4 font-sans">
+    <div className="space-y-3 font-sans">
       {/* Top Toolbar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
         {/* Left: Search and Filter */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           {/* Search Box */}
           <div className="relative w-64 sm:w-80">
             <Search
-              size={16}
+              size={15}
               className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
             />
             <input
@@ -231,7 +231,7 @@ const TimesheetDataTab = ({ project }) => {
               placeholder="Search tasks..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#856BFF] focus:ring-1 focus:ring-[#856BFF] transition-all shadow-sm"
+              className="w-full pl-8 pr-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#856BFF] focus:ring-1 focus:ring-[#856BFF] transition-all shadow-sm"
             />
           </div>
 
@@ -239,9 +239,9 @@ const TimesheetDataTab = ({ project }) => {
           <div className="relative">
             <button
               onClick={() => setShowFilterDropdown(!showFilterDropdown)}
-              className="flex items-center gap-2 px-3.5 py-2 bg-white border border-[#D8CEFD] text-[#856BFF] text-sm font-semibold rounded-lg hover:bg-purple-50 transition-colors shadow-sm cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-[#D8CEFD] text-[#856BFF] text-xs font-semibold rounded-lg hover:bg-purple-50 transition-colors shadow-sm cursor-pointer"
             >
-              <SlidersHorizontal size={15} />
+              <SlidersHorizontal size={14} />
               <span>Filter</span>
             </button>
 
@@ -273,20 +273,20 @@ const TimesheetDataTab = ({ project }) => {
         </div>
 
         {/* Right: Metrics Badges */}
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2">
           {/* Total Hours Badge */}
-          <div className="px-3.5 py-1.5 bg-gray-100 text-gray-800 text-xs font-semibold rounded-lg">
+          <div className="px-3 py-1 bg-gray-100 text-gray-800 text-[11px] font-semibold rounded-lg">
             Total Hours: <span className="font-bold">780 hrs</span>
           </div>
 
           {/* Approved Hours Badge */}
-          <div className="flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold rounded-lg">
+          <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-semibold rounded-lg">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
             Approved: <span className="font-bold">690 hrs</span>
           </div>
 
           {/* Pending Hours Badge */}
-          <div className="flex items-center gap-1.5 px-3.5 py-1.5 bg-amber-50 text-amber-700 border border-amber-200 text-xs font-semibold rounded-lg">
+          <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-semibold rounded-lg">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
             Pending: <span className="font-bold">90 hrs</span>
           </div>
@@ -298,83 +298,83 @@ const TimesheetDataTab = ({ project }) => {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[1300px]">
             <thead>
-              <tr className="bg-[#F8FAFC] border-b border-gray-200 text-[#475467] text-[12px] font-semibold">
-                <th className="py-3 px-4 whitespace-nowrap">EMP ID</th>
-                <th className="py-3 px-4 whitespace-nowrap">Emp Name</th>
-                <th className="py-3 px-4 whitespace-nowrap">Designation</th>
-                <th className="py-3 px-4 whitespace-nowrap">Project Code</th>
-                <th className="py-3 px-4 whitespace-nowrap">Project Name</th>
-                <th className="py-3 px-4 whitespace-nowrap">Cat. Code</th>
-                <th className="py-3 px-4 whitespace-nowrap">Category</th>
-                <th className="py-3 px-4 min-w-[200px]">Task Description</th>
-                <th className="py-3 px-4 whitespace-nowrap">Hours Spent</th>
-                <th className="py-3 px-4 whitespace-nowrap">From Date</th>
-                <th className="py-3 px-4 whitespace-nowrap">To Date</th>
-                <th className="py-3 px-4 whitespace-nowrap">Approval Status</th>
-                <th className="py-3 px-4 whitespace-nowrap">Approved By</th>
-                <th className="py-3 px-4 whitespace-nowrap">Submitted On</th>
-                <th className="py-3 px-4 whitespace-nowrap">Approved On</th>
+              <tr className="bg-[#F8FAFC] border-b border-gray-200 text-[#475467] text-[11px] font-semibold">
+                <th className="py-2 px-3 whitespace-nowrap">EMP ID</th>
+                <th className="py-2 px-3 whitespace-nowrap">Emp Name</th>
+                <th className="py-2 px-3 whitespace-nowrap">Designation</th>
+                <th className="py-2 px-3 whitespace-nowrap">Project Code</th>
+                <th className="py-2 px-3 whitespace-nowrap">Project Name</th>
+                <th className="py-2 px-3 whitespace-nowrap">Cat. Code</th>
+                <th className="py-2 px-3 whitespace-nowrap">Category</th>
+                <th className="py-2 px-3 min-w-[200px]">Task Description</th>
+                <th className="py-2 px-3 whitespace-nowrap">Hours Spent</th>
+                <th className="py-2 px-3 whitespace-nowrap">From Date</th>
+                <th className="py-2 px-3 whitespace-nowrap">To Date</th>
+                <th className="py-2 px-3 whitespace-nowrap">Approval Status</th>
+                <th className="py-2 px-3 whitespace-nowrap">Approved By</th>
+                <th className="py-2 px-3 whitespace-nowrap">Submitted On</th>
+                <th className="py-2 px-3 whitespace-nowrap">Approved On</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 text-xs text-gray-700">
+            <tbody className="divide-y divide-gray-100 text-[11.5px] text-gray-700">
               {filteredData.map((row) => (
                 <tr
                   key={row.id}
                   className="hover:bg-[#F9FAFB] transition-colors"
                 >
-                  <td className="py-3 px-4 font-semibold text-gray-900 whitespace-nowrap">
+                  <td className="py-1.5 px-3 font-semibold text-gray-900 whitespace-nowrap">
                     {row.empId}
                   </td>
-                  <td className="py-3 px-4 font-medium text-gray-900 whitespace-nowrap">
+                  <td className="py-1.5 px-3 font-medium text-gray-900 whitespace-nowrap">
                     {row.empName}
                   </td>
-                  <td className="py-3 px-4 text-gray-600 whitespace-nowrap">
+                  <td className="py-1.5 px-3 text-gray-600 whitespace-nowrap">
                     {row.designation}
                   </td>
-                  <td className="py-3 px-4 text-gray-600 whitespace-nowrap">
+                  <td className="py-1.5 px-3 text-gray-600 whitespace-nowrap">
                     {row.projectCode}
                   </td>
-                  <td className="py-3 px-4 font-semibold text-gray-900 whitespace-nowrap">
+                  <td className="py-1.5 px-3 font-semibold text-gray-900 whitespace-nowrap">
                     {row.projectName}
                   </td>
-                  <td className="py-3 px-4 text-gray-500 whitespace-nowrap">
+                  <td className="py-1.5 px-3 text-gray-500 whitespace-nowrap">
                     {row.catCode}
                   </td>
-                  <td className="py-3 px-4 text-gray-700 whitespace-nowrap">
+                  <td className="py-1.5 px-3 text-gray-700 whitespace-nowrap">
                     {row.category}
                   </td>
-                  <td className="py-3 px-4 text-gray-800 font-normal">
+                  <td className="py-1.5 px-3 text-gray-800 font-normal">
                     {row.taskDescription}
                   </td>
-                  <td className="py-3 px-4 font-semibold text-gray-900 whitespace-nowrap">
+                  <td className="py-1.5 px-3 font-semibold text-gray-900 whitespace-nowrap">
                     {row.hoursSpent}
                   </td>
-                  <td className="py-3 px-4 text-gray-600 whitespace-nowrap">
+                  <td className="py-1.5 px-3 text-gray-600 whitespace-nowrap">
                     {row.fromDate}
                   </td>
-                  <td className="py-3 px-4 text-gray-600 whitespace-nowrap">
+                  <td className="py-1.5 px-3 text-gray-600 whitespace-nowrap">
                     {row.toDate}
                   </td>
-                  <td className="py-3 px-4 whitespace-nowrap">
+                  <td className="py-1.5 px-3 whitespace-nowrap">
                     {row.approvalStatus === 'Approved' ? (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                         Approved
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#F0EDFF] text-[#6D4AFF] border border-[#D8CEFD]">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-semibold bg-[#F0EDFF] text-[#6D4AFF] border border-[#D8CEFD]">
                         <span className="w-1.5 h-1.5 rounded-full bg-[#856BFF]"></span>
                         Submitted
                       </span>
                     )}
                   </td>
-                  <td className="py-3 px-4 text-gray-700 whitespace-nowrap">
+                  <td className="py-1.5 px-3 text-gray-700 whitespace-nowrap">
                     {row.approvedBy}
                   </td>
-                  <td className="py-3 px-4 text-gray-500 whitespace-nowrap">
+                  <td className="py-1.5 px-3 text-gray-500 whitespace-nowrap">
                     {row.submittedOn}
                   </td>
-                  <td className="py-3 px-4 text-gray-500 whitespace-nowrap">
+                  <td className="py-1.5 px-3 text-gray-500 whitespace-nowrap">
                     {row.approvedOn}
                   </td>
                 </tr>
@@ -384,7 +384,7 @@ const TimesheetDataTab = ({ project }) => {
         </div>
 
         {/* Bottom Pagination */}
-        <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-3.5 bg-white border-t border-gray-100 gap-3 text-xs">
+        <div className="flex flex-col sm:flex-row items-center justify-between px-5 py-2.5 bg-white border-t border-gray-100 gap-3 text-xs">
           <div className="text-gray-500 font-medium">
             Showing 1-{filteredData.length} of {totalRecords} records
           </div>

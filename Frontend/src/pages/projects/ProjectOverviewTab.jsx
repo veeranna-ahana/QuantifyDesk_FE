@@ -123,7 +123,7 @@ function ProgressBar({ value }) {
 
 function MetricCard({ value, label, subLabel, valueClass }) {
   return (
-    <div className="bg-white border border-[#E2E8F0] rounded-xl p-3 flex flex-col items-center justify-center gap-0.5 shadow-sm text-center">
+    <div className="bg-white border border-[#E2E8F0] rounded-xl px-2 py-2 flex flex-col items-center justify-center gap-0.5 shadow-sm text-center">
       <span className={valueClass ?? 'text-xl font-bold text-[#1E293B]'}>{value}</span>
       <span className="text-[11px] text-[#64748B] font-medium leading-snug">{label}</span>
       {subLabel && <span className="text-[10px] text-[#94A3B8] leading-none">{subLabel}</span>}
@@ -138,7 +138,7 @@ const ProjectOverviewTab = ({ project }) => {
   const pCode = project?.project_code || project?.projectCode || OVERVIEW_DATA.projectCode;
 
   return (
-    <div className="flex flex-col gap-4 font-sans w-full">
+    <div className="flex flex-col gap-2 font-sans w-full">
 
       {/* ── Header row ── */}
       <div className="flex items-center justify-between flex-wrap gap-2">
@@ -160,7 +160,7 @@ const ProjectOverviewTab = ({ project }) => {
       </div>
 
       {/* ── Metric Cards ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-1.5">
         <MetricCard value={OVERVIEW_DATA.startDate}         label="Start Date"           valueClass="text-[18px] font-bold text-[#1E293B]" />
         <MetricCard value={OVERVIEW_DATA.endDate}           label="End Date"             valueClass="text-[18px] font-bold text-[#1E293B]" />
         <MetricCard value={`${OVERVIEW_DATA.completion}%`} label="Completion"           valueClass="text-2xl font-bold text-[#1E293B]" />
@@ -187,15 +187,15 @@ const ProjectOverviewTab = ({ project }) => {
       </div>
 
       {/* ── Work Allocation + Team Members ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
 
         {/* Work Allocation */}
-        <div className="bg-white border border-[#E2E8F0] rounded-xl p-5 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
+        <div className="bg-white border border-[#E2E8F0] rounded-xl p-2 shadow-sm">
+          <div className="flex items-center justify-between mb-2">
             <h3 className="text-[14px] font-semibold text-[#1E293B]">Work Allocation</h3>
             <span className="text-[11px] text-[#64748B]">By team member</span>
           </div>
-          <div className="flex flex-col items-center gap-4">
+          <div className="flex flex-col items-center gap-2">
             <PieChart members={TEAM_MEMBERS} />
             <div className="flex flex-wrap justify-center gap-x-4 gap-y-1.5">
               {TEAM_MEMBERS.map((m, i) => (
@@ -209,28 +209,28 @@ const ProjectOverviewTab = ({ project }) => {
         </div>
 
         {/* Team Members table */}
-        <div className="bg-white border border-[#E2E8F0] rounded-xl p-5 shadow-sm">
-          <h3 className="text-[14px] font-semibold text-[#1E293B] mb-4">Team Members</h3>
+        <div className="bg-white border border-[#E2E8F0] rounded-xl p-2 shadow-sm">
+          <h3 className="text-[14px] font-semibold text-[#1E293B] mb-2">Team Members</h3>
           <table className="w-full text-xs">
             <thead>
               <tr className="text-[#94A3B8] uppercase text-[10px] tracking-wider border-b border-[#F1F5F9]">
-                <th className="pb-2 text-left font-semibold">Member</th>
-                <th className="pb-2 text-center font-semibold">Tasks</th>
-                <th className="pb-2 text-center font-semibold">Logged</th>
-                <th className="pb-2 text-center font-semibold">Done</th>
-                <th className="pb-2 text-center font-semibold">Pending</th>
+                <th className="pb-1.5 text-left font-semibold">Member</th>
+                <th className="pb-1.5 text-center font-semibold">Tasks</th>
+                <th className="pb-1.5 text-center font-semibold">Logged</th>
+                <th className="pb-1.5 text-center font-semibold">Done</th>
+                <th className="pb-1.5 text-center font-semibold">Pending</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#F8FAFC]">
               {TEAM_MEMBERS.map((m, i) => (
                 <tr key={i} className="hover:bg-[#FAFAFA] transition-colors">
-                  <td className="py-2.5 text-[#1E293B] font-medium">{m.name}</td>
-                  <td className="py-2.5 text-center text-[#475467]">{m.tasks}</td>
-                  <td className="py-2.5 text-center text-[#475467]">{m.logged}</td>
-                  <td className="py-2.5 text-center">
+                  <td className="py-1 text-[#1E293B] font-medium">{m.name}</td>
+                  <td className="py-1 text-center text-[#475467]">{m.tasks}</td>
+                  <td className="py-1 text-center text-[#475467]">{m.logged}</td>
+                  <td className="py-1 text-center">
                     <span className="text-[#10B981] font-bold">{m.done}</span>
                   </td>
-                  <td className="py-2.5 text-center">
+                  <td className="py-1 text-center">
                     <span className={m.pending === 0 ? 'text-[#10B981] font-bold' : 'text-[#F59E0B] font-bold'}>
                       {m.pending}
                     </span>
@@ -244,7 +244,7 @@ const ProjectOverviewTab = ({ project }) => {
 
       {/* ── Task Allocation & Timesheet Details ── */}
       <div className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[#F1F5F9]">
+        <div className="flex items-center justify-between px-4 py-2.5 border-b border-[#F1F5F9]">
           <h3 className="text-[14px] font-semibold text-[#1E293B]">
             Task Allocation &amp; Timesheet Details
           </h3>
@@ -254,47 +254,47 @@ const ProjectOverviewTab = ({ project }) => {
           <table className="w-full text-xs min-w-[900px]">
             <thead>
               <tr className="bg-[#F8FAFC] border-b border-[#E2E8F0] text-[#94A3B8] text-[10px] uppercase tracking-wider">
-                <th className="py-3 px-4 text-left font-semibold whitespace-nowrap">Team Member</th>
-                <th className="py-3 px-4 text-left font-semibold whitespace-nowrap">Role</th>
-                <th className="py-3 px-4 text-center font-semibold whitespace-nowrap">Units</th>
-                <th className="py-3 px-4 text-center font-semibold whitespace-nowrap">Tasks</th>
-                <th className="py-3 px-4 text-center font-semibold whitespace-nowrap">Completed</th>
-                <th className="py-3 px-4 text-center font-semibold whitespace-nowrap">Pending</th>
-                <th className="py-3 px-4 text-center font-semibold whitespace-nowrap">Alloc. Hours</th>
-                <th className="py-3 px-4 text-center font-semibold whitespace-nowrap">Logged Hours</th>
-                <th className="py-3 px-4 text-center font-semibold whitespace-nowrap">Variance</th>
-                <th className="py-3 px-4 text-center font-semibold whitespace-nowrap">Progress</th>
-                <th className="py-3 px-4 text-center font-semibold whitespace-nowrap">Status</th>
+                <th className="py-2 px-3 text-left font-semibold whitespace-nowrap">Team Member</th>
+                <th className="py-2 px-3 text-left font-semibold whitespace-nowrap">Role</th>
+                <th className="py-2 px-3 text-center font-semibold whitespace-nowrap">Units</th>
+                <th className="py-2 px-3 text-center font-semibold whitespace-nowrap">Tasks</th>
+                <th className="py-2 px-3 text-center font-semibold whitespace-nowrap">Completed</th>
+                <th className="py-2 px-3 text-center font-semibold whitespace-nowrap">Pending</th>
+                <th className="py-2 px-3 text-center font-semibold whitespace-nowrap">Alloc. Hours</th>
+                <th className="py-2 px-3 text-center font-semibold whitespace-nowrap">Logged Hours</th>
+                <th className="py-2 px-3 text-center font-semibold whitespace-nowrap">Variance</th>
+                <th className="py-2 px-3 text-center font-semibold whitespace-nowrap">Progress</th>
+                <th className="py-2 px-3 text-center font-semibold whitespace-nowrap">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#F1F5F9] text-[#475467]">
               {TASK_ALLOCATION.map((row, i) => (
                 <tr key={i} className="hover:bg-[#FAFAFA] transition-colors">
-                  <td className="py-3 px-4 text-[#1E293B] font-semibold whitespace-nowrap">{row.member}</td>
-                  <td className="py-3 px-4 text-[#64748B] whitespace-nowrap">{row.role}</td>
-                  <td className="py-3 px-4 text-center">
+                  <td className="py-1.5 px-3 text-[#1E293B] font-semibold whitespace-nowrap">{row.member}</td>
+                  <td className="py-1.5 px-3 text-[#64748B] whitespace-nowrap">{row.role}</td>
+                  <td className="py-1.5 px-3 text-center">
                     <span className="text-[#7C3AED] font-bold">{row.units}</span>
                   </td>
-                  <td className="py-3 px-4 text-center font-medium">{row.tasks}</td>
-                  <td className="py-3 px-4 text-center">
+                  <td className="py-1.5 px-3 text-center font-medium">{row.tasks}</td>
+                  <td className="py-1.5 px-3 text-center">
                     <span className="text-[#10B981] font-bold">{row.completed}</span>
                   </td>
-                  <td className="py-3 px-4 text-center">
+                  <td className="py-1.5 px-3 text-center">
                     <span className={row.pending === 0 ? 'text-[#10B981] font-bold' : 'text-[#F59E0B] font-bold'}>
                       {row.pending}
                     </span>
                   </td>
-                  <td className="py-3 px-4 text-center font-medium">{row.allocHours}</td>
-                  <td className="py-3 px-4 text-center font-medium">{row.loggedHours}</td>
-                  <td className="py-3 px-4 text-center">
+                  <td className="py-1.5 px-3 text-center font-medium">{row.allocHours}</td>
+                  <td className="py-1.5 px-3 text-center font-medium">{row.loggedHours}</td>
+                  <td className="py-1.5 px-3 text-center">
                     <span className={`font-bold ${row.variancePos ? 'text-[#DC2626]' : 'text-[#059669]'}`}>
                       {row.variance}
                     </span>
                   </td>
-                  <td className="py-3 px-4">
+                  <td className="py-1.5 px-3">
                     <ProgressBar value={row.progress} />
                   </td>
-                  <td className="py-3 px-4 text-center">
+                  <td className="py-1.5 px-3 text-center">
                     <StatusBadge type={row.statusType} label={row.status} />
                   </td>
                 </tr>
