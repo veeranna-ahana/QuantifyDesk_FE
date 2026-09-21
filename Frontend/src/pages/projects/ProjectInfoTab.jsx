@@ -4,11 +4,11 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronDown, ArrowRight } from 'lucide-react';
 
 // ─── Styling constants ────────────────────────────────────────────────────────
-const BORDER = '#E2E8F0';
-const FILLED_BG = '#FAF9FD';
-const FILLED_TEXT = '#334155';
+const BORDER = '#DFE1E6';
+const FILLED_BG = '#F8F9FF';
+const FILLED_TEXT = '#6B7280';
 const EDIT_BG = '#FFFFFF';
-const EDIT_TEXT = '#1E293B';
+const EDIT_TEXT = '#172B4D';
 
 const PROJECT_TYPE_OPTIONS = [
   { value: 'One Time Project', label: 'One Time Project' },
@@ -34,14 +34,14 @@ const STATUS_OPTIONS = [
 // ─── Field-level sub-components ───────────────────────────────────────────────
 
 const FieldLabel = ({ children }) => (
-  <label className="block text-[11.5px] font-semibold text-[#475569] mb-0.5 leading-tight">
+  <label className="block h-4 text-[12px] font-bold tracking-[0.66px] text-[#6B778C] leading-4">
     {children}
   </label>
 );
 
 const ReadInput = ({ value, className = '' }) => (
   <div
-    className={`box-border flex items-center px-3 h-[32px] border rounded-[6px] w-full overflow-hidden ${className}`}
+    className={`box-border flex items-center px-3 h-11 border rounded w-full overflow-hidden ${className}`}
     style={{
       backgroundColor: FILLED_BG,
       borderColor: BORDER,
@@ -49,7 +49,7 @@ const ReadInput = ({ value, className = '' }) => (
     title={value}
   >
     <span
-      className="font-sans font-normal text-[13px] truncate w-full"
+      className="font-sans font-normal text-[14px] leading-4 truncate w-full"
       style={{ color: FILLED_TEXT }}
     >
       {value}
@@ -59,14 +59,14 @@ const ReadInput = ({ value, className = '' }) => (
 
 const ReadSelect = ({ value }) => (
   <div
-    className="box-border flex items-center justify-between px-3 h-[32px] border rounded-[6px] w-full"
+    className="box-border flex items-center justify-between px-3 h-11 border rounded w-full"
     style={{
       backgroundColor: FILLED_BG,
       borderColor: BORDER,
     }}
   >
     <span
-      className="font-sans font-normal text-[13px] truncate flex-1 pr-2"
+      className="font-sans font-normal text-[14px] leading-4 truncate flex-1 pr-2"
       style={{ color: FILLED_TEXT }}
     >
       {value}
@@ -80,15 +80,15 @@ const ReadSelect = ({ value }) => (
 
 const ReadTextarea = ({ value }) => (
   <div
-    className="box-border w-full border rounded-[6px] p-2 px-3"
+    className="box-border w-full min-h-[95px] border rounded p-3"
     style={{
       backgroundColor: FILLED_BG,
       borderColor: BORDER,
-      minHeight: '52px',
+      minHeight: '95px',
     }}
   >
     <p
-      className="font-sans font-normal text-[12.5px] leading-relaxed m-0 text-[#334155]"
+      className="font-sans font-normal text-[14px] leading-[23px] m-0 text-[#6B7280]"
     >
       {value}
     </p>
@@ -102,7 +102,7 @@ const EditableInput = ({ value, onChange, placeholder, id }) => (
     value={value}
     onChange={onChange}
     placeholder={placeholder}
-    className="box-border flex items-center px-3 h-[32px] border rounded-[6px] w-full font-sans font-normal text-[13px] outline-none focus:border-[#856BFF] focus:bg-white transition-colors"
+    className="box-border flex items-center px-3 h-11 border rounded w-full font-sans font-normal text-[14px] leading-4 outline-none focus:border-[#856BFF] focus:bg-white transition-colors"
     style={{
       backgroundColor: EDIT_BG,
       borderColor: BORDER,
@@ -117,7 +117,7 @@ const EditableSelect = ({ value, onChange, options, id }) => (
       id={id}
       value={value}
       onChange={onChange}
-      className="box-border appearance-none w-full h-[32px] px-3 pr-8 border rounded-[6px] font-sans font-normal text-[13px] cursor-pointer outline-none focus:border-[#856BFF] focus:bg-white transition-colors"
+      className="box-border appearance-none w-full h-11 px-3 pr-8 border rounded font-sans font-normal text-[14px] leading-4 cursor-pointer outline-none focus:border-[#856BFF] focus:bg-white transition-colors"
       style={{
         backgroundColor: EDIT_BG,
         borderColor: BORDER,
@@ -149,12 +149,12 @@ const EditableTextarea = ({
     value={value}
     onChange={onChange}
     placeholder={placeholder}
-    className="box-border w-full p-2 px-3 border rounded-[6px] font-sans font-normal text-[12.5px] leading-relaxed outline-none focus:border-[#856BFF] focus:bg-white transition-colors resize-none"
+    className="box-border w-full min-h-[95px] p-3 border rounded font-sans font-normal text-[14px] leading-[23px] outline-none focus:border-[#856BFF] focus:bg-white transition-colors resize-none"
     style={{
       backgroundColor: EDIT_BG,
       borderColor: BORDER,
       color: EDIT_TEXT,
-      minHeight: '52px',
+      minHeight: '95px',
     }}
   />
 );
@@ -308,18 +308,18 @@ const ProjectInfoTab = ({
 
   return (
     <div className="w-full text-sm">
-      <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-3">
 
         {/* ── Row 1: PMS ID ── */}
-        <div className="grid grid-cols-12 gap-3">
+        <div className="grid grid-cols-12 gap-1.5">
           <div className="col-span-12 sm:col-span-3">
             <FieldLabel>PMS ID</FieldLabel>
-            <ReadInput value={disp.pmsId} />
+            <ReadInput value={disp.pmsId} className="h-9" />
           </div>
         </div>
 
         {/* ── Row 2: Project Name*, Project Type, Customer Name ── */}
-        <div className="grid grid-cols-12 gap-3">
+        <div className="grid grid-cols-12 gap-1.5">
           <div className="col-span-12 sm:col-span-4">
             <FieldLabel>Project Name*</FieldLabel>
             <ReadInput value={disp.projectName} />
@@ -350,7 +350,7 @@ const ProjectInfoTab = ({
         </div>
 
         {/* ── Row 3: Presale ID, NBD ID, O2D ID, Project Code ── */}
-        <div className="grid grid-cols-12 gap-3">
+        <div className="grid grid-cols-12 gap-1.5">
           <div className="col-span-12 sm:col-span-3">
             <FieldLabel>Presale ID</FieldLabel>
             <ReadInput value={disp.presaleId} />
@@ -408,7 +408,7 @@ const ProjectInfoTab = ({
         </div>
 
         {/* ── Row 4: Sub Category, Start Date, End Date, Project Status ── */}
-        <div className="grid grid-cols-12 gap-3">
+        <div className="grid grid-cols-12 gap-1.5">
           <div className="col-span-12 sm:col-span-3">
             <FieldLabel>Sub Category</FieldLabel>
             {isEditing ? (
@@ -444,7 +444,7 @@ const ProjectInfoTab = ({
         </div>
 
         {/* ── Row 5: Description ── */}
-        <div className="grid grid-cols-12 gap-3">
+        <div className="grid grid-cols-12 gap-1.5">
           <div className="col-span-12">
             <FieldLabel>Description</FieldLabel>
             {isEditing ? (
@@ -468,7 +468,7 @@ const ProjectInfoTab = ({
 
       {/* ── Footer Actions (Only shown in Edit mode as in Figma Image 4) ── */}
       {isEditing && (
-        <div className="flex items-center justify-end gap-3 pt-2 mt-1">
+        <div className="box-border flex min-h-[61px] items-center justify-end gap-3 border-t border-[#DFE1E6] pt-2 mt-1">
           <button
             type="button"
             id="project-info-cancel-btn"

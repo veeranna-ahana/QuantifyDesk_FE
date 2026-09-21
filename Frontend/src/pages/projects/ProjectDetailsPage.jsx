@@ -239,7 +239,7 @@ const ProjectDetailsPage = () => {
         {activeTab === "Project Overview" ? (
           <ProjectOverviewTab project={project} />
         ) : activeTab === "Project Info" ? (
-          <div className="bg-white rounded-lg border border-[#E2E8F0] p-3 px-4 box-border shadow-none">
+          <div className="bg-white p-4 box-border shadow-none">
             <ProjectInfoTab
               project={project}
               isEditing={isEditing}
