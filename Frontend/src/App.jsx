@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Cookies from 'js-cookie';
 import { Toaster } from 'react-hot-toast';
 import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
+import Dashboard from './pages/Dashboard/Dashboard';
 // import ProtectedRoute from '@/components/ui/ProtectedRoute/ProtectedRoute';
 import MainLayout from '@/components/layout/AppLayout/AppLayout';
 
