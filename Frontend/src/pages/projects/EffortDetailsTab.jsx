@@ -9,6 +9,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import './EffortDetailsTab.css';
 
 // Initial dataset strictly matching the reference UI/UX mockup
 const INITIAL_EFFORT_GROUPS = [
@@ -175,243 +176,185 @@ const EffortDetailsTab = ({ project, isEditing = false, onNext, onCancel }) => {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden font-sans">
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
-          {/* Table Header */}
+    <div className="effort-details-shell">
+      <div className="effort-details-table-wrap">
+        <table className="effort-details-table">
           <thead>
-            <tr className="bg-[#F8FAFC] border-b border-[#C3C6D64D] text-[#475467] text-xs font-semibold">
-              <th className={`py-1.5 px-6 font-semibold text-left ${isEditing ? 'w-[22%]' : 'w-[25%]'}`}>Role</th>
-              <th className={`py-1.5 px-4 font-semibold text-center ${isEditing ? 'w-[13%]' : 'w-[15%]'}`}>Effort(Days)</th>
-              <th className={`py-1.5 px-4 font-semibold text-center ${isEditing ? 'w-[12%]' : 'w-[15%]'}`}>In Hrs</th>
-              <th className={`py-1.5 px-4 font-semibold text-center ${isEditing ? 'w-[13%]' : 'w-[15%]'}`}>Buffer(Days)</th>
-              <th className={`py-1.5 px-4 font-semibold text-center ${isEditing ? 'w-[12%]' : 'w-[15%]'}`}>In Hrs</th>
-              <th className={`py-1.5 px-4 font-semibold text-center ${isEditing ? 'w-[12%]' : 'w-[15%]'}`}>Total Hrs</th>
-              {isEditing && (
-                <th className="py-1.5 px-4 font-semibold text-center w-[16%]">Action</th>
-              )}
+            <tr>
+              <th style={{ width: isEditing ? '22%' : '25%' }}>Role</th>
+              <th style={{ width: isEditing ? '13%' : '15%' }}>Effort(Days)</th>
+              <th style={{ width: isEditing ? '12%' : '15%' }}>In Hrs</th>
+              <th style={{ width: isEditing ? '13%' : '15%' }}>Buffer(Days)</th>
+              <th style={{ width: isEditing ? '12%' : '15%' }}>In Hrs</th>
+              <th style={{ width: isEditing ? '12%' : '15%' }}>Total Hrs</th>
+              {isEditing && <th style={{ width: '16%' }}>Action</th>}
             </tr>
           </thead>
 
-          {/* Table Body */}
-          <tbody className="divide-y divide-gray-100 text-sm">
+          <tbody>
             {effortGroups.map((group) => (
               <React.Fragment key={group.id}>
-                {/* Role Group Header Row */}
-                <tr className="bg-white border-y border-gray-100">
-                  <td className="py-1 px-6 font-bold text-gray-900 text-xs">
-                    {group.roleCategory}
-                  </td>
-                  <td colSpan={isEditing ? 5 : 5}></td>
-                  {/* + Add Member button in Action column (Edit mode only) */}
+                <tr className="effort-details-role-row">
+                  <td>{group.roleCategory}</td>
+                  <td colSpan={isEditing ? 5 : 5} className="effort-details-role-spacer"></td>
                   {isEditing && (
-                    <td className="py-1 px-4 text-center">
+                    <td className="effort-details-role-action">
                       <button
                         type="button"
                         onClick={() => handleStartAddMember(group.id)}
-                        className="inline-flex items-center gap-1.5 text-xs font-bold text-[#856BFF] hover:text-[#7354fd] cursor-pointer bg-transparent border-none transition-colors"
+                        className="effort-details-add-member"
                       >
-                        <UserPlus size={14} className="text-[#856BFF]" />
+                        <UserPlus size={14} />
                         <span>+ Add Member</span>
                       </button>
                     </td>
                   )}
                 </tr>
 
-                {/* Inline Add Member Row (Edit mode only) */}
                 {isEditing && addingGroupId === group.id && (
-                  <tr className="bg-[#FAF8FF]/60 border-b border-purple-100 animate-in fade-in duration-150">
-                    {/* Role Dropdown */}
-                    <td className="py-1.5 px-6">
-                      <div className="relative inline-block w-full max-w-[180px]">
+                  <tr className="effort-details-pending-row">
+                    <td>
+                      <div className="effort-details-select-wrap">
                         <select
                           value={newMemberData.name}
-                          onChange={(e) =>
-                            setNewMemberData({ ...newMemberData, name: e.target.value })
-                          }
-                          className="w-full appearance-none px-3 py-1.5 text-xs text-gray-700 bg-white border border-[#CBD5E1] rounded-lg outline-none focus:border-[#856BFF] focus:ring-1 focus:ring-[#856BFF] cursor-pointer font-medium"
+                          onChange={(e) => setNewMemberData({ ...newMemberData, name: e.target.value })}
+                          className="effort-details-select"
                         >
-                          <option value="" disabled>
-                            Add Member
-                          </option>
+                          <option value="" disabled>Add Member</option>
                           {AVAILABLE_MEMBERS.map((name) => (
-                            <option key={name} value={name}>
-                              {name}
-                            </option>
+                            <option key={name} value={name}>{name}</option>
                           ))}
                         </select>
-                        <ChevronDown
-                          size={14}
-                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-                        />
+                        <span className="effort-details-select-chevron"><ChevronDown size={14} /></span>
                       </div>
                     </td>
 
-                    {/* Effort(Days) Input Box */}
-                    <td className="py-1.5 px-4 text-center">
-                      <div className="flex justify-center items-center">
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          value={newMemberData.effortDays}
-                          onChange={(e) =>
-                            setNewMemberData({
-                              ...newMemberData,
-                              effortDays: e.target.value.replace(/\D/g, ''),
-                            })
-                          }
-                          className="w-14 h-6 text-center text-xs font-medium text-[#475467] rounded-md border border-[#CBD5E1] bg-white outline-none focus:border-[#856BFF] focus:ring-1 focus:ring-[#856BFF]"
-                        />
-                      </div>
+                    <td>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={newMemberData.effortDays}
+                        onChange={(e) =>
+                          setNewMemberData({
+                            ...newMemberData,
+                            effortDays: e.target.value.replace(/\D/g, ''),
+                          })
+                        }
+                        className="effort-details-input"
+                      />
                     </td>
 
-                    {/* Effort In Hrs */}
-                    <td className="py-1.5 px-4 text-center text-[#475467] text-xs font-normal">
+                    <td className="effort-details-value">
                       {newMemberData.effortDays ? `${Number(newMemberData.effortDays) * 8} hrs` : '000 hrs'}
                     </td>
 
-                    {/* Buffer(Days) Input Box */}
-                    <td className="py-1.5 px-4 text-center">
-                      <div className="flex justify-center items-center">
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          value={newMemberData.bufferDays}
-                          onChange={(e) =>
-                            setNewMemberData({
-                              ...newMemberData,
-                              bufferDays: e.target.value.replace(/\D/g, ''),
-                            })
-                          }
-                          className="w-14 h-6 text-center text-xs font-medium text-[#475467] rounded-md border border-[#CBD5E1] bg-white outline-none focus:border-[#856BFF] focus:ring-1 focus:ring-[#856BFF]"
-                        />
-                      </div>
+                    <td>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={newMemberData.bufferDays}
+                        onChange={(e) =>
+                          setNewMemberData({
+                            ...newMemberData,
+                            bufferDays: e.target.value.replace(/\D/g, ''),
+                          })
+                        }
+                        className="effort-details-input"
+                      />
                     </td>
 
-                    {/* Buffer In Hrs */}
-                    <td className="py-1.5 px-4 text-center text-[#475467] text-xs font-normal">
+                    <td className="effort-details-value">
                       {newMemberData.bufferDays ? `${Number(newMemberData.bufferDays) * 8} hrs` : '00 hrs'}
                     </td>
 
-                    {/* Total Hrs */}
-                    <td className="py-1.5 px-4 text-center text-[#475467] text-xs font-normal">
+                    <td className="effort-details-value">
                       {(Number(newMemberData.effortDays) || 0) * 8 + (Number(newMemberData.bufferDays) || 0) * 8} hrs
                     </td>
 
-                    {/* Actions: Cancel (X) & Save (Check) */}
-                    <td className="py-1.5 px-4 text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        {/* Red Cancel Button */}
+                    <td>
+                      <div className="effort-details-action-cell">
                         <button
                           type="button"
                           title="Cancel"
                           onClick={handleCancelAddMember}
-                          className="text-red-500 hover:text-red-600 transition-colors p-1 cursor-pointer bg-transparent border-none inline-flex items-center justify-center"
+                          className="effort-details-icon-btn effort-details-icon-btn--danger"
                         >
-                          <XCircle size={19} />
+                          <XCircle size={18} />
                         </button>
-
-                        {/* Dark Blue/Green Confirm Button */}
                         <button
                           type="button"
                           title="Add Member"
                           onClick={() => handleConfirmAddMember(group.id)}
-                          className="text-[#0F172A] hover:text-[#856BFF] transition-colors p-1 cursor-pointer bg-transparent border-none inline-flex items-center justify-center"
+                          className="effort-details-icon-btn"
                         >
-                          <CheckCircle2 size={19} />
+                          <CheckCircle2 size={18} />
                         </button>
                       </div>
                     </td>
                   </tr>
                 )}
 
-                {/* Group Members Rows */}
                 {group.members.map((member) => (
-                  <tr
-                    key={member.id}
-                    className="hover:bg-[#F9FAFB] transition-colors border-b border-gray-50"
-                  >
-                    {/* Member Name */}
-                    <td className="py-1.5 px-6 text-gray-800 font-normal">
-                      {member.name}
+                  <tr key={member.id}>
+                    <td>
+                      <span className="effort-details-member-name">{member.name}</span>
                     </td>
 
-                    {/* Effort(Days) Box: Input in Edit mode, styled read box in View mode */}
-                    <td className="py-1.5 px-4 text-center">
-                      <div className="flex justify-center items-center">
-                        {isEditing ? (
-                          <input
-                            type="text"
-                            inputMode="numeric"
-                            value={member.effortDays}
-                            onChange={(e) =>
-                              handleValueChange(group.id, member.id, 'effortDays', e.target.value.replace(/\D/g, ''))
-                            }
-                            className="w-14 h-6 text-center text-xs font-medium text-[#475467] rounded-md border border-[#CBD5E1] bg-[#F8FAFC] hover:bg-white focus:bg-white focus:border-[#856BFF] focus:ring-1 focus:ring-[#856BFF] outline-none transition-all cursor-text"
-                          />
-                        ) : (
-                          <div className="w-14 h-6 flex items-center justify-center text-xs font-medium text-[#475467] rounded-md border border-[#CBD5E1] bg-[#F8FAFC]">
-                            {member.effortDays}
-                          </div>
-                        )}
-                      </div>
+                    <td>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          value={member.effortDays}
+                          onChange={(e) =>
+                            handleValueChange(group.id, member.id, 'effortDays', e.target.value.replace(/\D/g, ''))
+                          }
+                          className="effort-details-input"
+                        />
+                      ) : (
+                        <span className="effort-details-read-box">{member.effortDays}</span>
+                      )}
                     </td>
 
-                    {/* Effort In Hrs */}
-                    <td className="py-1.5 px-4 text-center text-[#475467] font-normal">
-                      {member.effortHrs} hrs
+                    <td className="effort-details-value">{member.effortHrs} hrs</td>
+
+                    <td>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          value={member.bufferDays}
+                          onChange={(e) =>
+                            handleValueChange(group.id, member.id, 'bufferDays', e.target.value.replace(/\D/g, ''))
+                          }
+                          className="effort-details-input"
+                        />
+                      ) : (
+                        <span className="effort-details-read-box">{member.bufferDays}</span>
+                      )}
                     </td>
 
-                    {/* Buffer(Days) Box: Input in Edit mode, styled read box in View mode */}
-                    <td className="py-1.5 px-4 text-center">
-                      <div className="flex justify-center items-center">
-                        {isEditing ? (
-                          <input
-                            type="text"
-                            inputMode="numeric"
-                            value={member.bufferDays}
-                            onChange={(e) =>
-                              handleValueChange(group.id, member.id, 'bufferDays', e.target.value.replace(/\D/g, ''))
-                            }
-                            className="w-14 h-6 text-center text-xs font-medium text-[#475467] rounded-md border border-[#CBD5E1] bg-[#F8FAFC] hover:bg-white focus:bg-white focus:border-[#856BFF] focus:ring-1 focus:ring-[#856BFF] outline-none transition-all cursor-text"
-                          />
-                        ) : (
-                          <div className="w-14 h-6 flex items-center justify-center text-xs font-medium text-[#475467] rounded-md border border-[#CBD5E1] bg-[#F8FAFC]">
-                            {member.bufferDays}
-                          </div>
-                        )}
-                      </div>
-                    </td>
+                    <td className="effort-details-value">{member.bufferHrs} hrs</td>
+                    <td className="effort-details-value">{member.totalHrs} hrs</td>
 
-                    {/* Buffer In Hrs */}
-                    <td className="py-1.5 px-4 text-center text-[#475467] font-normal">
-                      {member.bufferHrs} hrs
-                    </td>
-
-                    {/* Total Hrs */}
-                    <td className="py-1.5 px-4 text-center text-[#475467] font-normal">
-                      {member.totalHrs} hrs
-                    </td>
-
-                    {/* Action Column (Edit mode only) */}
                     {isEditing && (
-                      <td className="py-1.5 px-4 text-center">
-                        <div className="flex items-center justify-center gap-3">
+                      <td>
+                        <div className="effort-details-action-cell">
                           <button
                             type="button"
                             title="Edit member"
                             onClick={() => toast.success(`Editing ${member.name}'s effort values.`)}
-                            className="p-1 rounded hover:bg-purple-50 text-[#856BFF] transition-colors cursor-pointer bg-transparent border-none inline-flex items-center justify-center"
+                            className="effort-details-icon-btn"
                           >
-                            <Pencil size={15} />
+                            <Pencil size={14} />
                           </button>
                           <button
                             type="button"
                             title="Remove member"
                             onClick={() => handleDeleteMember(group.id, member.id, member.name)}
-                            className="p-1 rounded hover:bg-red-50 text-red-400 hover:text-red-600 transition-colors cursor-pointer bg-transparent border-none inline-flex items-center justify-center"
+                            className="effort-details-icon-btn effort-details-icon-btn--danger"
                           >
-                            <Trash2 size={15} />
+                            <Trash2 size={14} />
                           </button>
                         </div>
                       </td>
@@ -421,28 +364,26 @@ const EffortDetailsTab = ({ project, isEditing = false, onNext, onCancel }) => {
               </React.Fragment>
             ))}
 
-            {/* TOTAL Row */}
-            <tr className="bg-[#EFF4FF] border-t-2 border-gray-200 text-gray-900 font-bold text-sm">
-              <td className="py-1.5 px-6 font-bold tracking-wide">TOTAL</td>
-              <td className="py-1.5 px-4 text-center font-bold">{DEFAULT_TOTALS.effortDaysHrs}</td>
-              <td className="py-1.5 px-4 text-center font-bold">{DEFAULT_TOTALS.effortHrs}</td>
-              <td className="py-1.5 px-4 text-center font-bold">{DEFAULT_TOTALS.bufferDaysHrs}</td>
-              <td className="py-1.5 px-4 text-center font-bold">{DEFAULT_TOTALS.bufferHrs}</td>
-              <td className="py-1.5 px-4 text-center font-bold">{isEditing ? '' : '270 hrs'}</td>
-              {isEditing && <td className="py-1.5 px-4"></td>}
+            <tr className="effort-details-total-row">
+              <td>TOTAL</td>
+              <td>{DEFAULT_TOTALS.effortDaysHrs}</td>
+              <td>{DEFAULT_TOTALS.effortHrs}</td>
+              <td>{DEFAULT_TOTALS.bufferDaysHrs}</td>
+              <td>{DEFAULT_TOTALS.bufferHrs}</td>
+              <td>{isEditing ? '' : '270 hrs'}</td>
+              {isEditing && <td></td>}
             </tr>
           </tbody>
         </table>
       </div>
 
-      {/* Footer Actions (Edit mode only matching Attachment 5) */}
       {isEditing && (
-        <div className="flex items-center justify-end gap-3 px-4 py-2 border-t border-gray-100 bg-white">
+        <div className="effort-details-footer">
           <button
             type="button"
             id="effort-details-cancel-btn"
             onClick={onCancel}
-            className="px-3 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-800 transition-colors cursor-pointer bg-transparent border-none"
+            className="effort-details-footer-btn effort-details-footer-btn--secondary"
           >
             Cancel
           </button>
@@ -450,10 +391,10 @@ const EffortDetailsTab = ({ project, isEditing = false, onNext, onCancel }) => {
             type="button"
             id="effort-details-next-btn"
             onClick={onNext}
-            className="flex items-center gap-1.5 px-5 py-2 bg-[#856BFF] hover:bg-[#7354fd] text-xs font-semibold rounded-lg shadow-sm transition-colors cursor-pointer border-none"
+            className="effort-details-footer-btn effort-details-footer-btn--primary"
           >
             <span>Next:</span>
-            <ArrowRight size={16} />
+            <ArrowRight size={14} />
           </button>
         </div>
       )}

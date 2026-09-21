@@ -1207,7 +1207,7 @@ const AssignmentScreen = () => {
   const total_balance_hours = Math.max(Number(total_effort_hours) - Number(total_assigned_hours), 0);
 
   return (
-    <div className="p-6 bg-[#FAF8FF] min-h-full font-sans">
+    <div className="py-4 px-6 bg-[#FAF8FF] min-h-full font-sans">
       {/* Title */}
       <div className="mb-6">
         <h2 className="text-2xl font-extrabold text-slate-800 flex items-center gap-2">

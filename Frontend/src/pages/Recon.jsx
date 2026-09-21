@@ -712,7 +712,7 @@ useEffect(() => {
 
   // ─── Render ─────────────────────────────────────────────────────
   return (
-    <div className="p-6 font-sans bg-[#FAF8FF] min-h-screen">
+    <div className="py-4 px-6 font-sans bg-[#FAF8FF] min-h-screen">
       {/* ── If Detail View is Active, Show Only Project Details ── */}
       {showDetailView ? (
         <div className="px-0 pt-0 -mt-2">

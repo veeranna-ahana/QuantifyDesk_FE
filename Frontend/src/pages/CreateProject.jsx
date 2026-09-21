@@ -266,7 +266,7 @@ const employeeOptions = useMemo(() => {
 };
 
   return (
-    <div className="mx-auto  bg-[#FAF8FF] p-6 font-sans">
+    <div className="mx-auto  bg-[#FAF8FF] py-4 px-6 font-sans">
 
       {/* ── Page header ── */}
       <div className="mb-6">

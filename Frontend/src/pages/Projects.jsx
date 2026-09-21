@@ -993,7 +993,7 @@ const Projects = () => {
   ];
 
   return (
-    <div className="mx-auto  bg-[#FAF8FF] p-6 font-sans">
+    <div className="mx-auto  bg-[#FAF8FF] py-4 px-6 font-sans">
 
       {/* ── Page header ── */}
       <div className="sticky top-0 z-30  pb-4  flex items-start justify-between mb-4 flex-wrap gap-3">

@@ -316,7 +316,7 @@ export default function EffortEstimate() {
   ];
 
   return (
-    <div className="mx-auto  bg-[#FAF8FF] p-6 font-sans">
+    <div className="mx-auto  bg-[#FAF8FF] py-4 px-6 font-sans">
 
       {/* ── Page header - Sticky ── */}
       <div className="sticky top-0 z-30  pb-4  mb-4">
