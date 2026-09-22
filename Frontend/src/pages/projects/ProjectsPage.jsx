@@ -123,7 +123,7 @@ function SkeletonRow() {
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
-const ALL_STATUSES    = ['All', 'In Progress', 'Completed', 'On Hold', 'Not Started', 'Cancelled'];
+const ALL_STATUSES    = ['All', 'In Progress', 'Completed'];
 const FILTER_LABELS   = { All: null, 'In Progress': 'In Progress', Completed: 'Completed', 'On Hold': 'On Hold', 'Not Started': 'Not Started', Cancelled: 'Cancelled' };
 
 export default function ProjectsPage() {
