@@ -304,7 +304,7 @@ function ProjectCard({ project, globalTab, searchQuery }) {
             <span className="text-gray-300 mx-1">•</span>
             <span>
               Team :{' '}
-              <span className="text-[#6366F1] font-semibold cursor-pointer hover:underline">
+              <span className="text-[#856BFF] font-semibold cursor-pointer hover:underline">
                 {project.teamMembersCount} Members
               </span>
             </span>
@@ -326,7 +326,7 @@ function ProjectCard({ project, globalTab, searchQuery }) {
             <div className="w-[85px] h-[6px] rounded-full bg-gray-100 overflow-hidden">
               <div
                 className="h-full rounded-full transition-all duration-500"
-                style={{ width: `${project.milestoneCompletion}%`, backgroundColor: '#6366F1' }}
+                style={{ width: `${project.milestoneCompletion}%`, backgroundColor: '#856BFF' }}
               />
             </div>
             <button
@@ -754,7 +754,7 @@ export default function DailyUpdatesReport() {
             value={MOCK_METRICS.inProgressTasks}
             icon={RotateCcw}
             iconBg="#EEF2FF"
-            iconColor="#6366F1"
+            iconColor="#856BFF"
           />
           <StatCard
             label="Last Completed"
@@ -784,7 +784,7 @@ export default function DailyUpdatesReport() {
                   onClick={() => setGlobalTab(tab.key)}
                   className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
                     isActive
-                      ? 'bg-[#6366F1] text-white font-semibold shadow-sm'
+                      ? 'bg-[#856BFF] text-white font-semibold shadow-sm'
                       : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
                   }`}
                 >
@@ -816,13 +816,13 @@ export default function DailyUpdatesReport() {
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder="Search task titles..."
-                className="pl-8 pr-3 py-1.5 text-[12px] border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-[#6366F1] focus:border-[#6366F1] transition-all w-52 text-gray-700 placeholder-gray-400"
+                className="pl-8 pr-3 py-1.5 text-[12px] border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-[#856BFF] focus:border-[#856BFF] transition-all w-52 text-gray-700 placeholder-gray-400"
               />
             </div>
 
             <button
               onClick={handleExport}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#6366F1] hover:bg-[#4F46E5] text-white text-[12px] font-semibold rounded-lg transition-all shadow-sm active:scale-95"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#856BFF] hover:bg-[#4F46E5] text-white text-[12px] font-semibold rounded-lg transition-all shadow-sm active:scale-95"
             >
               <Download size={13} strokeWidth={2.5} />
               <span>Export Report</span>

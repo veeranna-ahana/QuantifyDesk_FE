@@ -24,7 +24,7 @@ const TEAM_MEMBERS = [
   { name: 'Priya Patel',    tasks: 6, logged: '38h', done: 5,  pending: 1, color: '#10B981' },
   { name: 'Anand Krishnan', tasks: 4, logged: '25h', done: 3,  pending: 1, color: '#F59E0B' },
   { name: 'Sunita Reddy',   tasks: 3, logged: '12h', done: 2,  pending: 1, color: '#EF4444' },
-  { name: 'Vikram Singh',   tasks: 2, logged: '11h', done: 2,  pending: 0, color: '#6366F1' },
+  { name: 'Vikram Singh',   tasks: 2, logged: '11h', done: 2,  pending: 0, color: '#856BFF' },
   { name: 'Meera Iyer',     tasks: 2, logged: '9h',  done: 1,  pending: 1, color: '#EC4899' },
 ];
 
@@ -55,7 +55,7 @@ const TASK_ALLOCATION = [
   },
 ];
 
-const PIE_COLORS = ['#7C3AED', '#10B981', '#F59E0B', '#EF4444', '#6366F1', '#EC4899'];
+const PIE_COLORS = ['#7C3AED', '#10B981', '#F59E0B', '#EF4444', '#856BFF', '#EC4899'];
 
 // ─── Pie Chart (pure SVG) ───────────────────────────────────────────────────
 
