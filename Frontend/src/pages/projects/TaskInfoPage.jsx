@@ -3,9 +3,10 @@
 // Used inside the ImportProjectPage multi-step shell.
 
 import React, { useMemo, useState, useCallback } from 'react';
-import { ChevronRight, Filter, Search } from 'lucide-react';
+import { ChevronRight, Search } from 'lucide-react';
 
 import './TaskInfoPage.css';
+import BulkUpdateTasksPage from './BulkUpdateTasksPage';
 import {
   MOCK_MILESTONES,
   MOCK_TASK_SUMMARY,
@@ -50,6 +51,14 @@ const FmsIcon = () => (
   <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
     <rect x="1.5" y="1.5" width="9" height="9" rx="1.5" stroke="#9333ea" strokeWidth="1" />
     <path d="M3.5 6h5M3.5 8h3" stroke="#9333ea" strokeWidth="1" strokeLinecap="round" />
+  </svg>
+);
+
+// ── Bulk Update icon ──────────────────────────────────────────
+const BulkUpdateIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M2 3.5h12M2 8h12M2 12.5h8" stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" />
+    <path d="M12 11l2 2-2 2" stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
 
@@ -246,7 +255,7 @@ const BuildingIcon = () => (
 
 const EditIcon = () => (
   <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M11.5 2.5L13.5 4.5L5.5 12.5H3.5V10.5L11.5 2.5Z" stroke="#856BFF" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M11.5 2.5L13.5 4.5L5.5 12.5H3.5V10.5L11.5 2.5Z" stroke="#856BFF" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
 
@@ -310,18 +319,14 @@ function TaskStatusPill({ status }) {
 
 // ── Task table (inside an expanded milestone) ─────────────────
 
-const PAGE_SIZE = 6;
-
 function TaskTable({ tasks, onEditTask }) {
   return (
     <div className="ti-table-scroll">
       <table className="ti-task-table">
         <thead className="ti-thead">
           <tr>
-            <th className="ti-th ti-th--checkbox">
-              <input type="checkbox" className="ti-checkbox" aria-label="Select all" />
-            </th>
             <th className="ti-th">Task ID</th>
+            <th className="ti-th">Milestone</th>
             <th className="ti-th">Task Title</th>
             <th className="ti-th">Owner</th>
             <th className="ti-th">Planned Start</th>
@@ -330,7 +335,7 @@ function TaskTable({ tasks, onEditTask }) {
             <th className="ti-th">Actual End</th>
             <th className="ti-th">Allocation</th>
             <th className="ti-th">Status</th>
-            <th className="ti-th ti-th--purple">Risk Category</th>
+            <th className="ti-th">Risk Category</th>
             <th className="ti-th">Remark</th>
             <th className="ti-th ti-th--purple">Role</th>
             <th className="ti-th ti-th--purple">Task Type</th>
@@ -341,11 +346,11 @@ function TaskTable({ tasks, onEditTask }) {
         <tbody>
           {tasks.map((t) => (
             <tr key={t.id} className="ti-tr">
-              <td className="ti-td ti-td--checkbox">
-                <input type="checkbox" className="ti-checkbox" aria-label={`Select ${t.taskId}`} />
-              </td>
               <td className="ti-td">
                 <span className="ti-task-id">{t.taskId}</span>
+              </td>
+              <td className="ti-td">
+                <span className="ti-cell-text">{t.milestoneShort || 'Discovery'}</span>
               </td>
               <td className="ti-td">
                 <span className="ti-task-title">{t.title}</span>
@@ -373,7 +378,10 @@ function TaskTable({ tasks, onEditTask }) {
               </td>
               <td className="ti-td">
                 <div className="ti-risk-wrap">
-                  <span className="ti-risk-text">{t.riskCategory}</span>
+                  <span className="ti-risk-text">{t.riskCategory || 'No Dependency'}</span>
+                  <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
+                    <path d="M1 1L5 5L9 1" stroke="#94A3B8" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
                 </div>
               </td>
               <td className="ti-td">
@@ -452,7 +460,10 @@ function pageNumbers(current, total) {
 // ── Main TaskInfoPage ─────────────────────────────────────────
 
 export default function TaskInfoPage({ onCancel, onNext }) {
+  const [isBulkUpdating, setIsBulkUpdating] = useState(false);
   const [search, setSearch] = useState('');
+  const [selectedMilestone, setSelectedMilestone] = useState('');
+  const [activeTab, setActiveTab] = useState('all');
   const [taskPage, setTaskPage] = useState(1);
 
   // ── Drawer state ────────────────────────────────────────────
@@ -481,27 +492,55 @@ export default function TaskInfoPage({ onCancel, onNext }) {
   }, [drawerTask, editValues, closeDrawer]);
   // ────────────────────────────────────────────────────────────
 
-  const { totalTasks, completed, inProgress, notStarted,
-          totalMilestones, milestonesCompleted } = MOCK_TASK_SUMMARY;
-
-  const pct = Math.round((milestonesCompleted / totalMilestones) * 100);
+  const { totalTasks, completed, inProgress, notStarted } = MOCK_TASK_SUMMARY;
 
   // Flat task list for the card-level pagination label
   const totalTaskPages = Math.ceil(totalTasks / 10);
 
-  // Filter milestones by search (milestone name or task title)
+  // Filter milestones by search, milestone dropdown, and active tab
   const visibleMilestones = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return MOCK_MILESTONES;
-    return MOCK_MILESTONES.filter(
-      (m) =>
-        m.name.toLowerCase().includes(q) ||
-        m.tasks.some((t) => t.title.toLowerCase().includes(q) || t.taskId.toLowerCase().includes(q))
-    );
-  }, [search]);
+    return MOCK_MILESTONES.filter((m) => {
+      if (selectedMilestone && m.id !== selectedMilestone) return false;
+      return true;
+    }).map((m) => {
+      let filteredTasks = m.tasks;
+      if (activeTab === 'in-progress') {
+        filteredTasks = filteredTasks.filter(t => t.status === 'In Progress');
+      } else if (activeTab === 'total-completed' || activeTab === 'last-completed') {
+        filteredTasks = filteredTasks.filter(t => t.status === 'Completed');
+      } else if (activeTab === 'not-started') {
+        filteredTasks = filteredTasks.filter(t => t.status === 'Not Started');
+      }
+
+      if (q) {
+        filteredTasks = filteredTasks.filter(
+          t => t.title.toLowerCase().includes(q) || t.taskId.toLowerCase().includes(q)
+        );
+      }
+      return { ...m, tasks: filteredTasks };
+    }).filter((m) => {
+      if (q) {
+        return m.name.toLowerCase().includes(q) || m.tasks.length > 0;
+      }
+      return activeTab === 'all' || m.tasks.length > 0;
+    });
+  }, [search, selectedMilestone, activeTab]);
 
   const start = (taskPage - 1) * 10 + 1;
   const end   = Math.min(taskPage * 10, totalTasks);
+
+  if (isBulkUpdating) {
+    return (
+      <BulkUpdateTasksPage
+        onCancel={() => setIsBulkUpdating(false)}
+        onSave={(updatedValues) => {
+          console.log('Saved bulk task updates:', updatedValues);
+          setIsBulkUpdating(false);
+        }}
+      />
+    );
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, width: '100%' }}>
@@ -517,7 +556,7 @@ export default function TaskInfoPage({ onCancel, onNext }) {
         />
       )}
 
-      {/* ── Task Information card (header + toolbar + badges) ── */}
+      {/* ── Task Information card (header + toolbar + filter tabs) ── */}
       <div className="ti-card">
 
         {/* Card header: title + context bar */}
@@ -531,17 +570,17 @@ export default function TaskInfoPage({ onCancel, onNext }) {
           </div>
         </div>
 
-        {/* Toolbar: search + milestone filter + filter btn */}
+        {/* Toolbar: search + milestone filter + Bulk Update button */}
         <div className="ti-toolbar">
           <div className="ti-toolbar-left">
             {/* Search */}
             <div className="ti-search-wrap">
-              <Search size={14} className="ti-search-icon" />
+              <Search size={16} className="ti-search-icon" />
               <input
                 id="task-search"
                 type="text"
                 className="ti-search-input"
-                placeholder="Search tasks..."
+                placeholder="Search by task"
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setTaskPage(1); }}
               />
@@ -549,7 +588,12 @@ export default function TaskInfoPage({ onCancel, onNext }) {
 
             {/* Milestone dropdown */}
             <div className="ti-milestone-select-wrap">
-              <select id="milestone-filter" className="ti-milestone-select">
+              <select
+                id="milestone-filter"
+                className="ti-milestone-select"
+                value={selectedMilestone}
+                onChange={(e) => { setSelectedMilestone(e.target.value); setTaskPage(1); }}
+              >
                 <option value="">Milestone</option>
                 {MOCK_MILESTONES.map((m) => (
                   <option key={m.id} value={m.id}>{m.name}</option>
@@ -559,45 +603,93 @@ export default function TaskInfoPage({ onCancel, onNext }) {
             </div>
           </div>
 
-          {/* Filter button */}
-          <button id="task-filter-btn" className="ti-filter-btn">
-            <Filter size={16} />
-            Filter
+          {/* Bulk Update button */}
+          <button
+            id="task-bulk-update-btn"
+            className="ti-bulk-update-btn"
+            onClick={() => setIsBulkUpdating(true)}
+          >
+            <BulkUpdateIcon />
+            <span>Bulk Update</span>
           </button>
         </div>
 
-        {/* Counter badges */}
-        <div className="ti-badges">
-          <div className="ti-badge ti-badge--milestone">
-            <span className="ti-badge-dot" />
-            <span className="ti-badge-text">
-              Milestones: {milestonesCompleted}/{totalMilestones} Completed ({pct}%)
-            </span>
+        {/* Filter tabs row */}
+        <div className="ti-filter-tabs-row">
+          {/* Left Segmented Pill Group */}
+          <div className="ti-tab-group">
+            <button
+              type="button"
+              className={`ti-tab-btn ${activeTab === 'all' ? 'ti-tab-btn--active' : ''}`}
+              onClick={() => { setActiveTab('all'); setTaskPage(1); }}
+            >
+              All Task ({totalTasks})
+            </button>
+            <button
+              type="button"
+              className={`ti-tab-btn ${activeTab === 'in-progress' ? 'ti-tab-btn--active' : ''}`}
+              onClick={() => { setActiveTab('in-progress'); setTaskPage(1); }}
+            >
+              <span>In Progress</span>
+              <span className="ti-tab-count ti-tab-count--gray">{inProgress}</span>
+            </button>
+            <button
+              type="button"
+              className={`ti-tab-btn ${activeTab === 'last-completed' ? 'ti-tab-btn--active' : ''}`}
+              onClick={() => { setActiveTab('last-completed'); setTaskPage(1); }}
+            >
+              <span>Last Completed</span>
+              <span className="ti-tab-count ti-tab-count--green">19</span>
+            </button>
+            <button
+              type="button"
+              className={`ti-tab-btn ${activeTab === 'total-completed' ? 'ti-tab-btn--active' : ''}`}
+              onClick={() => { setActiveTab('total-completed'); setTaskPage(1); }}
+            >
+              <span>Total Completed</span>
+              <span className="ti-tab-count ti-tab-count--green-dark">{completed}</span>
+            </button>
+            <button
+              type="button"
+              className={`ti-tab-btn ${activeTab === 'not-started' ? 'ti-tab-btn--active' : ''}`}
+              onClick={() => { setActiveTab('not-started'); setTaskPage(1); }}
+            >
+              <span>Not Started</span>
+              <span className="ti-tab-count ti-tab-count--blue">{notStarted}</span>
+            </button>
           </div>
 
-          <span className="ti-badge-divider" />
+          {/* Vertical divider */}
+          <div className="ti-tab-divider" />
 
-          <div className="ti-badge ti-badge--total">
-            <span className="ti-badge-text">Tasks: {totalTasks}</span>
-          </div>
-
-          <div className="ti-badge ti-badge--completed">
-            <span className="ti-badge-dot" />
-            <span className="ti-badge-text">
-              Completed: {completed} ({Math.round((completed / totalTasks) * 100)}%)
-            </span>
-          </div>
-
-          <div className="ti-badge ti-badge--inprogress">
-            <span className="ti-badge-dot" />
-            <span className="ti-badge-text">In Progress: {inProgress}</span>
-          </div>
-
-          <div className="ti-badge ti-badge--notstarted">
-            <span className="ti-badge-dot" />
-            <span className="ti-badge-text">Not Started: {notStarted}</span>
+          {/* Right Alert Pills */}
+          <div className="ti-alert-pills">
+            <button
+              type="button"
+              className={`ti-alert-pill ti-alert-pill--blockers ${activeTab === 'blockers' ? 'ti-alert-pill--active' : ''}`}
+              onClick={() => { setActiveTab(activeTab === 'blockers' ? 'all' : 'blockers'); setTaskPage(1); }}
+            >
+              <span className="ti-alert-dot ti-alert-dot--amber" />
+              <span>Blockers (4)</span>
+            </button>
+            <button
+              type="button"
+              className={`ti-alert-pill ti-alert-pill--delayed ${activeTab === 'delayed' ? 'ti-alert-pill--active' : ''}`}
+              onClick={() => { setActiveTab(activeTab === 'delayed' ? 'all' : 'delayed'); setTaskPage(1); }}
+            >
+              <span className="ti-alert-dot ti-alert-dot--rose" />
+              <span>Delayed (3)</span>
+            </button>
+            <button
+              type="button"
+              className={`ti-alert-pill ti-alert-pill--due ${activeTab === 'due' ? 'ti-alert-pill--active' : ''}`}
+              onClick={() => { setActiveTab(activeTab === 'due' ? 'all' : 'due'); setTaskPage(1); }}
+            >
+              <span>Due Today (8)</span>
+            </button>
           </div>
         </div>
+
       </div>
 
       {/* ── TaskInformationCard (milestones + pagination) ── */}
@@ -667,7 +759,7 @@ export default function TaskInfoPage({ onCancel, onNext }) {
 
       {/* ── Footer ── */}
       <div className="ti-footer">
-        {/* Invisible left spacer (matches Figma — opacity-0 cancel) */}
+        {/* Invisible left spacer */}
         <div style={{ width: 77, opacity: 0 }} aria-hidden />
 
         <div className="ti-footer-right">
@@ -676,7 +768,7 @@ export default function TaskInfoPage({ onCancel, onNext }) {
             className="ti-btn-cancel"
             onClick={onCancel}
           >
-            Cancel
+            Back
           </button>
 
           <button
@@ -693,3 +785,4 @@ export default function TaskInfoPage({ onCancel, onNext }) {
     </div>
   );
 }
+

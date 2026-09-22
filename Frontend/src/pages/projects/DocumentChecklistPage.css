@@ -9,7 +9,7 @@
 .dc-page {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 16px;
   width: 100%;
 }
 
@@ -23,9 +23,10 @@
   padding: 8px 16px;
   gap: 4px;
   width: 100%;
-  background: var(--color-surface-default);
-  border: 1px solid var(--color-border-figma);
-  box-shadow: var(--shadow-1);
+  min-height: 838px;
+  background: #ffffff;
+  border: 1px solid #c4c6cf;
+  box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);
   border-radius: 8px;
   overflow: hidden;
 }
@@ -33,13 +34,14 @@
 /* ── Card header row ─────────────────────────────────────────── */
 
 .dc-card-header {
+  box-sizing: border-box;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  padding: 0 0 8px;
+  padding: 0px 0px 8px;
   width: 100%;
-  min-height: 44px;
+  height: 44px;
   border-bottom: 1px solid #e2e8f0;
   flex-shrink: 0;
 }
@@ -51,21 +53,23 @@
   gap: 4px;
 }
 
-.dc-card-header-right {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 16px;
-}
-
 .dc-card-title {
   margin: 0;
-  font-family: var(--font-sans);
+  font-family: "Roboto", sans-serif;
+  font-style: normal;
   font-weight: 600;
   font-size: 16px;
   line-height: 28px;
   letter-spacing: -0.2px;
   color: #171c20;
+}
+
+.dc-card-header-right {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 16px;
 }
 
 /* ── Context bar: FMS | PMS ID ──────────────────────────────── */
@@ -77,6 +81,7 @@
   align-items: center;
   padding: 8px 16px;
   gap: 12px;
+  width: 227px;
   height: 36px;
   background: #eff4f9;
   border: 1px solid #c4c6cf;
@@ -86,7 +91,8 @@
 }
 
 .dc-ctx-project {
-  font-family: 'Roboto', sans-serif;
+  font-family: "Roboto", sans-serif;
+  font-style: normal;
   font-weight: 400;
   font-size: 12px;
   line-height: 16px;
@@ -102,7 +108,8 @@
 }
 
 .dc-ctx-pms {
-  font-family: 'Roboto', sans-serif;
+  font-family: "Roboto", sans-serif;
+  font-style: normal;
   font-weight: 400;
   font-size: 13px;
   line-height: 18px;
@@ -112,13 +119,14 @@
 /* ── Sub-header: progress bar + Add Document btn ─────────────── */
 
 .dc-subheader {
+  box-sizing: border-box;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  padding: 0 0 4px;
+  padding: 0px 0px 4px;
   width: 100%;
-  min-height: 38px;
+  height: 38px;
   flex-shrink: 0;
 }
 
@@ -126,11 +134,12 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
 }
 
 .dc-progress-label {
-  font-family: 'Roboto', sans-serif;
+  font-family: "Roboto", sans-serif;
+  font-style: normal;
   font-weight: 600;
   font-size: 12px;
   line-height: 16px;
@@ -161,8 +170,10 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
   padding: 8px 16px;
+  gap: 6px;
+  min-width: 133px;
   height: 34px;
   background: #856bff;
   border: 1px solid #c4c6cf;
@@ -171,23 +182,29 @@
   transition: background 150ms ease;
 }
 
-.dc-add-doc-btn:hover { background: #7457fc; }
+.dc-add-doc-btn:hover {
+  background: #7457fc;
+}
 
 .dc-add-doc-btn span {
-  font-family: 'Roboto', sans-serif;
+  font-family: "Roboto", sans-serif;
+  font-style: normal;
   font-weight: 600;
   font-size: 12px;
   line-height: 16px;
   letter-spacing: 0.6px;
   color: #ffffff;
+  text-align: center;
+  white-space: nowrap;
 }
 
-/* ── Table ───────────────────────────────────────────────────── */
+/* ── Table Container & Structure ────────────────────────────── */
 
 .dc-table-wrap {
+  box-sizing: border-box;
   width: 100%;
-  overflow-y: auto;
   max-height: 730px;
+  overflow-y: auto;
   flex: 1 1 auto;
 }
 
@@ -196,18 +213,18 @@
   flex-direction: column;
   align-items: flex-start;
   width: 100%;
-  min-width: 640px;
+  min-width: 800px;
 }
 
-/* Table header */
+/* Table header (5 Columns) */
 
 .dc-thead {
   box-sizing: border-box;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  align-items: flex-start;
-  padding: 0 16px;
+  align-items: center;
+  padding: 0px 16px;
   width: 100%;
   height: 42px;
   background: #eff4ff;
@@ -215,22 +232,25 @@
   flex-shrink: 0;
   position: sticky;
   top: 0;
-  z-index: 1;
+  z-index: 2;
 }
 
 .dc-th {
-  font-family: 'Roboto', sans-serif;
+  font-family: "Roboto", sans-serif;
+  font-style: normal;
   font-weight: 500;
   font-size: 12px;
-  line-height: 17px;
+  line-height: 16px;
   color: #475569;
   padding: 12px 16px;
-  flex: 1;
+  box-sizing: border-box;
 }
 
-.dc-th--name   { flex: 2.5; text-align: left; padding-left: 0; }
-.dc-th--center { flex: 1;   text-align: center; }
-.dc-th--right  { flex: 1;   text-align: right; }
+.dc-th--name     { flex: 3;   text-align: left; padding-left: 0; }
+.dc-th--uploaded { flex: 1.5; text-align: left; }
+.dc-th--date     { flex: 1.5; text-align: left; }
+.dc-th--status   { flex: 1.5; text-align: center; }
+.dc-th--actions  { flex: 1.5; text-align: right; padding-right: 0; }
 
 /* Table body */
 
@@ -249,27 +269,35 @@
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  padding: 0 16px;
+  padding: 0px 16px;
   width: 100%;
   height: 44px;
   border-top: 1px solid #f1f5f9;
   transition: background 100ms ease;
 }
 
-.dc-row:first-child { border-top: none; }
-.dc-row:hover { background: #fafbff; }
+.dc-row:first-child {
+  border-top: none;
+}
+
+.dc-row:hover {
+  background: #fafbff;
+}
 
 /* Table cells */
 
 .dc-td {
-  flex: 1;
+  box-sizing: border-box;
+  padding: 12px 16px;
   display: flex;
   align-items: center;
 }
 
-.dc-td--name   { flex: 2.5; justify-content: flex-start; gap: 10px; padding-left: 0; }
-.dc-td--center { flex: 1;   justify-content: center; }
-.dc-td--right  { flex: 1;   justify-content: flex-end; }
+.dc-td--name     { flex: 3;   justify-content: flex-start; gap: 10px; padding-left: 0; }
+.dc-td--uploaded { flex: 1.5; justify-content: flex-start; }
+.dc-td--date     { flex: 1.5; justify-content: flex-start; }
+.dc-td--status   { flex: 1.5; justify-content: center; }
+.dc-td--actions  { flex: 1.5; justify-content: flex-end; padding-right: 0; }
 
 /* Document icon */
 
@@ -285,17 +313,29 @@
 /* Document name */
 
 .dc-doc-name {
-  font-family: 'Roboto', sans-serif;
+  font-family: "Roboto", sans-serif;
+  font-style: normal;
   font-weight: 500;
   font-size: 12px;
   line-height: 16px;
   color: #1e293b;
+  white-space: nowrap;
 }
 
-/* Muted cell value (—) */
+/* Cell text / muted placeholder (-) */
+
+.dc-cell-text {
+  font-family: "Nimbus Sans", "Roboto", sans-serif;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 16px;
+  color: #334155;
+}
 
 .dc-cell-muted {
-  font-family: 'Nimbus Sans', 'Roboto', sans-serif;
+  font-family: "Nimbus Sans", "Roboto", sans-serif;
+  font-style: normal;
   font-weight: 400;
   font-size: 12px;
   line-height: 16px;
@@ -305,12 +345,15 @@
 /* ── Status pill ─────────────────────────────────────────────── */
 
 .dc-status-pill {
+  box-sizing: border-box;
   display: inline-flex;
   flex-direction: row;
   align-items: center;
+  justify-content: center;
   padding: 2px 10px;
   gap: 6px;
   border-radius: 9999px;
+  height: 16px;
 }
 
 .dc-status-dot {
@@ -321,11 +364,13 @@
 }
 
 .dc-status-text {
-  font-family: 'Roboto', sans-serif;
+  font-family: "Roboto", sans-serif;
+  font-style: normal;
   font-weight: 400;
   font-size: 10px;
   line-height: 12px;
   text-align: center;
+  white-space: nowrap;
 }
 
 /* ── Add Link action button ──────────────────────────────────── */
@@ -342,15 +387,29 @@
   transition: opacity 120ms ease;
 }
 
-.dc-add-link-btn:hover { opacity: 0.7; }
+.dc-add-link-btn:hover {
+  opacity: 0.75;
+}
 
-.dc-add-link-btn span {
-  font-family: 'Roboto', sans-serif;
+.dc-add-link-icon {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #856bff;
+}
+
+.dc-add-link-text {
+  font-family: "Roboto", sans-serif;
+  font-style: normal;
   font-weight: 600;
   font-size: 12px;
   line-height: 20px;
   letter-spacing: 0.14px;
+  text-align: center;
   color: #856bff;
+  white-space: nowrap;
 }
 
 /* ── Footer ──────────────────────────────────────────────────── */
@@ -368,7 +427,6 @@
   background: #ffffff;
   border-top: 1px solid #c4c6cf;
   flex-shrink: 0;
-  margin-top: 5px;
 }
 
 .dc-btn-cancel {
@@ -378,24 +436,27 @@
   justify-content: center;
   align-items: center;
   padding: 8px 24px;
-  width: 102px;
+  width: 86px;
   height: 44px;
   border-radius: 2px;
   border: none;
   background: transparent;
-  font-family: 'Roboto', sans-serif;
+  font-family: "Roboto", sans-serif;
+  font-style: normal;
   font-weight: 400;
   font-size: 16px;
-  line-height: 16px;
-  letter-spacing: 0.6px;
-  color: #545f72;
+  line-height: 20px;
+  color: #42526e;
   cursor: pointer;
   transition: background 150ms ease;
 }
 
-.dc-btn-cancel:hover { background: #f1f5f9; }
+.dc-btn-cancel:hover {
+  background: #f1f5f9;
+}
 
 .dc-btn-create {
+  box-sizing: border-box;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -409,19 +470,25 @@
   border-radius: 4px;
   border: none;
   cursor: pointer;
-  font-family: 'Roboto', sans-serif;
+  font-family: "Roboto", sans-serif;
+  font-style: normal;
   font-weight: 600;
   font-size: 16px;
   line-height: 16px;
   letter-spacing: 0.6px;
+  text-align: center;
   color: #ffffff;
   transition: background 150ms ease;
   white-space: nowrap;
 }
 
-.dc-btn-create:hover { background: #7457fc; }
+.dc-btn-create:hover {
+  background: #7457fc;
+}
 
-/* ── Add Link modal ──────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   ADD DOCUMENT MODAL ("Add Document SharePoint Link")
+   ═══════════════════════════════════════════════════════════════ */
 
 .dc-modal-overlay {
   position: fixed;
@@ -444,19 +511,27 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  padding: 0px;
+  width: 510px;
+  max-width: 512px;
+  min-height: 362px;
   background: #ffffff;
   border: 1px solid #c9c4d7;
   box-shadow: 0px 10px 30px rgba(25, 28, 30, 0.08);
   border-radius: 12px;
-  width: 512px;
-  max-width: 95vw;
   overflow: hidden;
   animation: dc-slide-up 180ms ease;
 }
 
 @keyframes dc-slide-up {
-  from { transform: translateY(12px); opacity: 0; }
-  to   { transform: translateY(0);    opacity: 1; }
+  from {
+    transform: translateY(12px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 /* Modal Header */
@@ -475,20 +550,23 @@
 }
 
 .dc-modal-title {
-  font-family: 'Roboto', sans-serif;
+  margin: 0;
+  font-family: "Roboto", sans-serif;
+  font-style: normal;
   font-weight: 400;
   font-size: 16px;
   line-height: 24px;
   color: #191c1e;
 }
 
-/* Close button — circle with X icon */
+/* Close button */
 
 .dc-modal-close-btn {
   display: flex;
   flex-direction: row;
   justify-content: center;
   align-items: center;
+  padding: 0px;
   width: 32px;
   height: 32px;
   border-radius: 9999px;
@@ -496,15 +574,17 @@
   background: transparent;
   cursor: pointer;
   transition: background 120ms ease;
-  padding: 0;
   flex-shrink: 0;
 }
 
-.dc-modal-close-btn:hover { background: #f1f0f4; }
+.dc-modal-close-btn:hover {
+  background: #f1f0f4;
+}
 
 /* Modal Body */
 
 .dc-modal-body {
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -513,9 +593,10 @@
   width: 100%;
 }
 
-/* Field wrapper */
+/* Field Group */
 
 .dc-modal-field {
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -524,38 +605,43 @@
 }
 
 .dc-modal-field-label {
-  font-family: 'Roboto', sans-serif;
+  font-family: "Roboto", sans-serif;
+  font-style: normal;
   font-weight: 400;
   font-size: 16px;
   line-height: 24px;
   color: #414751;
+  display: block;
 }
 
-/* Requirement Reference — read-only grey box */
+/* Document Name input */
 
-.dc-modal-ref-box {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  padding: 8px 16px;
-  width: 100%;
-  height: 40px;
-  background: #f6f6f6;
-  border-radius: 8px;
+.dc-modal-doc-input {
   box-sizing: border-box;
-}
-
-.dc-modal-ref-text {
-  font-family: 'Roboto', sans-serif;
+  width: 100%;
+  height: 42px;
+  padding: 8px 16px;
+  background: #ffffff;
+  border: 1px solid #c9c4d7;
+  border-radius: 8px;
+  font-family: "Roboto", sans-serif;
+  font-style: normal;
   font-weight: 400;
   font-size: 16px;
   line-height: 24px;
   color: #191c1e;
+  outline: none;
+  transition: border-color 150ms ease;
 }
 
-/* SharePoint URL — input with icon */
+.dc-modal-doc-input:focus {
+  border-color: #856bff;
+}
+
+/* SharePoint URL input */
 
 .dc-modal-url-wrap {
+  box-sizing: border-box;
   position: relative;
   display: flex;
   flex-direction: row;
@@ -566,23 +652,26 @@
 
 .dc-modal-url-icon {
   position: absolute;
-  left: 10px;
+  left: 14px;
   top: 50%;
   transform: translateY(-50%);
   display: flex;
   align-items: center;
+  justify-content: center;
   pointer-events: none;
+  color: #484554;
 }
 
 .dc-modal-url-input {
   box-sizing: border-box;
   width: 100%;
   height: 41px;
-  padding: 10px 16px 10px 40px;
+  padding: 10px 16px 10px 42px;
   background: #ffffff;
   border: 1px solid #c9c4d7;
   border-radius: 8px;
-  font-family: 'Roboto', sans-serif;
+  font-family: "Roboto", sans-serif;
+  font-style: normal;
   font-weight: 400;
   font-size: 16px;
   line-height: 19px;
@@ -591,12 +680,18 @@
   transition: border-color 150ms ease;
 }
 
-.dc-modal-url-input::placeholder { color: #6b7280; }
-.dc-modal-url-input:focus { border-color: #856bff; }
+.dc-modal-url-input::placeholder {
+  color: #6b7280;
+}
+
+.dc-modal-url-input:focus {
+  border-color: #856bff;
+}
 
 /* Modal Footer */
 
 .dc-modal-footer {
+  box-sizing: border-box;
   display: flex;
   flex-direction: row;
   justify-content: flex-end;
@@ -604,10 +699,9 @@
   padding: 16px 24px;
   gap: 16px;
   width: 100%;
-  height: 74px;
+  height: 76px;
   background: #f2f4f6;
   flex-shrink: 0;
-  box-sizing: border-box;
 }
 
 /* Cancel — outlined */
@@ -620,42 +714,50 @@
   align-items: center;
   padding: 8px 24px;
   width: 99px;
-  height: 42px;
-  background: transparent;
-  border: 1px solid #797586;
+  height: 44px;
+  background: #ffffff;
+  border: 1px solid #c4c6cf;
   border-radius: 4px;
-  font-family: 'Roboto', sans-serif;
+  font-family: "Roboto", sans-serif;
+  font-style: normal;
   font-weight: 400;
   font-size: 16px;
   line-height: 24px;
-  color: #191c1e;
+  color: #171c20;
   cursor: pointer;
   transition: background 150ms ease;
 }
 
-.dc-modal-cancel:hover { background: rgba(121, 117, 134, 0.08); }
+.dc-modal-cancel:hover {
+  background: #f8fafc;
+}
 
 /* Add Link — purple filled */
 
 .dc-modal-add-link {
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   padding: 9px 24px;
-  width: 110px;
+  min-width: 114px;
   height: 42px;
   background: #856bff;
   box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);
-  border-radius: 4px;
+  border-radius: 8px;
   border: none;
-  font-family: 'Roboto', sans-serif;
+  font-family: "Roboto", sans-serif;
+  font-style: normal;
   font-weight: 400;
   font-size: 16px;
   line-height: 24px;
   color: #ffffff;
   cursor: pointer;
   transition: background 150ms ease;
+  white-space: nowrap;
 }
 
-.dc-modal-add-link:hover { background: #7457fc; }
+.dc-modal-add-link:hover {
+  background: #7457fc;
+}

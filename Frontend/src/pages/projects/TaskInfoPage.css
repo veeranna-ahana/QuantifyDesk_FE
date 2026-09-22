@@ -84,7 +84,7 @@
   color: #545f72;
 }
 
-/* ── Toolbar row (search + filters) ─────────────────────────── */
+/* ── Toolbar row (search + milestone + Bulk Update) ─────────── */
 
 .ti-toolbar {
   display: flex;
@@ -99,14 +99,16 @@
 .ti-toolbar-left {
   display: flex;
   flex-direction: row;
-  align-items: flex-start;
+  align-items: center;
   gap: 16px;
+  flex: 1;
 }
 
 /* Search */
 .ti-search-wrap {
   position: relative;
-  width: 320px;
+  width: 448px;
+  max-width: 448px;
   height: 34px;
   border-radius: 8px;
   flex-shrink: 0;
@@ -117,9 +119,9 @@
   left: 12px;
   top: 50%;
   transform: translateY(-50%);
-  width: 14px;
-  height: 14px;
-  color: #74777f;
+  width: 16px;
+  height: 16px;
+  color: #94a3b8;
   pointer-events: none;
 }
 
@@ -127,9 +129,9 @@
   box-sizing: border-box;
   width: 100%;
   height: 34px;
-  padding: 7px 12px 8px 36px;
+  padding: 9px 16px 10px 36px;
   background: #ffffff;
-  border: 1px solid #c4c6cf;
+  border: 1px solid #e2e8f0;
   border-radius: 8px;
   outline: none;
   font-family: 'Roboto', sans-serif;
@@ -139,7 +141,7 @@
   transition: border-color 150ms ease;
 }
 
-.ti-search-input::placeholder { color: #6b7280; }
+.ti-search-input::placeholder { color: #94a3b8; }
 .ti-search-input:focus         { border-color: #856bff; }
 
 /* Milestone dropdown */
@@ -153,20 +155,19 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  padding: 8px 16px;
-  gap: 8px;
-  width: 124px;
+  padding: 8px 32px 8px 16px;
+  width: 111px;
   height: 34px;
   background: #ffffff;
-  border: 1px solid #c3c6d7;
+  border: 1px solid #e2e8f0;
   border-radius: 8px;
   font-family: 'Roboto', sans-serif;
-  font-size: 14px;
-  color: #6b7280;
+  font-size: 12px;
+  line-height: 14px;
+  color: #334155;
   appearance: none;
   cursor: pointer;
   outline: none;
-  padding-right: 32px;
 }
 
 .ti-milestone-chevron {
@@ -180,93 +181,203 @@
   pointer-events: none;
 }
 
-/* Filter button */
-.ti-filter-btn {
+/* Bulk Update button */
+.ti-bulk-update-btn {
   box-sizing: border-box;
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  padding: 8px 10px;
-  gap: 8px;
-  width: 81px;
+  padding: 6px 14px;
+  gap: 6px;
+  width: 110px;
   height: 34px;
-  border: 1px solid #856bff;
-  border-radius: 8px;
-  background: transparent;
+  background: #856bff;
+  box-shadow: 0px 0px 0px 2px #c7d2fe;
+  border-radius: 4px;
+  border: none;
   cursor: pointer;
-  font-family: 'Roboto', sans-serif;
+  font-family: "Roboto", sans-serif;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 12px;
   line-height: 16px;
-  letter-spacing: 0.6px;
-  color: #856bff;
+  color: #ffffff;
+  white-space: nowrap;
   transition: background 150ms ease;
+  flex-shrink: 0;
 }
 
-.ti-filter-btn:hover { background: #f5f3ff; }
+.ti-bulk-update-btn:hover {
+  background: #7457fc;
+}
 
-/* ── Counter badges row ──────────────────────────────────────── */
+/* ── Filter tabs row ────────────────────────────────────────── */
 
-.ti-badges {
+.ti-filter-tabs-row {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+  gap: 13px;
+  width: 100%;
+  overflow-x: auto;
+  padding-top: 4px;
+  box-sizing: border-box;
 }
 
-.ti-badge {
+/* Left Segmented Group */
+.ti-tab-group {
   box-sizing: border-box;
   display: flex;
   flex-direction: row;
   align-items: center;
-  padding: 4px 10px;
-  gap: 6px;
-  height: 26px;
-  border-radius: 4px;
+  padding: 2px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  gap: 0px;
+  flex-shrink: 0;
 }
 
-.ti-badge-dot {
+.ti-tab-btn {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  gap: 4px;
+  height: 24px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: "Roboto", sans-serif;
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 16px;
+  color: #475569;
+  transition: all 150ms ease;
+  white-space: nowrap;
+}
+
+.ti-tab-btn:hover:not(.ti-tab-btn--active) {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.ti-tab-btn--active {
+  background: #856bff;
+  color: #ffffff;
+  border-radius: 8px;
+}
+
+.ti-tab-btn--active .ti-tab-count {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+.ti-tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0px 6px;
+  min-width: 12px;
+  height: 16px;
+  border-radius: 9999px;
+  font-family: "Roboto", sans-serif;
+  font-weight: 700;
+  font-size: 10px;
+  line-height: 16px;
+}
+
+.ti-tab-count--gray {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.ti-tab-count--green {
+  background: #d1fae5;
+  color: #047857;
+}
+
+.ti-tab-count--green-dark {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.ti-tab-count--blue {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+/* Vertical divider */
+.ti-tab-divider {
+  width: 1px;
+  height: 20px;
+  background: #e2e8f0;
+  flex-shrink: 0;
+}
+
+/* Right alert pills */
+.ti-alert-pills {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.ti-alert-pill {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 4px 8px;
+  gap: 4px;
+  height: 26px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: "Roboto", sans-serif;
+  font-size: 12px;
+  line-height: 16px;
+  white-space: nowrap;
+  transition: opacity 150ms ease;
+}
+
+.ti-alert-pill:hover {
+  opacity: 0.85;
+}
+
+.ti-alert-pill--blockers {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #b45309;
+  font-weight: 700;
+}
+
+.ti-alert-pill--delayed {
+  background: rgba(255, 241, 242, 0.6);
+  border: 1px solid #ffe4e6;
+  color: #be123c;
+  font-weight: 500;
+}
+
+.ti-alert-pill--due {
+  color: #475569;
+  font-weight: 500;
+  padding: 4px 8px;
+}
+
+.ti-alert-dot {
   width: 6px;
   height: 6px;
   border-radius: 9999px;
   flex-shrink: 0;
 }
 
-.ti-badge-text {
-  font-family: 'Inter', sans-serif;
-  font-weight: 500;
-  font-size: 12px;
-  line-height: 16px;
-}
-
-.ti-badge-divider {
-  width: 1px;
-  height: 24px;
-  background: #cbd5e1;
-  flex-shrink: 0;
-}
-
-/* Badge variants */
-.ti-badge--milestone  { background: #faf5ff; border: 1px solid #e9d5ff; }
-.ti-badge--milestone  .ti-badge-dot  { background: #6c5ce7; }
-.ti-badge--milestone  .ti-badge-text { color: #7e22ce; }
-
-.ti-badge--total      { background: #f1f5f9; border: 1px solid #e2e8f0; }
-.ti-badge--total      .ti-badge-text { color: #334155; }
-
-.ti-badge--completed  { background: #ecfdf5; border: 1px solid #a7f3d0; }
-.ti-badge--completed  .ti-badge-dot  { background: #10b981; }
-.ti-badge--completed  .ti-badge-text { color: #006c49; }
-
-.ti-badge--inprogress { background: #fffbeb; border: 1px solid #fde68a; }
-.ti-badge--inprogress .ti-badge-dot  { background: #f59e0b; }
-.ti-badge--inprogress .ti-badge-text { color: #b45309; }
-
-.ti-badge--notstarted { background: #f8fafc; border: 1px solid #e2e8f0; }
-.ti-badge--notstarted .ti-badge-dot  { background: #94a3b8; }
-.ti-badge--notstarted .ti-badge-text { color: #475569; }
+.ti-alert-dot--amber { background: #f59e0b; }
+.ti-alert-dot--rose  { background: #f43f5e; }
 
 /* ── Task information card ───────────────────────────────────── */
 
@@ -410,71 +521,104 @@
 .ti-table-scroll {
   width: 100%;
   overflow-x: auto;
+  position: relative;
+  background: #ffffff;
 }
 
 .ti-task-table {
   width: 100%;
-  min-width: 1100px;
-  border-collapse: collapse;
+  min-width: 1640px;
+  border-collapse: separate;
+  border-spacing: 0;
   font-family: 'Roboto', sans-serif;
 }
 
 /* Table header */
 .ti-thead {
   background: #eff4ff;
-  border-bottom: 1px solid #e2e8f0;
 }
 
 .ti-th {
-  height: 41px;
+  height: 40px;
   padding: 12px 16px;
   font-family: 'Roboto', sans-serif;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 12px;
   line-height: 16px;
   color: #475569;
   text-align: left;
   white-space: nowrap;
+  background: #eff4ff;
+  border-bottom: 1px solid #e2e8f0;
+  box-sizing: border-box;
 }
 
-.ti-th--checkbox { width: 46px; padding: 12px; text-align: center; }
-.ti-th--center   { text-align: center; }
-.ti-th--purple   { color: #9333ea; }
-.ti-th--action   { text-align: center; width: 72px; }
+.ti-th--center { text-align: center; }
+.ti-th--purple { color: #9333ea; }
+
+/* Sticky Action header column */
+.ti-th--action {
+  position: sticky;
+  right: 0;
+  z-index: 3;
+  background: #eff4f9;
+  border-left: 1px solid #c4c6cf;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: center;
+  width: 73px;
+  min-width: 73px;
+  max-width: 73px;
+  box-sizing: border-box;
+}
 
 /* Body rows */
 .ti-tr {
-  border-top: 1px solid #f1f5f9;
+  background: #ffffff;
 }
 
-.ti-tr:first-child { border-top: none; }
-.ti-tr:hover       { background: #fafbff; }
+.ti-tr:hover {
+  background: #fafbff;
+}
 
 .ti-td {
   height: 45px;
   padding: 14px 16px;
   vertical-align: middle;
+  border-bottom: 1px solid #f1f5f9;
+  box-sizing: border-box;
+  background: #ffffff;
 }
 
-.ti-td--checkbox { width: 46px; padding: 12px; text-align: center; vertical-align: middle; }
-.ti-td--center   { text-align: center; }
-.ti-td--action   { text-align: center; width: 72px; }
+.ti-tr:hover .ti-td {
+  background: #fafbff;
+}
 
-/* Checkbox */
-.ti-checkbox {
-  box-sizing: border-box;
-  width: 14px;
-  height: 14px;
+.ti-td--center { text-align: center; }
+
+/* Sticky Action body cell column */
+.ti-td--action {
+  position: sticky;
+  right: 0;
+  z-index: 2;
   background: #ffffff;
-  border: 1px solid #cbd5e1;
-  border-radius: 4px;
-  cursor: pointer;
+  border-left: 1px solid #c4c6cf;
+  border-bottom: 1px solid #f1f5f9;
+  text-align: center;
+  width: 73px;
+  min-width: 73px;
+  max-width: 73px;
+  box-sizing: border-box;
+}
+
+.ti-tr:hover .ti-td--action {
+  background: #fafbff;
 }
 
 /* Task ID — monospace */
 .ti-task-id {
-  font-family: 'Courier New', monospace;
+  font-family: 'Roboto', sans-serif;
   font-size: 12px;
+  font-weight: 400;
   line-height: 16px;
   color: #64748b;
   white-space: nowrap;
@@ -496,7 +640,7 @@
   color: #334155;
 }
 
-.ti-cell-text--muted  { color: #475569; }
+.ti-cell-text--muted  { color: #94a3b8; }
 .ti-cell-text--alloc  { font-weight: 600; }
 
 /* Task status pill (in table) */
