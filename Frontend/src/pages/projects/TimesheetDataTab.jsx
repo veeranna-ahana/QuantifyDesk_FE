@@ -306,7 +306,6 @@ const TimesheetDataTab = ({ project }) => {
                 <th className="py-2 px-3 whitespace-nowrap">Project Name</th>
                 <th className="py-2 px-3 whitespace-nowrap">Cat. Code</th>
                 <th className="py-2 px-3 whitespace-nowrap">Category</th>
-                <th className="py-2 px-3 min-w-[200px]">Task Description</th>
                 <th className="py-2 px-3 whitespace-nowrap">Hours Spent</th>
                 <th className="py-2 px-3 whitespace-nowrap">From Date</th>
                 <th className="py-2 px-3 whitespace-nowrap">To Date</th>
@@ -314,6 +313,7 @@ const TimesheetDataTab = ({ project }) => {
                 <th className="py-2 px-3 whitespace-nowrap">Approved By</th>
                 <th className="py-2 px-3 whitespace-nowrap">Submitted On</th>
                 <th className="py-2 px-3 whitespace-nowrap">Approved On</th>
+                <th className="py-2 px-3 min-w-[200px]">Task Description</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 text-[11.5px] text-gray-700">
@@ -342,9 +342,6 @@ const TimesheetDataTab = ({ project }) => {
                   </td>
                   <td className="py-1.5 px-3 text-gray-700 whitespace-nowrap">
                     {row.category}
-                  </td>
-                  <td className="py-1.5 px-3 text-gray-800 font-normal">
-                    {row.taskDescription}
                   </td>
                   <td className="py-1.5 px-3 font-semibold text-gray-900 whitespace-nowrap">
                     {row.hoursSpent}
@@ -376,6 +373,9 @@ const TimesheetDataTab = ({ project }) => {
                   </td>
                   <td className="py-1.5 px-3 text-gray-500 whitespace-nowrap">
                     {row.approvedOn}
+                  </td>
+                  <td className="py-1.5 px-3 text-gray-800 font-normal">
+                    {row.taskDescription}
                   </td>
                 </tr>
               ))}

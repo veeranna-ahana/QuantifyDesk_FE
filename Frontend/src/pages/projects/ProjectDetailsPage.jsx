@@ -17,7 +17,7 @@ const ProjectDetailsPage = () => {
   const [searchParams] = useSearchParams();
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "Project Info");
+  const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "Project Overview");
   const [isEditing, setIsEditing] = useState(false);
   const [currentFormData, setCurrentFormData] = useState(null);
 
