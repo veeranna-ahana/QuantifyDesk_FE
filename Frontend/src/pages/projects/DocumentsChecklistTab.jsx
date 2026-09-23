@@ -220,7 +220,6 @@ const DocumentsChecklistTab = ({ project, isEditing = false, onSave, onCancel })
             <thead>
               <tr className="bg-[#F8FAFC] border-b border-gray-200 text-[#475467] text-[12px] font-semibold">
                 <th className="py-2.5 px-5 font-semibold w-[28%]">Document Name</th>
-                <th className="py-2.5 px-3 font-semibold w-[13%]">Version</th>
                 <th className="py-2.5 px-3 font-semibold w-[16%]">Uploaded By</th>
                 <th className="py-2.5 px-3 font-semibold w-[15%]">Upload Date</th>
                 <th className="py-2.5 px-3 font-semibold w-[13%]">Status</th>
@@ -239,9 +238,6 @@ const DocumentsChecklistTab = ({ project, isEditing = false, onSave, onCancel })
                         <span className="truncate">{doc.name}</span>
                       </div>
                     </td>
-
-                    {/* Version */}
-                    <td className="py-2 px-3 font-mono text-[11px] text-gray-600">{doc.version}</td>
 
                     {/* Uploaded By */}
                     <td className="py-2 px-3 text-gray-700 font-normal">{doc.uploadedBy}</td>
