@@ -158,12 +158,12 @@ const ProjectDetailsPage = () => {
   const endDateStr = endDt ? formatDate(endDt) : "Oct 15, 2024";
 
   return (
-    <div className="w-full max-w-[1106px] mx-auto px-6 py-1 font-sans flex flex-col gap-1.5 box-border bg-[#F9F7FF]">
+    <div className="w-full max-w-[1106px] mx-auto px-6 py-0 font-sans flex flex-col gap-1.5 box-border bg-[#f5f2ff]">
 
       {/* Frame 427321890: Header & Metadata + Tabs (width 1058, compact gap) */}
       <div className="w-full max-w-[1058px] flex flex-col gap-1 shrink-0">
         {/* Frame 427321892: White Header & Metadata Card (1058) */}
-       <div className="w-full max-w-[1058px] rounded-lg py-2 px-4 flex flex-col gap-1 box-border bg-[#F9F7FF]">
+       <div className="w-full max-w-[1058px] rounded-lg py-2 px-4 flex flex-col gap-1 box-border bg-[#f5f2ff]">
           {/* Breadcrumb */}
           <div className="flex items-center gap-1.5 text-xs text-gray-500 leading-none">
             <button
@@ -224,7 +224,7 @@ const ProjectDetailsPage = () => {
         </div>
 
         {/* TopAppBar: Tabs Bar (width 1058, compact, border-bottom 1px solid #E2E8F0) */}
-        <div className="w-full max-w-[1058px] flex items-center gap-6 border-b border-[#E2E8F0] overflow-x-auto hide-scrollbar bg-[#F9F7FF]">
+        <div className="w-full max-w-[1058px] flex items-center gap-6 border-b border-[#E2E8F0] overflow-x-auto hide-scrollbar bg-[#f5f2ff]">
           {tabs.map((tab) => (
             <button
               key={tab}

@@ -1,16 +1,9 @@
 // src/pages/projects/TimesheetDataTab.jsx
-import React, { useState, useMemo } from 'react';
-import {
-  Search,
-  SlidersHorizontal,
-  ChevronLeft,
-  ChevronRight,
-  Filter,
-} from 'lucide-react';
+import React, { useState } from 'react';
+import { CalendarDays, ChevronDown } from 'lucide-react';
 
-const INITIAL_TIMESHEET_DATA = [
+const ROWS = [
   {
-    id: 1,
     empId: 'EMP-1042',
     empName: 'Devanshi Shah',
     designation: 'Sr. Business Analyst',
@@ -18,7 +11,7 @@ const INITIAL_TIMESHEET_DATA = [
     projectName: 'FMS',
     catCode: 'CAT-BFSI-01',
     category: 'Enterprise Solutions',
-    taskDescription: 'BRD Walkthrough & Traceability Matrix',
+    taskDescription: 'BRD Walkthrough & Traceability Matr',
     hoursSpent: '8.0 hrs',
     fromDate: '01 Aug 2024',
     toDate: '01 Aug 2024',
@@ -28,7 +21,6 @@ const INITIAL_TIMESHEET_DATA = [
     approvedOn: '03 Aug 2024',
   },
   {
-    id: 2,
     empId: 'EMP-1088',
     empName: 'Rahul Sharma',
     designation: 'Lead Frontend Dev',
@@ -46,7 +38,6 @@ const INITIAL_TIMESHEET_DATA = [
     approvedOn: '04 Aug 2024',
   },
   {
-    id: 3,
     empId: 'EMP-0945',
     empName: 'Priya Nair',
     designation: 'QA Lead',
@@ -64,7 +55,6 @@ const INITIAL_TIMESHEET_DATA = [
     approvedOn: '10 Aug 2024',
   },
   {
-    id: 4,
     empId: 'EMP-0945',
     empName: 'Priyak Nair',
     designation: 'QA Lead',
@@ -82,7 +72,6 @@ const INITIAL_TIMESHEET_DATA = [
     approvedOn: '10 Aug 2024',
   },
   {
-    id: 5,
     empId: 'EMP-1033',
     empName: 'Amit Patel',
     designation: 'UI/UX Designer',
@@ -90,7 +79,7 @@ const INITIAL_TIMESHEET_DATA = [
     projectName: 'FMS',
     catCode: 'CAT-BFSI-01',
     category: 'Enterprise Solutions',
-    taskDescription: 'Responsive Mockup Alignment & Review',
+    taskDescription: 'Responsive Mockup Alignment & Rev',
     hoursSpent: '4.0 hrs',
     fromDate: '10 Aug 2024',
     toDate: '10 Aug 2024',
@@ -100,7 +89,6 @@ const INITIAL_TIMESHEET_DATA = [
     approvedOn: '12 Aug 2024',
   },
   {
-    id: 6,
     empId: 'EMP-1055',
     empName: 'Kusum G G',
     designation: 'Business Analyst',
@@ -118,7 +106,6 @@ const INITIAL_TIMESHEET_DATA = [
     approvedOn: '14 Aug 2024',
   },
   {
-    id: 7,
     empId: 'EMP-1062',
     empName: 'Navith K',
     designation: 'Technical Architect',
@@ -126,7 +113,7 @@ const INITIAL_TIMESHEET_DATA = [
     projectName: 'FMS',
     catCode: 'CAT-BFSI-01',
     category: 'Enterprise Solutions',
-    taskDescription: 'Microservices & Database Topology Review',
+    taskDescription: 'Microservices & Database Topology',
     hoursSpent: '8.0 hrs',
     fromDate: '14 Aug 2024',
     toDate: '14 Aug 2024',
@@ -136,7 +123,6 @@ const INITIAL_TIMESHEET_DATA = [
     approvedOn: '16 Aug 2024',
   },
   {
-    id: 8,
     empId: 'EMP-1070',
     empName: 'Soumya Sen',
     designation: 'Frontend Engineer',
@@ -144,7 +130,7 @@ const INITIAL_TIMESHEET_DATA = [
     projectName: 'FMS',
     catCode: 'CAT-BFSI-01',
     category: 'Enterprise Solutions',
-    taskDescription: 'State Management & Form Validation',
+    taskDescription: 'State Management & Form Validatio',
     hoursSpent: '7.0 hrs',
     fromDate: '16 Aug 2024',
     toDate: '16 Aug 2024',
@@ -153,273 +139,171 @@ const INITIAL_TIMESHEET_DATA = [
     submittedOn: '17 Aug 2024',
     approvedOn: '18 Aug 2024',
   },
-  {
-    id: 9,
-    empId: 'EMP-1082',
-    empName: 'Ankit Verma',
-    designation: 'Backend Engineer',
-    projectCode: 'PRJ-FMS-01',
-    projectName: 'FMS',
-    catCode: 'CAT-BFSI-01',
-    category: 'Enterprise Solutions',
-    taskDescription: 'Auth Token Middleware & API Optimization',
-    hoursSpent: '8.0 hrs',
-    fromDate: '18 Aug 2024',
-    toDate: '18 Aug 2024',
-    approvalStatus: 'Approved',
-    approvedBy: 'John Smith',
-    submittedOn: '19 Aug 2024',
-    approvedOn: '20 Aug 2024',
-  },
-  {
-    id: 10,
-    empId: 'EMP-1095',
-    empName: 'Ranjitha M',
-    designation: 'Frontend Engineer',
-    projectCode: 'PRJ-FMS-01',
-    projectName: 'FMS',
-    catCode: 'CAT-BFSI-01',
-    category: 'Enterprise Solutions',
-    taskDescription: 'Component Unit Testing & Accessibility',
-    hoursSpent: '6.5 hrs',
-    fromDate: '20 Aug 2024',
-    toDate: '20 Aug 2024',
-    approvalStatus: 'Submitted',
-    approvedBy: 'Rahul Sharma',
-    submittedOn: '21 Aug 2024',
-    approvedOn: '—',
-  },
 ];
 
-const TimesheetDataTab = ({ project }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('All');
-  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
+const COLUMNS = [
+  'Emp Id',
+  'Emp Name',
+  'Designation',
+  'Project Code',
+  'Project Name',
+  'Cat. Code',
+  'Category',
+  'Hours Spent',
+  'From Date',
+  'To Date',
+  'Approval Status',
+  'Approved By',
+  'Submitted On',
+  'Approved On',
+  'Task Description',
+];
 
-  const filteredData = useMemo(() => {
-    return INITIAL_TIMESHEET_DATA.filter((row) => {
-      const matchesSearch =
-        searchTerm === '' ||
-        row.taskDescription.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        row.empName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        row.empId.toLowerCase().includes(searchTerm.toLowerCase());
-
-      const matchesStatus =
-        statusFilter === 'All' || row.approvalStatus === statusFilter;
-
-      return matchesSearch && matchesStatus;
-    });
-  }, [searchTerm, statusFilter]);
-
-  const totalRecords = 145; // Matching design "Showing 1-10 of 145 records"
+const TimesheetDataTab = () => {
+  const [selectedEmployee, setSelectedEmployee] = useState('');
 
   return (
-    <div className="space-y-3 font-sans">
-      {/* Top Toolbar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-        {/* Left: Search and Filter */}
-        <div className="flex items-center gap-2.5">
-          {/* Search Box */}
-          <div className="relative w-64 sm:w-80">
-            <Search
-              size={15}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-            />
-            <input
-              type="text"
-              placeholder="Search tasks..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#856BFF] focus:ring-1 focus:ring-[#856BFF] transition-all shadow-sm"
-            />
-          </div>
-
-          {/* Filter Button */}
-          <div className="relative">
-            <button
-              onClick={() => setShowFilterDropdown(!showFilterDropdown)}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-[#D8CEFD] text-[#856BFF] text-xs font-semibold rounded-lg hover:bg-purple-50 transition-colors shadow-sm cursor-pointer"
-            >
-              <SlidersHorizontal size={14} />
-              <span>Filter</span>
-            </button>
-
-            {/* Filter Dropdown Popover */}
-            {showFilterDropdown && (
-              <div className="absolute left-0 mt-2 w-44 bg-white border border-gray-200 rounded-lg shadow-lg z-20 py-1 text-sm">
-                {['All', 'Approved', 'Submitted'].map((st) => (
-                  <button
-                    key={st}
-                    onClick={() => {
-                      setStatusFilter(st);
-                      setShowFilterDropdown(false);
-                    }}
-                    className={`w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center justify-between cursor-pointer ${
-                      statusFilter === st
-                        ? 'text-[#856BFF] font-semibold bg-purple-50/50'
-                        : 'text-gray-700'
-                    }`}
-                  >
-                    <span>{st}</span>
-                    {statusFilter === st && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#856BFF]"></span>
-                    )}
-                  </button>
-                ))}
+    <div className="w-full bg-[#f7f4ff] p-0 font-sans text-[#1f2937]">
+      <div
+        className="overflow-hidden bg-[#f8f7fb] shadow-[0_1px_2px_rgba(15,23,42,0.04)]"
+        style={{
+          border: '1px solid #E2E8F0',
+          borderRadius: 10,
+        }}
+      >
+        <div className="flex w-full max-w-[1053px] items-end justify-between bg-white px-4 py-2" style={{ height: 66 }}>
+          <div className="flex h-[50px] w-[495px] items-end gap-[24px]">
+            <div className="flex h-[50px] w-[146px] flex-col items-start gap-[2px]">
+              <label className="flex h-[14px] w-[146px] items-center text-[12px] font-semibold leading-[14px] text-[#545f72]" style={{ fontFamily: 'Roboto, sans-serif' }}>
+                Select Employee
+              </label>
+              <div
+                className="box-border flex items-center justify-center rounded-[4px] border border-[#E2E8F0] bg-white"
+                style={{
+                  boxSizing: 'border-box',
+                  width: 146,
+                  height: 34,
+                  padding: 8,
+                  gap: 50,
+                }}
+              >
+                <div className="flex items-center justify-between" style={{ width: 121, height: 16, gap: 16 }}>
+                  <span className="flex items-center text-[12px] font-normal leading-[14px] text-[#94A3B8]" style={{ width: 89, height: 14, fontFamily: 'Roboto, sans-serif' }}>
+                    Select Employee
+                  </span>
+                  <ChevronDown size={16} strokeWidth={1.5} className="text-[#c3c6d6]" />
+                </div>
               </div>
-            )}
+            </div>
+
+            <div className="flex h-[50px] w-[199px] flex-col items-start gap-[2px]">
+              <label className="flex h-[14px] w-[199px] items-center text-[12px] font-semibold leading-[14px] text-[#545f72]" style={{ fontFamily: 'Roboto, sans-serif' }}>
+                Date Range
+              </label>
+              <div
+                className="box-border flex items-center rounded-[4px] border border-[#E2E8F0] bg-white"
+                style={{
+                  boxSizing: 'border-box',
+                  width: 199,
+                  height: 34,
+                  padding: 8,
+                  gap: 50,
+                }}
+              >
+                <div className="flex items-center" style={{ width: 189, height: 16, gap: 16 }}>
+                  <span className="flex items-center text-[12px] font-normal leading-[14px] text-[#94A3B8]" style={{ width: 61, height: 14, fontFamily: 'Roboto, sans-serif' }}>
+                    Select Date
+                  </span>
+                  <span className="text-[12px] font-normal leading-[14px] text-[#c3c6d6]">→</span>
+                  <span className="flex items-center text-[12px] font-normal leading-[14px] text-[#94A3B8]" style={{ width: 48, height: 14, fontFamily: 'Roboto, sans-serif' }}>
+                    End Date
+                  </span>
+                  <CalendarDays size={16} strokeWidth={1.5} className="ml-auto shrink-0 text-[#c3c6d6]" />
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              className="flex h-[34px] w-[80px] items-center justify-center rounded-[4px] bg-[#856BFF] text-[14px] font-semibold leading-[16px] tracking-[0.6px] text-white shadow-[0_2px_8px_rgba(133,107,255,0.22)] transition-colors hover:bg-[#7458F5]"
+              style={{ fontFamily: 'Roboto, sans-serif' }}
+            >
+              Apply
+            </button>
+          </div>
+
+          <div className="flex h-[30px] w-[443px] items-center gap-[10px] whitespace-nowrap" style={{ paddingRight: 238.07 }}>
+            <div className="box-border flex h-[30px] w-[152px] items-center justify-center gap-[6px] rounded-[8px] border border-[#E2E8F0] bg-[#F8FAFC] px-[12px]">
+              <span className="h-[8px] w-[8px] rounded-full bg-[#64748B]" />
+              <span className="flex h-[16px] items-center text-[12px] leading-[16px] text-[#64748B]" style={{ fontFamily: 'Roboto, sans-serif' }}>Total Hours:</span>
+              <span className="flex h-[16px] items-center text-[12px] leading-[16px] text-[#0F172A]" style={{ fontFamily: 'Roboto, sans-serif' }}>780 hrs</span>
+            </div>
+
+            <div className="box-border flex h-[30px] w-[141px] items-center justify-center gap-[6px] rounded-[8px] border border-[#A7F3D0] bg-[#ECFDF5] px-[12px]">
+              <span className="h-[8px] w-[8px] rounded-full bg-[#10B981]" />
+              <span className="flex h-[16px] items-center text-[12px] leading-[16px] text-[#047857]" style={{ fontFamily: 'Roboto, sans-serif' }}>Approved:</span>
+              <span className="flex h-[16px] items-center text-[12px] leading-[16px] text-[#065F46]" style={{ fontFamily: 'Roboto, sans-serif' }}>690 hrs</span>
+            </div>
+
+            <div className="box-border flex h-[30px] w-[127px] items-center justify-center gap-[6px] rounded-[8px] border border-[#FDE68A] bg-[#FFFBEB] px-[12px]">
+              <span className="h-[8px] w-[8px] rounded-full bg-[#F59E0B]" />
+              <span className="flex h-[16px] items-center text-[12px] leading-[16px] text-[#B45309]" style={{ fontFamily: 'Roboto, sans-serif' }}>Pending:</span>
+              <span className="flex h-[16px] items-center text-[12px] leading-[16px] text-[#92400E]" style={{ fontFamily: 'Roboto, sans-serif' }}>90 hrs</span>
+            </div>
           </div>
         </div>
 
-        {/* Right: Metrics Badges */}
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Total Hours Badge */}
-          <div className="px-3 py-1 bg-gray-100 text-gray-800 text-[11px] font-semibold rounded-lg">
-            Total Hours: <span className="font-bold">780 hrs</span>
-          </div>
-
-          {/* Approved Hours Badge */}
-          <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-semibold rounded-lg">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-            Approved: <span className="font-bold">690 hrs</span>
-          </div>
-
-          {/* Pending Hours Badge */}
-          <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-semibold rounded-lg">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-            Pending: <span className="font-bold">90 hrs</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Table Card (Full View with Horizontal Scroll) */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[1300px]">
+          <table className="min-w-[1400px] w-full border-separate border-spacing-0 text-left">
             <thead>
-              <tr className="bg-[#F8FAFC] border-b border-gray-200 text-[#475467] text-[11px] font-semibold">
-                <th className="py-2 px-3 whitespace-nowrap">EMP ID</th>
-                <th className="py-2 px-3 whitespace-nowrap">Emp Name</th>
-                <th className="py-2 px-3 whitespace-nowrap">Designation</th>
-                <th className="py-2 px-3 whitespace-nowrap">Project Code</th>
-                <th className="py-2 px-3 whitespace-nowrap">Project Name</th>
-                <th className="py-2 px-3 whitespace-nowrap">Cat. Code</th>
-                <th className="py-2 px-3 whitespace-nowrap">Category</th>
-                <th className="py-2 px-3 whitespace-nowrap">Hours Spent</th>
-                <th className="py-2 px-3 whitespace-nowrap">From Date</th>
-                <th className="py-2 px-3 whitespace-nowrap">To Date</th>
-                <th className="py-2 px-3 whitespace-nowrap">Approval Status</th>
-                <th className="py-2 px-3 whitespace-nowrap">Approved By</th>
-                <th className="py-2 px-3 whitespace-nowrap">Submitted On</th>
-                <th className="py-2 px-3 whitespace-nowrap">Approved On</th>
-                <th className="py-2 px-3 min-w-[200px]">Task Description</th>
+              <tr className="bg-[#EFF4FF] text-[12px] font-medium tracking-[0.5px] text-[#475569]">
+                {COLUMNS.map((column) => (
+                  <th
+                    key={column}
+                    className="border-b border-[#dfe3ea] px-4 py-3 whitespace-nowrap text-left"
+                    style={{ minWidth: column.includes('Task Description') ? 220 : undefined }}
+                  >
+                    {column}
+                  </th>
+                ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 text-[11.5px] text-gray-700">
-              {filteredData.map((row) => (
+            <tbody className="text-[13px] text-[#2c3240]">
+              {ROWS.map((row, index) => (
                 <tr
-                  key={row.id}
-                  className="hover:bg-[#F9FAFB] transition-colors"
+                  key={`${row.empId}-${index}`}
+                  className={index % 2 === 0 ? 'bg-white' : 'bg-[#f8f9fc]'}
                 >
-                  <td className="py-1.5 px-3 font-semibold text-gray-900 whitespace-nowrap">
-                    {row.empId}
-                  </td>
-                  <td className="py-1.5 px-3 font-medium text-gray-900 whitespace-nowrap">
-                    {row.empName}
-                  </td>
-                  <td className="py-1.5 px-3 text-gray-600 whitespace-nowrap">
-                    {row.designation}
-                  </td>
-                  <td className="py-1.5 px-3 text-gray-600 whitespace-nowrap">
-                    {row.projectCode}
-                  </td>
-                  <td className="py-1.5 px-3 font-semibold text-gray-900 whitespace-nowrap">
-                    {row.projectName}
-                  </td>
-                  <td className="py-1.5 px-3 text-gray-500 whitespace-nowrap">
-                    {row.catCode}
-                  </td>
-                  <td className="py-1.5 px-3 text-gray-700 whitespace-nowrap">
-                    {row.category}
-                  </td>
-                  <td className="py-1.5 px-3 font-semibold text-gray-900 whitespace-nowrap">
-                    {row.hoursSpent}
-                  </td>
-                  <td className="py-1.5 px-3 text-gray-600 whitespace-nowrap">
-                    {row.fromDate}
-                  </td>
-                  <td className="py-1.5 px-3 text-gray-600 whitespace-nowrap">
-                    {row.toDate}
-                  </td>
-                  <td className="py-1.5 px-3 whitespace-nowrap">
-                    {row.approvalStatus === 'Approved' ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                        Approved
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-semibold bg-[#F0EDFF] text-[#6D4AFF] border border-[#D8CEFD]">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#856BFF]"></span>
-                        Submitted
-                      </span>
-                    )}
-                  </td>
-                  <td className="py-1.5 px-3 text-gray-700 whitespace-nowrap">
-                    {row.approvedBy}
-                  </td>
-                  <td className="py-1.5 px-3 text-gray-500 whitespace-nowrap">
-                    {row.submittedOn}
-                  </td>
-                  <td className="py-1.5 px-3 text-gray-500 whitespace-nowrap">
-                    {row.approvedOn}
-                  </td>
-                  <td className="py-1.5 px-3 text-gray-800 font-normal">
-                    {row.taskDescription}
-                  </td>
+                  <td className="border-b border-[#e8edf5] px-4 py-4 font-bold text-[#1f2937]">{row.empId}</td>
+                  <td className="border-b border-[#e8edf5] px-4 py-4 font-medium text-[#1f2937]">{row.empName}</td>
+                  <td className="border-b border-[#e8edf5] px-4 py-4 text-[#475467]">{row.designation}</td>
+                  <td className="border-b border-[#e8edf5] px-4 py-4 font-semibold text-[#1f2937]">{row.projectCode}</td>
+                  <td className="border-b border-[#e8edf5] px-4 py-4 font-bold text-[#1f2937]">{row.projectName}</td>
+                  <td className="border-b border-[#e8edf5] px-4 py-4 text-[#475467]">{row.catCode}</td>
+                  <td className="border-b border-[#e8edf5] px-4 py-4 text-[#475467]">{row.category}</td>
+                  <td className="border-b border-[#e8edf5] px-4 py-4 text-[#374151]">{row.hoursSpent}</td>
+                  <td className="border-b border-[#e8edf5] px-4 py-4 text-[#374151]">{row.fromDate}</td>
+                  <td className="border-b border-[#e8edf5] px-4 py-4 text-[#374151]">{row.toDate}</td>
+                  <td className="border-b border-[#e8edf5] px-4 py-4 text-[#374151]">{row.approvalStatus}</td>
+                  <td className="border-b border-[#e8edf5] px-4 py-4 text-[#374151]">{row.approvedBy}</td>
+                  <td className="border-b border-[#e8edf5] px-4 py-4 text-[#374151]">{row.submittedOn}</td>
+                  <td className="border-b border-[#e8edf5] px-4 py-4 text-[#374151]">{row.approvedOn}</td>
+                  <td className="border-b border-[#e8edf5] px-4 py-4 text-[#374151]">{row.taskDescription}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
 
-        {/* Bottom Pagination */}
-        <div className="flex flex-col sm:flex-row items-center justify-between px-5 py-2.5 bg-white border-t border-gray-100 gap-3 text-xs">
-          <div className="text-gray-500 font-medium">
-            Showing 1-{filteredData.length} of {totalRecords} records
-          </div>
-
-          <div className="flex items-center gap-1">
-            <button
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              className="w-7 h-7 flex items-center justify-center rounded border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
-            >
-              <ChevronLeft size={14} />
-            </button>
-
-            {[1, 2, 3].map((page) => (
-              <button
-                key={page}
-                onClick={() => setCurrentPage(page)}
-                className={`w-7 h-7 flex items-center justify-center rounded font-semibold text-xs transition-colors cursor-pointer ${
-                  currentPage === page
-                    ? 'bg-[#856BFF] text-white'
-                    : 'text-gray-700 hover:bg-gray-100'
-                }`}
-              >
-                {page}
-              </button>
-            ))}
-
-            <span className="px-1 text-gray-400 font-bold">...</span>
-
-            <button
-              onClick={() => setCurrentPage((p) => p + 1)}
-              className="w-7 h-7 flex items-center justify-center rounded border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors cursor-pointer"
-            >
-              <ChevronRight size={14} />
-            </button>
+        <div className="flex items-center justify-between border-t border-[#e5e7eb] bg-white px-4 py-3 text-[12px] text-[#64748b]">
+          <div className="font-medium text-[#64748b]">Showing 1-10 of 145 records</div>
+          <div className="flex items-center gap-2">
+            <button className="flex h-7 w-7 items-center justify-center rounded border border-[#d9dee8] bg-white text-[#64748b] hover:bg-[#f8fafc]">&lt;</button>
+            <button className="flex h-7 w-7 items-center justify-center rounded bg-[#856BFF] text-[12px] font-semibold text-white">1</button>
+            <button className="flex h-7 w-7 items-center justify-center rounded text-[#475467] hover:bg-[#f3f4f6]">2</button>
+            <button className="flex h-7 w-7 items-center justify-center rounded text-[#475467] hover:bg-[#f3f4f6]">3</button>
+            <span className="px-1 text-[#9ca3af]">...</span>
+            <button className="flex h-7 w-7 items-center justify-center rounded border border-[#d9dee8] bg-white text-[#64748b] hover:bg-[#f8fafc]">&gt;</button>
           </div>
         </div>
       </div>
