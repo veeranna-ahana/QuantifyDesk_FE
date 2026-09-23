@@ -1503,128 +1503,98 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
         </div>
       )}
 
-      {/* ── Edit Task Details Slide-Over Section (Right Side of Screen, Optimized for 100% Zoom) ── */}
+      {/* ── Edit Task Details Slide-Over Section (Figma-aligned at 100% zoom) ── */}
       {editingTask && (
-        <div className="fixed inset-0 z-50 overflow-hidden" role="dialog" aria-modal="true">
-          {/* Subtle backdrop overlay (transparent enough to keep the entire web screen visible) */}
+        <div className="task-edit-overlay" role="dialog" aria-modal="true">
           <div
-            className="fixed inset-0 bg-black/15 transition-opacity duration-200"
+            className="task-edit-backdrop"
             onClick={() => setEditingTask(null)}
             aria-hidden="true"
           />
 
-          {/* Right-docked slide-over panel */}
-          <div className="fixed inset-y-0 right-0 max-w-full flex pointer-events-none z-50">
-            <div className="w-screen max-w-[430px] bg-white shadow-[-12px_0_35px_rgba(0,0,0,0.12)] border-l border-gray-200 flex flex-col h-full pointer-events-auto animate-in slide-in-from-right duration-200">
-              
-              {/* Header (fixed at top) */}
-              <div className="flex-shrink-0 px-5 py-2 border-b border-gray-100 bg-white">
-                <div className="flex items-center justify-between">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-bold bg-[#F4F0FF] text-[#7C5CFC]">
-                    <RotateCw size={12} className="text-[#7C5CFC]" />
+          <div className="task-edit-drawer-shell">
+            <div className="task-edit-panel">
+              <header className="task-edit-header">
+                <div className="task-edit-header-row">
+                  <span className="task-edit-badge">
+                    <RotateCw size={12} className="task-edit-badge-icon" />
                     {editingTask.id}
                   </span>
                   <button
                     type="button"
                     onClick={() => setEditingTask(null)}
-                    className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-1.5 rounded-lg transition-colors cursor-pointer bg-transparent border-none"
+                    className="task-edit-close"
                     aria-label="Close"
                   >
                     <X size={18} />
                   </button>
                 </div>
 
-                <h2 className="text-lg font-bold text-gray-900 mt-1 mb-0.5">
-                  Edit Task Details
-                </h2>
-                <p className="text-xs font-medium text-gray-500 m-0 truncate">
-                  Milestone: {editingTask.milestoneName || 'Planning & Initiation'} &bull; {projName} ({pmsId})
+                <h2 className="task-edit-title">Edit Task Details</h2>
+                <p className="task-edit-subtitle">
+                  Milestone: {editingTask.milestoneName || 'Planning & Initiation'} • {projName} ({pmsId})
                 </p>
-              </div>
+              </header>
 
-              {/* Scrollable Content Body (Compactly optimized for 100% zoom) */}
-              <div className="flex-1 overflow-y-auto px-5 py-2.5 space-y-2.5 scrollbar-thin">
-                {/* Read-only Info Card */}
-                <div className="bg-[#F8F9FE] border border-[#EDE9FE]/80 rounded-xl p-2.5 text-xs">
-                  <div className="grid grid-cols-2 gap-x-3 gap-y-1">
-                    <div>
-                      <div className="text-[11px] font-medium text-gray-400">Milestone</div>
-                      <div className="text-[12.5px] font-bold text-gray-900 mt-0.5 leading-snug">
-                        {editingTask.phase || 'Phase 1: Discovery'}
-                      </div>
+              <div className="task-edit-body">
+                <div className="task-edit-summary">
+                  <div className="task-edit-grid">
+                    <div className="task-edit-field">
+                      <span className="task-edit-label">Milestone</span>
+                      <span className="task-edit-value">{editingTask.phase || 'Phase 1: Discovery'}</span>
                     </div>
-                    <div>
-                      <div className="text-[11px] font-medium text-gray-400">Task Title</div>
-                      <div className="text-[12.5px] font-bold text-gray-900 mt-0.5 leading-snug">
-                        {editingTask.title}
-                      </div>
+                    <div className="task-edit-field">
+                      <span className="task-edit-label">Task Title</span>
+                      <span className="task-edit-value">{editingTask.title}</span>
                     </div>
 
-                    <div>
-                      <div className="text-[11px] font-medium text-gray-400">Task Owner</div>
-                      <div className="text-[12.5px] font-bold text-gray-900 mt-0.5 leading-snug">
-                        {editingTask.ownerFull || 'Sarah Jenkins'}
-                      </div>
+                    <div className="task-edit-field">
+                      <span className="task-edit-label">Task Owner</span>
+                      <span className="task-edit-value">{editingTask.ownerFull || 'Sarah Jenkins'}</span>
                     </div>
-                    <div>
-                      <div className="text-[11px] font-medium text-gray-400">Status</div>
-                      <div className="text-[12.5px] font-bold text-gray-900 mt-0.5 leading-snug">
-                        {editingTask.status}
-                      </div>
+                    <div className="task-edit-field">
+                      <span className="task-edit-label">Status</span>
+                      <span className="task-edit-value">{editingTask.status}</span>
                     </div>
 
-                    <div>
-                      <div className="text-[11px] font-medium text-gray-400">Planned Start</div>
-                      <div className="text-[12.5px] font-bold text-gray-900 mt-0.5 leading-snug">
-                        {editingTask.plannedStart}
-                      </div>
+                    <div className="task-edit-field">
+                      <span className="task-edit-label">Planned Start</span>
+                      <span className="task-edit-value task-edit-value-sm">{editingTask.plannedStart}</span>
                     </div>
-                    <div>
-                      <div className="text-[11px] font-medium text-gray-400">Actual Start</div>
-                      <div className="text-[12.5px] font-bold text-gray-900 mt-0.5 leading-snug">
-                        {editingTask.actualStart || '-'}
-                      </div>
+                    <div className="task-edit-field">
+                      <span className="task-edit-label">Actual Start</span>
+                      <span className="task-edit-value task-edit-value-sm">{editingTask.actualStart || '-'}</span>
                     </div>
 
-                    <div>
-                      <div className="text-[11px] font-medium text-gray-400">Planned End</div>
-                      <div className="text-[12.5px] font-bold text-gray-900 mt-0.5 leading-snug">
-                        {editingTask.plannedEnd}
-                      </div>
+                    <div className="task-edit-field">
+                      <span className="task-edit-label">Planned End</span>
+                      <span className="task-edit-value task-edit-value-sm">{editingTask.plannedEnd}</span>
                     </div>
-                    <div>
-                      <div className="text-[11px] font-medium text-gray-400">Actual End</div>
-                      <div className="text-[12.5px] font-bold text-gray-900 mt-0.5 leading-snug">
-                        {editingTask.actualEnd || '-'}
-                      </div>
+                    <div className="task-edit-field">
+                      <span className="task-edit-label">Actual End</span>
+                      <span className="task-edit-value task-edit-value-sm">{editingTask.actualEnd || '-'}</span>
                     </div>
 
-                    <div>
-                      <div className="text-[11px] font-medium text-gray-400">Risk Category</div>
-                      <div className="text-[12.5px] font-bold text-gray-900 mt-0.5 leading-snug">
-                        {editingTask.riskCategory || '--'}
-                      </div>
+                    <div className="task-edit-field task-edit-field-full">
+                      <span className="task-edit-label">Risk Category</span>
+                      <span className="task-edit-value">{editingTask.riskCategory || '--'}</span>
                     </div>
-                    <div></div>
 
-                    <div className="col-span-2">
-                      <div className="text-[11px] font-medium text-gray-400">Remark</div>
-                      <div className="text-[12.5px] font-bold text-gray-900 mt-0.5 leading-snug">
-                        {editingTask.remark || 'Completed ahead of schedule.'}
-                      </div>
+                    <div className="task-edit-field task-edit-field-full">
+                      <span className="task-edit-label">Remark</span>
+                      <span className="task-edit-value">{editingTask.remark || 'Completed ahead of schedule.'}</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Form Fields */}
-                <form id="edit-task-details-form" onSubmit={handleSaveEditedTask} className="space-y-2">
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1">Role</label>
-                    <div className="relative">
+                <form id="edit-task-details-form" onSubmit={handleSaveEditedTask} className="task-edit-form">
+                  <div className="task-edit-form-row">
+                    <label className="task-edit-form-label">Role</label>
+                    <div className="task-edit-select-wrap">
                       <select
                         value={editFormData.role}
                         onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value })}
-                        className="w-full appearance-none px-3 py-1.5 border border-gray-300 rounded-lg text-xs text-gray-900 bg-white outline-none focus:border-[#856BFF] focus:ring-1 focus:ring-[#856BFF] cursor-pointer"
+                        className="task-edit-select"
                       >
                         <option value="Business Analyst">Business Analyst</option>
                         <option value="Lead">Lead</option>
@@ -1635,17 +1605,17 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
                         <option value="Project Manager">Project Manager</option>
                         <option value="DevOps Engineer">DevOps Engineer</option>
                       </select>
-                      <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                      <ChevronDown size={14} className="task-edit-select-chevron" />
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1">Task Type</label>
-                    <div className="relative">
+                  <div className="task-edit-form-row">
+                    <label className="task-edit-form-label">Task Type</label>
+                    <div className="task-edit-select-wrap">
                       <select
                         value={editFormData.taskType}
                         onChange={(e) => setEditFormData({ ...editFormData, taskType: e.target.value })}
-                        className="w-full appearance-none px-3 py-1.5 border border-gray-300 rounded-lg text-xs text-gray-900 bg-white outline-none focus:border-[#856BFF] focus:ring-1 focus:ring-[#856BFF] cursor-pointer"
+                        className="task-edit-select"
                       >
                         <option value="Analysis">Analysis</option>
                         <option value="Development">Development</option>
@@ -1659,40 +1629,38 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
                         <option value="Infra">Infra</option>
                         <option value="Security">Security</option>
                       </select>
-                      <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                      <ChevronDown size={14} className="task-edit-select-chevron" />
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1">Unit</label>
+                  <div className="task-edit-form-row">
+                    <label className="task-edit-form-label">Unit</label>
                     <input
                       type="text"
                       value={editFormData.unit}
                       onChange={(e) => setEditFormData({ ...editFormData, unit: e.target.value })}
-                      className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs text-gray-900 bg-white outline-none focus:border-[#856BFF] focus:ring-1 focus:ring-[#856BFF]"
+                      className="task-edit-input"
                     />
                   </div>
                 </form>
               </div>
 
-              {/* Fixed Footer (Always 100% visible at bottom, never cut off!) */}
-              <div className="flex-shrink-0 px-5 py-2 bg-white border-t border-gray-100 flex items-center justify-end gap-3 shadow-[0_-2px_10px_rgba(0,0,0,0.03)]">
+              <footer className="task-edit-footer">
                 <button
                   type="button"
                   onClick={() => setEditingTask(null)}
-                  className="px-5 py-2 rounded-lg border border-gray-300 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer bg-white"
+                  className="task-edit-cancel"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   form="edit-task-details-form"
-                  className="px-6 py-2 rounded-lg bg-[#856BFF] hover:bg-[#7354fd] text-xs font-semibold text-white transition-colors cursor-pointer border-none shadow-sm"
+                  className="task-edit-save"
                 >
-                  Save
+                  Save Changes
                 </button>
-              </div>
-
+              </footer>
             </div>
           </div>
         </div>
