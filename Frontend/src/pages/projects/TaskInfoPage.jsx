@@ -580,7 +580,7 @@ export default function TaskInfoPage({ onCancel, onNext }) {
                 id="task-search"
                 type="text"
                 className="ti-search-input"
-                placeholder="Search by task"
+                placeholder="Search tasks..."
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setTaskPage(1); }}
               />
@@ -693,8 +693,8 @@ export default function TaskInfoPage({ onCancel, onNext }) {
       </div>
 
       {/* ── TaskInformationCard (milestones + pagination) ── */}
-      <div className="ti-task-card">
-        <div className="ti-milestone-list">
+      <div className="ti-task-card task-info-card task-info-card--import">
+        <div className="ti-milestone-list task-info-milestone-list">
           {visibleMilestones.length === 0 ? (
             <div style={{ padding: '32px', color: '#94a3b8', fontSize: 14, textAlign: 'center', width: '100%' }}>
               No milestones match your search.

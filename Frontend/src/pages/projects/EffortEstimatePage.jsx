@@ -24,9 +24,17 @@ const DEFINED_ROLES = [
 
 /** Mock members pool for the "Add Member" dropdown */
 const ALL_MEMBERS = [
-  'Navith', 'Kusum', 'Soumya', 'Ranjitha',
-  'Ankit', 'Devanshi', 'Priya', 'Arjun',
-  'Sneha', 'Rohit', 'Meera', 'Dev',
+  { id: 'rahul', name: 'Rahul Sharma', initials: 'RS' },
+  { id: 'priya', name: 'Priya Nair', initials: 'PN' },
+  { id: 'amit', name: 'Amit Patel', initials: 'AP' },
+  { id: 'sneha', name: 'Sneha Rao', initials: 'SR' },
+  { id: 'vikas', name: 'Vikas Gupta', initials: 'VG' },
+  { id: 'pooja', name: 'Pooja Hegde', initials: 'PH' },
+  { id: 'suresh', name: 'Suresh Raina', initials: 'SR' },
+  { id: 'karthik', name: 'Karthik N', initials: 'KN' },
+  { id: 'mohan', name: 'Mohan Raj', initials: 'MR' },
+  { id: 'rohan', name: 'Rohan Verma', initials: 'RV' },
+  { id: 'meera', name: 'Meera Iyer', initials: 'MI' },
 ];
 
 /** Seed data matching the Figma screenshot */
@@ -90,9 +98,11 @@ const uid    = ()     => Math.random().toString(36).slice(2, 9);
 // ── Pending (new) member row ──────────────────────────────────────────────────
 
 function PendingRow({ role, members, onConfirm, onCancel }) {
-  const [selectedMember, setSelectedMember] = useState('');
-  const [effortDays,     setEffortDays]     = useState('');
-  const [bufferDays,     setBufferDays]     = useState('');
+  const defaultMember = members.find(member => member.name === 'Meera Iyer') || members[0] || null;
+  const [selectedMember, setSelectedMember] = useState(defaultMember ? defaultMember.name : '');
+  const [isOpen, setIsOpen] = useState(true);
+  const [effortDays, setEffortDays] = useState('');
+  const [bufferDays, setBufferDays] = useState('');
 
   const effortHrs = toHrs(effortDays);
   const bufferHrs = toHrs(bufferDays);
@@ -100,9 +110,9 @@ function PendingRow({ role, members, onConfirm, onCancel }) {
   const handleConfirm = () => {
     if (!selectedMember) return;
     onConfirm({
-      id:         uid(),
+      id: uid(),
       role,
-      name:       selectedMember,
+      name: selectedMember,
       effortDays: Number(effortDays) || 0,
       bufferDays: Number(bufferDays) || 0,
     });
@@ -112,16 +122,46 @@ function PendingRow({ role, members, onConfirm, onCancel }) {
     <div className="ee-member-row ee-member-row--pending">
       {/* Member select */}
       <div className="ee-cell ee-cell--name">
-        <div className="ee-add-member-select-wrap">
-          <select
-            className="ee-add-member-select"
-            value={selectedMember}
-            onChange={e => setSelectedMember(e.target.value)}
+        <div className="ee-add-member-picker">
+          <button
+            type="button"
+            className="ee-member-trigger"
+            onClick={() => setIsOpen(open => !open)}
           >
-            <option value="" disabled>Add Member</option>
-            {members.map(m => <option key={m} value={m}>{m}</option>)}
-          </select>
-          <span className="ee-add-member-chevron"><ChevronDownSmall /></span>
+            <span className="ee-member-trigger-content">
+              {selectedMember ? (
+                <>
+                  <span className="ee-member-avatar-small">{(selectedMember.split(' ').map(p => p[0]).slice(0, 2).join('') || 'U').toUpperCase()}</span>
+                  <span>{selectedMember}</span>
+                </>
+              ) : (
+                <span className="ee-member-placeholder">Select member</span>
+              )}
+            </span>
+            <span className="ee-add-member-chevron"><ChevronDownSmall /></span>
+          </button>
+
+          {isOpen && (
+            <div className="ee-member-menu" role="listbox" aria-label="Select team member">
+              {members.map(member => {
+                const isActive = member.name === selectedMember;
+                return (
+                  <button
+                    key={member.id}
+                    type="button"
+                    className={`ee-member-item ${isActive ? 'ee-member-item--active' : ''}`}
+                    onClick={() => {
+                      setSelectedMember(member.name);
+                      setIsOpen(false);
+                    }}
+                  >
+                    <span className="ee-member-avatar">{member.initials}</span>
+                    <span className="ee-member-label">{member.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 
@@ -232,7 +272,7 @@ function RoleSection({ role, rows, allMembers, onRowChange, onAddConfirm }) {
   const [showPending, setShowPending] = useState(false);
 
   const usedNames = rows.map(r => r.name);
-  const available = allMembers.filter(m => !usedNames.includes(m));
+  const available = allMembers.filter(m => !usedNames.includes(m.name));
 
   return (
     <>

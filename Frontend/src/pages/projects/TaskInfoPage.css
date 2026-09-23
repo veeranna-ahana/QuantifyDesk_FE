@@ -107,8 +107,8 @@
 /* Search */
 .ti-search-wrap {
   position: relative;
-  width: 448px;
-  max-width: 448px;
+  width: 320px;
+  max-width: 320px;
   height: 34px;
   border-radius: 8px;
   flex-shrink: 0;
@@ -121,7 +121,7 @@
   transform: translateY(-50%);
   width: 16px;
   height: 16px;
-  color: #94a3b8;
+  color: #74777f;
   pointer-events: none;
 }
 
@@ -132,7 +132,7 @@
   padding: 9px 16px 10px 36px;
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  border-radius: 4px;
   outline: none;
   font-family: 'Roboto', sans-serif;
   font-size: 14px;
@@ -141,7 +141,7 @@
   transition: border-color 150ms ease;
 }
 
-.ti-search-input::placeholder { color: #94a3b8; }
+.ti-search-input::placeholder { color: #6b7280; }
 .ti-search-input:focus         { border-color: #856bff; }
 
 /* Milestone dropdown */
@@ -174,7 +174,7 @@
   position: absolute;
   right: 10px;
   top: 50%;
-  transform: translateY(-50%);
+  transform: translateY(-50%) rotate(90deg);
   width: 16px;
   height: 16px;
   color: #6b7280;
@@ -207,6 +207,11 @@
   flex-shrink: 0;
 }
 
+/* The compact Import Project toolbar uses the status controls as its action row. */
+.ti-toolbar > .ti-bulk-update-btn {
+  display: none;
+}
+
 .ti-bulk-update-btn:hover {
   background: #7457fc;
 }
@@ -219,8 +224,11 @@
   align-items: center;
   gap: 13px;
   width: 100%;
+  min-width: 0;
   overflow-x: auto;
-  padding-top: 4px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  padding-top: 0;
   box-sizing: border-box;
 }
 
@@ -235,7 +243,8 @@
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   gap: 0px;
-  flex-shrink: 0;
+  flex: 0 0 587px;
+  min-width: 587px;
 }
 
 .ti-tab-btn {
@@ -258,6 +267,7 @@
   color: #475569;
   transition: all 150ms ease;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .ti-tab-btn:hover:not(.ti-tab-btn--active) {
@@ -314,7 +324,7 @@
   width: 1px;
   height: 20px;
   background: #e2e8f0;
-  flex-shrink: 0;
+  flex: 0 0 1px;
 }
 
 /* Right alert pills */
@@ -323,7 +333,9 @@
   flex-direction: row;
   align-items: center;
   gap: 6px;
-  flex-shrink: 0;
+  flex: 0 0 286px;
+  min-width: 286px;
+  white-space: nowrap;
 }
 
 .ti-alert-pill {
@@ -367,6 +379,10 @@
   color: #475569;
   font-weight: 500;
   padding: 4px 8px;
+}
+
+.ti-alert-pill--due {
+  height: 24px;
 }
 
 .ti-alert-dot {

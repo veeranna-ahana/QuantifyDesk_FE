@@ -274,44 +274,134 @@
 
 .ee-days-input:focus { border-color: #856bff; }
 
-/* ── Pending row: Add Member select ─────────────────────────── */
+/* ── Pending row: Attractive add-member selector ───────────────────── */
 
-.ee-add-member-select-wrap {
+.ee-add-member-picker {
   position: relative;
-  width: 167px;
-  height: 32px;
+  width: 220px;
 }
 
-.ee-add-member-select {
+.ee-member-trigger {
   box-sizing: border-box;
   width: 100%;
-  height: 32px;
-  padding: 4px 32px 4px 8px;
-  background: #ffffff;
-  border: 1px solid #c3c6d6;
-  border-radius: 8px;
-  appearance: none;
-  font-family: 'Roboto', sans-serif;
-  font-weight: 400;
-  font-size: 14px;
-  line-height: 24px;
-  color: #64748b;
-  cursor: pointer;
-  outline: none;
-  transition: border-color 150ms ease;
-}
-
-.ee-add-member-select:focus { border-color: #856bff; }
-.ee-add-member-select option { color: #171c20; }
-
-.ee-add-member-chevron {
-  position: absolute;
-  right: 6px;
-  top: 50%;
-  transform: translateY(-50%);
-  pointer-events: none;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid #d9dce7;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8faff 100%);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  font-family: 'Roboto', sans-serif;
+  color: #172033;
+  transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+}
+
+.ee-member-trigger:hover {
+  border-color: #9bb4ff;
+  box-shadow: 0 10px 22px rgba(55, 92, 255, 0.12);
+}
+
+.ee-member-trigger-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+}
+
+.ee-member-avatar-small {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e5e7ff 0%, #c7d2fe 100%);
+  color: #1d4ed8;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+.ee-member-placeholder {
+  color: #64748b;
+}
+
+.ee-member-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 100%;
+  max-height: 250px;
+  overflow-y: auto;
+  background: #ffffff;
+  border: 1px solid #dfe5f0;
+  border-radius: 12px;
+  box-shadow: 0 18px 38px rgba(15, 23, 42, 0.18);
+  padding: 8px;
+  z-index: 20;
+}
+
+.ee-member-item {
+  width: 100%;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 120ms ease, transform 120ms ease;
+  color: #1f2937;
+}
+
+.ee-member-item:hover {
+  background: #f5f7ff;
+}
+
+.ee-member-item--active {
+  background: linear-gradient(135deg, #0a7cff 0%, #1d4ed8 100%);
+  color: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18);
+}
+
+.ee-member-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #eef2ff 0%, #dbeafe 100%);
+  color: #1d4ed8;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.ee-member-item--active .ee-member-avatar {
+  background: rgba(255,255,255,0.2);
+  color: #ffffff;
+}
+
+.ee-member-label {
+  font-size: 14px;
+  line-height: 1.4;
+  font-weight: 500;
+}
+
+.ee-add-member-chevron {
+  position: static;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  flex-shrink: 0;
 }
 
 /* ── Confirm / Cancel icon buttons ──────────────────────────── */

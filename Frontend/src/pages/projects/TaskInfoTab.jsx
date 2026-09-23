@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Search,
   SlidersHorizontal,
@@ -14,6 +14,8 @@ import {
   Check,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+
+import './TaskInfoTab.css';
 
 // ─── Initial Mock Dataset (matches design specs & counts) ──────────────────────
 // Total Tasks: 145 = 69 Completed + 19 In Progress + 57 Not Started
@@ -702,6 +704,8 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMilestoneFilter, setSelectedMilestoneFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [milestoneMenuOpen, setMilestoneMenuOpen] = useState(false);
+  const milestoneMenuRef = useRef(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [editingTask, setEditingTask] = useState(null);
   const [editFormData, setEditFormData] = useState({
@@ -712,6 +716,24 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
   const [bulkUpdateOpen, setBulkUpdateOpen] = useState(false);
   const [bulkUpdateRows, setBulkUpdateRows] = useState([]);
   const pageSize = 10;
+
+  useEffect(() => {
+    const handlePointerDown = (event) => {
+      if (!milestoneMenuRef.current?.contains(event.target)) {
+        setMilestoneMenuOpen(false);
+      }
+    };
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') setMilestoneMenuOpen(false);
+    };
+
+    document.addEventListener('mousedown', handlePointerDown);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
 
   const handleOpenBulkUpdate = () => {
     setBulkUpdateRows(
@@ -1059,16 +1081,16 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
   }
 
   return (
-    <div className="space-y-2.5 font-sans text-gray-800">
+    <div className={`task-info-tab ${isEditing ? 'task-info-tab--editing' : ''} space-y-2.5 font-sans text-gray-800`}>
 
       {/* ── Filter & Search Bar Container ── */}
-      <div className="bg-white rounded-lg p-2.5 border border-[#E2E8F0] shadow-none mb-2.5">
+      <div className="task-info-toolbar bg-white rounded-lg p-2.5 border border-[#E2E8F0] shadow-none mb-2.5">
         
         {/* Row 1: Search + Milestone + Filter | Bulk Update (single row, no wrapping) */}
-        <div className="flex flex-nowrap items-center gap-2 min-w-0">
+        <div className="task-info-toolbar-row flex flex-nowrap items-center gap-2 min-w-0">
           
           {/* Search Input */}
-          <div className="relative flex-shrink-0 w-[226px]">
+          <div className="task-info-search relative flex-shrink-0 w-[226px]">
             <Search
               size={14}
               strokeWidth={2}
@@ -1087,27 +1109,51 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
           </div>
 
           {/* Milestone Dropdown Filter */}
-          <div className="relative flex-shrink-0">
-            <select
-              value={selectedMilestoneFilter}
-              onChange={(e) => {
-                setSelectedMilestoneFilter(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="box-border appearance-none h-[28px] pl-3 pr-8 border border-[#E2E8F0] rounded-md bg-white text-[#475569] font-medium text-[11px] outline-none focus:border-[#856BFF] cursor-pointer transition-colors"
+          <div ref={milestoneMenuRef} className="task-info-milestone-select relative flex-shrink-0">
+            <button
+              type="button"
+              aria-haspopup="listbox"
+              aria-expanded={milestoneMenuOpen}
+              onClick={() => setMilestoneMenuOpen((open) => !open)}
+              className="task-info-milestone-trigger box-border flex h-[34px] w-[111px] items-center justify-between gap-2 border border-[#E2E8F0] rounded-lg bg-white px-4 py-2 text-left text-[#334155] font-normal text-[12px] leading-[14px] outline-none transition-colors"
             >
-              <option value="ALL">Milestone</option>
-              {milestones.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name}
-                </option>
-              ))}
-            </select>
-            <ChevronDown
-              size={14}
-              strokeWidth={2.2}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#5E6C84] pointer-events-none"
-            />
+              <span>
+                {selectedMilestoneFilter === 'ALL'
+                  ? 'Milestone'
+                  : milestones.find((milestone) => milestone.id === selectedMilestoneFilter)?.name}
+              </span>
+              <ChevronDown
+                size={14}
+                strokeWidth={2.2}
+                className={`text-[#5E6C84] transition-transform ${milestoneMenuOpen ? 'rotate-180' : ''}`}
+              />
+            </button>
+
+            {milestoneMenuOpen && (
+              <div className="task-info-milestone-menu" role="listbox" aria-label="Milestones">
+                {milestones.map((milestone) => {
+                  const isSelected = selectedMilestoneFilter === milestone.id;
+                  return (
+                    <button
+                      key={milestone.id}
+                      type="button"
+                      role="option"
+                      aria-selected={isSelected}
+                      onClick={() => {
+                        setSelectedMilestoneFilter(milestone.id);
+                        setCurrentPage(1);
+                        setMilestoneMenuOpen(false);
+                      }}
+                      className={`task-info-milestone-option ${isSelected ? 'task-info-milestone-option--selected' : ''}`}
+                    >
+                      <span className="task-info-milestone-dot" aria-hidden="true" />
+                      <span className="task-info-milestone-option-label">{milestone.name}</span>
+                      {isSelected && <Check size={17} strokeWidth={2.4} aria-hidden="true" />}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Filter Button */}
@@ -1125,7 +1171,7 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
               setStatusFilter(next);
               setCurrentPage(1);
             }}
-            className="flex-shrink-0 box-border flex items-center gap-1.5 h-[28px] px-3 border border-[#E2E8F0] rounded-md bg-white text-[#475569] font-semibold text-[11px] hover:bg-gray-50 transition-colors cursor-pointer"
+            className="task-info-filter-button flex-shrink-0 box-border flex items-center gap-1.5 h-[28px] px-3 border border-[#E2E8F0] rounded-md bg-white text-[#475569] font-semibold text-[11px] hover:bg-gray-50 transition-colors cursor-pointer"
           >
             <SlidersHorizontal size={13} className="text-[#475569]" />
             <span>Filter</span>
@@ -1149,67 +1195,85 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
 
         </div>
 
-        {/* ── Row 2: Summary & Metrics Badges Bar ── */}
-        <div className="flex flex-wrap items-center gap-1.5 mt-2 text-[10px]">
-          
-          {/* Milestones Completed Badge */}
-          <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#FAF5FF] border border-[#E9D8FD] text-[#7C3AED] font-semibold whitespace-nowrap">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#7C3AED]"></span>
-            <span>Milestones: {completedMilestonesCount}/{totalMilestonesCount} Completed ({milestonesPercent}%)</span>
+        {/* ── Row 2: Status tabs and alert filters ── */}
+        <div className="task-info-status-row">
+          <div className="task-info-status-tabs">
+            <button
+              type="button"
+              className={`task-info-status-tab ${statusFilter === 'ALL' ? 'task-info-status-tab--active' : ''}`}
+              onClick={() => { setStatusFilter('ALL'); setCurrentPage(1); }}
+            >
+              All Task ({totalTasksCount})
+            </button>
+            <button
+              type="button"
+              className={`task-info-status-tab ${statusFilter === 'In Progress' ? 'task-info-status-tab--active' : ''}`}
+              onClick={() => { setStatusFilter(statusFilter === 'In Progress' ? 'ALL' : 'In Progress'); setCurrentPage(1); }}
+            >
+              <span>In Progress</span>
+              <span className="task-info-status-count task-info-status-count--gray">{inProgressTasksCount}</span>
+            </button>
+            <button
+              type="button"
+              className={`task-info-status-tab ${statusFilter === 'Completed' ? 'task-info-status-tab--active' : ''}`}
+              onClick={() => { setStatusFilter(statusFilter === 'Completed' ? 'ALL' : 'Completed'); setCurrentPage(1); }}
+            >
+              <span>Last Completed</span>
+              <span className="task-info-status-count task-info-status-count--green">19</span>
+            </button>
+            <button
+              type="button"
+              className="task-info-status-tab"
+              onClick={() => { setStatusFilter(statusFilter === 'Completed' ? 'ALL' : 'Completed'); setCurrentPage(1); }}
+            >
+              <span>Total Completed</span>
+              <span className="task-info-status-count task-info-status-count--green-dark">{completedTasksCount}</span>
+            </button>
+            <button
+              type="button"
+              className={`task-info-status-tab ${statusFilter === 'Not Started' ? 'task-info-status-tab--active' : ''}`}
+              onClick={() => { setStatusFilter(statusFilter === 'Not Started' ? 'ALL' : 'Not Started'); setCurrentPage(1); }}
+            >
+              <span>Not Started</span>
+              <span className="task-info-status-count task-info-status-count--blue">{notStartedTasksCount}</span>
+            </button>
           </div>
 
-          {/* Tasks Count Badge */}
-          <div
-            onClick={() => setStatusFilter('ALL')}
-            className={`flex items-center gap-1 px-2 py-0.5 rounded-md border text-[10px] cursor-pointer transition-colors whitespace-nowrap ${
-              statusFilter === 'ALL'
-                ? 'bg-[#F1F5F9] border-[#E2E8F0] text-[#334155] font-semibold'
-                : 'bg-white border-[#E2E8F0] text-[#334155] hover:bg-gray-50'
-            }`}
-          >
-            <span className="w-1.5 h-1.5 rounded-sm bg-[#64748B]"></span>
-            <span>Tasks: <span className="font-bold text-[#1E293B]">{totalTasksCount}</span></span>
-          </div>
+          <div className="task-info-status-divider" aria-hidden="true" />
 
-          {/* Completed Badge */}
-          <div
-            onClick={() => setStatusFilter(statusFilter === 'Completed' ? 'ALL' : 'Completed')}
-            className={`flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#ECFDF5] border border-[#A7F3D0] text-[#065F46] font-semibold cursor-pointer transition-colors whitespace-nowrap ${
-              statusFilter === 'Completed' ? 'ring-1 ring-[#10B981]' : 'hover:opacity-90'
-            }`}
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>
-            <span>Completed: {completedTasksCount} ({completedPercent}%)</span>
+          <div className="task-info-alerts">
+            <button
+              type="button"
+              className="task-info-alert task-info-alert--blockers"
+              onClick={() => setStatusFilter('ALL')}
+            >
+              <span className="task-info-alert-dot task-info-alert-dot--amber" />
+              <span>Blockers (4)</span>
+            </button>
+            <button
+              type="button"
+              className="task-info-alert task-info-alert--delayed"
+              onClick={() => setStatusFilter('ALL')}
+            >
+              <span className="task-info-alert-dot task-info-alert-dot--rose" />
+              <span>Delayed (3)</span>
+            </button>
+            <button
+              type="button"
+              className="task-info-alert task-info-alert--due"
+              onClick={() => setStatusFilter('ALL')}
+            >
+              Due Today (8)
+            </button>
           </div>
-
-          {/* In Progress Badge */}
-          <div
-            onClick={() => setStatusFilter(statusFilter === 'In Progress' ? 'ALL' : 'In Progress')}
-            className={`flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#FFFBEB] border border-[#FDE68A] text-[#92400E] font-semibold cursor-pointer transition-colors whitespace-nowrap ${
-              statusFilter === 'In Progress' ? 'ring-1 ring-[#F59E0B]' : 'hover:opacity-90'
-            }`}
-          >
-            <span className="w-1.5 h-1.5 rounded-sm bg-[#F59E0B]"></span>
-            <span>In Progress: {inProgressTasksCount}</span>
-          </div>
-
-          {/* Not Started Badge */}
-          <div
-            onClick={() => setStatusFilter(statusFilter === 'Not Started' ? 'ALL' : 'Not Started')}
-            className={`flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#F8FAFC] border border-[#E2E8F0] text-[#475569] font-semibold cursor-pointer transition-colors whitespace-nowrap ${
-              statusFilter === 'Not Started' ? 'ring-1 ring-[#94A3B8]' : 'hover:opacity-90'
-            }`}
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-[#94A3B8]"></span>
-            <span>Not Started: {notStartedTasksCount}</span>
-          </div>
-
         </div>
 
       </div>
 
-      {/* ── Milestones Accordion Cards List ── */}
-      <div className="space-y-1">
+      {/* ── Task Information Card: all milestones share one container ── */}
+      <div className={`task-info-card ${isEditing ? 'task-info-card--editing' : 'task-info-card--view'}`}>
+        {/* ── Milestones Accordion Cards List ── */}
+        <div className="task-info-milestones task-info-milestone-list space-y-1">
         {filteredMilestones.length === 0 ? (
           <div className="bg-white rounded-xl p-10 text-center border border-gray-100 text-gray-400 text-sm">
             No milestones or tasks found matching your filters.
@@ -1221,12 +1285,12 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
             return (
               <div
                 key={milestone.id}
-                className="bg-white rounded-lg border border-[#E2E8F0] shadow-none overflow-hidden transition-all duration-200"
+                className="task-info-milestone bg-white rounded-lg border border-[#E2E8F0] shadow-none overflow-hidden transition-all duration-200"
               >
                 {/* ── Card Header (Accordion toggle) ── */}
                 <div
                   onClick={() => toggleMilestone(milestone.id)}
-                  className="flex items-center justify-between px-3 py-1.5 cursor-pointer hover:bg-gray-50/70 transition-colors select-none"
+                  className="task-info-milestone-header flex items-center justify-between px-3 py-1.5 cursor-pointer hover:bg-gray-50/70 transition-colors select-none"
                 >
                   <div className="flex flex-wrap items-center gap-1.5">
                     {/* Blue Calendar/Clipboard Icon */}
@@ -1257,9 +1321,9 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
 
                 {/* ── Card Body / Task Table (when expanded) ── */}
                 {isExpanded && (
-                  <div className="border-t border-gray-100">
-                    <div className="overflow-x-auto relative w-full scrollbar-thin">
-                      <table className={`w-full text-left border-collapse text-[10px] ${isEditing ? 'min-w-[760px]' : 'min-w-[1040px]'}`}>
+                  <div className="task-info-milestone-body border-t border-gray-100">
+                    <div className="task-info-table-scroll overflow-x-auto relative w-full scrollbar-thin">
+                      <table className={`task-info-table w-full text-left border-collapse text-[10px] ${isEditing ? 'min-w-[760px]' : 'min-w-[1040px]'}`}>
                         <thead>
                           <tr className="bg-[#F8F9FB] border-b border-gray-100 text-[#5E6C84] font-bold">
                             <th className="py-1.5 px-2.5 whitespace-nowrap">Task ID</th>
@@ -1408,10 +1472,10 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
             );
           })
         )}
-      </div>
+        </div>
 
-      {/* ── Bottom Pagination Bar ── */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-2 py-4 text-xs text-gray-500">
+        {/* ── Bottom Pagination Bar ── */}
+        <div className="task-info-pagination flex flex-col sm:flex-row items-center justify-between gap-3 px-2 py-4 text-xs text-gray-500">
         <div>
           Showing{' '}
           <span className="font-bold text-gray-800">
@@ -1478,11 +1542,12 @@ const TaskInfoTab = ({ project, isEditing = false, onEdit, onNext, onCancel }) =
             <ChevronRight size={14} />
           </button>
         </div>
+        </div>
       </div>
 
       {/* ── Footer Actions ── */}
       {isEditing && (
-        <div className="flex items-center justify-end gap-2 mt-2.5 pt-2.5 border-t border-gray-100">
+        <div className="task-info-footer flex items-center justify-end gap-2 mt-2.5 pt-2.5 border-t border-gray-100">
           <button
             type="button"
             id="task-info-cancel-btn"
