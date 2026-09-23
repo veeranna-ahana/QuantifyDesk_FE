@@ -1,0 +1,159 @@
+/* ----------------------------------------
+   Design Tokens — WorkQuantify Brand
+   Mirrors the token pattern from @UI/src/styles/tokens.css
+---------------------------------------- */
+
+:root {
+  /* ── Spacing ── */
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-5: 24px;
+  --spacing-6: 32px;
+  --spacing-8: 48px;
+  --spacing-10: 64px;
+
+  /* ── Brand / Primary ── */
+  --color-brand-primary: #856bff;
+  --color-brand-primary-hover: #7458f5;
+  --color-brand-primary-light: #ede9ff;
+  --color-brand-button: #7062e4;
+  --color-brand-button-hover: #5d51c7;
+  --color-brand-button-active: #4e44b0;
+
+  /* ── Existing page-level aliases ── */
+  --color-brand-purple: #6c5ce7;
+  --color-brand-purple-light: #eef0ff;
+  --color-surface-form: #f8f9fa;
+  --color-surface-table-header: #1e272e;
+  --color-surface-table-row-border: #f0f0f0;
+  --color-text-legacy-primary: #333333;
+  --color-text-legacy-muted: #666666;
+  --color-text-legacy-placeholder: #999999;
+  --color-border-form: #dddddd;
+  --color-accent-danger: #ff0000;
+  --color-accent-success: #27ae60;
+  --color-accent-warning: #ff8800;
+  --color-accent-error: #ff4444;
+  --color-accent-error-strong: #e74c3c;
+
+  /* ── Neutral Scale ── */
+  --color-neutral-0: #ffffff;
+  --color-neutral-50: #f9fafb;
+  --color-neutral-100: #f3f4f6;
+  --color-neutral-200: #e5e7eb;
+  --color-neutral-300: #d1d5db;
+  --color-neutral-400: #9ca3af;
+  --color-neutral-500: #6b7280;
+  --color-neutral-600: #4b5563;
+  --color-neutral-700: #374151;
+  --color-neutral-800: #1f2937;
+  --color-neutral-900: #111827;
+
+  /* ── Surface ── */
+  --color-surface-default: #ffffff;
+  --color-surface-muted: #f3f4f6;
+  --color-surface-app: #f5f7fa;
+
+  /* ── Text ── */
+  --color-text-primary: #1e272e;
+  --color-text-secondary: #434655;
+  --color-text-tertiary: #58606b;
+  --color-text-muted: #9aa3ab;
+
+  /* ── Border ── */
+  --color-border-default: #c3c6d7;
+  --color-border-subtle: #e2e8f0;
+  --color-border-focus: #856bff;
+  --color-border-subtle-alpha: rgba(226, 232, 240, 0.9);
+  --color-border-figma: #c4c6cf;
+  --color-surface-context: #eff4f9;
+  --color-surface-table-header-light: #eff4ff;
+  --color-text-navy: #002045;
+
+  /* ── Sidebar ── */
+  --color-sidebar-active: #856bff;
+  --color-sidebar-active-hover: #7458f5;
+  --color-sidebar-bg: #ffffff;
+  --color-sidebar-text: #434655;
+  --color-sidebar-text-active: #ffffff;
+
+  /* ── Sidebar dimensions ── */
+  --spacing-sidebar-width: 260px;
+  --spacing-sidebar-item-height: 56px;
+  --spacing-sidebar-item-padding-x: 24px;
+  --spacing-sidebar-item-gap: 16px;
+  --spacing-sidebar-sub-item-indent: 52px;
+
+  /* ── Header ── */
+  --spacing-header-height: 54px;
+  --color-header-bg: #ffffff;
+  --color-header-border: #e2e8f0;
+
+  /* ── Icon sizes ── */
+  --icon-sm: 16px;
+  --icon-md: 18px;
+  --icon-lg: 24px;
+
+  /* ── Radius ── */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* ── Shadows ── */
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-2: 0 4px 12px rgba(0, 0, 0, 0.12);
+  --shadow-3: 0 12px 32px rgba(0, 0, 0, 0.16);
+  --shadow-page-card: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --shadow-form-card: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --shadow-toast: 0 6px 24px rgba(0, 0, 0, 0.18);
+
+  /* ── Motion ── */
+  --duration-fast: 100ms;
+  --duration-standard: 150ms;
+  --duration-slow: 250ms;
+
+  /* ── Typography ── */
+  --font-sans: 'Roboto', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  --font-size-caption: 12px;
+  --line-height-caption: 16px;
+
+  --font-size-body-sm: 13px;
+  --line-height-body-sm: 20px;
+
+  --font-size-body: 14px;
+  --line-height-body: 24px;
+
+  --font-size-h1: 24px;
+  --line-height-h1: 32px;
+
+  /* ── Form ── */
+  --spacing-form-field-gap: 4px;
+  --spacing-form-row-gap: 12px;
+  --spacing-form-section-gap: 16px;
+  --spacing-form-input-padding-x: 12px;
+  --spacing-form-input-height: 36px;
+  --color-form-input-background: #ffffff;
+  --color-form-input-border: #d7dde1;
+
+  /* ── Status Colors ── */
+  --color-status-success-text: #15803d;
+  --color-status-success-background: #ecfdf5;
+  --color-status-success-border: #a7f3d0;
+
+  --color-status-warning-text: #b45309;
+  --color-status-warning-background: #fffbeb;
+  --color-status-warning-border: #fcd34d;
+
+  --color-status-neutral-text: #475569;
+  --color-status-neutral-background: #f1f5f9;
+  --color-status-neutral-border: #cbd5e1;
+
+  --color-status-error-text: #b91c1c;
+  --color-status-error-background: #fef2f2;
+  --color-status-error-border: #fecaca;
+}

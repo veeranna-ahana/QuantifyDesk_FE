@@ -8,7 +8,7 @@ import {
 } from '../store/slices/employeeSlice';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import SearchableSelect from '../component/SearchableSelect';
+import SearchableSelect from '@/components/ui/SearchableSelect/SearchableSelect';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const CUSTOMER_API_URL = `${BASE_URL}/api/projects/customers`;
@@ -317,7 +317,7 @@ const employeeOptions = useMemo(() => {
   };
 
   return (
-    <div className="mx-auto  bg-[#FAF8FF] p-6 font-sans">
+    <div className="mx-auto  bg-[#FAF8FF] py-4 px-6 font-sans">
 
       {/* ── Page header ── */}
       <div className="mb-6">

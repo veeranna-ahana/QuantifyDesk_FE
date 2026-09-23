@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from "react-redux";
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import SearchableSelect from '../component/SearchableSelect';
+import SearchableSelect from '@/components/ui/SearchableSelect/SearchableSelect';
 import { 
   fetchHrmsEmployees, 
   selectAllEmployees, 
@@ -266,7 +266,7 @@ const employeeOptions = useMemo(() => {
 };
 
   return (
-    <div className="mx-auto  bg-[#FAF8FF] p-6 font-sans">
+    <div className="mx-auto  bg-[#FAF8FF] py-4 px-6 font-sans">
 
       {/* ── Page header ── */}
       <div className="mb-6">

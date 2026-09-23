@@ -514,7 +514,7 @@ const correctUtilizationPercentage = totalEstimated > 0
     : 0;
 
     return (
-        <div className="p-6 max-w-full mx-auto">
+        <div className="py-4 px-6 max-w-full mx-auto">
             {/* Header */}
             <div className="mb-6">
                 <Title level={2}>Reconciliation</Title>

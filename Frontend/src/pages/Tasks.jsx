@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
-import SearchableSelect from '../component/SearchableSelect';
+import SearchableSelect from '@/components/ui/SearchableSelect/SearchableSelect';
 //const BASE_URL  = process.env.REACT_APP_API_BASE_URL;
 const BASE_URL  = import.meta.env.VITE_API_BASE_URL;
 
@@ -121,29 +121,29 @@ const Tasks = () => {
   
 
   return (
-    <div style={{ padding: '20px', maxWidth: '1400px', margin: '0 auto' }}>
+    <div className="legacy-page">
       {/* Modern Heading */}
-      <div style={headingContainerStyle}>
-        <h2 style={headingStyle}>Tasks</h2>
-        <div style={headingUnderlineStyle}></div>
+      <div className="legacy-heading-block">
+        <h2 className="legacy-heading">Tasks</h2>
+        <div className="legacy-heading-underline"></div>
       </div>
 
       {/* Modern Form */}
-      <form onSubmit={handleCreateTask} style={formStyle}>
-        <div style={formRowStyle}>
-          <div style={formGroupStyle}>
-            <label style={labelStyle}>Task Name</label>
+      <form onSubmit={handleCreateTask} className="legacy-form">
+        <div className="legacy-form-row">
+          <div className="legacy-form-group">
+            <label className="legacy-form-label">Task Name</label>
             <input
               type="text"
               placeholder="Enter task name"
               value={taskName}
               onChange={(e) => setTaskName(e.target.value)}
-              style={inputStyle}
+              className="legacy-form-input"
             />
           </div>
 
-          <div style={formGroupStyle}>
-            <label style={labelStyle}>Select Project</label>
+          <div className="legacy-form-group">
+            <label className="legacy-form-label">Select Project</label>
             <SearchableSelect
               value={selectedProject}
               onChange={setSelectedProject}
@@ -152,8 +152,8 @@ const Tasks = () => {
             />
           </div>
 
-          <div style={formGroupStyle}>
-            <label style={labelStyle}>Select User</label>
+          <div className="legacy-form-group">
+            <label className="legacy-form-label">Select User</label>
             <SearchableSelect
               value={selectedUserId}
               onChange={setSelectedUserId}
@@ -166,7 +166,7 @@ const Tasks = () => {
         <button 
           type="submit" 
           disabled={creating} 
-          style={submitButtonStyle}
+          className="legacy-button-submit"
         >
           {creating ? 'Creating...' : 'Add Task'}
         </button>
@@ -174,43 +174,32 @@ const Tasks = () => {
 
       {/* Tasks Table */}
       {loading ? (
-        <div style={loadingStyle}>Loading tasks...</div>
+        <div className="legacy-state">Loading tasks...</div>
       ) : !tasks.length ? (
-        <div style={noDataStyle}>No tasks found. Select a project to view tasks.</div>
+        <div className="legacy-state">No tasks found. Select a project to view tasks.</div>
       ) : (
-        <div style={tableContainerStyle}>
-          <div style={{ maxHeight: '500px', overflowY: 'auto' }}>
-            <table style={tableStyle}>
-              <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
+        <div className="legacy-table-card">
+          <div className="legacy-table-scroll">
+            <table className="legacy-table">
+              <thead className="legacy-table-head">
                 <tr>
-                  <th style={thStyle}>ID</th>
-                  <th style={thStyle}>Project ID</th>
-                  <th style={thStyle}>Assigned User ID</th>
-                  <th style={thStyle}>Title</th>
-                  <th style={thStyle}>Planned Units</th>
-                  <th style={thStyle}>Status</th>
-                  <th style={thStyle}>Due Date</th>
+                  <th>ID</th><th>Project ID</th><th>Assigned User ID</th><th>Title</th><th>Planned Units</th><th>Status</th><th>Due Date</th>
                 </tr>
               </thead>
               <tbody>
                 {tasks.map((t) => (
-                  <tr key={t.id} style={trStyle}>
-                    <td style={tdStyle}>{t.id}</td>
-                    <td style={tdStyle}>{t.project_id}</td>
-                    <td style={tdStyle}>{t.assigned_user_id}</td>
-                    <td style={tdStyle}>{t.task_name || t.title}</td>
-                    <td style={tdStyle}>{t.planned_units || 0}</td>
-                    <td style={tdStyle}>
+                  <tr key={t.id}>
+                    <td>{t.id}</td><td>{t.project_id}</td><td>{t.assigned_user_id}</td><td>{t.task_name || t.title}</td><td>{t.planned_units || 0}</td>
+                    <td>
                       <span style={{
-                        ...statusBadgeStyle,
                         backgroundColor: t.status === 'COMPLETED' ? '#44ff44' : 
                                        t.status === 'IN_PROGRESS' ? '#ff8800' : '#ff4444',
-                        color: '#fff',
                       }}>
+                      className="legacy-table-badge"
                         {t.status || 'PENDING'}
                       </span>
                     </td>
-                    <td style={tdStyle}>
+                    <td>
                       {t.due_date ? new Date(t.due_date).toLocaleDateString('en-GB', {
                         day: '2-digit',
                         month: '2-digit',
@@ -226,149 +215,6 @@ const Tasks = () => {
       )}
     </div>
   );
-};
-
-// Styles
-const headingContainerStyle = {
-  marginBottom: '30px',
-};
-
-const headingStyle = {
-  margin: 0,
-  color: '#1e272e',
-  fontSize: '32px',
-  fontWeight: '700',
-  letterSpacing: '-0.5px',
-  marginBottom: '8px',
-};
-
-const headingUnderlineStyle = {
-  width: '60px',
-  height: '4px',
-  backgroundColor: '#ff0000',
-  borderRadius: '2px',
-};
-
-const formStyle = {
-  backgroundColor: '#f8f9fa',
-  padding: '20px',
-  borderRadius: '12px',
-  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-  marginBottom: '30px',
-  border: '1px solid #f0f0f0',
-};
-
-const formRowStyle = {
-  display: 'flex',
-  gap: '15px',
-  marginBottom: '20px',
-  flexWrap: 'wrap',
-};
-
-const formGroupStyle = {
-  flex: '1',
-  minWidth: '200px',
-};
-
-const labelStyle = {
-  display: 'block',
-  marginBottom: '8px',
-  fontWeight: '600',
-  color: '#333',
-  fontSize: '14px',
-};
-
-const inputStyle = {
-  width: '100%',
-  padding: '12px 16px',
-  border: '1px solid #ddd',
-  borderRadius: '8px',
-  fontSize: '16px',
-  boxSizing: 'border-box',
-  transition: 'border-color 0.3s',
-  outline: 'none',
-};
-
-const selectStyle = {
-  ...inputStyle,
-  backgroundColor: 'white',
-  cursor: 'pointer',
-};
-
-const submitButtonStyle = {
-  padding: '12px 24px',
-  backgroundColor: '#ff0000',
-  color: 'white',
-  border: 'none',
-  borderRadius: '8px',
-  fontSize: '16px',
-  fontWeight: '600',
-  cursor: 'pointer',
-  transition: 'background-color 0.3s',
-  whiteSpace: 'nowrap',
-};
-
-const tableContainerStyle = {
-  backgroundColor: '#fff',
-  borderRadius: '12px',
-  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-  overflow: 'hidden',
-  border: '1px solid #f0f0f0',
-};
-
-const tableStyle = {
-  width: '100%',
-  borderCollapse: 'collapse',
-};
-
-const thStyle = {
-  backgroundColor: '#1e272e',
-  color: '#fff',
-  padding: '16px',
-  textAlign: 'left',
-  fontWeight: '600',
-  fontSize: '14px',
-  textTransform: 'uppercase',
-  letterSpacing: '0.5px',
-};
-
-const trStyle = {
-  borderBottom: '1px solid #f0f0f0',
-  transition: 'background-color 0.2s',
-};
-
-const tdStyle = {
-  padding: '16px',
-  color: '#333',
-  fontSize: '14px',
-};
-
-const statusBadgeStyle = {
-  padding: '6px 12px',
-  borderRadius: '20px',
-  fontSize: '12px',
-  fontWeight: '600',
-  display: 'inline-block',
-};
-
-const loadingStyle = {
-  padding: '40px',
-  textAlign: 'center',
-  color: '#999',
-  fontSize: '16px',
-  backgroundColor: '#fff',
-  borderRadius: '12px',
-  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-};
-
-const noDataStyle = {
-  padding: '40px',
-  textAlign: 'center',
-  color: '#999',
-  fontSize: '16px',
-  backgroundColor: '#fff',
-  borderRadius: '12px',
-  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
 };
 
 export default Tasks;

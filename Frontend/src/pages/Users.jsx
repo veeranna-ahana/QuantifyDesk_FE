@@ -32,48 +32,41 @@ console.log("result",res.data);
   }, []);
 
   return (
-    <div style={{ padding: '20px', maxWidth: '1400px', margin: '0 auto' }}>
+    <div className="legacy-page">
       {/* Modern Heading */}
-      <div style={headingContainerStyle}>
-        <h2 style={headingStyle}>Users</h2>
-        <div style={headingUnderlineStyle}></div>
+      <div className="legacy-heading-block">
+        <h2 className="legacy-heading">Users</h2>
+        <div className="legacy-heading-underline"></div>
       </div>
 
       {/* Users Table */}
       {loading ? (
-        <div style={loadingStyle}>Loading users...</div>
+        <div className="legacy-state">Loading users...</div>
       ) : !users.length ? (
-        <div style={noDataStyle}>No users found</div>
+        <div className="legacy-state">No users found</div>
       ) : (
-        <div style={tableContainerStyle}>
-          <div style={{ maxHeight: '360px', overflowY: 'auto' }}>
-            <table style={tableStyle}>
-              <thead style={{ position: 'sticky', top: 0, zIndex: 1}}>
+        <div className="legacy-table-card">
+          <div className="legacy-table-scroll legacy-table-scroll--users">
+            <table className="legacy-table">
+              <thead className="legacy-table-head">
                 <tr>
-                  <th style={thStyle}>ID</th>
-                  <th style={thStyle}>Name</th>
-                  <th style={thStyle}>Email</th>
-                  <th style={thStyle}>Projects</th>
-                  <th style={thStyle}>Role</th>
+                  <th>ID</th><th>Name</th><th>Email</th><th>Projects</th><th>Role</th>
                 </tr>
               </thead>
               <tbody>
                 {users.map((u) => (
-                  <tr key={u.id} style={trStyle}>
-                    <td style={tdStyle}>{u.id}</td>
-                    <td style={tdStyle}>{u.name}</td>
-                    <td style={tdStyle}>{u.email}</td>
-                    {/* <td style={tdStyle}>{u.projects}</td> */}
-                    <td style={tdStyle}>
+                  <tr key={u.id}>
+                    <td>{u.id}</td><td>{u.name}</td><td>{u.email}</td>
+                    <td>
                         {u.projects && u.projects.length > 0
                           ? u.projects
                           : (
-                            <span style={{ color: "#9e9e9e" }}>
+                            <span className="legacy-table-muted">
                               No Projects
                             </span>
                           )}
                       </td>
-                    <td style={tdStyle}>{u.role}</td>
+                    <td>{u.role}</td>
                     
                   </tr>
                 ))}
@@ -84,90 +77,6 @@ console.log("result",res.data);
       )}
     </div>
   );
-};
-
-// Styles
-const headingContainerStyle = {
-  marginBottom: '30px',
-};
-
-const headingStyle = {
-  margin: 0,
-  color: '#1e272e',
-  fontSize: '32px',
-  fontWeight: '700',
-  letterSpacing: '-0.5px',
-  marginBottom: '8px',
-};
-
-const headingUnderlineStyle = {
-  width: '60px',
-  height: '4px',
-  backgroundColor: '#ff0000',
-  borderRadius: '2px',
-};
-
-const tableContainerStyle = {
-  backgroundColor: '#fff',
-  borderRadius: '12px',
-  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-  overflow: 'hidden',
-  border: '1px solid #f0f0f0',
-};
-
-const tableStyle = {
-  width: '100%',
-  borderCollapse: 'collapse',
-};
-
-const thStyle = {
-  backgroundColor: '#1e272e',
-  color: '#fff',
-  padding: '16px',
-  textAlign: 'center',
-  fontWeight: '600',
-  fontSize: '14px',
-  textTransform: 'uppercase',
-  letterSpacing: '0.5px',
-};
-
-const trStyle = {
-  borderBottom: '1px solid #f0f0f0',
-  transition: 'background-color 0.2s',
-};
-
-const tdStyle = {
-  padding: '16px',
-  color: '#333',
-  fontSize: '14px',
-};
-
-const roleBadgeStyle = {
-  padding: '6px 12px',
-  borderRadius: '20px',
-  fontSize: '12px',
-  fontWeight: '600',
-  display: 'inline-block',
-};
-
-const loadingStyle = {
-  padding: '40px',
-  textAlign: 'center',
-  color: '#999',
-  fontSize: '16px',
-  backgroundColor: '#fff',
-  borderRadius: '12px',
-  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-};
-
-const noDataStyle = {
-  padding: '40px',
-  textAlign: 'center',
-  color: '#999',
-  fontSize: '16px',
-  backgroundColor: '#fff',
-  borderRadius: '12px',
-  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
 };
 
 export default Users;

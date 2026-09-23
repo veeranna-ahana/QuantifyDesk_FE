@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import { Icon } from '@iconify/react';
-import SearchableSelect from '../component/SearchableSelect';
+import SearchableSelect from '@/components/ui/SearchableSelect/SearchableSelect';
 
 // ── Role helper ───────────────────────────────────────────────────────────────
 const getUserRole = () => {
@@ -993,7 +993,7 @@ const Projects = () => {
   ];
 
   return (
-    <div className="mx-auto  bg-[#FAF8FF] p-6 font-sans">
+    <div className="mx-auto  bg-[#FAF8FF] py-4 px-6 font-sans">
 
       {/* ── Page header ── */}
       <div className="sticky top-0 z-30  pb-4  flex items-start justify-between mb-4 flex-wrap gap-3">
@@ -1015,7 +1015,7 @@ const Projects = () => {
       </div>
 
       {/* ── Table card ── */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-90 flex flex-col">
         {/* ── Table Card Header with Search & Filters ── */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-wrap gap-3">
           <div className="flex items-center gap-2">

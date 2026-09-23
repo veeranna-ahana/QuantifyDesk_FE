@@ -450,7 +450,7 @@ const utilizationPieData = useMemo(() => {
   // ─── Project Detail Role Pie Chart Data ────────────────────────
   const projectRolePieData = useMemo(() => {
     if (!projectDetail?.project) return [];
-    const colors = ['#856BFF', '#3B82F6', '#10B981', '#F59E0B', '#EC4899', '#06B6D4', '#8B5CF6', '#F97316', '#6366F1', '#14B8A6'];
+    const colors = ['#856BFF', '#3B82F6', '#10B981', '#F59E0B', '#EC4899', '#06B6D4', '#8B5CF6', '#F97316', '#856BFF', '#14B8A6'];
 
     if (projectDetail.roleSummary && projectDetail.roleSummary.length > 0) {
       const raw = projectDetail.roleSummary
@@ -500,7 +500,7 @@ const utilizationPieData = useMemo(() => {
   // ─── Project Detail Employee Pie Chart Data ────────────────────
   const projectEmployeePieData = useMemo(() => {
     if (!projectDetail?.employeeSummary || projectDetail.employeeSummary.length === 0) return [];
-    const colors = ['#856BFF', '#3B82F6', '#10B981', '#F59E0B', '#EC4899', '#06B6D4', '#8B5CF6', '#F97316', '#6366F1', '#14B8A6', '#D946EF', '#0EA5E9'];
+    const colors = ['#856BFF', '#3B82F6', '#10B981', '#F59E0B', '#EC4899', '#06B6D4', '#8B5CF6', '#F97316', '#856BFF', '#14B8A6', '#D946EF', '#0EA5E9'];
 
     const raw = projectDetail.employeeSummary
       .map((e, i) => {
@@ -712,7 +712,7 @@ useEffect(() => {
 
   // ─── Render ─────────────────────────────────────────────────────
   return (
-    <div className="p-6 font-sans bg-[#FAF8FF] min-h-screen">
+    <div className="py-4 px-6 font-sans bg-[#FAF8FF] min-h-screen">
       {/* ── If Detail View is Active, Show Only Project Details ── */}
       {showDetailView ? (
         <div className="px-0 pt-0 -mt-2">

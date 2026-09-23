@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import axiosInstance from "../../src/shared/axiosInstance";
-import { loginUser } from "../../src/store/slices/authSlice";
-import { FiSettings, FiBriefcase, FiUser, FiShield, FiChevronRight, FiCheckCircle } from "react-icons/fi";
-import { login } from "../../src/api/AuthApi";
+import axiosInstance from '@/shared/axiosInstance';
+import { loginUser } from '@/store/slices/authSlice';
+import { FiSettings, FiBriefcase, FiUser, FiShield, FiChevronRight, FiCheckCircle } from 'react-icons/fi';
+import { login } from '@/api/AuthApi';
+
 
 export default function Login() {
   console.log("frontend loading");

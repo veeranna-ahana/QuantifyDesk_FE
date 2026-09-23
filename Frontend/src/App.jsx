@@ -3,12 +3,15 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Cookies from 'js-cookie';
 import { Toaster } from 'react-hot-toast';
 import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-// import ProtectedRoute from './component/ProtectedRoute';
-import MainLayout from './layout/MainLayout';
-import './App.css';
+import Dashboard from './pages/Dashboard/Dashboard';
+// import ProtectedRoute from '@/components/ui/ProtectedRoute/ProtectedRoute';
+import MainLayout from '@/components/layout/AppLayout/AppLayout';
+
 import Users from './pages/Users';
-import Projects from './pages/Projects';
+import Projects from './pages/Projects'; // legacy — kept for other routes
+import ProjectsPage from '@/pages/projects/ProjectsPage';
+import ProjectDetailsPage from '@/pages/projects/ProjectDetailsPage';
+import ImportProjectPage from '@/pages/projects/ImportProjectPage';
 import CreateProject from './pages/CreateProject';
 import EditProject from './pages/EditProject';
 import EffortEstimate from './pages/EffortEstimate';
@@ -19,7 +22,7 @@ import AssignEmployee from './pages/AssignEmployee';
 import MyWork from './pages/MyWork';
 import UtilizationDashboard from './pages/UtilizationDashboard';
 import Approvals from './pages/Approvals';
-import DailyUpdatesReport from './pages/DailyUpdatesReport';
+import DailyUpdatesReport from './pages/DailyReport/DailyUpdatesReport';
 import ReconPage from './pages/Recon';
 import ReconciliationUpload from './pages/ReconciliationUpload';
 
@@ -33,15 +36,15 @@ function App() {
         toastOptions={{
           duration: 3500,
           style: {
-            borderRadius: '10px',
+            borderRadius: 'var(--radius-md)',
             fontWeight: 700,
-            fontSize: '14px',
+            fontSize: 'var(--font-size-body)',
             minWidth: '280px',
             maxWidth: '420px',
-            boxShadow: '0 6px 24px rgba(0,0,0,0.18)',
+            boxShadow: 'var(--shadow-toast)',
           },
-          success: { style: { background: '#27ae60', color: '#fff' } },
-          error:   { style: { background: '#e74c3c', color: '#fff' } },
+          success: { style: { background: 'var(--color-accent-success)', color: 'var(--color-neutral-0)' } },
+          error:   { style: { background: 'var(--color-accent-error-strong)', color: 'var(--color-neutral-0)' } },
         }}
       />
       <Routes>
@@ -51,7 +54,9 @@ function App() {
         {/* Protected Routes with MainLayout */}
         <Route path="/" element={<MainLayout />}>
           <Route path="dashboard" element={<Dashboard />} />
-          <Route path="projects" element={<Projects />} />
+          <Route path="projects" element={<ProjectsPage />} />
+          <Route path="projects/import" element={<ImportProjectPage />} />
+          <Route path="projects/:id" element={<ProjectDetailsPage />} />
           <Route path="projects/create" element={<CreateProject />} />
           <Route path="projects/edit" element={<EditProject />} />
           <Route path="projects/effort" element={<EffortEstimate />} />

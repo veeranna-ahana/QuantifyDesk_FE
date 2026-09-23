@@ -8,12 +8,13 @@ export default {
     extend: {
       colors: {
         brand: {
-          purple: '#6C5CE7',
-          light: '#EEF0FF',
+          purple: 'var(--color-brand-purple)',
+          light: 'var(--color-brand-purple-light)',
         }
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
+        roboto: ['Roboto', 'sans-serif'],
       },
     },
   },
