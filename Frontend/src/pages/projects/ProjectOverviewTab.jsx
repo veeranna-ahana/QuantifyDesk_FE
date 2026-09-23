@@ -134,8 +134,24 @@ function MetricCard({ value, label, subLabel, valueClass }) {
 // ─── Main Component ─────────────────────────────────────────────────────────
 
 const ProjectOverviewTab = ({ project }) => {
-  const pName = project?.project_name || project?.projectName || OVERVIEW_DATA.projectName;
-  const pCode = project?.project_code || project?.projectCode || OVERVIEW_DATA.projectCode;
+  const pName = project?.project_name || project?.projectName || project?.name || OVERVIEW_DATA.projectName;
+  const pCode = project?.project_code || project?.projectCode || project?.code || project?.pmsId || OVERVIEW_DATA.projectCode;
+  const units = project?.units ?? OVERVIEW_DATA.units;
+  const onTrackStatus = project?.status || OVERVIEW_DATA.onTrackStatus;
+  const riskLevel = project?.risk || OVERVIEW_DATA.riskLevel;
+  const completion = project?.completion ?? OVERVIEW_DATA.completion;
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return "";
+    return new Date(dateStr).toLocaleDateString("en-US", { day: "2-digit", month: "short", year: "numeric" });
+  };
+  const startDt = project?.start_date || project?.startDate;
+  const endDt = project?.end_date || project?.endDate;
+  const startDateStr = startDt ? formatDate(startDt) : OVERVIEW_DATA.startDate;
+  const endDateStr = endDt ? formatDate(endDt) : OVERVIEW_DATA.endDate;
+
+  const isPositiveStatus = onTrackStatus === 'On Track' || onTrackStatus === 'Completed';
+  const isWarningStatus = onTrackStatus === 'At Risk' || onTrackStatus === 'Delayed';
 
   return (
     <div className="flex flex-col gap-2 font-sans w-full">
@@ -145,25 +161,39 @@ const ProjectOverviewTab = ({ project }) => {
         <div>
           <h1 className="text-[22px] font-bold text-[#1E293B] leading-tight">{pName}</h1>
           <p className="text-xs text-[#64748B] mt-0.5">
-            {pCode} · {OVERVIEW_DATA.units} Units
+            {pCode} · {units} Units
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#D1FAE5] text-[#059669] border border-[#A7F3D0]">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#059669]" />
-            {OVERVIEW_DATA.onTrackStatus}
+          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
+            isPositiveStatus
+              ? 'bg-[#D1FAE5] text-[#059669] border border-[#A7F3D0]'
+              : isWarningStatus
+              ? 'bg-[#FEF3C7] text-[#D97706] border border-[#FDE68A]'
+              : 'bg-[#F0EDFF] text-[#7C3AED] border border-[#D8CEFD]'
+          }`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${
+              isPositiveStatus ? 'bg-[#059669]' : isWarningStatus ? 'bg-[#D97706]' : 'bg-[#7C3AED]'
+            }`} />
+            {onTrackStatus}
           </span>
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-[#F0EDFF] text-[#7C3AED] border border-[#D8CEFD]">
-            {OVERVIEW_DATA.riskLevel}
+          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
+            riskLevel === 'Low'
+              ? 'bg-[#F0EDFF] text-[#7C3AED] border border-[#D8CEFD]'
+              : riskLevel === 'Critical' || riskLevel === 'High'
+              ? 'bg-[#FEE2E2] text-[#DC2626] border border-[#FECACA]'
+              : 'bg-[#FEF3C7] text-[#D97706] border border-[#FDE68A]'
+          }`}>
+            {riskLevel}
           </span>
         </div>
       </div>
 
       {/* ── Metric Cards ── */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-1.5">
-        <MetricCard value={OVERVIEW_DATA.startDate}         label="Start Date"           valueClass="text-[18px] font-bold text-[#1E293B]" />
-        <MetricCard value={OVERVIEW_DATA.endDate}           label="End Date"             valueClass="text-[18px] font-bold text-[#1E293B]" />
-        <MetricCard value={`${OVERVIEW_DATA.completion}%`} label="Completion"           valueClass="text-2xl font-bold text-[#1E293B]" />
+        <MetricCard value={startDateStr}                     label="Start Date"           valueClass="text-[18px] font-bold text-[#1E293B]" />
+        <MetricCard value={endDateStr}                       label="End Date"             valueClass="text-[18px] font-bold text-[#1E293B]" />
+        <MetricCard value={`${completion}%`}                label="Completion"           valueClass="text-2xl font-bold text-[#1E293B]" />
         <MetricCard value={OVERVIEW_DATA.teamMembersCount}  label="Team Members"         valueClass="text-2xl font-bold text-[#1E293B]" />
         <MetricCard
           value={`${OVERVIEW_DATA.totalHoursAllocated}h`}

@@ -31,6 +31,13 @@ const ProjectDetailsPage = () => {
   ];
 
   useEffect(() => {
+    const tabFromQuery = searchParams.get("tab");
+    if (tabFromQuery && tabs.includes(tabFromQuery)) {
+      setActiveTab(tabFromQuery);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
     let isMounted = true;
     const fetchProject = async () => {
       try {
@@ -137,7 +144,7 @@ const ProjectDetailsPage = () => {
   // Exact fallback defaults matching Figma design
   const projName = project?.project_name || project?.projectName || project?.name || "FMS";
   const projStatus = project?.status || "Completed";
-  const pmsId = project?.pms_id || project?.pmsId || "PMS-9021";
+  const pmsId = project?.pms_id || project?.pmsId || project?.project_code || project?.projectCode || project?.code || "PMS-9021";
   const clientName = project?.client_name || project?.customer || "Ahana IT";
   const owner = project?.team_lead || project?.owner || "Sarah J.";
 

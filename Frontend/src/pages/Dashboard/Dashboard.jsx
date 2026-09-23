@@ -1,5 +1,5 @@
-// src/pages/Dashboard/Dashboard.jsx
 import React, { useEffect, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import api from '../../api/axios';
 import './Dashboard.css';
@@ -485,6 +485,7 @@ function ExpandedRow({ emp, colSpan }) {
    MAIN DASHBOARD COMPONENT
 ═══════════════════════════════════════════ */
 const Dashboard = () => {
+  const navigate = useNavigate();
   const [summary, setSummary]               = useState(null);
   const [loading, setLoading]               = useState(true);
   const [userUtilization, setUserUtilization] = useState([]);
@@ -698,7 +699,15 @@ const Dashboard = () => {
                   <td style={{ padding: '9.6px 12px' }}><MiniBar pct={p.completion} /></td>
                   <td style={{ padding: '9.6px 12px' }}><span className={riskClass(p.risk)}>{p.risk}</span></td>
                   <td style={{ padding: '9.6px 12px' }}><span className={statusClass(p.status)}>{p.status}</span></td>
-                  <td className="db-td-action"><button className="db-view-btn">View →</button></td>
+                  <td className="db-td-action">
+                    <button
+                      id={`view-project-${p.code || p.id}`}
+                      className="db-view-btn"
+                      onClick={() => navigate(`/projects/${p.code || p.id}?tab=Project Overview`)}
+                    >
+                      View →
+                    </button>
+                  </td>
                 </tr>
               ))}
               {filteredProjects.length === 0 && (
