@@ -173,7 +173,7 @@ const ProjectDetailsPage = () => {
               Projects
             </button>
             <span className="text-gray-400">›</span>
-            <span className="text-gray-900 font-bold">View / Edit Project</span>
+            <span className="text-gray-900 font-medium">{isEditing ? "Edit" : "View"}</span>
           </div>
 
           {/* Title & Metadata Row (Container: width 1058, justify-between) */}
