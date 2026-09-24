@@ -54,3 +54,16 @@ export const getEmployeeReconciliation = async (userId) => {
     const response = await api.get(`/api/timesheet/reconciliation/employee/${userId}`);
     return response.data;
 };
+
+// 7. GET TIMESHEETS BY PROJECT CATEGORY
+export const getTimesheetsByCategory = async (projectCategoryCode) => {
+    const response = await api.get('/api/hrms/timesheets-by-category', {
+        params: {
+            projectcategory_code: projectCategoryCode,
+        },
+    });
+    if (response.data?.success === false) {
+        throw new Error(response.data.message || 'Timesheet API returned an unsuccessful response');
+    }
+    return response.data;
+};

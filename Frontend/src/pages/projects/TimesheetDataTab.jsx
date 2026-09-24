@@ -1,145 +1,57 @@
 // src/pages/projects/TimesheetDataTab.jsx
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { CalendarDays, ChevronDown } from 'lucide-react';
+import { getTimesheetsByCategory } from '../../api/timesheet.api';
 
-const ROWS = [
-  {
-    empId: 'EMP-1042',
-    empName: 'Devanshi Shah',
-    designation: 'Sr. Business Analyst',
-    projectCode: 'PRJ-FMS-01',
-    projectName: 'FMS',
-    catCode: 'CAT-BFSI-01',
-    category: 'Enterprise Solutions',
-    taskDescription: 'BRD Walkthrough & Traceability Matr',
-    hoursSpent: '8.0 hrs',
-    fromDate: '01 Aug 2024',
-    toDate: '01 Aug 2024',
-    approvalStatus: 'Approved',
-    approvedBy: 'John Smith',
-    submittedOn: '02 Aug 2024',
-    approvedOn: '03 Aug 2024',
-  },
-  {
-    empId: 'EMP-1088',
-    empName: 'Rahul Sharma',
-    designation: 'Lead Frontend Dev',
-    projectCode: 'PRJ-FMS-01',
-    projectName: 'FMS',
-    catCode: 'CAT-BFSI-01',
-    category: 'Enterprise Solutions',
-    taskDescription: 'UI Development & React Components',
-    hoursSpent: '7.5 hrs',
-    fromDate: '02 Aug 2024',
-    toDate: '02 Aug 2024',
-    approvalStatus: 'Approved',
-    approvedBy: 'Sarah Jenkins',
-    submittedOn: '03 Aug 2024',
-    approvedOn: '04 Aug 2024',
-  },
-  {
-    empId: 'EMP-0945',
-    empName: 'Priya Nair',
-    designation: 'QA Lead',
-    projectCode: 'PRJ-FMS-01',
-    projectName: 'FMS',
-    catCode: 'CAT-BFSI-01',
-    category: 'Enterprise Solutions',
-    taskDescription: 'Automation Test Scripts & Signoff',
-    hoursSpent: '8.0 hrs',
-    fromDate: '08 Aug 2024',
-    toDate: '08 Aug 2024',
-    approvalStatus: 'Approved',
-    approvedBy: 'John Smith',
-    submittedOn: '09 Aug 2024',
-    approvedOn: '10 Aug 2024',
-  },
-  {
-    empId: 'EMP-0945',
-    empName: 'Priyak Nair',
-    designation: 'QA Lead',
-    projectCode: 'PRJ-FMS-01',
-    projectName: 'FMS',
-    catCode: 'CAT-BFSI-01',
-    category: 'Enterprise Solutions',
-    taskDescription: 'Automation Test Scripts & Signoff',
-    hoursSpent: '8.0 hrs',
-    fromDate: '08 Aug 2024',
-    toDate: '08 Aug 2024',
-    approvalStatus: 'Approved',
-    approvedBy: 'John Smith',
-    submittedOn: '09 Aug 2024',
-    approvedOn: '10 Aug 2024',
-  },
-  {
-    empId: 'EMP-1033',
-    empName: 'Amit Patel',
-    designation: 'UI/UX Designer',
-    projectCode: 'PRJ-FMS-01',
-    projectName: 'FMS',
-    catCode: 'CAT-BFSI-01',
-    category: 'Enterprise Solutions',
-    taskDescription: 'Responsive Mockup Alignment & Rev',
-    hoursSpent: '4.0 hrs',
-    fromDate: '10 Aug 2024',
-    toDate: '10 Aug 2024',
-    approvalStatus: 'Submitted',
-    approvedBy: 'Sarah Jenkins',
-    submittedOn: '11 Aug 2024',
-    approvedOn: '12 Aug 2024',
-  },
-  {
-    empId: 'EMP-1055',
-    empName: 'Kusum G G',
-    designation: 'Business Analyst',
-    projectCode: 'PRJ-FMS-01',
-    projectName: 'FMS',
-    catCode: 'CAT-BFSI-01',
-    category: 'Enterprise Solutions',
-    taskDescription: 'Functional Requirements Mapping',
-    hoursSpent: '8.0 hrs',
-    fromDate: '12 Aug 2024',
-    toDate: '12 Aug 2024',
-    approvalStatus: 'Approved',
-    approvedBy: 'Sarah Jenkins',
-    submittedOn: '13 Aug 2024',
-    approvedOn: '14 Aug 2024',
-  },
-  {
-    empId: 'EMP-1062',
-    empName: 'Navith K',
-    designation: 'Technical Architect',
-    projectCode: 'PRJ-FMS-01',
-    projectName: 'FMS',
-    catCode: 'CAT-BFSI-01',
-    category: 'Enterprise Solutions',
-    taskDescription: 'Microservices & Database Topology',
-    hoursSpent: '8.0 hrs',
-    fromDate: '14 Aug 2024',
-    toDate: '14 Aug 2024',
-    approvalStatus: 'Approved',
-    approvedBy: 'John Smith',
-    submittedOn: '15 Aug 2024',
-    approvedOn: '16 Aug 2024',
-  },
-  {
-    empId: 'EMP-1070',
-    empName: 'Soumya Sen',
-    designation: 'Frontend Engineer',
-    projectCode: 'PRJ-FMS-01',
-    projectName: 'FMS',
-    catCode: 'CAT-BFSI-01',
-    category: 'Enterprise Solutions',
-    taskDescription: 'State Management & Form Validatio',
-    hoursSpent: '7.0 hrs',
-    fromDate: '16 Aug 2024',
-    toDate: '16 Aug 2024',
-    approvalStatus: 'Approved',
-    approvedBy: 'Rahul Sharma',
-    submittedOn: '17 Aug 2024',
-    approvedOn: '18 Aug 2024',
-  },
-];
+const formatDate = (value) => {
+  if (!value) return '-';
+  const dateValue = String(value).split('T')[0];
+  const date = new Date(`${dateValue}T00:00:00`);
+  return Number.isNaN(date.getTime()) ? '-' : date.toLocaleDateString();
+};
+
+const toNumber = (value) => {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : 0;
+};
+
+const formatHours = (value) => {
+  if (value == null || value === '') return '-';
+  const hours = toNumber(value);
+  return `${hours.toFixed(2).replace(/\.00$/, '')} hrs`;
+};
+
+const formatTaskDescription = (item) => {
+  const description = item.task_description ?? item.taskDescription ?? item.description;
+  if (description != null && description !== '') return String(description);
+  if (Array.isArray(item.entries)) {
+    const descriptions = item.entries
+      .map((entry) => entry?.task_description ?? entry?.taskDescription ?? entry?.description)
+      .filter(Boolean);
+    return descriptions.length ? descriptions.join(', ') : '-';
+  }
+  return '-';
+};
+
+const mapTimesheetRow = (item) => ({
+  empId: item.employee_id ?? '-',
+  empName: item.employee_name ?? '-',
+  designation: item.designation ?? '-',
+  projectCode: item.project_code ?? '-',
+  projectName: item.project_name ?? '-',
+  catCode: item.projectcategory_code ?? '-',
+  category: item.projectcategory_name ?? '-',
+  hoursSpent: item.total_hours == null ? null : toNumber(item.total_hours),
+  fromDate: formatDate(item.from_date),
+  toDate: formatDate(item.to_date),
+  approvalStatus: item.overall_status ?? '-',
+  approvedBy: item.last_approved_by ?? '-',
+  submittedOn: formatDate(item.submitted_on ?? item.submittedOn ?? item.last_submitted_on),
+  approvedOn: formatDate(item.last_approved_on),
+  taskDescription: formatTaskDescription(item),
+  approvedHours: toNumber(item.approved_hours ?? item.approved),
+  pendingHours: toNumber(item.pending_hours ?? item.pending),
+});
 
 const COLUMNS = [
   'Emp Id',
@@ -159,8 +71,41 @@ const COLUMNS = [
   'Task Description',
 ];
 
-const TimesheetDataTab = () => {
-  const [selectedEmployee, setSelectedEmployee] = useState('');
+const TimesheetDataTab = ({ project }) => {
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [retryKey, setRetryKey] = useState(0);
+  const projectCategoryCode = project?.projectcategory_code || project?.projectCategoryCode || project?.categoryCode || 'NBD3011';
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchTimesheets = async () => {
+      try {
+        setLoading(true);
+        setError('');
+        const response = await getTimesheetsByCategory(projectCategoryCode);
+        const records = Array.isArray(response) ? response : response?.data || response?.results || [];
+        if (isMounted) setRows(records.map(mapTimesheetRow));
+      } catch (requestError) {
+        console.error('Failed to load timesheet data:', requestError);
+        if (isMounted) {
+          setRows([]);
+          setError('Unable to load timesheet data. Please try again.');
+        }
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    fetchTimesheets();
+    return () => { isMounted = false; };
+  }, [projectCategoryCode, retryKey]);
+
+  const totalHours = rows.reduce((sum, row) => sum + (row.hoursSpent || 0), 0);
+  const approvedHours = rows.reduce((sum, row) => sum + row.approvedHours, 0);
+  const pendingHours = rows.reduce((sum, row) => sum + row.pendingHours, 0);
 
   return (
     <div className="w-full bg-[#f7f4ff] p-0 font-sans text-[#1f2937]">
@@ -177,7 +122,10 @@ const TimesheetDataTab = () => {
               <label className="flex h-[14px] w-[146px] items-center text-[12px] font-semibold leading-[14px] text-[#545f72]" style={{ fontFamily: 'Roboto, sans-serif' }}>
                 Select Employee
               </label>
-              <div
+              <button
+                type="button"
+                aria-label="Select Employee"
+                aria-haspopup="listbox"
                 className="box-border flex items-center justify-center rounded-[4px] border border-[#E2E8F0] bg-white"
                 style={{
                   boxSizing: 'border-box',
@@ -193,14 +141,17 @@ const TimesheetDataTab = () => {
                   </span>
                   <ChevronDown size={16} strokeWidth={1.5} className="text-[#c3c6d6]" />
                 </div>
-              </div>
+              </button>
             </div>
 
             <div className="flex h-[50px] w-[199px] flex-col items-start gap-[2px]">
               <label className="flex h-[14px] w-[199px] items-center text-[12px] font-semibold leading-[14px] text-[#545f72]" style={{ fontFamily: 'Roboto, sans-serif' }}>
                 Date Range
               </label>
-              <div
+              <button
+                type="button"
+                aria-label="Select Date Range"
+                aria-haspopup="dialog"
                 className="box-border flex items-center rounded-[4px] border border-[#E2E8F0] bg-white"
                 style={{
                   boxSizing: 'border-box',
@@ -220,7 +171,7 @@ const TimesheetDataTab = () => {
                   </span>
                   <CalendarDays size={16} strokeWidth={1.5} className="ml-auto shrink-0 text-[#c3c6d6]" />
                 </div>
-              </div>
+              </button>
             </div>
 
             <button
@@ -236,19 +187,19 @@ const TimesheetDataTab = () => {
             <div className="box-border flex h-[30px] w-[152px] items-center justify-center gap-[6px] rounded-[8px] border border-[#E2E8F0] bg-[#F8FAFC] px-[12px]">
               <span className="h-[8px] w-[8px] rounded-full bg-[#64748B]" />
               <span className="flex h-[16px] items-center text-[12px] leading-[16px] text-[#64748B]" style={{ fontFamily: 'Roboto, sans-serif' }}>Total Hours:</span>
-              <span className="flex h-[16px] items-center text-[12px] leading-[16px] text-[#0F172A]" style={{ fontFamily: 'Roboto, sans-serif' }}>780 hrs</span>
+              <span className="flex h-[16px] items-center text-[12px] leading-[16px] text-[#0F172A]" style={{ fontFamily: 'Roboto, sans-serif' }}>{formatHours(totalHours)}</span>
             </div>
 
             <div className="box-border flex h-[30px] w-[141px] items-center justify-center gap-[6px] rounded-[8px] border border-[#A7F3D0] bg-[#ECFDF5] px-[12px]">
               <span className="h-[8px] w-[8px] rounded-full bg-[#10B981]" />
               <span className="flex h-[16px] items-center text-[12px] leading-[16px] text-[#047857]" style={{ fontFamily: 'Roboto, sans-serif' }}>Approved:</span>
-              <span className="flex h-[16px] items-center text-[12px] leading-[16px] text-[#065F46]" style={{ fontFamily: 'Roboto, sans-serif' }}>690 hrs</span>
+              <span className="flex h-[16px] items-center text-[12px] leading-[16px] text-[#065F46]" style={{ fontFamily: 'Roboto, sans-serif' }}>{formatHours(approvedHours)}</span>
             </div>
 
             <div className="box-border flex h-[30px] w-[127px] items-center justify-center gap-[6px] rounded-[8px] border border-[#FDE68A] bg-[#FFFBEB] px-[12px]">
               <span className="h-[8px] w-[8px] rounded-full bg-[#F59E0B]" />
               <span className="flex h-[16px] items-center text-[12px] leading-[16px] text-[#B45309]" style={{ fontFamily: 'Roboto, sans-serif' }}>Pending:</span>
-              <span className="flex h-[16px] items-center text-[12px] leading-[16px] text-[#92400E]" style={{ fontFamily: 'Roboto, sans-serif' }}>90 hrs</span>
+              <span className="flex h-[16px] items-center text-[12px] leading-[16px] text-[#92400E]" style={{ fontFamily: 'Roboto, sans-serif' }}>{formatHours(pendingHours)}</span>
             </div>
           </div>
         </div>
@@ -269,7 +220,25 @@ const TimesheetDataTab = () => {
               </tr>
             </thead>
             <tbody className="text-[13px] text-[#2c3240]">
-              {ROWS.map((row, index) => (
+              {loading && (
+                <tr>
+                  <td colSpan={COLUMNS.length} className="px-4 py-10 text-center text-[#64748b]">Loading timesheet data...</td>
+                </tr>
+              )}
+              {!loading && error && (
+                <tr>
+                  <td colSpan={COLUMNS.length} className="px-4 py-10 text-center text-red-600">
+                    <div>{error}</div>
+                    <button type="button" onClick={() => setRetryKey((value) => value + 1)} className="mt-2 font-semibold underline">Retry</button>
+                  </td>
+                </tr>
+              )}
+              {!loading && !error && rows.length === 0 && (
+                <tr>
+                  <td colSpan={COLUMNS.length} className="px-4 py-10 text-center text-[#64748b]">No timesheet records found.</td>
+                </tr>
+              )}
+              {!loading && !error && rows.map((row, index) => (
                 <tr
                   key={`${row.empId}-${index}`}
                   className={index % 2 === 0 ? 'bg-white' : 'bg-[#f8f9fc]'}
@@ -281,7 +250,7 @@ const TimesheetDataTab = () => {
                   <td className="border-b border-[#e8edf5] px-4 py-4 font-bold text-[#1f2937]">{row.projectName}</td>
                   <td className="border-b border-[#e8edf5] px-4 py-4 text-[#475467]">{row.catCode}</td>
                   <td className="border-b border-[#e8edf5] px-4 py-4 text-[#475467]">{row.category}</td>
-                  <td className="border-b border-[#e8edf5] px-4 py-4 text-[#374151]">{row.hoursSpent}</td>
+                  <td className="border-b border-[#e8edf5] px-4 py-4 text-[#374151]">{formatHours(row.hoursSpent)}</td>
                   <td className="border-b border-[#e8edf5] px-4 py-4 text-[#374151]">{row.fromDate}</td>
                   <td className="border-b border-[#e8edf5] px-4 py-4 text-[#374151]">{row.toDate}</td>
                   <td className="border-b border-[#e8edf5] px-4 py-4 text-[#374151]">{row.approvalStatus}</td>
@@ -296,7 +265,7 @@ const TimesheetDataTab = () => {
         </div>
 
         <div className="flex items-center justify-between border-t border-[#e5e7eb] bg-white px-4 py-3 text-[12px] text-[#64748b]">
-          <div className="font-medium text-[#64748b]">Showing 1-10 of 145 records</div>
+          <div className="font-medium text-[#64748b]">Showing {rows.length ? `1-${rows.length}` : '0'} of {rows.length} records</div>
           <div className="flex items-center gap-2">
             <button className="flex h-7 w-7 items-center justify-center rounded border border-[#d9dee8] bg-white text-[#64748b] hover:bg-[#f8fafc]">&lt;</button>
             <button className="flex h-7 w-7 items-center justify-center rounded bg-[#856BFF] text-[12px] font-semibold text-white">1</button>

@@ -210,7 +210,7 @@ const ProjectDetailsPage = () => {
               </div>
             </div>
 
-            {activeTab === "Project Info" && (
+            {activeTab === "Project Info" && !isEditing && (
               <button
                 id="edit-project-btn"
                 onClick={() => setIsEditing(!isEditing)}
