@@ -85,7 +85,7 @@ export function AppHeader() {
 
             {/* User info */}
             <div className="flex flex-col items-start leading-none text-left">
-              <span className="text-[12px] font-semibold text-[#1E293B]">
+              <span className="text-[12px] font-semibold text-[#7B6CF0]">
                 {uName}
               </span>
               <span className="text-[10px] text-gray-400 mt-0.5">

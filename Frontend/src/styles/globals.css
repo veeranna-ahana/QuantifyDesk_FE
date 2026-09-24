@@ -55,6 +55,569 @@ option {
   color: var(--color-text-primary);
 }
 
+.timesheet-control-overlay-wrap,
+.timesheet-date-control-wrap {
+  position: relative;
+}
+
+.timesheet-control-overlay,
+.timesheet-date-overlay {
+  cursor: pointer;
+  inset: 0;
+  opacity: 0;
+  position: absolute;
+  z-index: 2;
+}
+
+.timesheet-control-overlay {
+  height: 34px;
+  width: 146px;
+}
+
+.timesheet-date-overlay {
+  height: 34px;
+  width: 50%;
+}
+
+.timesheet-date-overlay-from {
+  left: 0;
+}
+
+.timesheet-date-overlay-to {
+  left: auto;
+  right: 0;
+}
+
+.timesheet-page {
+  --timesheet-brand: #7B6CF0;
+  --timesheet-brand-soft: #F3F1FF;
+  --timesheet-border: #E0E4EC;
+  --timesheet-text: #1F2937;
+  --timesheet-muted: #6B7280;
+  --timesheet-head: #EEF3FD;
+  background: transparent;
+  padding: 0;
+}
+
+.timesheet-popover-root {
+  position: relative;
+  width: 100%;
+}
+
+.timesheet-control {
+  box-sizing: border-box;
+  width: 100%;
+  height: 36px;
+  border: 1px solid var(--timesheet-border) !important;
+  border-radius: 8px !important;
+  background: #FFFFFF;
+  color: var(--timesheet-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  text-align: left;
+  font: 400 12px/16px Roboto, sans-serif;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.timesheet-control > span:first-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.timesheet-control > svg {
+  flex: 0 0 auto;
+  color: #AAB3C2;
+  margin-left: auto;
+}
+
+.timesheet-control .has-value {
+  color: var(--timesheet-text);
+}
+
+.timesheet-control:hover,
+.timesheet-control.is-open,
+.timesheet-control:focus-visible {
+  border-color: var(--timesheet-brand) !important;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(123, 108, 240, 0.16);
+}
+
+.timesheet-select-trigger {
+  width: 146px;
+}
+
+.timesheet-date-trigger {
+  width: 199px;
+}
+
+.timesheet-date-trigger > span:nth-child(2) {
+  color: #B8C0CE;
+}
+
+.timesheet-range-arrow {
+  flex: 0 0 auto;
+}
+
+.timesheet-popover {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 20;
+  border: 1px solid var(--timesheet-border);
+  border-radius: 10px;
+  background: #FFFFFF;
+  box-shadow: 0 12px 28px rgba(31, 41, 55, 0.14);
+  color: var(--timesheet-text);
+}
+
+.timesheet-employee-popover {
+  width: 240px;
+  padding: 8px;
+}
+
+.timesheet-search-wrap {
+  height: 34px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 9px;
+  border: 1px solid var(--timesheet-border);
+  border-radius: 7px;
+  color: #98A2B3;
+}
+
+.timesheet-search-wrap:focus-within {
+  border-color: var(--timesheet-brand);
+  box-shadow: 0 0 0 3px rgba(123, 108, 240, 0.12);
+}
+
+.timesheet-search-wrap input {
+  min-width: 0;
+  width: 100%;
+  border: 0 !important;
+  outline: 0;
+  background: transparent !important;
+  font: 400 12px/16px Roboto, sans-serif;
+}
+
+.timesheet-option {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--timesheet-text);
+  cursor: pointer;
+  font: 400 12px/16px Roboto, sans-serif;
+  text-align: left;
+}
+
+.timesheet-option small {
+  color: #98A2B3;
+  font-size: 11px;
+}
+
+.timesheet-option:hover,
+.timesheet-option.is-highlighted {
+  background: var(--timesheet-brand-soft);
+}
+
+.timesheet-option.is-selected {
+  color: var(--timesheet-brand);
+  font-weight: 600;
+}
+
+.timesheet-option-empty {
+  padding: 14px 8px 8px;
+  color: var(--timesheet-muted);
+  font-size: 12px;
+  text-align: center;
+}
+
+.timesheet-calendar-popover {
+  width: 300px;
+  padding: 12px;
+}
+
+.timesheet-calendar-inputs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+  color: #98A2B3;
+  font-size: 12px;
+}
+
+.timesheet-calendar-inputs input {
+  box-sizing: border-box;
+  width: 118px;
+  height: 32px;
+  padding: 0 7px;
+  border: 1px solid var(--timesheet-border) !important;
+  border-radius: 6px;
+  background: #FFFFFF !important;
+  font: 400 11px/16px Roboto, sans-serif;
+}
+
+.timesheet-calendar-inputs input:focus {
+  outline: 0;
+  border-color: var(--timesheet-brand) !important;
+  box-shadow: 0 0 0 3px rgba(123, 108, 240, 0.12);
+}
+
+.timesheet-calendar-header,
+.timesheet-calendar-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.timesheet-calendar-header {
+  margin-bottom: 8px;
+}
+
+.timesheet-calendar-header strong {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.timesheet-calendar-header button,
+.timesheet-calendar-footer button {
+  border: 0;
+  background: transparent;
+  color: var(--timesheet-brand);
+  cursor: pointer;
+}
+
+.timesheet-calendar-header button {
+  display: inline-flex;
+  padding: 4px;
+  border-radius: 5px;
+}
+
+.timesheet-calendar-header button:hover,
+.timesheet-calendar-header button:focus-visible {
+  background: var(--timesheet-brand-soft);
+  outline: 0;
+}
+
+.timesheet-calendar-weekdays,
+.timesheet-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+}
+
+.timesheet-calendar-weekdays {
+  margin-bottom: 3px;
+  color: #98A2B3;
+  font-size: 11px;
+}
+
+.timesheet-calendar-day {
+  position: relative;
+  width: 36px;
+  height: 32px;
+  margin: 1px auto;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--timesheet-text);
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.timesheet-calendar-day:hover:not(:disabled),
+.timesheet-calendar-day:focus-visible:not(:disabled) {
+  outline: 2px solid rgba(123, 108, 240, 0.35);
+  outline-offset: -2px;
+}
+
+.timesheet-calendar-day.is-outside {
+  color: #C7CDD8;
+}
+
+.timesheet-calendar-day.is-between {
+  border-radius: 0;
+  background: var(--timesheet-brand-soft);
+}
+
+.timesheet-calendar-day.is-selected {
+  background: var(--timesheet-brand);
+  color: #FFFFFF;
+  font-weight: 600;
+}
+
+.timesheet-calendar-day:disabled {
+  color: #D5DAE3;
+  cursor: not-allowed;
+}
+
+.timesheet-calendar-footer {
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px solid #EEF0F5;
+}
+
+.timesheet-calendar-footer > div {
+  display: flex;
+  gap: 8px;
+}
+
+.timesheet-calendar-footer button {
+  padding: 4px 5px;
+  border-radius: 5px;
+  font: 600 12px/16px Roboto, sans-serif;
+}
+
+.timesheet-calendar-footer button:hover,
+.timesheet-calendar-footer button:focus-visible {
+  background: var(--timesheet-brand-soft);
+  outline: 0;
+}
+
+.timesheet-calendar-clear {
+  color: var(--timesheet-muted) !important;
+}
+
+.timesheet-shell {
+  border: 1px solid #E2E8F0;
+  border-radius: 12px !important;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+.timesheet-toolbar {
+  min-height: 0;
+  border-bottom: 0;
+  background: #ffffff;
+}
+
+.timesheet-control-overlay-wrap > button,
+.timesheet-date-control-wrap > button {
+  border-color: #E2E8F0 !important;
+  border-radius: 4px !important;
+  transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
+}
+
+.timesheet-control-overlay-wrap:hover > button,
+.timesheet-date-control-wrap:hover > button {
+  border-color: #aebbd0 !important;
+  background: #fbfcff;
+}
+
+.timesheet-control-overlay-wrap:focus-within > button,
+.timesheet-date-control-wrap:focus-within > button {
+  border-color: #856bff !important;
+  box-shadow: 0 0 0 3px rgba(133, 107, 255, 0.14);
+}
+
+.timesheet-apply-button {
+  background: #7564e8;
+  transition: background-color 150ms ease, transform 150ms ease, box-shadow 150ms ease;
+}
+
+.timesheet-apply-button:hover {
+  background: #5f50d2;
+  box-shadow: 0 5px 14px rgba(117, 100, 232, 0.28);
+  transform: translateY(-1px);
+}
+
+.timesheet-summary-card {
+  border: 1px solid transparent;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  font-weight: 500;
+}
+
+.timesheet-summary-card-total {
+  border-color: #E2E8F0;
+  background: #F8FAFC;
+}
+
+.timesheet-summary-card-approved {
+  border-color: #A7F3D0;
+  background: #ECFDF5;
+}
+
+.timesheet-summary-card-pending {
+  border-color: #FDE68A;
+  background: #FFFBEB;
+}
+
+.timesheet-table-scroll {
+  scrollbar-color: #c7d1df #f4f6fb;
+  scrollbar-width: thin;
+}
+
+.timesheet-table-scroll::-webkit-scrollbar {
+  height: 8px;
+}
+
+.timesheet-table-scroll::-webkit-scrollbar-track {
+  background: #f4f6fb;
+}
+
+.timesheet-table-scroll::-webkit-scrollbar-thumb {
+  border: 2px solid #f4f6fb;
+  border-radius: 10px;
+  background: #c7d1df;
+}
+
+.timesheet-table {
+  width: max-content;
+  min-width: 100%;
+  table-layout: auto;
+}
+
+.timesheet-table th,
+.timesheet-table .timesheet-cell {
+  box-sizing: border-box;
+  height: 47px;
+  max-width: none;
+  overflow: visible;
+  padding: 12px 16px;
+  text-overflow: clip;
+  white-space: nowrap;
+}
+
+.timesheet-table .timesheet-category-cell {
+  color: #685F91;
+}
+
+.timesheet-table thead tr {
+  background: #EFF4FF;
+}
+
+.timesheet-table thead th {
+  border-bottom-color: #E2E8F0 !important;
+  color: #475569;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+.timesheet-table tbody tr {
+  background: #FFFFFF;
+  transition: background-color 140ms ease;
+}
+
+.timesheet-table tbody tr:hover {
+  background: #f7f8ff !important;
+}
+
+.timesheet-table tbody td {
+  border-bottom-color: #F1F5F9 !important;
+  padding: 12px 16px;
+  font-size: 13px;
+  line-height: 16px;
+}
+
+.timesheet-skeleton {
+  display: block;
+  width: 72%;
+  height: 12px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #F1F3F8 25%, #E7EAF2 50%, #F1F3F8 75%);
+  background-size: 200% 100%;
+  animation: timesheet-skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes timesheet-skeleton-pulse {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+.timesheet-table tbody tr:hover td {
+  background: #FAF9FF;
+}
+
+.timesheet-page-button {
+  min-width: 32px;
+  min-height: 32px;
+}
+
+.timesheet-footer {
+  box-sizing: border-box;
+  height: 49px;
+  padding: 8px 16px;
+  border-top: 1px solid #C4C6CF;
+  background: #EFF4FF;
+}
+
+.timesheet-footer button {
+  width: 32px;
+  height: 32px;
+}
+
+.timesheet-footer .timesheet-page-button {
+  border-radius: 6px;
+}
+
+.timesheet-page-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+.timesheet-empty-state {
+  box-sizing: border-box;
+  min-height: 178px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  background: #FFFFFF;
+  color: #B8BFD6;
+  text-align: center;
+}
+
+.timesheet-empty-state h3 {
+  margin: 10px 0 4px;
+  color: #1F2937;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 20px;
+}
+
+.timesheet-empty-state p {
+  margin: 0;
+  color: #6B7280;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+@media (max-width: 900px) {
+  .timesheet-page {
+    padding: 0;
+  }
+
+  .timesheet-toolbar {
+    align-items: flex-start !important;
+    flex-direction: column;
+    gap: 14px;
+    height: auto !important;
+  }
+
+  .timesheet-filter-row,
+  .timesheet-summary {
+    width: 100% !important;
+  }
+
+  .timesheet-summary {
+    padding-right: 0 !important;
+  }
+}
+
 a {
   font-weight: 500;
   color: var(--color-brand-primary);
@@ -90,6 +653,10 @@ a:hover {
   overflow-y: auto;
   min-width: 0;
   background-color: var(--color-surface-app);
+}
+
+#main-content-scroll:has(.view-edit-page) {
+  background-color: #FAF8FF;
 }
 
 /* ── Custom Figma-style table horizontal scrollbar ── */

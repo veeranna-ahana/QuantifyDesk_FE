@@ -158,22 +158,22 @@ const ProjectDetailsPage = () => {
   const endDateStr = endDt ? formatDate(endDt) : "Oct 15, 2024";
 
   return (
-    <div className="w-full max-w-[1106px] mx-auto px-6 py-0 font-sans flex flex-col gap-1.5 box-border bg-[#f5f2ff]">
+    <div className="view-edit-page w-full max-w-[1106px] mx-auto px-6 py-0 font-sans flex flex-col gap-1.5 box-border bg-[#FAF8FF]">
 
       {/* Frame 427321890: Header & Metadata + Tabs (width 1058, compact gap) */}
       <div className="w-full max-w-[1058px] flex flex-col gap-1 shrink-0">
         {/* Frame 427321892: White Header & Metadata Card (1058) */}
-       <div className="w-full max-w-[1058px] rounded-lg py-2 px-4 flex flex-col gap-1 box-border bg-[#f5f2ff]">
+      <div className="w-full max-w-[1058px] rounded-lg py-2 px-4 flex flex-col gap-1 box-border bg-[#FAF8FF]">
           {/* Breadcrumb */}
           <div className="flex items-center gap-1.5 text-xs text-gray-500 leading-none">
             <button
               onClick={() => navigate("/projects")}
-              className="hover:text-[#856BFF] transition-colors bg-transparent border-none p-0 cursor-pointer text-xs font-normal text-gray-500"
+              className="hover:text-[#7B6CF0] transition-colors bg-transparent border-none p-0 cursor-pointer text-xs font-semibold text-[#1F2937]"
             >
               Projects
             </button>
             <span className="text-gray-400">›</span>
-            <span className="text-gray-900 font-medium">{isEditing ? "Edit" : "View"}</span>
+            <span className="font-semibold text-[#1F2937]">{isEditing ? "Edit" : "View"}</span>
           </div>
 
           {/* Title & Metadata Row (Container: width 1058, justify-between) */}
@@ -224,14 +224,14 @@ const ProjectDetailsPage = () => {
         </div>
 
         {/* TopAppBar: Tabs Bar (width 1058, compact, border-bottom 1px solid #E2E8F0) */}
-        <div className="w-full max-w-[1058px] flex items-center gap-6 border-b border-[#E2E8F0] overflow-x-auto hide-scrollbar bg-[#f5f2ff]">
+        <div className="w-full max-w-[1058px] flex items-center gap-6 border-b border-[#E2E8F0] overflow-x-auto hide-scrollbar bg-[#FAF8FF]">
           {tabs.map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`pt-1 pb-1.5 text-[13px] font-medium transition-colors whitespace-nowrap relative cursor-pointer border-none bg-transparent ${
                 activeTab === tab
-                  ? "text-[#856BFF] border-b-2 border-[#856BFF] font-semibold"
+                  ? "text-[#7B6CF0] border-b-2 border-[#7B6CF0] font-semibold"
                   : "text-gray-500 hover:text-gray-800"
               }`}
             >
