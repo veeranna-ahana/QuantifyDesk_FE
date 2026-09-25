@@ -208,9 +208,9 @@
 }
 
 /* The compact Import Project toolbar uses the status controls as its action row. */
-.ti-toolbar > .ti-bulk-update-btn {
+/* .ti-toolbar > .ti-bulk-update-btn {
   display: none;
-}
+} */
 
 .ti-bulk-update-btn:hover {
   background: #7457fc;
