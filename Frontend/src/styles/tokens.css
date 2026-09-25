@@ -117,7 +117,9 @@
   --duration-slow: 250ms;
 
   /* ── Typography ── */
-  --font-sans: 'Roboto', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-sans:
+    "Roboto", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
 
   --font-size-caption: 12px;
   --line-height-caption: 16px;
@@ -156,4 +158,120 @@
   --color-status-error-text: #b91c1c;
   --color-status-error-background: #fef2f2;
   --color-status-error-border: #fecaca;
+
+  /* ==========================================================
+     PHASE 2 SEMANTIC TOKENS  (used by the standardised UI)
+     ----------------------------------------------------------
+     Source of truth for every migrated screen. Components use
+     these through Tailwind utilities (see tailwind.config.js) and
+     never raw hex / px values. Legacy tokens above are kept only
+     because untouched Phase 1 files still reference them.
+
+     [FIGMA]     = read from Figma Inspect
+     [ESTIMATED] = not supplied yet; inferred from screenshots.
+                   Replace here once Figma values are available.
+     ========================================================== */
+
+  /* -- Action / brand -- */
+  --color-action-primary: #856bff; /* [FIGMA] primary button */
+  --color-action-primary-hover: #7458f5; /* [ESTIMATED] */
+  --color-action-primary-soft: #f1eeff; /* [ESTIMATED] active nav / outline hover */
+  --color-action-primary-ring: #b7adf0; /* [ESTIMATED] focus ring */
+
+  /* -- Surfaces -- */
+  --color-surface-page: #faf8ff; /* [FIGMA] page background */
+  --color-surface-card: #ffffff; /* [FIGMA] header, sidebar, cards */
+  --color-surface-field-disabled: #f8f9ff; /* [FIGMA] disabled / read-only field */
+  --color-surface-table-head: #eff4ff; /* [FIGMA] table header */
+
+  /* -- Borders -- */
+  --color-line-default: #c3c6d7; /* [FIGMA] sidebar border */
+  --color-line-field: #dfe1e6; /* [FIGMA] input border */
+  --color-line-table-head: rgba(195, 198, 214, 0.3); /* [FIGMA] 30% */
+  --color-line-card: #e2e8f0; /* [ESTIMATED] */
+
+  /* -- Text -- */
+  --color-ink-primary: #1e272e; /* [ESTIMATED] */
+  --color-ink-secondary: #434655; /* [ESTIMATED] */
+  --color-ink-muted: #8a91a0; /* [ESTIMATED] placeholders, captions */
+  --color-ink-on-primary: #ffffff;
+
+  /* -- Badge / status variants (bg, border, text) -- */
+  --color-badge-success-bg: #ecfdf5; /* [FIGMA] Completed */
+  --color-badge-success-line: #a7f3d0; /* [FIGMA] */
+  --color-badge-success-ink: #047857; /* [ESTIMATED] */
+
+  --color-badge-warning-bg: #fffbeb; /* [FIGMA] In Progress */
+  --color-badge-warning-line: #fde68a; /* [FIGMA] */
+  --color-badge-warning-ink: #f59e0b; /* [ESTIMATED] */
+
+  --color-badge-neutral-bg: #f1f5f9; /* [FIGMA] Not Started */
+  --color-badge-neutral-line: #e2e8f0; /* [FIGMA] */
+  --color-badge-neutral-ink: #64748b; /* [ESTIMATED] */
+
+  --color-badge-danger-bg: #fff1f2; /* [FIGMA] Delayed (60% alpha in Figma) */
+  --color-badge-danger-line: #ffe4e6; /* [FIGMA] */
+  --color-badge-danger-ink: #ef4444; /* [ESTIMATED] */
+
+  --color-badge-info-bg: #eff6ff; /* [ESTIMATED] */
+  --color-badge-info-line: #bfdbfe; /* [ESTIMATED] */
+  --color-badge-info-ink: #1d4ed8; /* [ESTIMATED] */
+
+  --color-badge-brand-bg: #f1eeff; /* [ESTIMATED] */
+  --color-badge-brand-line: #d9d0ff; /* [ESTIMATED] */
+  --color-badge-brand-ink: #5d43d6; /* [ESTIMATED] */
+
+  /* -- Data-viz series (charts / legends) -- [ESTIMATED] */
+  --color-chart-1: #7c3aed;
+  --color-chart-2: #10b981;
+  --color-chart-3: #f59e0b;
+  --color-chart-4: #ef4444;
+  --color-chart-5: #856bff;
+  --color-chart-6: #ec4899;
+  --color-chart-7: #94a3b8;
+
+  /* -- Progress bar fills -- [FIGMA] */
+  --color-progress-brand: #856bff; /* In Progress, Completed */
+  --color-progress-success: #10b981; /* On Track */
+  --color-progress-danger: #ef4444; /* At Risk */
+  --color-progress-warning: #f59e0b; /* Delayed */
+
+  /* -- Component sizing -- */
+  --size-control-sm: 32px; /* small button / compact field */
+  --size-control-md: 36px; /* [FIGMA] button height */
+  --size-control-lg: 44px; /* [FIGMA] input height */
+  --size-table-head: 44px; /* [FIGMA] table header row */
+  --radius-control: 4px; /* [FIGMA] buttons + inputs */
+  --radius-chip: 8px; /* [FIGMA] delayed / blocker chips */
+
+  /* -- App shell -- */
+  --size-sidebar: 260px; /* [FIGMA] */
+  --size-header: 54px; /* [FIGMA] */
+  --space-header-x: 24px; /* [FIGMA] */
+  --shadow-header: 0 1px 2px rgba(0, 0, 0, 0.05); /* [FIGMA] */
+}
+
+/* ==========================================================
+   Responsive token overrides (Phase 2)
+   Components read tokens only, so adapting the whole app to
+   smaller / shorter viewports (Windows display scaling, browser
+   zoom 80-90%, laptop screens) is done here in one place.
+   ========================================================== */
+:root {
+  --space-page-x: 24px;
+  --space-page-y: 16px;
+}
+
+@media (max-width: 1279px) {
+  :root {
+    --size-sidebar: 232px;
+    --space-page-x: 16px;
+  }
+}
+
+@media (max-height: 720px) {
+  :root {
+    --size-control-lg: 40px;
+    --space-page-y: 12px;
+  }
 }

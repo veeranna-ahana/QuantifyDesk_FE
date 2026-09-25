@@ -42,9 +42,8 @@ body {
 }
 
 /* Explicit overrides to guarantee consistent form control styling across macOS & Windows */
-input:not([type='submit']):not([type='button']),
-select,
-textarea {
+/* :where() keeps specificity at 0 so component utilities (bg-*, border-*) can override these defaults */
+:where(input:not([type='submit']):not([type='button']), select, textarea) {
   background-color: #ffffff;
   color: var(--color-text-primary);
   border: 1px solid #ddd;

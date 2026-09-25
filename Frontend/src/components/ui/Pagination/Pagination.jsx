@@ -1,99 +1,50 @@
-// src/components/ui/Pagination/Pagination.jsx
-// Promoted from features/projects/components/ProjectPagination.jsx
-// Mirrors @UI/src/components/ui/Pagination/Pagination.tsx pattern
-import React from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import {
-  selectCurrentPage,
-  selectPageSize,
-  selectTotalProjects,
-  setCurrentPage,
-} from '@/store/slices/projectsSlice';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-const ChevronLeft = () => (
-  <svg width="6" height="9" viewBox="0 0 6 9" fill="none">
-    <path d="M5 1L1 4.5L5 8" stroke="#43474E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
+import { cn } from '@/lib/cn';
 
-const ChevronRight = () => (
-  <svg width="6" height="9" viewBox="0 0 6 9" fill="none">
-    <path d="M1 1L5 4.5L1 8" stroke="#43474E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
+function pageList(page, total) {
+  if (total <= 5) return Array.from({ length: total }, (_, i) => i + 1);
+  const list = new Set([1, 2, 3, total]);
+  [page - 1, page, page + 1].forEach((n) => n > 0 && n <= total && list.add(n));
+  const sorted = [...list].sort((a, b) => a - b);
+  return sorted.flatMap((n, i) => (i > 0 && n - sorted[i - 1] > 1 ? ['…', n] : [n]));
+}
 
-export function Pagination() {
-  const dispatch    = useDispatch();
-  const currentPage = useSelector(selectCurrentPage);
-  const pageSize    = useSelector(selectPageSize);
-  const total       = useSelector(selectTotalProjects);
+const btn = 'flex h-8 w-8 items-center justify-center rounded-control border text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50';
 
-  const totalPages = Math.ceil(total / pageSize);
-  const startItem  = (currentPage - 1) * pageSize + 1;
-  const endItem    = Math.min(currentPage * pageSize, total);
-
-  const goTo = (p) => { if (p >= 1 && p <= totalPages) dispatch(setCurrentPage(p)); };
-
-  const pages = () => {
-    if (totalPages <= 5) return Array.from({ length: totalPages }, (_, i) => i + 1);
-    const list = [1, 2, 3];
-    if (currentPage > 4) list.push('...');
-    if (currentPage > 3 && currentPage < totalPages - 1) {
-      [currentPage - 1, currentPage, currentPage + 1].forEach((n) => !list.includes(n) && list.push(n));
-    }
-    if (currentPage < totalPages - 2) list.push('...');
-    if (!list.includes(totalPages)) list.push(totalPages);
-    return list;
-  };
-
-  if (!total) return null;
-
+/** Props-driven footer: "Showing 1-10 of 145 tasks   < 1 2 3 ... >" */
+export function Pagination({ page, totalPages, totalItems, pageSize, onPageChange, itemLabel = 'items', className }) {
+  if (!totalItems) return null;
+  const start = (page - 1) * pageSize + 1;
+  const end = Math.min(page * pageSize, totalItems);
   return (
-    <div className="flex flex-row justify-end items-center px-4 py-2 gap-2 h-[49px] bg-[#EFF4FF] border-t border-[#C4C6CF] box-border">
-      <span className="flex-1 font-roboto font-medium text-xs leading-4 tracking-[0.6px] text-[#43474E]">
-        Showing {startItem}–{endItem} of {total} projects
+    <div className={cn('flex flex-wrap items-center justify-between gap-2 border-t border-line-table-head bg-surface-table-head px-4 py-2', className)}>
+      <span className="text-xs text-ink-secondary">
+        Showing <b className="font-semibold text-ink-primary">{start}-{end}</b> of <b className="font-semibold text-ink-primary">{totalItems}</b> {itemLabel}
       </span>
-
-      <button
-        id="pg-prev"
-        onClick={() => goTo(currentPage - 1)}
-        disabled={currentPage === 1}
-        className="w-8 h-8 flex items-center justify-center rounded-sm p-0 bg-white border border-[#C4C6CF] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors hover:bg-gray-50"
-      >
-        <ChevronLeft />
-      </button>
-
-      {pages().map((p, i) =>
-        p === '...' ? (
-          <span key={`e${i}`} className="w-5 text-center font-roboto text-sm text-[#43474E] px-1">
-            ...
-          </span>
-        ) : (
-          <button
-            key={p}
-            id={`pg-${p}`}
-            onClick={() => goTo(p)}
-            className={`w-8 h-8 flex items-center justify-center rounded-sm p-0 font-roboto font-semibold text-xs leading-4 tracking-[0.6px] cursor-pointer ${
-              currentPage === p
-                ? 'bg-[#856BFF] text-white border-none'
-                : 'bg-white text-[#43474E] border border-[#C4C6CF] hover:bg-gray-50'
-            }`}
-          >
-            {p}
-          </button>
-        )
-      )}
-
-      <button
-        id="pg-next"
-        onClick={() => goTo(currentPage + 1)}
-        disabled={currentPage === totalPages}
-        className="w-8 h-8 flex items-center justify-center rounded-sm p-0 bg-white border border-[#C4C6CF] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors hover:bg-gray-50"
-      >
-        <ChevronRight />
-      </button>
+      <nav aria-label="Pagination" className="flex items-center gap-1.5">
+        <button type="button" aria-label="Previous page" disabled={page <= 1} onClick={() => onPageChange(page - 1)} className={cn(btn, 'border-line-field bg-surface-card text-ink-secondary')}>
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+        {pageList(page, totalPages).map((p, i) =>
+          p === '…' ? (
+            <span key={`gap${i}`} className="w-5 text-center text-xs text-ink-muted">…</span>
+          ) : (
+            <button
+              key={p}
+              type="button"
+              aria-current={p === page ? 'page' : undefined}
+              onClick={() => onPageChange(p)}
+              className={cn(btn, p === page ? 'border-action-primary bg-action-primary text-ink-on-primary' : 'border-line-field bg-surface-card text-ink-secondary hover:bg-surface-field-disabled')}
+            >
+              {p}
+            </button>
+          ),
+        )}
+        <button type="button" aria-label="Next page" disabled={page >= totalPages} onClick={() => onPageChange(page + 1)} className={cn(btn, 'border-line-field bg-surface-card text-ink-secondary')}>
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      </nav>
     </div>
   );
 }
-
-export default Pagination;
