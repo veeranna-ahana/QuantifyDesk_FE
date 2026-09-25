@@ -19,12 +19,16 @@ const EDITABLE_COLUMNS = ['Role', 'Task Type', 'Unit'];
  */
 export function TaskTable({ tasks, onEdit, editable = false, onChange }) {
   return (
-    <Table className="min-w-[1250px] whitespace-nowrap border-t border-line-card">
+    <Table className="min-w-[1250px] whitespace-nowrap border-t border-line-card border-separate border-spacing-0">
       <TableHead>
         <TableRow className="hover:bg-transparent">
           {COLUMNS.map((c) => <TableHeaderCell key={c}>{c}</TableHeaderCell>)}
           {EDITABLE_COLUMNS.map((c) => <TableHeaderCell key={c} className="text-action-primary">{c}</TableHeaderCell>)}
-          {onEdit && <TableHeaderCell className="text-center">Action</TableHeaderCell>}
+          {onEdit && (
+            <TableHeaderCell className="sticky right-0 z-20 w-20 min-w-20 border-l border-line-card bg-surface-table-head px-4 text-left shadow-[-3px_0_6px_-2px_rgba(0,0,0,0.06)]">
+              Action
+            </TableHeaderCell>
+          )}
         </TableRow>
       </TableHead>
       <TableBody>
@@ -58,8 +62,16 @@ export function TaskTable({ tasks, onEdit, editable = false, onChange }) {
             <TableCell>{t.taskType}</TableCell>
             <TableCell className="font-semibold">{t.unit}</TableCell>
             {onEdit && (
-              <TableCell className="text-center">
-                <IconButton label={`Edit ${t.taskId}`} onClick={() => onEdit(t)}><Pencil className="h-4 w-4" /></IconButton>
+              <TableCell className="sticky right-0 z-10 w-20 min-w-20 border-l border-line-card bg-surface-card px-4 text-left group-hover:bg-surface-field-disabled shadow-[-3px_0_6px_-2px_rgba(0,0,0,0.06)]">
+                <IconButton
+                  size="sm"
+                  variant="ghost"
+                  label={`Edit ${t.taskId}`}
+                  onClick={() => onEdit(t)}
+                  className="text-action-primary hover:bg-action-primary-soft -ml-1.5"
+                >
+                  <Pencil className="h-4 w-4" />
+                </IconButton>
               </TableCell>
             )}
           </TableRow>

@@ -6,7 +6,7 @@ import { cn } from '@/lib/cn';
  */
 export function FilterTabs({ items, value, onChange, className }) {
   return (
-    <div role="tablist" className={cn('inline-flex max-w-full flex-wrap items-center gap-1 rounded-chip bg-surface-table-head p-1', className)}>
+    <div role="tablist" className={cn('inline-flex max-w-full flex-nowrap items-center gap-1 rounded-chip bg-surface-table-head p-1', className)}>
       {items.map((t) => {
         const active = t.id === value;
         return (
@@ -17,13 +17,24 @@ export function FilterTabs({ items, value, onChange, className }) {
             aria-selected={active}
             onClick={() => onChange(t.id)}
             className={cn(
-              'inline-flex items-center gap-1.5 rounded-control px-3 py-1 text-xs font-medium transition-colors',
+              'inline-flex shrink-0 whitespace-nowrap items-center gap-1.5 rounded-control px-3 py-1 text-xs font-medium transition-colors',
               active ? 'bg-action-primary text-ink-on-primary' : 'text-ink-secondary hover:bg-surface-card',
             )}
           >
             {t.label}
             {t.count !== undefined && (
-              <span className={cn('rounded-full px-1.5 text-[11px]', active ? 'bg-white/25' : 'bg-badge-info-bg text-badge-info-ink')}>{t.count}</span>
+              <span
+                className={cn(
+                  'rounded-full px-1.5 text-[11px]',
+                  active
+                    ? 'bg-white/25'
+                    : t.countVariant === 'success'
+                      ? 'bg-badge-success-bg text-badge-success-ink'
+                      : 'bg-badge-info-bg text-badge-info-ink',
+                )}
+              >
+                {t.count}
+              </span>
             )}
           </button>
         );

@@ -15,8 +15,8 @@ export function TaskFilters({ task, projectContext, showBulk, onBulk }) {
   const tabs = [
     { id: 'all', label: `All Task (${summary.totalTasks})` },
     { id: 'in-progress', label: 'In Progress', count: summary.inProgress },
-    { id: 'last-completed', label: 'Last Completed', count: alerts.lastCompleted },
-    { id: 'total-completed', label: 'Total Completed', count: summary.completed },
+    { id: 'last-completed', label: 'Last Completed', count: alerts.lastCompleted, countVariant: 'success' },
+    { id: 'total-completed', label: 'Total Completed', count: summary.completed, countVariant: 'success' },
     { id: 'not-started', label: 'Not Started', count: summary.notStarted },
   ];
   const toggle = (id) => setTab(tab === id ? 'all' : id);
@@ -36,10 +36,9 @@ export function TaskFilters({ task, projectContext, showBulk, onBulk }) {
         {showBulk && <Button id="task-bulk-update-btn" leftIcon={<SlidersHorizontal className="h-4 w-4" />} onClick={onBulk}>Bulk Update</Button>}
       </div>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <FilterTabs items={tabs} value={tab} onChange={setTab} />
-        <span aria-hidden="true" className="hidden h-6 w-px bg-line sm:block" />
-        <div className="flex flex-wrap items-center gap-2">
+      <div className="flex items-center gap-3 overflow-x-auto no-scrollbar py-0.5">
+        <FilterTabs items={tabs} value={tab} onChange={setTab} className="shrink-0 flex-nowrap" />
+        <div className="flex shrink-0 items-center gap-2 flex-nowrap">
           <FilterChip variant="warning" active={tab === 'blockers'} onClick={() => toggle('blockers')}>Blockers ({alerts.blockers})</FilterChip>
           <FilterChip variant="danger" active={tab === 'delayed'} onClick={() => toggle('delayed')}>Delayed ({alerts.delayed})</FilterChip>
           <FilterChip active={tab === 'due'} onClick={() => toggle('due')}>Due Today ({alerts.dueToday})</FilterChip>
