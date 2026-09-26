@@ -42,9 +42,8 @@ body {
 }
 
 /* Explicit overrides to guarantee consistent form control styling across macOS & Windows */
-input:not([type='submit']):not([type='button']),
-select,
-textarea {
+/* :where() keeps specificity at 0 so component utilities (bg-*, border-*) can override these defaults */
+:where(input:not([type='submit']):not([type='button']), select, textarea) {
   background-color: #ffffff;
   color: var(--color-text-primary);
   border: 1px solid #ddd;
@@ -116,6 +115,15 @@ a:hover {
 
 .figma-table-scroll::-webkit-scrollbar-thumb:hover {
   background: #94A3B8;
+}
+
+/* ── Hide scrollbar utility ── */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 /* ── Edit Task Details drawer (Figma-aligned at 100% zoom) ── */
