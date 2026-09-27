@@ -1,17 +1,25 @@
-// src/components/ui/Textarea/Textarea.jsx
-// Mirrors @UI/src/components/ui/Textarea/Textarea.tsx — fully interactive
-import React from 'react';
+import { forwardRef, useId } from 'react';
 
-/**
- * @param {React.TextareaHTMLAttributes<HTMLTextAreaElement>} props
- */
-export function Textarea({ className = '', ...props }) {
+import { FormField } from '@/components/ui/FormField';
+import { fieldStyles } from '@/components/ui/Input/Input.styles';
+import { cn } from '@/lib/cn';
+
+export const Textarea = forwardRef(function Textarea(
+  { label, error, helperText, required, id, rows = 3, className, wrapperClassName, ...rest },
+  ref,
+) {
+  const autoId = useId();
+  const areaId = id ?? autoId;
   return (
-    <textarea
-      {...props}
-      className={['form-textarea', className].filter(Boolean).join(' ')}
-    />
+    <FormField label={label} htmlFor={areaId} required={required} error={error} helperText={helperText} className={wrapperClassName}>
+      <textarea
+        ref={ref}
+        id={areaId}
+        rows={rows}
+        aria-invalid={Boolean(error)}
+        className={cn(fieldStyles({ invalid: Boolean(error) }), 'h-auto min-h-[5rem] resize-y py-2', className)}
+        {...rest}
+      />
+    </FormField>
   );
-}
-
-export default Textarea;
+});

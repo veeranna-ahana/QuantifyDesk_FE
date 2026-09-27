@@ -152,3 +152,11 @@ export const MOCK_TASK_SUMMARY = (() => {
     notStarted,
   };
 })();
+
+// Alert / shortcut counts shown next to the task filter tabs (placeholder until the API provides them)
+export const MOCK_TASK_ALERTS = {
+  lastCompleted: 19,
+  blockers: 4,
+  delayed: 3,
+  dueToday: 8,
+};

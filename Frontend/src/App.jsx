@@ -1,17 +1,17 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Cookies from 'js-cookie';
 import { Toaster } from 'react-hot-toast';
 import Login from './pages/Login';
-import Dashboard from './pages/Dashboard/Dashboard';
+import Dashboard from '@/features/dashboard/DashboardPage';
 // import ProtectedRoute from '@/components/ui/ProtectedRoute/ProtectedRoute';
 import MainLayout from '@/components/layout/AppLayout/AppLayout';
 
 import Users from './pages/Users';
 import Projects from './pages/Projects'; // legacy — kept for other routes
-import ProjectsPage from '@/pages/projects/ProjectsPage';
-import ProjectDetailsPage from '@/pages/projects/ProjectDetailsPage';
-import ImportProjectPage from '@/pages/projects/ImportProjectPage';
+import ProjectsPage from '@/features/projects/ProjectsPage';
+import ProjectDetailsPage from '@/features/projects/details/ProjectDetailsPage';
+import ImportProjectPage from '@/features/projects/import/ImportProjectPage';
 import CreateProject from './pages/CreateProject';
 import EditProject from './pages/EditProject';
 import EffortEstimate from './pages/EffortEstimate';
@@ -22,7 +22,7 @@ import AssignEmployee from './pages/AssignEmployee';
 import MyWork from './pages/MyWork';
 import UtilizationDashboard from './pages/UtilizationDashboard';
 import Approvals from './pages/Approvals';
-import DailyUpdatesReport from './pages/DailyReport/DailyUpdatesReport';
+import DailyUpdatesReport from '@/features/daily-report/DailyReportPage';
 import ReconPage from './pages/Recon';
 import ReconciliationUpload from './pages/ReconciliationUpload';
 
