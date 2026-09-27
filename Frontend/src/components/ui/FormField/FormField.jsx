@@ -1,21 +1,24 @@
-// src/components/ui/FormField/FormField.jsx
-// Mirrors @UI/src/components/ui/FormField/FormField.tsx
-import React from 'react';
+import { cn } from '@/lib/cn';
 
 /**
- * Wraps a form control with a label.
- * @param {{ label: string, required?: boolean, children: React.ReactNode }} props
+ * Label + control + helper/error text. Shared by Input, Select, Textarea so the
+ * label/error layout exists in exactly one place.
  */
-export function FormField({ label, required = false, children }) {
+export function FormField({ label, htmlFor, required = false, error, helperText, className, children }) {
   return (
-    <div className="form-field">
-      <label className="form-field-label">
-        {label}
-        {required && <span className="form-field-required">*</span>}
-      </label>
+    <div className={cn('flex min-w-0 flex-col gap-1', className)}>
+      {label && (
+        <label htmlFor={htmlFor} className="text-xs font-medium text-ink-secondary">
+          {label}
+          {required && <span className="text-badge-danger-ink">*</span>}
+        </label>
+      )}
       {children}
+      {error ? (
+        <p id={`${htmlFor}-error`} className="text-xs text-badge-danger-ink">{error}</p>
+      ) : (
+        helperText && <p id={`${htmlFor}-helper`} className="text-xs text-ink-muted">{helperText}</p>
+      )}
     </div>
   );
 }
-
-export default FormField;

@@ -1,68 +1,28 @@
-// src/components/ui/Stepper/Stepper.jsx
-// Mirrors @UI/src/components/ui/Stepper/Stepper.tsx exactly
-import React from 'react';
+import { cn } from '@/lib/cn';
 
 /**
- * Multi-step progress indicator.
- * @param {{ steps: Array<{id: number, label: string}>, currentStep: number, onStepChange: (step: number) => void }} props
+ * Wizard progress: steps = [{ id, label }], currentStep = id.
+ * Completed and current steps are filled purple, upcoming ones grey.
  */
 export function Stepper({ steps, currentStep, onStepChange }) {
   return (
-    <div className="stepper">
-      <div className="stepper-track">
-        <div className="stepper-line" />
-
-        {steps.map((step, index) => {
-          const isActive    = step.id === currentStep;
-          const isCompleted = step.id < currentStep;
-
-          return (
-            <div
-              key={step.id}
-              className={[
-                'stepper-item',
-                index === 0                                    && 'stepper-item-first',
-                index === steps.length - 1                    && 'stepper-item-last',
-                index > 0 && index < steps.length - 1         && 'stepper-item-middle',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-            >
-              <button
-                type="button"
-                className="stepper-button"
-                onClick={() => onStepChange(step.id)}
-                aria-current={isActive ? 'step' : undefined}
-              >
-                <span
-                  className={[
-                    'stepper-indicator',
-                    isActive    && 'stepper-indicator-active',
-                    isCompleted && 'stepper-indicator-completed',
-                  ]
-                    .filter(Boolean)
-                    .join(' ')}
-                >
-                  {String(step.id).padStart(2, '0')}
-                </span>
-
-                <span
-                  className={[
-                    'stepper-label',
-                    isActive && 'stepper-label-active',
-                  ]
-                    .filter(Boolean)
-                    .join(' ')}
-                >
-                  {step.label}
-                </span>
-              </button>
-            </div>
-          );
-        })}
-      </div>
-    </div>
+    <ol className="relative flex items-start justify-between">
+      <span aria-hidden="true" className="absolute left-3.5 right-3.5 top-3.5 h-px bg-line" />
+      {steps.map((step, i) => {
+        const reached = step.id <= currentStep;
+        const active = step.id === currentStep;
+        const align = i === 0 ? 'items-start' : i === steps.length - 1 ? 'items-end' : 'items-center';
+        return (
+          <li key={step.id} className={cn('relative z-10 flex flex-col gap-1', align)}>
+            <button type="button" onClick={() => onStepChange?.(step.id)} aria-current={active ? 'step' : undefined} className={cn('flex flex-col gap-1', align)}>
+              <span className={cn('flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-semibold', reached ? 'bg-action-primary text-ink-on-primary' : 'bg-badge-neutral-line text-ink-secondary')}>
+                {String(step.id).padStart(2, '0')}
+              </span>
+              <span className={cn('whitespace-nowrap text-[11px] font-medium', active ? 'text-action-primary' : 'text-ink-secondary')}>{step.label}</span>
+            </button>
+          </li>
+        );
+      })}
+    </ol>
   );
 }
-
-export default Stepper;
