@@ -1,33 +1,86 @@
-import { Button } from '@/components/ui/Button';
-import { Drawer } from '@/components/ui/Drawer';
-import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
+import { useQuery } from "@tanstack/react-query";
 
-import { ROLE_OPTIONS, TASK_TYPE_OPTIONS } from '../constants';
+import { Button } from "@/components/ui/Button";
+import { Drawer } from "@/components/ui/Drawer";
+import { Input } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
 
-const withCurrent = (options, value) => (value && !options.includes(value) ? [value, ...options] : options);
+import { getRoles, getTaskTypesByRole } from "../services/importProjectService";
+
+const withCurrent = (options, value) =>
+  value && !options.includes(value) ? [value, ...options] : options;
 
 function Detail({ label, value, className }) {
   return (
     <div className={className}>
       <div className="text-[11px] text-ink-muted">{label}</div>
-      <div className="text-[13px] font-medium text-ink-primary">{value || '—'}</div>
+      <div className="text-[13px] font-medium text-ink-primary">
+        {value || "—"}
+      </div>
     </div>
   );
 }
 
-/** Edit Task Details panel: PMS values read-only, Role / Task Type / Unit editable. */
-export function EditTaskDrawer({ task, values, onChange, onCancel, onSave, projectContext }) {
+/**
+ * Edit Task Details panel: PMS values read-only, Role / Task Type / Unit editable.
+ *
+ * Role comes from GET /api/import-project/roles (role_task_catalog's distinct roles).
+ * Task Type depends on the selected Role — GET /api/import-project/task-catalog?role=X
+ * returns that role's task_name list (e.g. role=BA -> "BA-BRD", "BA-TDD", ...). Changing
+ * Role clears the current Task Type, since the old value may not belong to the new role's list.
+ *
+ * IMPORTANT: both Selects use a real `placeholder` (shown only when nothing is chosen yet) —
+ * never a placeholder that doubles as a fake pre-selected value. That earlier pattern
+ * (`placeholder="Business Analyst"`) LOOKED selected in the closed dropdown but the actual
+ * value stayed "", so Save silently persisted nothing for Role/Task Type — only Unit (a plain
+ * text input) actually had a real value to save.
+ */
+export function EditTaskDrawer({
+  task,
+  values,
+  onChange,
+  onCancel,
+  onSave,
+  projectContext,
+}) {
+  const rolesQuery = useQuery({
+    queryKey: ["roles"],
+    queryFn: async () => (await getRoles())?.roles || [],
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const taskTypesQuery = useQuery({
+    queryKey: ["task-catalog", values.role],
+    queryFn: async () =>
+      (await getTaskTypesByRole(values.role))?.taskTypes || [],
+    enabled: Boolean(values.role),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const roleOptions = rolesQuery.data || [];
+  const taskTypeOptions = taskTypesQuery.data || [];
+
+  const changeRole = (e) => {
+    onChange("role", e.target.value);
+    onChange("taskType", ""); // old task type may not belong to the newly picked role
+  };
+
   return (
     <Drawer
       open={Boolean(task)}
       title="Edit Task Details"
       taskId={task?.taskId}
-      context={task ? `Milestone: ${task.milestone ?? '—'} · ${projectContext.projectName} (${projectContext.pmsId})` : undefined}
+      context={
+        task
+          ? `Milestone: ${task.milestone ?? "—"} · ${projectContext.projectName} (${projectContext.pmsId})`
+          : undefined
+      }
       onClose={onCancel}
       footer={
         <>
-          <Button variant="secondary" onClick={onCancel}>Cancel</Button>
+          <Button variant="secondary" onClick={onCancel}>
+            Cancel
+          </Button>
           <Button onClick={onSave}>Save</Button>
         </>
       }
@@ -43,12 +96,37 @@ export function EditTaskDrawer({ task, values, onChange, onCancel, onSave, proje
             <Detail label="Actual Start" value={task.actualStart} />
             <Detail label="Planned End" value={task.plannedEnd} />
             <Detail label="Actual End" value={task.actualEnd} />
-            <Detail label="Risk Category" value={task.riskCategory} className="col-span-2" />
-            <Detail label="Remark" value={task.remark || 'Completed ahead of schedule.'} className="col-span-2" />
+            <Detail
+              label="Risk Category"
+              value={task.riskCategory}
+              className="col-span-2"
+            />
+            <Detail label="Remark" value={task.remark} className="col-span-2" />
           </div>
-          <Select label="Role" placeholder="Business Analyst" value={values.role} options={withCurrent(ROLE_OPTIONS, values.role)} onChange={(e) => onChange('role', e.target.value)} />
-          <Select label="Task Type" placeholder="Analysis" value={values.taskType} options={withCurrent(TASK_TYPE_OPTIONS, values.taskType)} onChange={(e) => onChange('taskType', e.target.value)} />
-          <Input label="Unit" type="number" min="0" placeholder="98" value={values.unit} onChange={(e) => onChange('unit', e.target.value)} />
+          <Select
+            label="Role"
+            placeholder="Select Role"
+            value={values.role}
+            options={withCurrent(roleOptions, values.role)}
+            onChange={changeRole}
+          />
+          <Select
+            label="Task Type"
+            placeholder={
+              values.role ? "Select Task Type" : "Select a Role first"
+            }
+            value={values.taskType}
+            options={withCurrent(taskTypeOptions, values.taskType)}
+            onChange={(e) => onChange("taskType", e.target.value)}
+            disabled={!values.role}
+          />
+          <Input
+            label="Unit"
+            type="number"
+            min="0"
+            value={values.unit}
+            onChange={(e) => onChange("unit", e.target.value)}
+          />
         </>
       )}
     </Drawer>
