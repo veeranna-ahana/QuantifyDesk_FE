@@ -48,15 +48,20 @@ export function ProjectPerformanceTable({ d }) {
     {
       key: "risk",
       label: "Risk",
-      render: (p) => (
-        <Badge
-          variant={RISK_VARIANT[p.risk] ?? "neutral"}
-          shape="pill"
-          size="sm"
-        >
-          {p.risk}
-        </Badge>
-      ),
+      // Risk is always null for now (PMS hasn't shipped task-level risk_category yet) — shows
+      // '—' rather than an empty badge.
+      render: (p) =>
+        p.risk ? (
+          <Badge
+            variant={RISK_VARIANT[p.risk] ?? "neutral"}
+            shape="pill"
+            size="sm"
+          >
+            {p.risk}
+          </Badge>
+        ) : (
+          <span className="text-ink-muted">—</span>
+        ),
     },
     {
       key: "status",
@@ -74,14 +79,16 @@ export function ProjectPerformanceTable({ d }) {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => navigate(`/projects/${p.code}?tab=Project Overview`)}
+          // The view route is keyed by project_info_id (App.jsx's "projects/:id"), not
+          // project_code — project_code is just a display column here.
+          onClick={() => navigate(`/projects/${p.id}?tab=Project Overview`)}
         >
           View →
         </Button>
       ),
     },
   ];
-  const rows = d.projects.map((p) => ({ ...p, id: p.code }));
+  const rows = d.projects;
 
   return (
     <Card className="overflow-hidden">
@@ -96,12 +103,12 @@ export function ProjectPerformanceTable({ d }) {
             leadingIcon={<Search className="h-4 w-4" />}
             value={d.projectSearch}
             onChange={(e) => d.setProjectSearch(e.target.value)}
-            size="sm"
+            size="md"
             wrapperClassName="w-48"
           />
           <Select
             aria-label="Status"
-            size="sm"
+            size="md"
             options={PROJECT_STATUS_FILTERS}
             value={d.statusFilter}
             onChange={(e) => d.setStatusFilter(e.target.value)}
@@ -109,7 +116,7 @@ export function ProjectPerformanceTable({ d }) {
           />
           <Select
             aria-label="Risk"
-            size="sm"
+            size="md"
             options={PROJECT_RISK_FILTERS}
             value={d.riskFilter}
             onChange={(e) => d.setRiskFilter(e.target.value)}
