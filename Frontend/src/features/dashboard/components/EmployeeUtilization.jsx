@@ -17,7 +17,6 @@ import {
 } from "@/components/ui/Table";
 import { cn } from "@/lib/cn";
 
-import { EMPLOYEE_ROLE_FILTERS } from "../mock/mockDashboard";
 import { EmployeeDetails } from "./EmployeeDetails";
 
 const utilTone = (pct) =>
@@ -49,13 +48,13 @@ export function EmployeeUtilization({ d }) {
             leadingIcon={<Search className="h-4 w-4" />}
             value={d.employeeSearch}
             onChange={(e) => d.setEmployeeSearch(e.target.value)}
-            size="sm"
+            size="md"
             wrapperClassName="w-48"
           />
           <Select
             aria-label="Role"
-            size="sm"
-            options={EMPLOYEE_ROLE_FILTERS}
+            size="md"
+            options={d.roleOptions}
             value={d.roleFilter}
             onChange={(e) => d.setRoleFilter(e.target.value)}
             wrapperClassName="w-36"
@@ -130,10 +129,6 @@ export function EmployeeUtilization({ d }) {
                         {e.window}
                       </div>
                     )}
-                    <ProgressBar
-                      value={e.windowPct ?? 70}
-                      className="mt-1.5 h-1"
-                    />
                   </TableCell>
                   <TableCell className="min-w-[180px]">
                     <div className="flex items-center gap-2">
@@ -174,7 +169,17 @@ export function EmployeeUtilization({ d }) {
                       colSpan={5}
                       className="border-b border-line-card bg-surface-card px-4 pb-4 pt-2"
                     >
-                      <EmployeeDetails employee={e} />
+                      {e.loading ? (
+                        <p className="py-3 text-xs text-ink-muted">
+                          Loading details…
+                        </p>
+                      ) : e.error ? (
+                        <p className="py-3 text-xs text-badge-danger-ink">
+                          Couldn't load details: {e.error}
+                        </p>
+                      ) : (
+                        <EmployeeDetails employee={e} />
+                      )}
                     </td>
                   </tr>
                 )}

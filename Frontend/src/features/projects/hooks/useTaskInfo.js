@@ -1,60 +1,97 @@
-import { useCallback, useMemo, useState } from 'react';
-import toast from 'react-hot-toast';
-
-import { MOCK_MILESTONES, MOCK_TASK_ALERTS, MOCK_TASK_SUMMARY } from '@/features/projects/mock/mockTasks';
+import { useCallback, useMemo, useState } from "react";
+import toast from "react-hot-toast";
 
 export const TASK_PAGE_SIZE = 10;
 
 const TAB_STATUS = {
-  'in-progress': 'In Progress',
-  'last-completed': 'Completed',
-  'total-completed': 'Completed',
-  'not-started': 'Not Started',
+  "in-progress": "In Progress",
+  "last-completed": "Completed",
+  "total-completed": "Completed",
+  "not-started": "Not Started",
 };
+
+// No mock fallback: Blockers/Delayed/Due Today/Last Completed logic against real PMS data
+// hasn't been defined yet, so these show 0 rather than a fake number until that's specified.
+const EMPTY_ALERTS = { lastCompleted: 0, blockers: 0, delayed: 0, dueToday: 0 };
 
 /**
  * State + derived data for the Task Info screens (import step 2 and project view/edit).
- * Owns: milestone/task data, search + milestone + status filters, pagination,
- * the Edit Task drawer and bulk updates.
- * Today it reads mock data; swapping in the real API only changes the initial state here.
+ * Owns: search + milestone + status filters, pagination, the Edit Task drawer, bulk updates.
+ *
+ * `milestones` (real PMS milestone/task data — [] if not yet synced, no mock fallback) and
+ * `onMilestonesChange` are CONTROLLED: this hook does NOT keep its own copy of the milestone/task
+ * data in local state. It used to (`useState(initialMilestones)`), which caused a real bug — the
+ * Import wizard conditionally renders each step (`{wiz.step === 2 && <TaskInfoPanel/>}`), so
+ * leaving Task Info UNMOUNTS this hook entirely; coming back remounted it fresh from the original
+ * `initialMilestones` prop, silently discarding every edit made via the Edit Task drawer or Bulk
+ * Update. Making it controlled means edits are written back up to the caller (ultimately the
+ * wizard hook's own state) via `onMilestonesChange`, which survives the remount.
  */
-export function useTaskInfo() {
-  const [milestones, setMilestones] = useState(MOCK_MILESTONES);
-  const [search, setSearch] = useState('');
-  const [milestoneId, setMilestoneId] = useState('');
-  const [tab, setTab] = useState('all');
+export function useTaskInfo(milestones, onMilestonesChange) {
+  const safeMilestones = milestones || [];
+  const [search, setSearch] = useState("");
+  const [milestoneId, setMilestoneId] = useState("");
+  const [tab, setTab] = useState("all");
   const [page, setPage] = useState(1);
-  const [expanded, setExpanded] = useState({ [MOCK_MILESTONES[0].id]: true });
+  const [expanded, setExpanded] = useState({ [safeMilestones[0]?.id]: true });
 
   const [drawerTask, setDrawerTask] = useState(null);
-  const [editValues, setEditValues] = useState({ role: '', taskType: '', unit: '' });
+  const [editValues, setEditValues] = useState({
+    role: "",
+    taskType: "",
+    unit: "",
+  });
 
-  const updateTask = useCallback((taskId, patch) => {
-    setMilestones((prev) => prev.map((m) => ({ ...m, tasks: m.tasks.map((t) => (t.id === taskId ? { ...t, ...patch } : t)) })));
-  }, []);
+  const updateTask = useCallback(
+    (taskId, patch) => {
+      onMilestonesChange(
+        safeMilestones.map((m) => ({
+          ...m,
+          tasks: m.tasks.map((t) => (t.id === taskId ? { ...t, ...patch } : t)),
+        })),
+      );
+    },
+    [safeMilestones, onMilestonesChange],
+  );
 
   const visibleMilestones = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return milestones
+    return safeMilestones
       .filter((m) => !milestoneId || m.id === milestoneId)
       .map((m) => {
         let tasks = m.tasks;
-        if (TAB_STATUS[tab]) tasks = tasks.filter((t) => t.status === TAB_STATUS[tab]);
-        if (q) tasks = tasks.filter((t) => t.title.toLowerCase().includes(q) || t.taskId.toLowerCase().includes(q));
+        if (TAB_STATUS[tab])
+          tasks = tasks.filter((t) => t.status === TAB_STATUS[tab]);
+        if (q)
+          tasks = tasks.filter(
+            (t) =>
+              t.title.toLowerCase().includes(q) ||
+              t.taskId.toLowerCase().includes(q),
+          );
         return { ...m, tasks };
       })
-      .filter((m) => (search.trim() ? m.name.toLowerCase().includes(q) || m.tasks.length > 0 : tab === 'all' || m.tasks.length > 0));
-  }, [milestones, search, milestoneId, tab]);
+      .filter((m) =>
+        search.trim()
+          ? m.name.toLowerCase().includes(q) || m.tasks.length > 0
+          : tab === "all" || m.tasks.length > 0,
+      );
+  }, [safeMilestones, search, milestoneId, tab]);
 
-  const toggleMilestone = (id) => setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
+  const toggleMilestone = (id) =>
+    setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
 
   // ── Edit drawer ──
   const openDrawer = (task, milestone) => {
     setDrawerTask({ ...task, milestone: milestone?.name });
-    setEditValues({ role: task.role ?? '', taskType: task.taskType ?? '', unit: task.unit ?? '' });
+    setEditValues({
+      role: task.role ?? "",
+      taskType: task.taskType ?? "",
+      unit: task.unit ?? "",
+    });
   };
   const closeDrawer = () => setDrawerTask(null);
-  const changeEditValue = (field, value) => setEditValues((prev) => ({ ...prev, [field]: value }));
+  const changeEditValue = (field, value) =>
+    setEditValues((prev) => ({ ...prev, [field]: value }));
   const saveDrawer = () => {
     if (!drawerTask) return;
     updateTask(drawerTask.id, editValues);
@@ -65,7 +102,7 @@ export function useTaskInfo() {
   // ── Bulk update ──
   const bulkRows = useMemo(
     () =>
-      milestones.flatMap((m) =>
+      safeMilestones.flatMap((m) =>
         m.tasks.map((t) => ({
           id: t.id,
           taskId: t.taskId,
@@ -73,32 +110,90 @@ export function useTaskInfo() {
           milestoneId: m.id,
           milestoneName: m.name,
           owner: t.owner,
-          role: 'Business Analyst',
-          taskType: 'Analysis',
-          unit: '1',
+          role: t.role || "",
+          taskType: t.taskType || "",
+          unit: t.unit || "",
         })),
       ),
-    [milestones],
+    [safeMilestones],
   );
   const applyBulk = (valuesById) => {
-    setMilestones((prev) => prev.map((m) => ({ ...m, tasks: m.tasks.map((t) => (valuesById[t.id] ? { ...t, ...valuesById[t.id] } : t)) })));
-    toast.success(`Successfully updated ${Object.keys(valuesById).length} tasks!`);
+    onMilestonesChange(
+      safeMilestones.map((m) => ({
+        ...m,
+        tasks: m.tasks.map((t) =>
+          valuesById[t.id] ? { ...t, ...valuesById[t.id] } : t,
+        ),
+      })),
+    );
+    toast.success(
+      `Successfully updated ${Object.keys(valuesById).length} tasks!`,
+    );
   };
 
-  const totalPages = Math.max(1, Math.ceil(MOCK_TASK_SUMMARY.totalTasks / TASK_PAGE_SIZE));
+  const summary = useMemo(() => {
+    let total = 0,
+      completed = 0,
+      inProgress = 0,
+      notStarted = 0,
+      milestoneCompleted = 0;
+    safeMilestones.forEach((m) => {
+      total += m.totalTasks;
+      completed += m.completedTasks;
+      inProgress += m.tasks.filter((t) => t.status === "In Progress").length;
+      notStarted += m.tasks.filter((t) => t.status === "Not Started").length;
+      if (m.status === "Completed") milestoneCompleted++;
+    });
+    return {
+      totalMilestones: safeMilestones.length,
+      milestonesCompleted: milestoneCompleted,
+      totalTasks: total,
+      completed,
+      inProgress,
+      notStarted,
+    };
+  }, [safeMilestones]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(summary.totalTasks / TASK_PAGE_SIZE),
+  );
 
   return {
-    milestones,
+    milestones: safeMilestones,
     visibleMilestones,
-    summary: MOCK_TASK_SUMMARY,
-    alerts: MOCK_TASK_ALERTS,
-    search, setSearch: (v) => { setSearch(v); setPage(1); },
-    milestoneId, setMilestoneId: (v) => { setMilestoneId(v); setPage(1); },
-    tab, setTab: (v) => { setTab(v); setPage(1); },
-    page, setPage, totalPages, pageSize: TASK_PAGE_SIZE, totalItems: MOCK_TASK_SUMMARY.totalTasks,
-    expanded, toggleMilestone,
+    summary,
+    alerts: EMPTY_ALERTS,
+    search,
+    setSearch: (v) => {
+      setSearch(v);
+      setPage(1);
+    },
+    milestoneId,
+    setMilestoneId: (v) => {
+      setMilestoneId(v);
+      setPage(1);
+    },
+    tab,
+    setTab: (v) => {
+      setTab(v);
+      setPage(1);
+    },
+    page,
+    setPage,
+    totalPages,
+    pageSize: TASK_PAGE_SIZE,
+    totalItems: summary.totalTasks,
+    expanded,
+    toggleMilestone,
     updateTask,
-    drawerTask, editValues, openDrawer, closeDrawer, changeEditValue, saveDrawer,
-    bulkRows, applyBulk,
+    drawerTask,
+    editValues,
+    openDrawer,
+    closeDrawer,
+    changeEditValue,
+    saveDrawer,
+    bulkRows,
+    applyBulk,
   };
 }
