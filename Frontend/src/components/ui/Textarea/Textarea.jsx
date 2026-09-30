@@ -16,6 +16,7 @@ export const Textarea = forwardRef(function Textarea(
         ref={ref}
         id={areaId}
         rows={rows}
+        autoComplete="off"
         aria-invalid={Boolean(error)}
         className={cn(fieldStyles({ invalid: Boolean(error) }), 'h-auto min-h-[5rem] resize-y py-2', className)}
         {...rest}

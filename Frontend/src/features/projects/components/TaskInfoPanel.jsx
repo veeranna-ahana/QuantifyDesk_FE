@@ -86,12 +86,12 @@ export function TaskInfoPanel({
 
       <Card className="overflow-hidden">
         <div className="flex flex-col gap-2 p-3">
-          {task.visibleMilestones.length === 0 && (
+          {task.paginatedMilestones.length === 0 && (
             <p className="py-8 text-center text-sm text-ink-muted">
               No milestones match your search.
             </p>
           )}
-          {task.visibleMilestones.map((m) => (
+          {task.paginatedMilestones.map((m) => (
             <MilestoneAccordion
               key={m.id}
               milestone={m}
@@ -111,7 +111,7 @@ export function TaskInfoPanel({
           totalItems={task.totalItems}
           pageSize={task.pageSize}
           onPageChange={task.setPage}
-          itemLabel="tasks"
+          itemLabel="milestones"
         />
       </Card>
 
