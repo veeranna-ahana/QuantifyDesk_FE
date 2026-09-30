@@ -38,7 +38,10 @@ const EDITABLE_COLUMNS = ["Role", "Task Type", "Unit"];
  */
 export function TaskTable({ tasks, onEdit }) {
   return (
-    <Table className="min-w-[1250px] whitespace-nowrap border-t border-line-card border-separate border-spacing-0">
+    <Table
+      className="min-w-[1250px] whitespace-nowrap border-t border-line-card border-separate border-spacing-0"
+      wrapperClassName="max-h-[420px] overflow-auto"
+    >
       <TableHead>
         <TableRow className="hover:bg-transparent">
           {COLUMNS.map((c) => (
