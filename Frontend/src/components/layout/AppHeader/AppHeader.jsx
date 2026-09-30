@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { ChevronDown, LogOut, Menu } from 'lucide-react';
 import Cookies from 'js-cookie';
 import { useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
 
 import { Avatar } from '@/components/ui/Avatar';
 import { IconButton } from '@/components/ui/IconButton';
@@ -10,7 +9,6 @@ import { cn } from '@/lib/cn';
 
 /** Top bar: menu button (small screens) on the left, user menu on the right. */
 export function AppHeader({ onMenuClick }) {
-  const navigate = useNavigate();
   const reduxUser = useSelector((state) => state.auth?.user);
   const menuRef = useRef(null);
   const [open, setOpen] = useState(false);
@@ -24,11 +22,15 @@ export function AppHeader({ onMenuClick }) {
   const uEmpId = user?.emp_id || localStorage.getItem('emp_id') || 'AS03363';
   const uRole = user?.role || localStorage.getItem('role') || 'Lead';
 
-  // ── Logout (unchanged behaviour) ──
+  // ── Logout — clear session and redirect to MyAhana portal ──
   const handleLogout = () => {
     Cookies.remove('user');
-    ['token', 'email', 'emp_id', 'role', 'userName'].forEach((k) => localStorage.removeItem(k));
-    navigate('/quantification');
+    ['token', 'email', 'emp_id', 'role', 'userName', 'serviceDeliveryEmployees'].forEach(
+      (k) => localStorage.removeItem(k),
+    );
+    const portalUrl =
+      import.meta.env.VITE_MYAHANA_PORTAL_URL || 'https://myahana.ahanait.com/home';
+    window.location.href = portalUrl;
   };
 
   useEffect(() => {

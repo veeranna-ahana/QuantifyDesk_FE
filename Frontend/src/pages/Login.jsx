@@ -1,50 +1,49 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import axiosInstance from '@/shared/axiosInstance';
-import { loginUser } from '@/store/slices/authSlice';
-import { FiSettings, FiBriefcase, FiUser, FiShield, FiChevronRight, FiCheckCircle } from 'react-icons/fi';
-import { login } from '@/api/AuthApi';
+import { loginUser } from "@/store/slices/authSlice";
+import { FiBriefcase, FiUser, FiShield, FiChevronRight } from "react-icons/fi";
+import { login } from "@/api/AuthApi";
 
-
+/**
+ * Login page — shown at /quantification.
+ * - While waiting (1.5 s) for a postMessage token from MyAhana → shows spinner.
+ * - If token received → auto-logs in via API and redirects to /dashboard.
+ * - If NO token after 1.5 s → shows the "Authentication Required" screen
+ *   with a button to open MyAhana portal (URL from VITE_MYAHANA_PORTAL_URL).
+ *
+ * NOTE: The global postMessage handler in usePostMessageLogin (AppShell)
+ * also fires on other routes. loginCalledRef prevents double API calls.
+ */
 export default function Login() {
-  console.log("frontend loading");
-
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
   const [authReady, setAuthReady] = useState(false);
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [showManualLogin, setShowManualLogin] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-
-  // Role selection modal states
   const [showRoleModal, setShowRoleModal] = useState(false);
-  const [pendingLogin, setPendingLogin] = useState(null); // { response, redirectPath }
+  const [pendingLogin, setPendingLogin] = useState(null);
 
-  /* ─── Listen for postMessage token ─── */
+  // Prevents double API call if both postMessage AND timeout fire
+  const loginCalledRef = useRef(false);
+
+  /* ─── Listen for postMessage token from MyAhana ─── */
   useEffect(() => {
     const handleMessage = (event) => {
-      console.log("Received postMessage event:", event);
-      const allowedOrigin = import.meta.env.VITE_MYAHANA_BASE_URL;
-      // if (!allowedOrigin.includes(event.origin)) return;
-
-      console.log("Received postMessage:", event.data);
-      if (event.data.type === "TOKEN" || event.data.type === "token") {
-        const { token, email, emp_id } = event.data;
-        if (token) localStorage.setItem("token", token);
-        if (email) localStorage.setItem("email", email);
-        if (emp_id) localStorage.setItem("emp_id", emp_id);
-        setUserData({ token, email, emp_id });
-        setAuthReady(true);
-      }
+      if (event.data?.type !== "TOKEN" && event.data?.type !== "token") return;
+      const { token, email, emp_id } = event.data;
+      if (!token) return;
+      if (token) localStorage.setItem("token", token);
+      if (email) localStorage.setItem("email", email);
+      if (emp_id) localStorage.setItem("emp_id", emp_id);
+      setUserData({ token, email, emp_id });
+      setAuthReady(true);
     };
 
     window.addEventListener("message", handleMessage);
 
+    // 1.5 s timeout: if token already in localStorage (returning session), use it
     const t = setTimeout(() => {
       const token = localStorage.getItem("token");
       const email = localStorage.getItem("email");
@@ -53,9 +52,8 @@ export default function Login() {
         setUserData({ token, email, emp_id });
         setAuthReady(true);
       } else {
-        // Show manual login UI if no token found after 1.5s
+        // No token — show SSO-required screen
         setLoading(false);
-        setShowManualLogin(true);
       }
     }, 1500);
 
@@ -65,23 +63,22 @@ export default function Login() {
     };
   }, []);
 
-  console.log("userdata", userData);
-  console.log("authReady", authReady);
-
-  /* ─── Determine landing page from a role string ────────────────────── */
+  /* ─── Determine landing page from role ─── */
   const getRoleBasedRedirect = (role) => {
-    const r = (role || '').toUpperCase();
-    if (r === 'ADMIN' || r === 'MANAGER') return '/quantificationnew';
-    return '/my-work'; // EMPLOYEE and any other role
+    const r = (role || "").toUpperCase();
+    return r === "ADMIN" || r === "MANAGER" ? "/dashboard" : "/dashboard";
   };
 
-  /* ─── Helper to handle login response and check for multiple roles ─── */
+  /* ─── Process login API response (single or multi-role) ─── */
   const processLoginResult = (response) => {
     const rawResult = response.result;
-    const rolesList = Array.isArray(rawResult) ? rawResult : (rawResult ? [rawResult] : []);
+    const rolesList = Array.isArray(rawResult)
+      ? rawResult
+      : rawResult
+      ? [rawResult]
+      : [];
 
     if (rolesList.length > 1) {
-      // Store only the response; redirect is computed after user picks a role
       setPendingLogin({ response });
       setShowRoleModal(true);
       setLoading(false);
@@ -91,204 +88,226 @@ export default function Login() {
     }
   };
 
-  /* ─── Role modal selection handler ────────────────────────────── */
+  /* ─── Role picker handler ─── */
   const handleSelectRole = (selectedRoleObj) => {
     if (!pendingLogin) return;
     const { response } = pendingLogin;
-
-    const rawResult = response.result;
-    const allRoles = Array.isArray(rawResult) ? rawResult : [rawResult];
+    const allRoles = Array.isArray(response.result)
+      ? response.result
+      : [response.result];
     const otherRoles = allRoles.filter((r) => r !== selectedRoleObj);
-    const reorderedResult = [selectedRoleObj, ...otherRoles];
-
-    const updatedResponse = { ...response, result: reorderedResult };
-
-    dispatch(loginUser(updatedResponse));
+    dispatch(loginUser({ ...response, result: [selectedRoleObj, ...otherRoles] }));
     setShowRoleModal(false);
     setPendingLogin(null);
-    // Navigate based on the role the user actually chose in the modal
     navigate(getRoleBasedRedirect(selectedRoleObj?.role));
   };
 
-  /* ─── Auto login when MyAhana token received ─── */
+  /* ─── Auto-login when token is ready ─── */
   useEffect(() => {
     if (!authReady || !userData) return;
+    if (loginCalledRef.current) return; // guard against double-fire
+    loginCalledRef.current = true;
 
     const doLogin = async () => {
-      console.log("Auto login triggered with userData:", userData);
       setLoading(true);
-
       try {
-        console.log("entered try block for login");
         const response = await login({
           email: userData.email || "",
           password: "",
           emp_id: userData.emp_id || undefined,
-          authToken: userData.token,  // Pass MyAhana token
+          authToken: userData.token,
         });
-        console.log("login response", response);
-
         if (response.status === "success") {
           processLoginResult(response);
         } else {
-          setError("Login failed. Please try again.");
           setLoading(false);
+          loginCalledRef.current = false;
         }
       } catch (err) {
         console.error("Auto login failed:", err);
-        setError(err.response?.data?.message || "Login failed");
         setLoading(false);
+        loginCalledRef.current = false;
       }
     };
 
     doLogin();
-  }, [authReady, userData, dispatch, navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authReady, userData]);
 
-  /* ─── Manual login handler ─── */
-  const handleManualLogin = async (e) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
+  // ── Portal URL from env ──────────────────────────────────────────────────
+  const portalUrl =
+    import.meta.env.VITE_MYAHANA_PORTAL_URL || "https://myahana.ahanait.com/";
 
-    try {
-      // Check if we have an authToken from MyAhana
-      const authToken = localStorage.getItem("token");
-
-      const response = await login({
-        email,
-        password,
-        emp_id: undefined,
-        authToken: authToken || undefined,  // Pass token if available
-      });
-
-      if (response.status === "success") {
-        processLoginResult(response);
-      } else {
-        setError(response.message || "Login failed");
-        setLoading(false);
-      }
-    } catch (err) {
-      console.error("Manual login failed:", err);
-      setError(err.response?.data?.message || "Invalid email or password");
-      setLoading(false);
-    }
+  const handleGoToPortal = () => {
+    window.open(portalUrl, "_blank", "noopener,noreferrer");
   };
 
-  // Show loading state
-  if (loading && !showManualLogin && !showRoleModal) {
+  // ── Loading / authenticating spinner ────────────────────────────────────
+  if (loading && !showRoleModal) {
     return (
-      <div style={styles.container}>
-        <div style={styles.card}>
-          <div style={styles.logo}>QD</div>
-          <h1 style={styles.title}>QuantifyDesk</h1>
-          <p style={styles.subtitle}>Loading...</p>
-          <div style={styles.spinner}></div>
+      <div style={ss.page}>
+        <div style={ss.card}>
+          <div style={ss.logoBox}>
+            <span style={ss.logoText}>QD</span>
+          </div>
+          <h1 style={ss.title}>Work Quantify Tool</h1>
+          <p style={ss.sub}>Authenticating via MyAhana&hellip;</p>
+          <div style={ss.spinner} />
         </div>
       </div>
     );
   }
 
-  // Render main UI with manual login form or role modal overlay
+  // ── SSO-required / session-expired screen ───────────────────────────────
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <div style={styles.logo}>QD</div>
-        <h1 style={styles.title}>QuantifyDesk</h1>
-        <p style={styles.subtitle}>Sign in to your account</p>
-
-        <form onSubmit={handleManualLogin} style={styles.form}>
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Email Address</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="your@email.com"
-              required
-              style={styles.input}
-              disabled={loading}
-            />
+    <div style={ss.page}>
+      <div style={ss.card}>
+        {/* Lock icon */}
+        <div style={ss.lockWrap}>
+          <div style={ss.lockIcon}>
+            <svg
+              width="32"
+              height="32"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="white"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
           </div>
+        </div>
 
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              required
-              style={styles.input}
-              disabled={loading}
-            />
-          </div>
+        <h1 style={ss.title}>Authentication Required</h1>
+        <p style={ss.desc}>
+          The{" "}
+          <strong style={{ color: "#856bff" }}>Work Quantify Tool</strong> is
+          accessible only through the MyAhana portal. Please log in via MyAhana
+          to sync your employee credentials and access this tool.
+        </p>
 
-          {error && <div style={styles.error}>{error}</div>}
-
-          <button
-            type="submit"
-            style={{
-              ...styles.button,
-              opacity: loading ? 0.7 : 1,
-              cursor: loading ? "not-allowed" : "pointer",
-            }}
-            disabled={loading}
+        {/* SSO info pill */}
+        <div style={ss.ssoPill}>
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#856bff"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{ flexShrink: 0, marginTop: 2 }}
           >
-            {loading ? "Signing in..." : "Sign In"}
-          </button>
-        </form>
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          </svg>
+          <div style={{ textAlign: "left" }}>
+            <p style={ss.ssoPillTitle}>SSO REQUIRED</p>
+            <p style={ss.ssoPillSub}>
+              Log in through MyAhana portal to sync your employee credentials.
+            </p>
+          </div>
+        </div>
 
-        <p style={styles.footer}>
-          © 2026 QuantifyDesk. All rights reserved.
+        {/* Redirect button */}
+        <button
+          id="go-to-myahana-btn"
+          onClick={handleGoToPortal}
+          style={ss.portalBtn}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "#7458f5";
+            e.currentTarget.style.boxShadow =
+              "0 4px 20px rgba(133,107,255,0.45)";
+            e.currentTarget.style.transform = "translateY(-2px)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background =
+              "linear-gradient(135deg,#856bff 0%,#7062e4 100%)";
+            e.currentTarget.style.boxShadow =
+              "0 4px 16px rgba(133,107,255,0.3)";
+            e.currentTarget.style.transform = "translateY(0)";
+          }}
+        >
+          Access MyAhana Portal
+          <svg
+            width="17"
+            height="17"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{ marginLeft: 8 }}
+          >
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+            <polyline points="15 3 21 3 21 9" />
+            <line x1="10" y1="14" x2="21" y2="3" />
+          </svg>
+        </button>
+
+        <p style={ss.footer}>
+          &copy; {new Date().getFullYear()} Ahana IT Solutions &mdash; Work
+          Quantify Tool
         </p>
       </div>
 
-      {/* ── Role Selection Modal Overlay ── */}
+      {/* ── Role Selection Modal Overlay ─────────────────────────────────── */}
       {showRoleModal && pendingLogin && (
-        <div style={modalStyles.overlay}>
-          <div style={modalStyles.modal}>
-            <div style={modalStyles.header}>
-              <div style={modalStyles.iconCircle}>
-                <FiBriefcase size={26} color="#667eea" />
+        <div style={rm.overlay}>
+          <div style={rm.modal}>
+            <div style={rm.header}>
+              <div style={rm.iconCircle}>
+                <FiBriefcase size={26} color="#856bff" />
               </div>
-              <h2 style={modalStyles.title}>Select Your Role</h2>
-              <p style={modalStyles.subtitle}>
-                Your account is registered with multiple roles. Please select which role you want to log in as:
+              <h2 style={rm.title}>Select Your Role</h2>
+              <p style={rm.subtitle}>
+                Your account is registered with multiple roles. Please select
+                which role you want to log in as:
               </p>
             </div>
 
-            <div style={modalStyles.roleList}>
+            <div style={rm.roleList}>
               {(Array.isArray(pendingLogin.response.result)
                 ? pendingLogin.response.result
                 : [pendingLogin.response.result]
               ).map((roleItem, index) => {
-                const roleName = roleItem.role || roleItem.designation || `Role ${index + 1}`;
+                const roleName =
+                  roleItem.role ||
+                  roleItem.designation ||
+                  `Role ${index + 1}`;
                 const isManager =
                   roleName.toLowerCase().includes("manager") ||
                   roleName.toLowerCase().includes("lead");
                 const isAdmin = roleName.toLowerCase().includes("admin");
-
-                const iconColor = isManager ? "#667eea" : isAdmin ? "#764ba2" : "#10b981";
-
+                const iconColor = isManager
+                  ? "#856bff"   /* --color-brand-primary */
+                  : isAdmin
+                  ? "#7062e4"   /* --color-brand-button */
+                  : "#10b981"; /* success green */
                 return (
                   <button
                     key={index}
                     onClick={() => handleSelectRole(roleItem)}
-                    style={modalStyles.roleCard}
+                    style={rm.roleCard}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = "#667eea";
-                      e.currentTarget.style.backgroundColor = "#f0f3ff";
+                      e.currentTarget.style.borderColor = "#856bff";
+                      e.currentTarget.style.backgroundColor = "#f1eeff";
                       e.currentTarget.style.transform = "translateY(-1px)";
-                      e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.15)";
+                      e.currentTarget.style.boxShadow =
+                        "0 4px 12px rgba(133,107,255,0.15)";
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.borderColor = "#e2e8f0";
-                      e.currentTarget.style.backgroundColor = "#f8fafc";
+                      e.currentTarget.style.backgroundColor = "#faf8ff";
                       e.currentTarget.style.transform = "translateY(0)";
                       e.currentTarget.style.boxShadow = "none";
                     }}
                   >
-                    <div style={modalStyles.roleIconBg(iconColor)}>
+                    <div style={rm.roleIconBg(iconColor)}>
                       {isManager ? (
                         <FiBriefcase size={20} color="white" />
                       ) : isAdmin ? (
@@ -297,13 +316,13 @@ export default function Login() {
                         <FiUser size={20} color="white" />
                       )}
                     </div>
-                    <div style={modalStyles.roleInfo}>
-                      <span style={modalStyles.roleTitle}>Login as {roleName}</span>
-                      <span style={modalStyles.roleSub}>
-                        {roleItem.designation && roleItem.designation !== roleName
+                    <div style={rm.roleInfo}>
+                      <span style={rm.roleTitle}>Login as {roleName}</span>
+                      <span style={rm.roleSub}>
+                        {roleItem.designation &&
+                        roleItem.designation !== roleName
                           ? `Designation: ${roleItem.designation}`
-                          : roleItem.role
-                        }
+                          : roleItem.role}
                       </span>
                     </div>
                     <FiChevronRight size={20} color="#94a3b8" />
@@ -312,15 +331,14 @@ export default function Login() {
               })}
             </div>
 
-            <div style={modalStyles.footer}>
+            <div style={rm.footer}>
               <button
                 onClick={() => {
                   setShowRoleModal(false);
                   setPendingLogin(null);
                   setLoading(false);
-                  setShowManualLogin(true);
                 }}
-                style={modalStyles.cancelButton}
+                style={rm.cancelButton}
               >
                 Cancel
               </button>
@@ -332,110 +350,141 @@ export default function Login() {
   );
 }
 
-const styles = {
-  container: {
+/* ─── SSO-required / session-expired screen styles ──────────────────────── */
+/* ─── Session-expired / auth-required screen styles (WorkQuantify brand) ─── */
+const ss = {
+  page: {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     minHeight: "100vh",
-    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-  },
-  card: {
-    background: "white",
-    borderRadius: "12px",
-    boxShadow: "0 20px 60px rgba(0, 0, 0, 0.3)",
-    padding: "40px",
-    width: "100%",
-    maxWidth: "400px",
-    textAlign: "center",
-  },
-  logo: {
-    fontSize: "42px",
-    fontWeight: "800",
-    color: "#667eea",
-    marginBottom: "16px",
-  },
-  title: {
-    fontSize: "28px",
-    fontWeight: "700",
-    color: "#1e272e",
-    margin: "0 0 8px 0",
-  },
-  subtitle: {
-    fontSize: "14px",
-    color: "#666",
-    margin: "0 0 32px 0",
-  },
-  form: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "16px",
-  },
-  formGroup: {
-    textAlign: "left",
-  },
-  label: {
-    fontSize: "13px",
-    fontWeight: "600",
-    color: "#333",
-    display: "block",
-    marginBottom: "6px",
-  },
-  input: {
-    width: "100%",
-    padding: "10px 12px",
-    border: "1px solid #ddd",
-    borderRadius: "6px",
-    fontSize: "14px",
-    fontFamily: "inherit",
-    transition: "border 0.2s",
+    background: "#faf8ff",                        /* --color-surface-page */
+    fontFamily:
+      "'Roboto', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+    padding: "24px",
     boxSizing: "border-box",
   },
-  button: {
-    background: "#667eea",
-    color: "white",
-    border: "none",
-    padding: "10px 16px",
-    borderRadius: "6px",
-    fontSize: "14px",
-    fontWeight: "600",
-    transition: "background 0.2s",
-    marginTop: "8px",
-  },
-  error: {
-    background: "#fee",
-    color: "#c33",
-    padding: "10px 12px",
-    borderRadius: "6px",
-    fontSize: "13px",
+  card: {
+    background: "#ffffff",                         /* --color-surface-card */
+    border: "1px solid #e2e8f0",                  /* --color-line-card */
+    borderRadius: "20px",
+    boxShadow:
+      "0 0 0 1px rgba(133,107,255,0.08), 0 12px 40px rgba(133,107,255,0.12), 0 2px 8px rgba(0,0,0,0.06)",
+    padding: "44px 40px 36px",
+    width: "100%",
+    maxWidth: "440px",
     textAlign: "center",
+    boxSizing: "border-box",
   },
-  spinner: {
-    width: "24px",
-    height: "24px",
-    border: "3px solid #f0f0f0",
-    borderTop: "3px solid #667eea",
-    borderRadius: "50%",
-    animation: "spin 1s linear infinite",
-    margin: "16px auto",
+  lockWrap: {
+    display: "flex",
+    justifyContent: "center",
+    marginBottom: "24px",
+  },
+  lockIcon: {
+    width: "72px",
+    height: "72px",
+    borderRadius: "20px",
+    background: "linear-gradient(135deg,#856bff 0%,#7062e4 100%)",  /* --color-brand-primary */
+    boxShadow: "0 8px 24px rgba(133,107,255,0.35)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  logoBox: {
+    display: "flex",
+    justifyContent: "center",
+    marginBottom: "8px",
+  },
+  logoText: {
+    fontSize: "40px",
+    fontWeight: "900",
+    background: "linear-gradient(135deg,#856bff,#7062e4)",
+    WebkitBackgroundClip: "text",
+    WebkitTextFillColor: "transparent",
+  },
+  title: {
+    fontSize: "24px",
+    fontWeight: "800",
+    color: "#1e272e",                             /* --color-ink-primary */
+    margin: "0 0 14px 0",
+    letterSpacing: "-0.3px",
+  },
+  sub: {
+    fontSize: "14px",
+    color: "#8a91a0",                             /* --color-ink-muted */
+    margin: "0 0 20px 0",
+  },
+  desc: {
+    fontSize: "14px",
+    color: "#434655",                             /* --color-ink-secondary */
+    lineHeight: "1.65",
+    margin: "0 0 28px 0",
+  },
+  ssoPill: {
+    display: "flex",
+    alignItems: "flex-start",
+    gap: "14px",
+    background: "#f1eeff",                        /* --color-action-primary-soft */
+    border: "1px solid #d9d0ff",                 /* --color-badge-brand-line */
+    borderRadius: "12px",
+    padding: "16px 18px",
+    marginBottom: "28px",
+    textAlign: "left",
+  },
+  ssoPillTitle: {
+    fontSize: "11px",
+    fontWeight: "700",
+    letterSpacing: "0.08em",
+    color: "#856bff",                             /* --color-brand-primary */
+    margin: "0 0 4px 0",
+  },
+  ssoPillSub: {
+    fontSize: "13px",
+    color: "#434655",                             /* --color-ink-secondary */
+    margin: 0,
+    lineHeight: "1.5",
+  },
+  portalBtn: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "100%",
+    padding: "14px 24px",
+    background: "linear-gradient(135deg,#856bff 0%,#7062e4 100%)",  /* --color-brand-primary */
+    boxShadow: "0 4px 16px rgba(133,107,255,0.3)",
+    color: "#ffffff",                             /* --color-ink-on-primary */
+    border: "none",
+    borderRadius: "10px",
+    fontSize: "15px",
+    fontWeight: "700",
+    cursor: "pointer",
+    transition: "all 0.2s ease",
+    marginBottom: "24px",
+    boxSizing: "border-box",
   },
   footer: {
-    fontSize: "12px",
-    color: "#999",
-    marginTop: "24px",
-    margin: "24px 0 0 0",
+    fontSize: "11px",
+    color: "#8a91a0",                             /* --color-ink-muted */
+    margin: 0,
+  },
+  spinner: {
+    width: "28px",
+    height: "28px",
+    border: "3px solid #f1eeff",                 /* --color-action-primary-soft */
+    borderTop: "3px solid #856bff",              /* --color-brand-primary */
+    borderRadius: "50%",
+    animation: "spin 0.9s linear infinite",
+    margin: "20px auto 0",
   },
 };
 
-const modalStyles = {
+/* ─── Role-picker modal styles (WorkQuantify brand tokens) ──────────────── */
+const rm = {
   overlay: {
     position: "fixed",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(15, 23, 42, 0.65)",
+    inset: 0,
+    backgroundColor: "rgba(30, 39, 46, 0.6)",   /* --color-ink-primary at 60% */
     backdropFilter: "blur(6px)",
     display: "flex",
     alignItems: "center",
@@ -444,12 +493,13 @@ const modalStyles = {
     padding: "20px",
   },
   modal: {
-    background: "#ffffff",
+    background: "#ffffff",                        /* --color-surface-card */
+    border: "1px solid #e2e8f0",                 /* --color-line-card */
     borderRadius: "16px",
-    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+    boxShadow: "0 12px 40px rgba(133,107,255,0.12), 0 2px 8px rgba(0,0,0,0.08)",
     width: "100%",
     maxWidth: "440px",
-    padding: "28px",
+    padding: "32px 28px 24px",
     textAlign: "center",
     boxSizing: "border-box",
   },
@@ -457,47 +507,50 @@ const modalStyles = {
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    marginBottom: "20px",
+    marginBottom: "24px",
   },
   iconCircle: {
-    width: "56px",
-    height: "56px",
+    width: "60px",
+    height: "60px",
     borderRadius: "50%",
-    background: "#eef2ff",
+    background: "#f1eeff",                        /* --color-action-primary-soft */
+    border: "2px solid #d9d0ff",                 /* --color-badge-brand-line */
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: "12px",
+    marginBottom: "14px",
   },
   title: {
-    fontSize: "22px",
+    fontSize: "20px",
     fontWeight: "700",
-    color: "#1e293b",
+    color: "#1e272e",                            /* --color-ink-primary */
     margin: "0 0 6px 0",
+    letterSpacing: "-0.2px",
   },
   subtitle: {
-    fontSize: "14px",
-    color: "#64748b",
-    lineHeight: "1.4",
+    fontSize: "13px",
+    color: "#8a91a0",                            /* --color-ink-muted */
+    lineHeight: "1.5",
     margin: 0,
   },
   roleList: {
     display: "flex",
     flexDirection: "column",
-    gap: "12px",
+    gap: "10px",
     marginBottom: "20px",
+    marginTop: "4px",
   },
   roleCard: {
     display: "flex",
     alignItems: "center",
     gap: "14px",
-    padding: "14px 16px",
-    background: "#f8fafc",
-    border: "1px solid #e2e8f0",
-    borderRadius: "12px",
+    padding: "13px 16px",
+    background: "#faf8ff",                       /* --color-surface-page */
+    border: "1.5px solid #e2e8f0",              /* --color-line-card */
+    borderRadius: "10px",
     cursor: "pointer",
     textAlign: "left",
-    transition: "all 0.2s ease",
+    transition: "all 0.18s ease",
     width: "100%",
     boxSizing: "border-box",
   },
@@ -518,28 +571,25 @@ const modalStyles = {
     overflow: "hidden",
   },
   roleTitle: {
-    fontSize: "15px",
+    fontSize: "14px",
     fontWeight: "600",
-    color: "#0f172a",
+    color: "#1e272e",                           /* --color-ink-primary */
   },
   roleSub: {
     fontSize: "12px",
-    color: "#64748b",
+    color: "#8a91a0",                           /* --color-ink-muted */
     marginTop: "2px",
   },
-  footer: {
-    display: "flex",
-    justifyContent: "center",
-  },
+  footer: { display: "flex", justifyContent: "center", paddingTop: "4px" },
   cancelButton: {
     background: "transparent",
-    border: "none",
-    color: "#64748b",
+    border: "1px solid #e2e8f0",               /* --color-line-card */
+    color: "#434655",                           /* --color-ink-secondary */
     fontSize: "13px",
     fontWeight: "500",
     cursor: "pointer",
-    padding: "8px 16px",
-    borderRadius: "6px",
-    transition: "color 0.2s",
+    padding: "8px 24px",
+    borderRadius: "8px",
+    transition: "all 0.15s ease",
   },
 };

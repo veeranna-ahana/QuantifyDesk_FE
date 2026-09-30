@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 
@@ -7,7 +7,7 @@ import { loginUser } from "@/store/slices/authSlice";
 
 const getRoleBasedRedirect = (role) => {
   const r = (role || "").toUpperCase();
-  return r === "ADMIN" || r === "MANAGER" ? "/quantificationnew" : "/my-work";
+  return r === "ADMIN" || r === "MANAGER" ? "/dashboard" : "/dashboard";
 };
 
 /**
@@ -16,11 +16,15 @@ const getRoleBasedRedirect = (role) => {
  * /api/auth/login — and the server-side PMS token caching that happens
  * inside it — still fires no matter which route UAT's tile opens directly
  * into (today: /dashboard, which has no listener of its own).
+ *
+ * handledRef ensures we call the login API exactly ONCE even if MyAhana
+ * sends the TOKEN message multiple times (e.g. on an interval).
  */
 export function usePostMessageLogin() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const [pendingRoleChoice, setPendingRoleChoice] = useState(null); // { response } when multiple roles
+  const [pendingRoleChoice, setPendingRoleChoice] = useState(null);
+  const handledRef = useRef(false); // ← prevents duplicate API calls
 
   useEffect(() => {
     const handleMessage = async (event) => {
@@ -29,6 +33,10 @@ export function usePostMessageLogin() {
       const { token, email, emp_id } = event.data;
       if (!token) return;
 
+      // Guard: skip if we already processed a TOKEN message this session
+      if (handledRef.current) return;
+      handledRef.current = true;
+
       try {
         const response = await login({
           email: email || "",
@@ -36,7 +44,10 @@ export function usePostMessageLogin() {
           emp_id,
           authToken: token,
         });
-        if (response.status !== "success") return;
+        if (response.status !== "success") {
+          handledRef.current = false; // allow retry on failure
+          return;
+        }
 
         const rawResult = response.result;
         const rolesList = Array.isArray(rawResult)
@@ -52,6 +63,7 @@ export function usePostMessageLogin() {
           navigate(getRoleBasedRedirect(rolesList[0]?.role), { replace: true });
         }
       } catch (err) {
+        handledRef.current = false; // allow retry on failure
         console.error("Auto login via postMessage failed:", err);
       }
     };
@@ -59,6 +71,7 @@ export function usePostMessageLogin() {
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
   }, [dispatch, navigate]);
+
 
   const selectRole = (selectedRoleObj) => {
     if (!pendingRoleChoice) return;
