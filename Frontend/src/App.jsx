@@ -44,6 +44,8 @@ function AppShell() {
 
         {/* Protected Routes with MainLayout */}
         <Route path="/" element={<MainLayout />}>
+          {/* Bare "/" → redirect to auth screen */}
+          <Route index element={<Navigate to="/quantification" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="projects" element={<ProjectsPage />} />
           <Route path="projects/import" element={<ImportProjectPage />} />
@@ -79,6 +81,16 @@ function AppShell() {
       {pendingRoleChoice && (
         <div style={roleModalStyles.overlay}>
           <div style={roleModalStyles.modal}>
+            {/* Icon circle */}
+            <div style={roleModalStyles.iconCircle}>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
+                stroke="#856bff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              </svg>
+            </div>
             <h2 style={roleModalStyles.title}>Select Your Role</h2>
             <p style={roleModalStyles.subtitle}>
               Your account is registered with multiple roles. Please select
@@ -93,15 +105,51 @@ function AppShell() {
                   key={i}
                   onClick={() => selectRole(roleItem)}
                   style={roleModalStyles.roleCard}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = "#856bff";
+                    e.currentTarget.style.background = "#f1eeff";
+                    e.currentTarget.style.transform = "translateY(-1px)";
+                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(133,107,255,0.15)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = "#e2e8f0";
+                    e.currentTarget.style.background = "#faf8ff";
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "none";
+                  }}
                 >
-                  Login as{" "}
-                  {roleItem.role || roleItem.designation || `Role ${i + 1}`}
+                  <div style={{
+                    width: 36, height: 36, borderRadius: 8, flexShrink: 0,
+                    background: "#f1eeff", border: "1px solid #d9d0ff",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                      stroke="#856bff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                      <circle cx="12" cy="7" r="4" />
+                    </svg>
+                  </div>
+                  <span style={{ flex: 1, textAlign: "left", fontSize: 14, fontWeight: 600, color: "#1e272e" }}>
+                    Login as {roleItem.role || roleItem.designation || `Role ${i + 1}`}
+                  </span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    stroke="#8a91a0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
                 </button>
               ))}
             </div>
             <button
               onClick={dismissRoleChoice}
               style={roleModalStyles.cancelButton}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = "#856bff";
+                e.currentTarget.style.color = "#856bff";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = "#e2e8f0";
+                e.currentTarget.style.color = "#434655";
+              }}
             >
               Cancel
             </button>
@@ -116,7 +164,8 @@ const roleModalStyles = {
   overlay: {
     position: "fixed",
     inset: 0,
-    background: "rgba(15,23,42,0.65)",
+    background: "rgba(30, 39, 46, 0.6)",          /* --color-ink-primary at 60% */
+    backdropFilter: "blur(6px)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -124,43 +173,76 @@ const roleModalStyles = {
     padding: 20,
   },
   modal: {
-    background: "#fff",
+    background: "#ffffff",                          /* --color-surface-card */
+    border: "1px solid #e2e8f0",                   /* --color-line-card */
     borderRadius: 16,
+    boxShadow: "0 12px 40px rgba(133,107,255,0.12), 0 2px 8px rgba(0,0,0,0.08)",
     width: "100%",
     maxWidth: 440,
-    padding: 28,
+    padding: "32px 28px 24px",
     textAlign: "center",
     boxSizing: "border-box",
   },
-  title: {
-    fontSize: 22,
-    fontWeight: 700,
-    color: "#1e293b",
-    margin: "0 0 6px 0",
+  iconCircle: {
+    width: 60,
+    height: 60,
+    borderRadius: "50%",
+    background: "#f1eeff",                          /* --color-action-primary-soft */
+    border: "2px solid #d9d0ff",                   /* --color-badge-brand-line */
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    margin: "0 auto 14px",
   },
-  subtitle: { fontSize: 14, color: "#64748b", margin: "0 0 20px 0" },
+  title: {
+    fontSize: 20,
+    fontWeight: 700,
+    color: "#1e272e",                               /* --color-ink-primary */
+    margin: "0 0 6px 0",
+    letterSpacing: "-0.2px",
+  },
+  subtitle: {
+    fontSize: 13,
+    color: "#8a91a0",                               /* --color-ink-muted */
+    margin: "0 0 20px 0",
+    lineHeight: 1.5,
+  },
   roleList: {
     display: "flex",
     flexDirection: "column",
-    gap: 12,
+    gap: 10,
     marginBottom: 20,
   },
   roleCard: {
-    padding: "14px 16px",
-    background: "#f8fafc",
-    border: "1px solid #e2e8f0",
-    borderRadius: 12,
+    display: "flex",
+    alignItems: "center",
+    gap: 14,
+    padding: "13px 16px",
+    background: "#faf8ff",                          /* --color-surface-page */
+    border: "1.5px solid #e2e8f0",                 /* --color-line-card */
+    borderRadius: 10,
     cursor: "pointer",
+    textAlign: "left",
+    transition: "all 0.18s ease",
+    width: "100%",
+    boxSizing: "border-box",
     fontWeight: 600,
+    color: "#1e272e",                               /* --color-ink-primary */
+    fontSize: 14,
   },
   cancelButton: {
     background: "transparent",
-    border: "none",
-    color: "#64748b",
+    border: "1px solid #e2e8f0",                   /* --color-line-card */
+    color: "#434655",                               /* --color-ink-secondary */
     fontSize: 13,
+    fontWeight: 500,
     cursor: "pointer",
+    padding: "8px 24px",
+    borderRadius: 8,
+    transition: "all 0.15s ease",
   },
 };
+
 
 function App() {
   return (
