@@ -38,7 +38,7 @@ export function AppLayout() {
         <main
           id="main-content-scroll"
           ref={contentRef}
-          className="min-w-0 flex-1 overflow-y-auto px-page-x py-page-y"
+          className="min-w-0 flex-1 flex flex-col min-h-0 overflow-y-auto px-page-x py-2"
         >
           <Outlet />
         </main>

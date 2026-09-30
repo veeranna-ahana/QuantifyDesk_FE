@@ -25,6 +25,7 @@ import Approvals from "./pages/Approvals";
 import DailyUpdatesReport from "@/features/daily-report/DailyReportPage";
 import ReconPage from "./pages/Recon";
 import ReconciliationUpload from "./pages/ReconciliationUpload";
+import { GuidelinePage, GuidelineFormPage } from "@/features/guideline";
 
 /**
  * Runs the app-wide UAT postMessage listener and shows the role picker when
@@ -62,6 +63,10 @@ function AppShell() {
           <Route path="quantificationnew" element={<UtilizationDashboard />} />
           <Route path="dailyreport" element={<DailyUpdatesReport />} />
           <Route path="approvals" element={<Approvals />} />
+          <Route path="guideline" element={<GuidelinePage />} />
+          <Route path="guideline/add" element={<GuidelineFormPage mode="add" />} />
+          <Route path="guideline/edit/:id" element={<GuidelineFormPage mode="edit" />} />
+          <Route path="guideline/:id" element={<GuidelineFormPage mode="view" />} />
           {/* ─── Reconciliation Routes ─── */}
           <Route path="reconciliation/dashboard" element={<ReconPage />} />
           <Route

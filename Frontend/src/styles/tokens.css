@@ -243,6 +243,8 @@
   --size-table-head: 44px; /* [FIGMA] table header row */
   --radius-control: 4px; /* [FIGMA] buttons + inputs */
   --radius-chip: 8px; /* [FIGMA] delayed / blocker chips */
+  --row-min: 28px;
+  --row-max: 50px;
 
   /* -- App shell -- */
   --size-sidebar: 260px; /* [FIGMA] */

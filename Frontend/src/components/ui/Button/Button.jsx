@@ -7,7 +7,7 @@ import { buttonStyles } from './Button.styles';
 
 /**
  * @typedef {Object} ButtonProps
- * @property {'primary'|'secondary'|'ghost'|'danger'} [variant]
+ * @property {'primary'|'secondary'|'outline'|'ghost'|'danger'} [variant]
  * @property {'sm'|'md'} [size]
  * @property {boolean} [fullWidth]
  * @property {boolean} [isLoading]

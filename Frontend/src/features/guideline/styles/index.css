@@ -1,0 +1,12 @@
+/* 
+  Guideline feature specific styles. 
+  Uses base tokens from global.css 
+*/
+.p-page-x {
+  padding-left: var(--space-page-x);
+  padding-right: var(--space-page-x);
+}
+.py-page-y {
+  padding-top: var(--space-page-y);
+  padding-bottom: var(--space-page-y);
+}
