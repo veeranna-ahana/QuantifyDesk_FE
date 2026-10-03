@@ -122,6 +122,11 @@ export function mapPmsToMilestones(milestoneDetails = [], tasksDetails = []) {
         actualEnd: formatPmsDate(t.actual_end_date),
         allocation: "—",
         status,
+        // Shown on the Status badge instead of the translated `status` bucket above — the user
+        // wants PMS's own wording visible (e.g. "YET_TO_START"), not a relabeled "Not Started".
+        // `status` (the bucket) is kept as-is for filtering/counts (TaskFilters, useTaskInfo
+        // summary tallies), which compare against 'Not Started'/'In Progress'/'Completed'.
+        statusLabel: t.status || status,
         // Risk Category and Remark are both fields WE fill in (via the Edit Task drawer /
         // inline edit) — they are not PMS data at all, so they start genuinely empty here.
         // `dependency` (PMS's task-ordering field, e.g. "Analysis of Intune Platform") is a
