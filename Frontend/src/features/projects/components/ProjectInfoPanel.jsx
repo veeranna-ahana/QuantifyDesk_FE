@@ -57,10 +57,6 @@ export function ProjectInfoPanel({
     status: pick(project, "project_status", "status") || "—",
     description: project?.description || "—",
   };
-  // The field is already labeled "PMS ID" right below, so the value itself is just the raw id —
-  // the "PMS-" prefix (used in the page header/breadcrumb) would be redundant here.
-  const pmsId = project?.pms_id ?? "—";
-
   const initialEditable = () => ({
     projectType: display.projectType,
     nbdId: display.nbdId,
@@ -96,16 +92,6 @@ export function ProjectInfoPanel({
           setEditable((prev) => ({ ...prev, [field]: value }))
         }
         projectTypeOptions={projectTypeOptions}
-        pmsSlot={
-          <div className="flex flex-col gap-1">
-            <span className="text-xs font-semibold text-ink-primary">
-              PMS ID
-            </span>
-            <span className="w-full max-w-[16rem] rounded-control border border-line-field bg-surface-field-disabled px-3 py-2.5 text-sm text-ink-secondary">
-              {pmsId}
-            </span>
-          </div>
-        }
       />
       {isEditing && (
         <div className="flex justify-end gap-3">

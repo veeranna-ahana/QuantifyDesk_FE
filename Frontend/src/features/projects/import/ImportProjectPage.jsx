@@ -1,8 +1,8 @@
-import { ArrowRight, Check, RefreshCw } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
+import SearchableSelect from "@/components/ui/SearchableSelect/SearchableSelect";
 import { Stepper } from "@/components/ui/Stepper";
 
 import { DocumentChecklist } from "../components/DocumentChecklist";
@@ -15,28 +15,31 @@ import { useImportProjectWizard } from "../hooks/useImportProjectWizard";
 export default function ImportProjectPage() {
   const wiz = useImportProjectWizard();
 
+  // Step 1's PMS project selection: a searchable TITLE dropdown, not a typed numeric PMS ID.
+  // Picking a title resolves it to PMS's current project_id and syncs automatically — see
+  // useImportProjectWizard's selectProjectTitle for why (PMS mints a new project_id per version).
   const pmsRow = (
     <div className="flex flex-col gap-1">
-      <span className="text-xs font-semibold text-ink-primary">PMS ID</span>
+      <span className="text-xs font-semibold text-ink-primary">
+        Project Name
+      </span>
       <div className="flex flex-wrap items-center gap-2">
-        <Input
-          id="pms-id-input"
-          aria-label="PMS ID"
-          placeholder="Enter PMS ID to sync"
-          value={wiz.pmsId}
-          onChange={(e) => wiz.setPmsId(e.target.value)}
-          wrapperClassName="w-full max-w-[16rem]"
+        <SearchableSelect
+          id="pms-project-title-select"
+          value={wiz.projectTitle}
+          onChange={wiz.setProjectTitle}
+          options={wiz.projectTitleOptions}
+          loading={wiz.loadingProjectTitles || wiz.syncing}
+          disabled={wiz.syncing}
+          placeholder="Enter Project Name to sync"
+          className="w-full max-w-[20rem]"
         />
-        <Button
-          id="pms-sync-btn"
-          isLoading={wiz.syncing}
-          disabled={!wiz.pmsId.trim()}
-          leftIcon={<RefreshCw className="h-3.5 w-3.5" />}
-          onClick={wiz.handleSync}
-        >
-          {wiz.syncing ? "Syncing…" : "Sync"}
-        </Button>
-        {wiz.synced && (
+        {wiz.syncing && (
+          <span className="text-xs font-medium text-ink-secondary">
+            Syncing…
+          </span>
+        )}
+        {wiz.synced && !wiz.syncing && (
           <span className="inline-flex items-center gap-1 text-xs font-medium text-badge-success-ink">
             <Check className="h-3.5 w-3.5" />
             Synced
