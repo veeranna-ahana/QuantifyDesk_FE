@@ -22,7 +22,11 @@ export function MilestoneAccordion({ milestone, expanded, onToggle, children }) 
         </span>
         <ChevronRight className={cn('h-4 w-4 shrink-0 text-ink-muted transition-transform', expanded && 'rotate-90')} />
       </button>
-      {expanded && children}
+      {expanded && (
+        <div className="border-t border-line-card">
+          {children}
+        </div>
+      )}
     </div>
   );
 }
