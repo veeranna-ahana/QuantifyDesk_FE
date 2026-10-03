@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
-export const TASK_PAGE_SIZE = 10;
+export const MILESTONE_PAGE_SIZE = 10;
 
 const TAB_STATUS = {
   "in-progress": "In Progress",
@@ -156,12 +156,18 @@ export function useTaskInfo(milestones, onMilestonesChange) {
 
   const totalPages = Math.max(
     1,
-    Math.ceil(summary.totalTasks / TASK_PAGE_SIZE),
+    Math.ceil(visibleMilestones.length / MILESTONE_PAGE_SIZE),
   );
+
+  const paginatedMilestones = useMemo(() => {
+    const start = (page - 1) * MILESTONE_PAGE_SIZE;
+    return visibleMilestones.slice(start, start + MILESTONE_PAGE_SIZE);
+  }, [visibleMilestones, page]);
 
   return {
     milestones: safeMilestones,
     visibleMilestones,
+    paginatedMilestones,
     summary,
     alerts: EMPTY_ALERTS,
     search,
@@ -182,8 +188,8 @@ export function useTaskInfo(milestones, onMilestonesChange) {
     page,
     setPage,
     totalPages,
-    pageSize: TASK_PAGE_SIZE,
-    totalItems: summary.totalTasks,
+    pageSize: MILESTONE_PAGE_SIZE,
+    totalItems: visibleMilestones.length,
     expanded,
     toggleMilestone,
     updateTask,
