@@ -141,6 +141,10 @@ export function useDashboard() {
             : 0;
           return {
             code: p.project_code || "—",
+            // An employee can genuinely hold more than one role on the same project (e.g. both
+            // "BE Dev" and "FE Dev") — `roles` is the real, complete list from the backend;
+            // `role` (single) is kept only as a fallback for anything still reading it.
+            roles: p.roles && p.roles.length ? p.roles : p.role ? [p.role] : [],
             role: p.role || null,
             meta: `${p.assigned_task_count} tasks · ${p.assigned_units} units`,
             name: p.description || p.project_code || "—",
@@ -247,17 +251,25 @@ export function useDashboard() {
       const assignedHours = Number(u.total_assigned_hours) || 0;
       const loggedHours = Number(u.total_logged_hours) || 0;
       // There's still no single employee "designation" field anywhere — role is per-project
-      // (task_info.role / effort_estimate.role), and one person can be tagged with different
-      // roles on different projects. Rather than fabricate one designation, this takes the role
-      // from their first project that has one — real data, just not necessarily "the" role if
-      // they're multi-role across projects. null (not a guessed value) when none of their
-      // projects have a role tagged yet.
-      const role = (u.projects || []).map((p) => p.role).find(Boolean) || null;
+      // (task_info.role / effort_estimate.role), and a person can be tagged with different, or
+      // even MULTIPLE, roles on the same project (see the drill-down's `roles` array). `roles`
+      // here is every distinct role across every one of their projects, so the Role filter below
+      // can match an employee on ANY role they hold, not just whichever came first. `role`
+      // (singular) is kept only for display fallbacks that still expect one string.
+      const roles = [
+        ...new Set(
+          (u.projects || []).flatMap((p) =>
+            p.roles && p.roles.length ? p.roles : p.role ? [p.role] : [],
+          ),
+        ),
+      ];
+      const role = roles[0] || null;
       return {
         id: u.emp_id,
         name: u.emp_name || u.emp_id,
         initials: initialsOf(u.emp_name || u.emp_id),
         role,
+        roles,
         projects: (u.projects || []).map((p) => p.project_code).filter(Boolean),
         days: `${u.total_assigned_days ?? 0} business days`,
         // No capacity-calendar data yet for a date window — left blank; ProgressBar below already
@@ -276,7 +288,7 @@ export function useDashboard() {
         (!employeeSearch ||
           has(e.name, employeeSearch) ||
           has(e.id, employeeSearch)) &&
-        (roleFilter === "All Roles" || e.role === roleFilter),
+        (roleFilter === "All Roles" || e.roles.includes(roleFilter)),
     );
   }, [employeeRows, employeeDetails, employeeSearch, roleFilter]);
 

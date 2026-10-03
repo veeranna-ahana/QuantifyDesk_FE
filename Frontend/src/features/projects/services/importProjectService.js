@@ -1,6 +1,21 @@
 import axiosInstance from "@/shared/axiosInstance";
 
-/** Step 1/2: fetch + pre-fill Project Info + Task Info from PMS for a given PMS project ID. */
+/**
+ * Step 1: unique PMS project titles, for the searchable project dropdown that replaced the old
+ * free-text PMS ID input. PMS mints a brand-new project_id for each new VERSION of the same
+ * project (the old id then goes INACTIVE), but the title stays the same across versions — so the
+ * title is what the user picks, and getPmsProjectIdByTitle below resolves it to the current id.
+ */
+export const getPmsProjectTitles = () =>
+  axiosInstance.get("/api/import-project/pms-project-titles");
+
+/** Step 1: resolves a chosen project title to PMS's current (latest-version) project_id. */
+export const getPmsProjectIdByTitle = (projectTitle) =>
+  axiosInstance.get("/api/import-project/pms-project-id-by-title", {
+    params: { project_title: projectTitle },
+  });
+
+/** Step 1/2: fetch + pre-fill Project Info + Task Info from PMS for a given (resolved) PMS project ID. */
 export const syncPmsProject = (projectId) =>
   axiosInstance.get("/api/import-project/pms-sync", { params: { projectId } });
 
