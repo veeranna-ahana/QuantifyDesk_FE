@@ -41,16 +41,21 @@ export function mapViewToMilestones(milestones = []) {
       actualStart: formatPmsDate(t.actual_start_date),
       actualEnd: formatPmsDate(t.actual_end_date),
       allocation: t.allocation ?? "—",
-      // Raw PMS status (e.g. "COMPLETED") doesn't match statusVariant's lookup keys
-      // ("Completed") — normalize it the same way the Import wizard's mapPmsToMilestones does,
-      // otherwise the Status badge silently loses its color (falls back to neutral/gray).
+      // `status` here is the normalized bucket (Not Started/In Progress/Completed) — kept for
+      // filtering/counts (TaskFilters, useTaskInfo tallies compare against these exact strings).
+      // `statusLabel` is what the Status badge actually displays: PMS's own raw status text (e.g.
+      // "YET_TO_START"), not a relabeled "Not Started" — the user wants to see PMS's own wording.
       status: normalizeStatus(t.status),
+      statusLabel: t.status || normalizeStatus(t.status),
       dependency: t.dependency || "",
       riskCategory: t.risk_category || "",
       remark: t.remark || "",
       role: t.role || "",
       taskType: t.task_type || "",
       unit: t.unit || "",
+      // Same "Last Completed" rule as Daily Reports (one flagged task per employee — their
+      // most-recently-completed one), computed backend-side in getProjectView.
+      isLastCompleted: Boolean(t.is_last_completed),
     }));
 
     return {
