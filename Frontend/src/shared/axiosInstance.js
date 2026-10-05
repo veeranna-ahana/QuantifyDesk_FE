@@ -1,6 +1,8 @@
 // src/shared/axiosInstance.js
 import axios from "axios";
 
+import { handleSessionExpired } from "./sessionExpiry";
+
 const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || "https://api.example.com",
   timeout: 10000,
@@ -15,7 +17,7 @@ axiosInstance.interceptors.request.use(
     const token = localStorage.getItem("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-      // console.log("🔐 Token sent in request:", token.substring(0, 20) + "...");
+      console.log("🔐 Token sent in request:", token.substring(0, 20) + "...");
     } else {
       console.warn("⚠️ No token found in localStorage");
     }
@@ -44,6 +46,16 @@ axiosInstance.interceptors.response.use(
   (error) => {
     const message = error.response?.data?.message || "Something went wrong";
     console.error("[API Error]", message);
+
+    // A 401 from the login call itself is a failed SSO handoff, not an
+    // expired session — don't show the session-expired modal for it.
+    const isLoginCall = String(error.config?.url || "").includes(
+      "/api/auth/login",
+    );
+    if (error.response?.status === 401 && !isLoginCall) {
+      handleSessionExpired();
+    }
+
     return Promise.reject(error);
   },
 );

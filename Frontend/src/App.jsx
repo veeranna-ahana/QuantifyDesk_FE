@@ -2,6 +2,7 @@ import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import Login from "./pages/Login";
+import { SessionExpiredModal } from "@/components/SessionExpiredModal";
 import Dashboard from "@/features/dashboard/DashboardPage";
 // import ProtectedRoute from '@/components/ui/ProtectedRoute/ProtectedRoute';
 import MainLayout from "@/components/layout/AppLayout/AppLayout";
@@ -83,8 +84,16 @@ function AppShell() {
           <div style={roleModalStyles.modal}>
             {/* Icon circle */}
             <div style={roleModalStyles.iconCircle}>
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
-                stroke="#856bff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                width="28"
+                height="28"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#856bff"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
                 <circle cx="9" cy="7" r="4" />
                 <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
@@ -109,7 +118,8 @@ function AppShell() {
                     e.currentTarget.style.borderColor = "#856bff";
                     e.currentTarget.style.background = "#f1eeff";
                     e.currentTarget.style.transform = "translateY(-1px)";
-                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(133,107,255,0.15)";
+                    e.currentTarget.style.boxShadow =
+                      "0 4px 12px rgba(133,107,255,0.15)";
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.borderColor = "#e2e8f0";
@@ -118,22 +128,55 @@ function AppShell() {
                     e.currentTarget.style.boxShadow = "none";
                   }}
                 >
-                  <div style={{
-                    width: 36, height: 36, borderRadius: 8, flexShrink: 0,
-                    background: "#f1eeff", border: "1px solid #d9d0ff",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                  }}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                      stroke="#856bff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <div
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 8,
+                      flexShrink: 0,
+                      background: "#f1eeff",
+                      border: "1px solid #d9d0ff",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#856bff"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
                       <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                       <circle cx="12" cy="7" r="4" />
                     </svg>
                   </div>
-                  <span style={{ flex: 1, textAlign: "left", fontSize: 14, fontWeight: 600, color: "#1e272e" }}>
-                    Login as {roleItem.role || roleItem.designation || `Role ${i + 1}`}
+                  <span
+                    style={{
+                      flex: 1,
+                      textAlign: "left",
+                      fontSize: 14,
+                      fontWeight: 600,
+                      color: "#1e272e",
+                    }}
+                  >
+                    Login as{" "}
+                    {roleItem.role || roleItem.designation || `Role ${i + 1}`}
                   </span>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                    stroke="#8a91a0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#8a91a0"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
                     <polyline points="9 18 15 12 9 6" />
                   </svg>
                 </button>
@@ -164,7 +207,7 @@ const roleModalStyles = {
   overlay: {
     position: "fixed",
     inset: 0,
-    background: "rgba(30, 39, 46, 0.6)",          /* --color-ink-primary at 60% */
+    background: "rgba(30, 39, 46, 0.6)" /* --color-ink-primary at 60% */,
     backdropFilter: "blur(6px)",
     display: "flex",
     alignItems: "center",
@@ -173,8 +216,8 @@ const roleModalStyles = {
     padding: 20,
   },
   modal: {
-    background: "#ffffff",                          /* --color-surface-card */
-    border: "1px solid #e2e8f0",                   /* --color-line-card */
+    background: "#ffffff" /* --color-surface-card */,
+    border: "1px solid #e2e8f0" /* --color-line-card */,
     borderRadius: 16,
     boxShadow: "0 12px 40px rgba(133,107,255,0.12), 0 2px 8px rgba(0,0,0,0.08)",
     width: "100%",
@@ -187,8 +230,8 @@ const roleModalStyles = {
     width: 60,
     height: 60,
     borderRadius: "50%",
-    background: "#f1eeff",                          /* --color-action-primary-soft */
-    border: "2px solid #d9d0ff",                   /* --color-badge-brand-line */
+    background: "#f1eeff" /* --color-action-primary-soft */,
+    border: "2px solid #d9d0ff" /* --color-badge-brand-line */,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -197,13 +240,13 @@ const roleModalStyles = {
   title: {
     fontSize: 20,
     fontWeight: 700,
-    color: "#1e272e",                               /* --color-ink-primary */
+    color: "#1e272e" /* --color-ink-primary */,
     margin: "0 0 6px 0",
     letterSpacing: "-0.2px",
   },
   subtitle: {
     fontSize: 13,
-    color: "#8a91a0",                               /* --color-ink-muted */
+    color: "#8a91a0" /* --color-ink-muted */,
     margin: "0 0 20px 0",
     lineHeight: 1.5,
   },
@@ -218,8 +261,8 @@ const roleModalStyles = {
     alignItems: "center",
     gap: 14,
     padding: "13px 16px",
-    background: "#faf8ff",                          /* --color-surface-page */
-    border: "1.5px solid #e2e8f0",                 /* --color-line-card */
+    background: "#faf8ff" /* --color-surface-page */,
+    border: "1.5px solid #e2e8f0" /* --color-line-card */,
     borderRadius: 10,
     cursor: "pointer",
     textAlign: "left",
@@ -227,13 +270,13 @@ const roleModalStyles = {
     width: "100%",
     boxSizing: "border-box",
     fontWeight: 600,
-    color: "#1e272e",                               /* --color-ink-primary */
+    color: "#1e272e" /* --color-ink-primary */,
     fontSize: 14,
   },
   cancelButton: {
     background: "transparent",
-    border: "1px solid #e2e8f0",                   /* --color-line-card */
-    color: "#434655",                               /* --color-ink-secondary */
+    border: "1px solid #e2e8f0" /* --color-line-card */,
+    color: "#434655" /* --color-ink-secondary */,
     fontSize: 13,
     fontWeight: 500,
     cursor: "pointer",
@@ -242,7 +285,6 @@ const roleModalStyles = {
     transition: "all 0.15s ease",
   },
 };
-
 
 function App() {
   return (
@@ -274,6 +316,7 @@ function App() {
         }}
       />
       <AppShell />
+      <SessionExpiredModal />
     </BrowserRouter>
   );
 }
