@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { ProgressBar } from "@/components/ui/ProgressBar";
@@ -15,23 +17,35 @@ import { statusVariant } from "@/lib/status";
 
 import { formatProjectDate } from "../utils/formatProjectDate";
 
-// Literal class names so Tailwind can see them.
-const SLICE_FILL = [
-  "fill-chart-1",
-  "fill-chart-2",
-  "fill-chart-3",
-  "fill-chart-4",
-  "fill-chart-5",
-  "fill-chart-6",
+// Hours are often the result of a division/sum of fractional values (e.g. minutes converted to
+// hours), which can land on a binary floating-point value like 680.8000000000001 instead of a
+// clean 680.8 — rounding to 2 decimals and trimming trailing zeros keeps the display honest
+// without introducing any fake precision of our own.
+const formatHours = (value) => {
+  const num = Number(value) || 0;
+  return Number(num.toFixed(2)).toString();
+};
+
+// Requested palette (indigo / emerald / amber / red / violet / pink) — picked so adjacent entries
+// differ in both hue AND lightness/saturation, not just hue, which is what actually reads as
+// "different colors" at a glance rather than two shades of the same color. Repeats past 6 members
+// with a shifted lightness (see sliceColor) so a second lap still looks distinct from the first.
+const CATEGORICAL_PALETTE = [
+  "#6366F1", // indigo
+  "#10B981", // emerald
+  "#F59E0B", // amber
+  "#EF4444", // red
+  "#8B5CF6", // violet
+  "#EC4899", // pink
 ];
-const SWATCH_BG = [
-  "bg-chart-1",
-  "bg-chart-2",
-  "bg-chart-3",
-  "bg-chart-4",
-  "bg-chart-5",
-  "bg-chart-6",
-];
+const sliceColor = (index) => {
+  const lap = Math.floor(index / CATEGORICAL_PALETTE.length);
+  const base = CATEGORICAL_PALETTE[index % CATEGORICAL_PALETTE.length];
+  if (lap === 0) return base;
+  // Second+ time around the palette (11th+ member) — darken progressively so it's still visibly
+  // distinct from the first lap's use of the same base color, instead of an exact repeat.
+  return `color-mix(in srgb, ${base} ${Math.max(40, 100 - lap * 20)}%, black)`;
+};
 
 const EMPTY_OVERVIEW = {
   team_members: [],
@@ -54,33 +68,72 @@ function PieChart({ members }) {
   const c = size / 2;
   const r = 62;
   const total = members.reduce((s, m) => s + m.units, 0);
+  // hovered holds the slice's own data plus the mouse position *within this component's own
+  // wrapper div* (clientX/Y minus that div's own bounding rect) — a plain native <title> tooltip
+  // can't be styled at all (it's the browser's own OS-drawn yellow box), so this renders a real,
+  // themed tooltip positioned next to the cursor instead.
+  const [hovered, setHovered] = useState(null);
   if (total === 0) return null;
   const starts = members.reduce(
     (acc, m) => [...acc, acc[acc.length - 1] + (m.units / total) * 2 * Math.PI],
     [-Math.PI / 2],
   );
   return (
-    <svg
-      viewBox={`0 0 ${size} ${size}`}
-      className="h-40 w-40 overflow-visible"
-      role="img"
-      aria-label="Work allocation by team member"
-    >
-      {members.map((m, i) => {
-        const sweep = (m.units / total) * 2 * Math.PI;
-        const [a1, a2] = [starts[i], starts[i + 1]];
-        const [x1, y1] = [c + r * Math.cos(a1), c + r * Math.sin(a1)];
-        const [x2, y2] = [c + r * Math.cos(a2), c + r * Math.sin(a2)];
-        return (
-          <path
-            key={m.emp_id}
-            d={`M ${c} ${c} L ${x1} ${y1} A ${r} ${r} 0 ${sweep > Math.PI ? 1 : 0} 1 ${x2} ${y2} Z`}
-            className={cn(SLICE_FILL[i % 6], "stroke-white")}
-            strokeWidth={2}
+    <div className="relative">
+      <svg
+        viewBox={`0 0 ${size} ${size}`}
+        className="h-40 w-40 overflow-visible"
+        role="img"
+        aria-label="Work allocation by team member"
+        onMouseLeave={() => setHovered(null)}
+      >
+        {members.map((m, i) => {
+          const sweep = (m.units / total) * 2 * Math.PI;
+          const [a1, a2] = [starts[i], starts[i + 1]];
+          const [x1, y1] = [c + r * Math.cos(a1), c + r * Math.sin(a1)];
+          const [x2, y2] = [c + r * Math.cos(a2), c + r * Math.sin(a2)];
+          const pct = Math.round((m.units / total) * 100);
+          return (
+            <path
+              key={m.emp_id}
+              d={`M ${c} ${c} L ${x1} ${y1} A ${r} ${r} 0 ${sweep > Math.PI ? 1 : 0} 1 ${x2} ${y2} Z`}
+              style={{ fill: sliceColor(i) }}
+              className="cursor-default stroke-white transition-opacity hover:opacity-85"
+              strokeWidth={2}
+              onMouseMove={(e) => {
+                const hostRect = e.currentTarget.ownerSVGElement
+                  .closest(".relative")
+                  .getBoundingClientRect();
+                setHovered({
+                  name: m.emp_name,
+                  units: m.units,
+                  pct,
+                  x: e.clientX - hostRect.left,
+                  y: e.clientY - hostRect.top,
+                  color: sliceColor(i),
+                });
+              }}
+            />
+          );
+        })}
+      </svg>
+      {hovered && (
+        <div
+          className="pointer-events-none absolute z-10 flex -translate-x-1/2 -translate-y-full items-center gap-1.5 whitespace-nowrap rounded-md bg-ink-primary px-2.5 py-1.5 text-[11px] font-medium text-white shadow-lg"
+          style={{ left: hovered.x, top: hovered.y - 10 }}
+        >
+          <span
+            className="h-2 w-2 shrink-0 rounded-full"
+            style={{ backgroundColor: hovered.color }}
           />
-        );
-      })}
-    </svg>
+          {hovered.name}
+          <span className="text-white/70">
+            · {hovered.units} unit{hovered.units === 1 ? "" : "s"} (
+            {hovered.pct}%)
+          </span>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -169,7 +222,7 @@ export function ProjectOverview({ project, overview }) {
         <StatCard
           centered
           label="Total Hours Allocated"
-          value={`${o.total_hours_allocated}h`}
+          value={`${formatHours(o.total_hours_allocated)}h`}
           caption={`Across ${o.team_members_count} members`}
         />
         <StatCard
@@ -177,7 +230,7 @@ export function ProjectOverview({ project, overview }) {
           filled={overUtilized}
           tone={overUtilized ? "danger" : undefined}
           label="Total Hours Utilized"
-          value={`${o.total_hours_utilized}h`}
+          value={`${formatHours(o.total_hours_utilized)}h`}
           caption={
             utilizationPercent === null
               ? "No logged hours yet"
@@ -204,20 +257,25 @@ export function ProjectOverview({ project, overview }) {
             <div className="flex flex-col items-center gap-3">
               <PieChart members={o.team_members} />
               <ul className="flex flex-wrap justify-center gap-x-4 gap-y-1">
-                {o.team_members.map((m, i) => (
-                  <li
-                    key={m.emp_id}
-                    className="flex items-center gap-1.5 text-[11px] text-ink-secondary"
-                  >
-                    <span
-                      className={cn(
-                        "h-2.5 w-2.5 rounded-full",
-                        SWATCH_BG[i % 6],
-                      )}
-                    />
-                    {m.emp_name}
-                  </li>
-                ))}
+                {(() => {
+                  const totalUnits = o.team_members.reduce(
+                    (s, m) => s + m.units,
+                    0,
+                  );
+                  return o.team_members.map((m, i) => (
+                    <li
+                      key={m.emp_id}
+                      className="flex items-center gap-1.5 text-[11px] text-ink-secondary"
+                      title={`${m.units} unit${m.units === 1 ? "" : "s"}${totalUnits > 0 ? ` (${Math.round((m.units / totalUnits) * 100)}%)` : ""}`}
+                    >
+                      <span
+                        className="h-2.5 w-2.5 shrink-0 rounded-full"
+                        style={{ backgroundColor: sliceColor(i) }}
+                      />
+                      {m.emp_name}
+                    </li>
+                  ));
+                })()}
               </ul>
             </div>
           )}
@@ -227,7 +285,10 @@ export function ProjectOverview({ project, overview }) {
           <h3 className="px-4 pt-4 text-sm font-semibold text-ink-primary">
             Team Members
           </h3>
-          <Table className="mt-2">
+          <Table
+            className="mt-2"
+            wrapperClassName="max-h-[55vh] overflow-y-auto"
+          >
             <TableHead>
               <TableRow className="hover:bg-transparent">
                 <TableHeaderCell>Member</TableHeaderCell>
@@ -256,7 +317,7 @@ export function ProjectOverview({ project, overview }) {
                   </TableCell>
                   <TableCell className="text-center">{m.tasks}</TableCell>
                   <TableCell className="text-center">
-                    {m.logged_hours}h
+                    {formatHours(m.logged_hours)}h
                   </TableCell>
                   <TableCell className="text-center font-semibold text-badge-success-ink">
                     {m.done}
@@ -287,7 +348,10 @@ export function ProjectOverview({ project, overview }) {
             Per member breakdown
           </span>
         </div>
-        <Table className="min-w-[980px]">
+        <Table
+          className="min-w-[980px]"
+          wrapperClassName="max-h-[55vh] overflow-y-auto"
+        >
           <TableHead>
             <TableRow className="hover:bg-transparent">
               {[
@@ -344,7 +408,7 @@ export function ProjectOverview({ project, overview }) {
                   {r.pending}
                 </TableCell>
                 <TableCell>{r.alloc_hours}h</TableCell>
-                <TableCell>{r.logged_hours}h</TableCell>
+                <TableCell>{formatHours(r.logged_hours)}h</TableCell>
                 <TableCell className="text-ink-secondary">
                   {r.variance_hours ?? "—"}
                 </TableCell>

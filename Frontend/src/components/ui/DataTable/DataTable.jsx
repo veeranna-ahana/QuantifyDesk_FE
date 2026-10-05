@@ -1,6 +1,6 @@
 // src/components/ui/DataTable/DataTable.jsx
 // Mirrors @UI/src/components/ui/DataTable/DataTable.tsx — adapted for WorkQuantify
-import React from 'react';
+import React from "react";
 
 /**
  * Generic data table with configurable columns.
@@ -21,7 +21,7 @@ export function DataTable({
   renderCell,
   renderAction,
   loading = false,
-  emptyMessage = 'No data found.',
+  emptyMessage = "No data found.",
   selectable = false,
 }) {
   return (
@@ -39,9 +39,7 @@ export function DataTable({
                 {col.label}
               </th>
             ))}
-            {renderAction && (
-              <th className="task-table-header">Action</th>
-            )}
+            {renderAction && <th className="task-table-header">Action</th>}
           </tr>
         </thead>
 
@@ -49,9 +47,11 @@ export function DataTable({
           {loading ? (
             <tr>
               <td
-                colSpan={columns.length + (selectable ? 1 : 0) + (renderAction ? 1 : 0)}
+                colSpan={
+                  columns.length + (selectable ? 1 : 0) + (renderAction ? 1 : 0)
+                }
                 className="task-table-cell"
-                style={{ textAlign: 'center', padding: '24px' }}
+                style={{ textAlign: "center", padding: "24px" }}
               >
                 Loading…
               </td>
@@ -59,9 +59,11 @@ export function DataTable({
           ) : rows.length === 0 ? (
             <tr>
               <td
-                colSpan={columns.length + (selectable ? 1 : 0) + (renderAction ? 1 : 0)}
+                colSpan={
+                  columns.length + (selectable ? 1 : 0) + (renderAction ? 1 : 0)
+                }
                 className="task-table-cell"
-                style={{ textAlign: 'center', padding: '24px' }}
+                style={{ textAlign: "center", padding: "24px" }}
               >
                 {emptyMessage}
               </td>
@@ -71,7 +73,10 @@ export function DataTable({
               <tr key={row.id ?? rowIdx}>
                 {selectable && (
                   <td className="task-table-cell task-table-checkbox">
-                    <input type="checkbox" aria-label={`Select row ${rowIdx + 1}`} />
+                    <input
+                      type="checkbox"
+                      aria-label={`Select row ${rowIdx + 1}`}
+                    />
                   </td>
                 )}
                 {columns.map((col) => (

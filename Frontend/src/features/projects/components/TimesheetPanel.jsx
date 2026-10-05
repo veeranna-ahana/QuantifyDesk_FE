@@ -102,7 +102,10 @@ export function TimesheetPanel({ projectcategoryCode }) {
         <p className="px-4 pb-2 text-xs text-badge-danger-ink">{ts.error}</p>
       )}
 
-      <Table className="min-w-[1400px]">
+      <Table
+        className="min-w-[1400px]"
+        wrapperClassName="max-h-[55vh] overflow-y-auto"
+      >
         <TableHead>
           <TableRow className="hover:bg-transparent">
             {COLUMNS.map((c) => (

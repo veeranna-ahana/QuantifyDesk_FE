@@ -52,7 +52,7 @@ export const getImportedProject = (projectInfoId) =>
 export const importProjects = (file) =>
   new Promise((resolve) => {
     setTimeout(() => {
-      console.log("Import Project clicked – file:", file?.name ?? "none");
+      // console.log("Import Project clicked – file:", file?.name ?? "none");
       resolve({ success: true });
     }, 300);
   });

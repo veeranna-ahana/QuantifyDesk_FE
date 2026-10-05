@@ -3,46 +3,61 @@ import { useNavigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
 import axios from "axios";
 import { useSelector, useDispatch } from "react-redux";
-import { fetchHrmsEmployees, selectAllEmployees, selectEmployeesLoading } from "../store/slices/employeeSlice";
+import {
+  fetchHrmsEmployees,
+  selectAllEmployees,
+  selectEmployeesLoading,
+} from "../store/slices/employeeSlice";
 import Cookies from "js-cookie";
-import SearchableSelect from '@/components/ui/SearchableSelect/SearchableSelect';
-import { Icon } from '@iconify/react';
+import SearchableSelect from "@/components/ui/SearchableSelect/SearchableSelect";
+import { Icon } from "@iconify/react";
 
 const getUserRole = () => {
   try {
-    const cookieUser = JSON.parse(Cookies.get('user') || 'null');
+    const cookieUser = JSON.parse(Cookies.get("user") || "null");
     if (cookieUser?.role) return cookieUser.role.toUpperCase();
-  } catch { /* ignore */ }
-  return (localStorage.getItem('role') || 'EMPLOYEE').toUpperCase();
+  } catch {
+    /* ignore */
+  }
+  return (localStorage.getItem("role") || "EMPLOYEE").toUpperCase();
 };
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
-const getHeaders = () => ({ Authorization: `Bearer ${localStorage.getItem("token") || ""}` });
+const getHeaders = () => ({
+  Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+});
 
 const ROLE_COLORS = {
-  "BA": { bg: "#f8f8fd", border: "#7f5feb", text: "#7f5feb" },
+  BA: { bg: "#f8f8fd", border: "#7f5feb", text: "#7f5feb" },
   "Solution Architect": { bg: "#f8f8fd", border: "#7f5feb", text: "#7f5feb" },
   "UI/UX": { bg: "#f5f6ff", border: "#5352ed", text: "#5352ed" },
   "FE Dev": { bg: "#fffaf0", border: "#f39c12", text: "#f39c12" },
   "BE Dev": { bg: "#f6f8ff", border: "#3742fa", text: "#3742fa" },
-  "Tester": { bg: "#fdf8ff", border: "#8e44ad", text: "#8e44ad" },
-  "Deployment": { bg: "#fdf8ff", border: "#8e44ad", text: "#8e44ad" },
+  Tester: { bg: "#fdf8ff", border: "#8e44ad", text: "#8e44ad" },
+  Deployment: { bg: "#fdf8ff", border: "#8e44ad", text: "#8e44ad" },
   "Warranty & Support": { bg: "#fdf8ff", border: "#8e44ad", text: "#8e44ad" },
   "Project Manager": { bg: "#eafaf1", border: "#2ecc71", text: "#2ecc71" },
 };
-const roleStyle = (role) => ROLE_COLORS[role] || { bg: "#f5f5f5", border: "#999", text: "#333" };
+const roleStyle = (role) =>
+  ROLE_COLORS[role] || { bg: "#f5f5f5", border: "#999", text: "#333" };
 
 const AssignEmployee = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const isAdmin = getUserRole() === 'ADMIN';
+  const isAdmin = getUserRole() === "ADMIN";
   // const serviceDeliveryEmployees = useSelector((state) => state.auth.serviceDeliveryEmployees);
   const dispatch = useDispatch();
-const hrmsEmployees = useSelector(selectAllEmployees);
-const employeesLoading = useSelector(selectEmployeesLoading);
+  const hrmsEmployees = useSelector(selectAllEmployees);
+  const employeesLoading = useSelector(selectEmployeesLoading);
 
   // All context passed via navigation state
-  const { modal, selProject, projectName = "", assignments: initAssignments = [], extraData: initExtraData = {} } = location.state || {};
+  const {
+    modal,
+    selProject,
+    projectName = "",
+    assignments: initAssignments = [],
+    extraData: initExtraData = {},
+  } = location.state || {};
 
   const [assignments, setAssignments] = useState(initAssignments);
   const [extraData, setExtraData] = useState(initExtraData);
@@ -60,7 +75,8 @@ const employeesLoading = useSelector(selectEmployeesLoading);
   const [deleteTarget, setDeleteTarget] = useState(null); // { id, user_name, task_name }
   const [deleting, setDeleting] = useState(false);
   const [collapsedProjects, setCollapsedProjects] = useState({});
-  const toggleProject = (pid) => setCollapsedProjects(prev => ({ ...prev, [pid]: !prev[pid] }));
+  const toggleProject = (pid) =>
+    setCollapsedProjects((prev) => ({ ...prev, [pid]: !prev[pid] }));
 
   const scrollToTop = () => {
     const scrollContainer = document.getElementById("main-content-scroll");
@@ -78,21 +94,21 @@ const employeesLoading = useSelector(selectEmployeesLoading);
   }, []);
 
   // Fetch HRMS employees when component mounts
-useEffect(() => {
-  if (hrmsEmployees.length === 0 && !employeesLoading) {
-    dispatch(fetchHrmsEmployees());
-  }
-}, [dispatch, hrmsEmployees.length, employeesLoading]);
+  useEffect(() => {
+    if (hrmsEmployees.length === 0 && !employeesLoading) {
+      dispatch(fetchHrmsEmployees());
+    }
+  }, [dispatch, hrmsEmployees.length, employeesLoading]);
 
-// Add this after your hrmsEmployees useEffect
-useEffect(() => {
-  if (hrmsEmployees.length > 0) {
-    // console.log('🔍 All employees with departments:');
-    hrmsEmployees.forEach(emp => {
-      // console.log(`- ${emp.Employee_Name}: "${emp.Name_of_Department}" (length: ${emp.Name_of_Department?.length || 0})`);
-    });
-  }
-}, [hrmsEmployees]);
+  // Add this after your hrmsEmployees useEffect
+  useEffect(() => {
+    if (hrmsEmployees.length > 0) {
+      // console.log('🔍 All employees with departments:');
+      hrmsEmployees.forEach((emp) => {
+        // console.log(`- ${emp.Employee_Name}: "${emp.Name_of_Department}" (length: ${emp.Name_of_Department?.length || 0})`);
+      });
+    }
+  }, [hrmsEmployees]);
 
   // Redirect if navigated directly without state
   useEffect(() => {
@@ -105,10 +121,15 @@ useEffect(() => {
   const refreshAssignments = async () => {
     if (!selProject) return;
     try {
-      const res = await axios.get(`${BASE_URL}/api/assignments?projectId=${selProject}`, { headers: getHeaders() });
+      const res = await axios.get(
+        `${BASE_URL}/api/assignments?projectId=${selProject}`,
+        { headers: getHeaders() },
+      );
       setAssignments(res.data || []);
       setExtraData({});
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   };
 
   useEffect(() => {
@@ -119,17 +140,23 @@ useEffect(() => {
 
   // Fetch employee workload when user selected
   useEffect(() => {
-    if (!selUser) { setWorkload(null); return; }
+    if (!selUser) {
+      setWorkload(null);
+      return;
+    }
     const fetch = async () => {
       setLoadingWorkload(true);
       try {
         const res = await axios.get(
           `${BASE_URL}/api/assignments/employee-assignments?emp_id=${selUser}`,
-          { headers: getHeaders() }
+          { headers: getHeaders() },
         );
         setWorkload(res.data?.success ? res.data.data : null);
-      } catch { setWorkload(null); }
-      finally { setLoadingWorkload(false); }
+      } catch {
+        setWorkload(null);
+      } finally {
+        setLoadingWorkload(false);
+      }
     };
     fetch();
   }, [selUser]);
@@ -137,20 +164,39 @@ useEffect(() => {
   if (!modal || !selProject) return null;
 
   const existing = assignments
-    .filter(a => a.role === modal.role && a.task_name === modal.task_name)
-    .map(a => ({
+    .filter((a) => a.role === modal.role && a.task_name === modal.task_name)
+    .map((a) => ({
       ...a,
       estimated_days: extraData[a.id]?.estimated_days ?? a.estimated_days ?? 0,
-      estimated_hours: extraData[a.id]?.estimated_hours ?? a.estimated_hours ?? 0,
+      estimated_hours:
+        extraData[a.id]?.estimated_hours ?? a.estimated_hours ?? 0,
       units_assigned: extraData[a.id]?.units_assigned ?? a.units_assigned,
     }));
 
-  const totalAssignedUnits = existing.reduce((s, a) => s + Number(a.units_assigned), 0);
-  const totalAssignedDays = existing.reduce((s, a) => s + Number(a.estimated_days || 0), 0);
-  const totalAssignedHours = existing.reduce((s, a) => s + Number(a.estimated_hours || 0), 0);
-  const remainingUnits = Math.max((modal.planned_units || 0) - totalAssignedUnits, 0);
-  const remainingDays = Math.max((modal.estimated_days || 0) - totalAssignedDays, 0);
-  const remainingHours = Math.max((modal.estimated_hours || 0) - totalAssignedHours, 0);
+  const totalAssignedUnits = existing.reduce(
+    (s, a) => s + Number(a.units_assigned),
+    0,
+  );
+  const totalAssignedDays = existing.reduce(
+    (s, a) => s + Number(a.estimated_days || 0),
+    0,
+  );
+  const totalAssignedHours = existing.reduce(
+    (s, a) => s + Number(a.estimated_hours || 0),
+    0,
+  );
+  const remainingUnits = Math.max(
+    (modal.planned_units || 0) - totalAssignedUnits,
+    0,
+  );
+  const remainingDays = Math.max(
+    (modal.estimated_days || 0) - totalAssignedDays,
+    0,
+  );
+  const remainingHours = Math.max(
+    (modal.estimated_hours || 0) - totalAssignedHours,
+    0,
+  );
 
   const unitsExceeded = units && Number(units) > remainingUnits;
   const daysExceeded = days && Number(days) > remainingDays;
@@ -178,24 +224,48 @@ useEffect(() => {
     const navigateAfter = shouldNavigateOnSuccess === true;
     if (!selUser) return toast.error("Please select an employee.");
     const reqUnits = parseInt(units, 10);
-    if (!units || isNaN(reqUnits) || reqUnits <= 0) return toast.error("Enter units > 0.");
-    if (!days || Number(days) <= 0) return toast.error("Enter days > 0 before assigning.");
-    const reqDays = Number(days), reqHours = hours ? Number(hours) : 0;
-    if (reqUnits > remainingUnits) return toast.error(`Only ${remainingUnits} units remaining.`);
-    if (reqDays > remainingDays) return toast.error(`Only ${remainingDays} days remaining.`);
-    if (reqHours > remainingHours) return toast.error(`Only ${remainingHours} hours remaining.`);
+    if (!units || isNaN(reqUnits) || reqUnits <= 0)
+      return toast.error("Enter units > 0.");
+    if (!days || Number(days) <= 0)
+      return toast.error("Enter days > 0 before assigning.");
+    const reqDays = Number(days),
+      reqHours = hours ? Number(hours) : 0;
+    if (reqUnits > remainingUnits)
+      return toast.error(`Only ${remainingUnits} units remaining.`);
+    if (reqDays > remainingDays)
+      return toast.error(`Only ${remainingDays} days remaining.`);
+    if (reqHours > remainingHours)
+      return toast.error(`Only ${remainingHours} hours remaining.`);
     setSaving(true);
     try {
-      const res = await axios.post(`${BASE_URL}/api/assignments`, {
-        project_id: selProject, user_id: selUser, role: modal.role,
-        task_name: modal.task_name, units_assigned: reqUnits,
-        estimated_days: reqDays, estimated_hours: reqHours,
-      }, { headers: getHeaders() });
+      const res = await axios.post(
+        `${BASE_URL}/api/assignments`,
+        {
+          project_id: selProject,
+          user_id: selUser,
+          role: modal.role,
+          task_name: modal.task_name,
+          units_assigned: reqUnits,
+          estimated_days: reqDays,
+          estimated_hours: reqHours,
+        },
+        { headers: getHeaders() },
+      );
       const saved = res.data?.data || res.data;
       if (saved?.id) {
-        setExtraData(prev => ({ ...prev, [saved.id]: { estimated_days: reqDays, estimated_hours: reqHours, units_assigned: reqUnits } }));
+        setExtraData((prev) => ({
+          ...prev,
+          [saved.id]: {
+            estimated_days: reqDays,
+            estimated_hours: reqHours,
+            units_assigned: reqUnits,
+          },
+        }));
       }
-      setSelUser(""); setUnits(""); setDays(""); setHours("");
+      setSelUser("");
+      setUnits("");
+      setDays("");
+      setHours("");
       toast.success("Employee assigned successfully!");
       await refreshAssignments();
       scrollToTop();
@@ -204,17 +274,37 @@ useEffect(() => {
       }
     } catch (e) {
       toast.error(e?.response?.data?.message || "Failed to assign.");
-    } finally { setSaving(false); }
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const startEdit = (a) => setEditingRow(prev => ({ ...prev, [a.id]: { units: String(a.units_assigned), days: String(a.estimated_days || 0), hours: String(a.estimated_hours || 0) } }));
-  const cancelEdit = (id) => setEditingRow(prev => { const n = { ...prev }; delete n[id]; return n; });
+  const startEdit = (a) =>
+    setEditingRow((prev) => ({
+      ...prev,
+      [a.id]: {
+        units: String(a.units_assigned),
+        days: String(a.estimated_days || 0),
+        hours: String(a.estimated_hours || 0),
+      },
+    }));
+  const cancelEdit = (id) =>
+    setEditingRow((prev) => {
+      const n = { ...prev };
+      delete n[id];
+      return n;
+    });
   const handleEditField = (id, field, val) => {
-    setEditingRow(prev => {
-      const sanitizedVal = field === 'units' ? (val === '' ? '' : val.replace(/\D/g, '')) : val;
+    setEditingRow((prev) => {
+      const sanitizedVal =
+        field === "units" ? (val === "" ? "" : val.replace(/\D/g, "")) : val;
       const row = { ...prev[id], [field]: sanitizedVal };
-      if (field === 'days') row.hours = val === '' || isNaN(Number(val)) ? '' : String(Number(val) * 8);
-      if (field === 'hours') row.days = val === '' || isNaN(Number(val)) ? '' : String(Number(val) / 8);
+      if (field === "days")
+        row.hours =
+          val === "" || isNaN(Number(val)) ? "" : String(Number(val) * 8);
+      if (field === "hours")
+        row.days =
+          val === "" || isNaN(Number(val)) ? "" : String(Number(val) / 8);
       return { ...prev, [id]: row };
     });
   };
@@ -224,33 +314,61 @@ useEffect(() => {
     const unitsVal = parseInt(row.units, 10);
     const daysVal = Number(row.days) || 0;
     const hoursVal = Number(row.hours) || 0;
-    if (!unitsVal || isNaN(unitsVal) || unitsVal <= 0) return toast.error('Units must be > 0.');
+    if (!unitsVal || isNaN(unitsVal) || unitsVal <= 0)
+      return toast.error("Units must be > 0.");
 
     // Remaining capacity = total task limits minus what OTHER assignments use
-    const otherAssignments = existing.filter(a => a.id !== id);
-    const otherUnits = otherAssignments.reduce((s, a) => s + Number(a.units_assigned), 0);
-    const otherDays  = otherAssignments.reduce((s, a) => s + Number(a.estimated_days || 0), 0);
-    const otherHours = otherAssignments.reduce((s, a) => s + Number(a.estimated_hours || 0), 0);
-    const maxUnits = (modal.planned_units  || 0) - otherUnits;
-    const maxDays  = (modal.estimated_days  || 0) - otherDays;
+    const otherAssignments = existing.filter((a) => a.id !== id);
+    const otherUnits = otherAssignments.reduce(
+      (s, a) => s + Number(a.units_assigned),
+      0,
+    );
+    const otherDays = otherAssignments.reduce(
+      (s, a) => s + Number(a.estimated_days || 0),
+      0,
+    );
+    const otherHours = otherAssignments.reduce(
+      (s, a) => s + Number(a.estimated_hours || 0),
+      0,
+    );
+    const maxUnits = (modal.planned_units || 0) - otherUnits;
+    const maxDays = (modal.estimated_days || 0) - otherDays;
     const maxHours = (modal.estimated_hours || 0) - otherHours;
 
-    if (unitsVal > maxUnits) return toast.error(`Only ${maxUnits} units remaining for this task.`);
-    if (daysVal  > maxDays)  return toast.error(`Only ${maxDays} days remaining for this task.`);
-    if (hoursVal > maxHours) return toast.error(`Only ${maxHours} hours remaining for this task.`);
+    if (unitsVal > maxUnits)
+      return toast.error(`Only ${maxUnits} units remaining for this task.`);
+    if (daysVal > maxDays)
+      return toast.error(`Only ${maxDays} days remaining for this task.`);
+    if (hoursVal > maxHours)
+      return toast.error(`Only ${maxHours} hours remaining for this task.`);
 
-    setSavingEdit(prev => ({ ...prev, [id]: true }));
+    setSavingEdit((prev) => ({ ...prev, [id]: true }));
     try {
-      await axios.put(`${BASE_URL}/api/assignments/${id}`, {
-        units_assigned: unitsVal, estimated_days: daysVal, estimated_hours: hoursVal,
-      }, { headers: getHeaders() });
-      setExtraData(prev => ({ ...prev, [id]: { estimated_days: daysVal, estimated_hours: hoursVal, units_assigned: unitsVal } }));
+      await axios.put(
+        `${BASE_URL}/api/assignments/${id}`,
+        {
+          units_assigned: unitsVal,
+          estimated_days: daysVal,
+          estimated_hours: hoursVal,
+        },
+        { headers: getHeaders() },
+      );
+      setExtraData((prev) => ({
+        ...prev,
+        [id]: {
+          estimated_days: daysVal,
+          estimated_hours: hoursVal,
+          units_assigned: unitsVal,
+        },
+      }));
       cancelEdit(id);
-      toast.success('Assignment updated!');
+      toast.success("Assignment updated!");
       await refreshAssignments();
     } catch (err) {
-      toast.error(err?.response?.data?.message || 'Failed to update.');
-    } finally { setSavingEdit(prev => ({ ...prev, [id]: false })); }
+      toast.error(err?.response?.data?.message || "Failed to update.");
+    } finally {
+      setSavingEdit((prev) => ({ ...prev, [id]: false }));
+    }
   };
 
   const handleDelete = (id, user_name, task_name) => {
@@ -261,10 +379,16 @@ useEffect(() => {
     if (!deleteTarget) return;
     setDeleting(true);
     try {
-      await axios.delete(`${BASE_URL}/api/assignments/${deleteTarget.id}`, { headers: getHeaders() });
+      await axios.delete(`${BASE_URL}/api/assignments/${deleteTarget.id}`, {
+        headers: getHeaders(),
+      });
       // Instant UI update — remove row without waiting for server round-trip
-      setAssignments(prev => prev.filter(a => a.id !== deleteTarget.id));
-      setExtraData(prev => { const n = { ...prev }; delete n[deleteTarget.id]; return n; });
+      setAssignments((prev) => prev.filter((a) => a.id !== deleteTarget.id));
+      setExtraData((prev) => {
+        const n = { ...prev };
+        delete n[deleteTarget.id];
+        return n;
+      });
       setDeleteTarget(null);
       toast.success("Assignment removed.");
       // Re-sync from server to guarantee the list is accurate
@@ -277,20 +401,25 @@ useEffect(() => {
   };
 
   const rs = roleStyle(modal.role);
-  const roleInitials = modal.role.split(/\s+/).map(w => w[0]).join("").slice(0, 2).toUpperCase();
+  const roleInitials = modal.role
+    .split(/\s+/)
+    .map((w) => w[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
-const deliveryEmployees = hrmsEmployees.filter(emp => {
-  if (!emp.Name_of_Department) return false;
-  // Trim and compare case-insensitively
-  const dept = emp.Name_of_Department.trim();
-  return dept.toLowerCase() === 'delivery';
-});
+  const deliveryEmployees = hrmsEmployees.filter((emp) => {
+    if (!emp.Name_of_Department) return false;
+    // Trim and compare case-insensitively
+    const dept = emp.Name_of_Department.trim();
+    return dept.toLowerCase() === "delivery";
+  });
 
-// Add debug log
-console.log('Total employees:', hrmsEmployees.length);
-console.log('ADM employees:', deliveryEmployees.length);
+  // Add debug log
+  // console.log('Total employees:', hrmsEmployees.length);
+  // console.log('ADM employees:', deliveryEmployees.length);
 
-// Then use deliveryEmployees in the SearchableSelect
+  // Then use deliveryEmployees in the SearchableSelect
 
   return (
     <div className="py-4 px-6 bg-[#FAF8FF] min-h-full font-sans">
@@ -302,96 +431,172 @@ console.log('ADM employees:', deliveryEmployees.length);
             onClick={handleDoneOrBack}
             className="flex items-center gap-2 text-gray-500 hover:text-gray-800 font-semibold text-sm transition-colors"
           >
-            <Icon icon="material-symbols:arrow-back" width="18" height="18" color="#64748b" />
+            <Icon
+              icon="material-symbols:arrow-back"
+              width="18"
+              height="18"
+              color="#64748b"
+            />
             Back to Assignments
           </button>
         </div>
 
         {/* Row 2: Title and Task Info */}
         <div className="flex items-center gap-2 flex-wrap mb-3 ">
-          <span className="px-2 py-0.5 rounded text-[10px] font-bold text-white uppercase" style={{ backgroundColor: rs.border }}>
+          <span
+            className="px-2 py-0.5 rounded text-[10px] font-bold text-white uppercase"
+            style={{ backgroundColor: rs.border }}
+          >
             {roleInitials}
           </span>
           <h2 className="text-[24px] font-bold text-[#191B23] m-0">
-            {isAdmin ? 'View Assignments' : 'Assign Employee'}
+            {isAdmin ? "View Assignments" : "Assign Employee"}
           </h2>
           <span className="text-gray-400">·</span>
-          <span className="text-[16px] text-[#434654] mt-1">{modal.task_name}</span>
-          {modal.unit_type && <span className="text-gray-400 text-xs font-semibold">({modal.unit_type})</span>}
+          <span className="text-[16px] text-[#434654] mt-1">
+            {modal.task_name}
+          </span>
+          {modal.unit_type && (
+            <span className="text-gray-400 text-xs font-semibold">
+              ({modal.unit_type})
+            </span>
+          )}
           {isAdmin && (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-100">
-              <Icon icon="material-symbols:lock" width="12" height="12" color="#e11d48" />
+              <Icon
+                icon="material-symbols:lock"
+                width="12"
+                height="12"
+                color="#e11d48"
+              />
               VIEW ONLY
             </span>
           )}
         </div>
 
         <div className=" sticky top-0 z-30 grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-        {[
-          { label: "PLANNED UNITS", value: modal.planned_units ?? 0 },
-          { label: "EST. DAYS", value: modal.estimated_days ?? 0 },
-          { label: "EST. HOURS", value: modal.estimated_hours ?? 0 },
-          { label: "ASSIGNED UNITS", value: totalAssignedUnits, highlight: true },
-        ].map(({ label, value, highlight }) => (
-          <div key={label} className={`bg-white border border-gray-100 rounded-xl p-4 flex flex-col items-center justify-center min-h-[80px] shadow-sm ${highlight ? 'border-l-4 border-l-[#856BFF]' : ''}`}>
-            <span className={`text-[9px] font-extrabold tracking-wider uppercase mb-1 ${highlight ? 'text-[#856BFF]' : 'text-gray-400'}`}>{label}</span>
-            <span className={`text-2xl font-extrabold ${highlight ? 'text-[#856BFF]' : 'text-gray-800'}`}>{value}</span>
-          </div>
-        ))}
-      </div>
-      {/* Remaining Balance Strip - Updated colors */}
-      <div className="bg-[#F5F3FF] border border-[#856BFF]/20 rounded-xl p-4 flex justify-around items-center text-center mb-6">
-        {[
-          { label: "REMAINING UNITS", value: remainingUnits },
-          { label: "REMAINING DAYS", value: remainingDays },
-          { label: "REMAINING HOURS", value: remainingHours },
-        ].map(({ label, value }, i) => (
-          <React.Fragment key={label}>
-            {i > 0 && <div className="w-[1px] h-8 bg-gray-200" />}
-            <div className="flex-1">
-              <div className="text-[9px] font-bold text-[#856BFF] tracking-wider uppercase mb-1">{label}</div>
-              <div className="text-lg font-bold text-[#856BFF]">{value}</div>
+          {[
+            { label: "PLANNED UNITS", value: modal.planned_units ?? 0 },
+            { label: "EST. DAYS", value: modal.estimated_days ?? 0 },
+            { label: "EST. HOURS", value: modal.estimated_hours ?? 0 },
+            {
+              label: "ASSIGNED UNITS",
+              value: totalAssignedUnits,
+              highlight: true,
+            },
+          ].map(({ label, value, highlight }) => (
+            <div
+              key={label}
+              className={`bg-white border border-gray-100 rounded-xl p-4 flex flex-col items-center justify-center min-h-[80px] shadow-sm ${highlight ? "border-l-4 border-l-[#856BFF]" : ""}`}
+            >
+              <span
+                className={`text-[9px] font-extrabold tracking-wider uppercase mb-1 ${highlight ? "text-[#856BFF]" : "text-gray-400"}`}
+              >
+                {label}
+              </span>
+              <span
+                className={`text-2xl font-extrabold ${highlight ? "text-[#856BFF]" : "text-gray-800"}`}
+              >
+                {value}
+              </span>
             </div>
-          </React.Fragment>
-        ))}
-      </div>
+          ))}
+        </div>
+        {/* Remaining Balance Strip - Updated colors */}
+        <div className="bg-[#F5F3FF] border border-[#856BFF]/20 rounded-xl p-4 flex justify-around items-center text-center mb-6">
+          {[
+            { label: "REMAINING UNITS", value: remainingUnits },
+            { label: "REMAINING DAYS", value: remainingDays },
+            { label: "REMAINING HOURS", value: remainingHours },
+          ].map(({ label, value }, i) => (
+            <React.Fragment key={label}>
+              {i > 0 && <div className="w-[1px] h-8 bg-gray-200" />}
+              <div className="flex-1">
+                <div className="text-[9px] font-bold text-[#856BFF] tracking-wider uppercase mb-1">
+                  {label}
+                </div>
+                <div className="text-lg font-bold text-[#856BFF]">{value}</div>
+              </div>
+            </React.Fragment>
+          ))}
+        </div>
       </div>
 
       {/* KPI Cards - Updated to match app style */}
-      
-
-      
 
       {/* New Assignment Form - Updated button colors */}
       {!isAdmin && (
         <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6 mb-6">
-          <h3 className="font-semibold text-[#191B23] text-[20px] uppercase mb-4">New Assignment</h3>
+          <h3 className="font-semibold text-[#191B23] text-[20px] uppercase mb-4">
+            New Assignment
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
             <div className="md:col-span-2">
-              <label className="block text-[10px] font-semibold text-gray-400 mb-1">Employee</label>
-            <SearchableSelect
-  value={selUser}
-  onChange={setSelUser}
-  placeholder={employeesLoading ? "Loading employees..." : "Select employee…"}
-  options={deliveryEmployees.map(emp => ({
-    value: String(emp.Employee_ID),
-    label: `${emp.Employee_Name} (${emp.Employee_ID})`,
-  }))}
-  className="rounded-xl text-xs font-semibold text-gray-700 border-gray-200"
-/>
+              <label className="block text-[10px] font-semibold text-gray-400 mb-1">
+                Employee
+              </label>
+              <SearchableSelect
+                value={selUser}
+                onChange={setSelUser}
+                placeholder={
+                  employeesLoading ? "Loading employees..." : "Select employee…"
+                }
+                options={deliveryEmployees.map((emp) => ({
+                  value: String(emp.Employee_ID),
+                  label: `${emp.Employee_Name} (${emp.Employee_ID})`,
+                }))}
+                className="rounded-xl text-xs font-semibold text-gray-700 border-gray-200"
+              />
             </div>
             {[
-              { label: "Units", val: units, onChange: val => setUnits(val.replace(/\D/g, '')), exceeded: unitsExceeded, step: "1", integerOnly: true },
-              { label: "Days", val: days, onChange: handleDaysChange, exceeded: daysExceeded, step: "0.5" },
-              { label: "Hours", val: hours, onChange: handleHoursChange, exceeded: hoursExceeded, step: "0.5" },
+              {
+                label: "Units",
+                val: units,
+                onChange: (val) => setUnits(val.replace(/\D/g, "")),
+                exceeded: unitsExceeded,
+                step: "1",
+                integerOnly: true,
+              },
+              {
+                label: "Days",
+                val: days,
+                onChange: handleDaysChange,
+                exceeded: daysExceeded,
+                step: "0.5",
+              },
+              {
+                label: "Hours",
+                val: hours,
+                onChange: handleHoursChange,
+                exceeded: hoursExceeded,
+                step: "0.5",
+              },
             ].map(({ label, val, onChange, exceeded, step, integerOnly }) => (
               <div key={label}>
-                <label className="block text-[10px] font-semibold text-gray-400 mb-1">{label}</label>
+                <label className="block text-[10px] font-semibold text-gray-400 mb-1">
+                  {label}
+                </label>
                 <input
-                  type="number" min="0" step={step || "1"} placeholder="0"
+                  type="number"
+                  min="0"
+                  step={step || "1"}
+                  placeholder="0"
                   value={val}
-                  onKeyDown={integerOnly ? (e) => { if (e.key === '.' || e.key === 'e' || e.key === 'E' || e.key === '+' || e.key === '-') e.preventDefault(); } : undefined}
-                  onChange={e => onChange(e.target.value)}
+                  onKeyDown={
+                    integerOnly
+                      ? (e) => {
+                          if (
+                            e.key === "." ||
+                            e.key === "e" ||
+                            e.key === "E" ||
+                            e.key === "+" ||
+                            e.key === "-"
+                          )
+                            e.preventDefault();
+                        }
+                      : undefined
+                  }
+                  onChange={(e) => onChange(e.target.value)}
                   className="w-full px-3 py-2.5 bg-white border rounded-xl text-xs font-semibold text-center text-gray-700 outline-none focus:border-[#856BFF] focus:ring-1 focus:ring-[#856BFF]"
                   style={{ borderColor: exceeded ? "#f43f5e" : "#e2e8f0" }}
                 />
@@ -399,18 +604,34 @@ console.log('ADM employees:', deliveryEmployees.length);
             ))}
             <button
               onClick={() => handleSubmit(false)}
-              disabled={saving || unitsExceeded || daysExceeded || hoursExceeded || remainingUnits === 0}
-              className={`w-full py-2.5 rounded-xl font-bold text-xs transition-all ${saving || unitsExceeded || daysExceeded || hoursExceeded || remainingUnits === 0
-                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                : "bg-[#856BFF] hover:bg-[#7259e6] text-white shadow-sm"
-                }`}
+              disabled={
+                saving ||
+                unitsExceeded ||
+                daysExceeded ||
+                hoursExceeded ||
+                remainingUnits === 0
+              }
+              className={`w-full py-2.5 rounded-xl font-bold text-xs transition-all ${
+                saving ||
+                unitsExceeded ||
+                daysExceeded ||
+                hoursExceeded ||
+                remainingUnits === 0
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "bg-[#856BFF] hover:bg-[#7259e6] text-white shadow-sm"
+              }`}
             >
               {saving ? "Saving…" : "Assign"}
             </button>
           </div>
           {(unitsExceeded || daysExceeded || hoursExceeded) && (
             <p className="text-rose-500 text-[11px] font-semibold mt-2 flex items-center gap-1">
-              <Icon icon="material-symbols:warning" width="14" height="14" color="#f43f5e" />
+              <Icon
+                icon="material-symbols:warning"
+                width="14"
+                height="14"
+                color="#f43f5e"
+              />
               Values exceed remaining limits. Please adjust.
             </p>
           )}
@@ -422,44 +643,65 @@ console.log('ADM employees:', deliveryEmployees.length);
         <div className="bg-white border border-gray-100 rounded-2xl shadow-sm mb-6 overflow-hidden">
           {/* Card Header — toggles the whole card */}
           <button
-            onClick={() => setWorkloadOpen(o => !o)}
+            onClick={() => setWorkloadOpen((o) => !o)}
             className="w-full flex items-center justify-between px-6 py-4 hover:bg-gray-50/60 transition-colors select-none"
           >
             <span className="font-semibold text-[#191B23] text-[20px] flex items-center gap-1.5">
-              <Icon icon="material-symbols:work" width="16" height="16" color="#856BFF" />
+              <Icon
+                icon="material-symbols:work"
+                width="16"
+                height="16"
+                color="#856BFF"
+              />
               Current Workload
             </span>
             <Icon
-              icon={`material-symbols:${workloadOpen ? 'expand-less' : 'expand-more'}`}
-              width="20" height="20" color="#856BFF"
+              icon={`material-symbols:${workloadOpen ? "expand-less" : "expand-more"}`}
+              width="20"
+              height="20"
+              color="#856BFF"
             />
           </button>
 
           {workloadOpen && (
             <div className="px-6 pb-6">
               {loadingWorkload ? (
-                <p className="text-xs text-gray-400 italic py-2">Loading workload...</p>
+                <p className="text-xs text-gray-400 italic py-2">
+                  Loading workload...
+                </p>
               ) : workload?.tasks?.length > 0 ? (
                 <div className="flex flex-col gap-4">
-                  {workload.tasks.map(proj => {
-                    const isProjCollapsed = !!collapsedProjects[proj.project_id];
+                  {workload.tasks.map((proj) => {
+                    const isProjCollapsed =
+                      !!collapsedProjects[proj.project_id];
                     return (
-                      <div key={proj.project_id} className="border border-gray-200/60 rounded-xl overflow-hidden">
+                      <div
+                        key={proj.project_id}
+                        className="border border-gray-200/60 rounded-xl overflow-hidden"
+                      >
                         {/* Per-project accordion header */}
                         <button
                           onClick={() => toggleProject(proj.project_id)}
                           className="w-full flex items-center justify-between px-4 py-2.5  select-none"
                         >
                           <span className="text-[16px] font-semibold text-[#434654] flex items-center gap-1.5">
-                            <Icon icon="material-symbols:folder" width="14" height="14" color="#856BFF" />
+                            <Icon
+                              icon="material-symbols:folder"
+                              width="14"
+                              height="14"
+                              color="#856BFF"
+                            />
                             {proj.project_name}
                             <span className="ml-1 px-1.5 py-0.5 bg-gray-200 text-gray-500 rounded-full text-[9px] font-bold">
-                              {proj.tasks.length} task{proj.tasks.length !== 1 ? 's' : ''}
+                              {proj.tasks.length} task
+                              {proj.tasks.length !== 1 ? "s" : ""}
                             </span>
                           </span>
                           <Icon
-                            icon={`material-symbols:${isProjCollapsed ? 'chevron-right' : 'expand-more'}`}
-                            width="18" height="18" color="#94a3b8"
+                            icon={`material-symbols:${isProjCollapsed ? "chevron-right" : "expand-more"}`}
+                            width="18"
+                            height="18"
+                            color="#94a3b8"
                           />
                         </button>
 
@@ -467,41 +709,103 @@ console.log('ADM employees:', deliveryEmployees.length);
                           <div className="overflow-x-auto">
                             <table className="w-full text-left text-[11px] border-collapse">
                               <thead className="sticky top-0 z-10 bg-[#EFF4FF]">
-  <tr className="border-b border-gray-50" style={{ backgroundColor: '#EFF4FF' }}>
-    <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-left text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">Employee Name</th>
-    <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-left text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">Project Name</th>
-    <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-left text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">Task Name</th>
-    <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-center text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">Assigned Units</th>
-    <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-center text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">Assigned Days</th>
-    <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-center text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">Completed Units</th>
-    <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-center text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">Completed Days</th>
-    <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-center text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">Pending Units</th>
-    <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-center text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">Pending Days</th>
-  </tr>
-</thead>
+                                <tr
+                                  className="border-b border-gray-50"
+                                  style={{ backgroundColor: "#EFF4FF" }}
+                                >
+                                  <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-left text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">
+                                    Employee Name
+                                  </th>
+                                  <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-left text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">
+                                    Project Name
+                                  </th>
+                                  <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-left text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">
+                                    Task Name
+                                  </th>
+                                  <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-center text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">
+                                    Assigned Units
+                                  </th>
+                                  <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-center text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">
+                                    Assigned Days
+                                  </th>
+                                  <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-center text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">
+                                    Completed Units
+                                  </th>
+                                  <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-center text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">
+                                    Completed Days
+                                  </th>
+                                  <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-center text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">
+                                    Pending Units
+                                  </th>
+                                  <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-center text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">
+                                    Pending Days
+                                  </th>
+                                </tr>
+                              </thead>
                               <tbody className="divide-y divide-gray-50">
-                                {proj.tasks.map(task => {
-                                  const assignedUnits = Number(task.units_assigned || 0);
-                                  const completedUnits = Number(task.units_completed || 0);
-                                  const pendingUnits = Number(task.units_pending || 0);
-                                  const assignedDays = parseFloat((Number(task.estimated_hours || 0) / 8).toFixed(2));
-                                  const completedDays = parseFloat((Number(task.completed_hours || 0) / 8).toFixed(2));
-                                  const pendingDays = parseFloat((Number(task.pending_hours || 0) / 8).toFixed(2));
-                                  const empObj = hrmsEmployees.find(
-                                    e => String(e.Employee_ID) === String(selUser)
+                                {proj.tasks.map((task) => {
+                                  const assignedUnits = Number(
+                                    task.units_assigned || 0,
                                   );
-                                  const empName = empObj?.Employee_Name || selUser;
+                                  const completedUnits = Number(
+                                    task.units_completed || 0,
+                                  );
+                                  const pendingUnits = Number(
+                                    task.units_pending || 0,
+                                  );
+                                  const assignedDays = parseFloat(
+                                    (
+                                      Number(task.estimated_hours || 0) / 8
+                                    ).toFixed(2),
+                                  );
+                                  const completedDays = parseFloat(
+                                    (
+                                      Number(task.completed_hours || 0) / 8
+                                    ).toFixed(2),
+                                  );
+                                  const pendingDays = parseFloat(
+                                    (
+                                      Number(task.pending_hours || 0) / 8
+                                    ).toFixed(2),
+                                  );
+                                  const empObj = hrmsEmployees.find(
+                                    (e) =>
+                                      String(e.Employee_ID) === String(selUser),
+                                  );
+                                  const empName =
+                                    empObj?.Employee_Name || selUser;
                                   return (
-                                    <tr key={task.task_id} className="hover:bg-gray-50/60 transition-colors">
-                                      <td className="px-4 py-3 text-[12px] font-semibold text-gray-700">{empName}</td>
-<td className="px-4 py-3 text-[12px] text-gray-500">{proj.project_name}</td>
-<td className="px-4 py-3 text-[12px] font-semibold text-gray-700">{task.task_name}</td>
-<td className="px-4 py-3 text-center text-[12px] font-bold text-[#856BFF]">{assignedUnits}</td>
-<td className="px-4 py-3 text-center text-[12px] font-semibold text-gray-700">{assignedDays}</td>
-<td className="px-4 py-3 text-center text-[12px] font-bold text-emerald-600">{completedUnits}</td>
-<td className="px-4 py-3 text-center text-[12px] font-semibold text-emerald-500">{completedDays}</td>
-<td className="px-4 py-3 text-center text-[12px] font-bold text-rose-500">{pendingUnits}</td>
-<td className="px-4 py-3 text-center text-[12px] font-semibold text-rose-400">{pendingDays}</td>
+                                    <tr
+                                      key={task.task_id}
+                                      className="hover:bg-gray-50/60 transition-colors"
+                                    >
+                                      <td className="px-4 py-3 text-[12px] font-semibold text-gray-700">
+                                        {empName}
+                                      </td>
+                                      <td className="px-4 py-3 text-[12px] text-gray-500">
+                                        {proj.project_name}
+                                      </td>
+                                      <td className="px-4 py-3 text-[12px] font-semibold text-gray-700">
+                                        {task.task_name}
+                                      </td>
+                                      <td className="px-4 py-3 text-center text-[12px] font-bold text-[#856BFF]">
+                                        {assignedUnits}
+                                      </td>
+                                      <td className="px-4 py-3 text-center text-[12px] font-semibold text-gray-700">
+                                        {assignedDays}
+                                      </td>
+                                      <td className="px-4 py-3 text-center text-[12px] font-bold text-emerald-600">
+                                        {completedUnits}
+                                      </td>
+                                      <td className="px-4 py-3 text-center text-[12px] font-semibold text-emerald-500">
+                                        {completedDays}
+                                      </td>
+                                      <td className="px-4 py-3 text-center text-[12px] font-bold text-rose-500">
+                                        {pendingUnits}
+                                      </td>
+                                      <td className="px-4 py-3 text-center text-[12px] font-semibold text-rose-400">
+                                        {pendingDays}
+                                      </td>
                                     </tr>
                                   );
                                 })}
@@ -514,7 +818,9 @@ console.log('ADM employees:', deliveryEmployees.length);
                   })}
                 </div>
               ) : (
-                <p className="text-xs text-gray-400 text-center py-4 border border-dashed border-gray-200 rounded-xl">No active project assignments found.</p>
+                <p className="text-xs text-gray-400 text-center py-4 border border-dashed border-gray-200 rounded-xl">
+                  No active project assignments found.
+                </p>
               )}
             </div>
           )}
@@ -524,111 +830,259 @@ console.log('ADM employees:', deliveryEmployees.length);
       {/* Current Assignments Table - Updated header and colors */}
       <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
         <div className="flex justify-between items-center mb-4">
-          <span className="font-semibold text-[#191B23] text-[20px] tracking-wider uppercase">Current Assignments ({existing.length})</span>
+          <span className="font-semibold text-[#191B23] text-[20px] tracking-wider uppercase">
+            Current Assignments ({existing.length})
+          </span>
         </div>
         {existing.length > 0 ? (
           <div className="overflow-x-auto border border-gray-100 rounded-xl">
             <table className="w-full text-left text-xs border-collapse">
               <thead className="sticky top-0 z-10 bg-[#EFF4FF]">
-  <tr className="border-b border-gray-50" style={{ backgroundColor: '#EFF4FF' }}>
-    <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-left text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">Employee Name</th>
-    <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-left text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">Project Name</th>
-    <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-left text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">Task Name</th>
-    <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-center text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">Assigned Units</th>
-    <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-center text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">Assigned Days</th>
-    <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-center text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">Completed Units</th>
-    <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-center text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">Completed Days</th>
-    <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-center text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">Pending Units</th>
-    <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-center text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">Pending Days</th>
-    {!isAdmin && <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-center text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">Action</th>}
-  </tr>
-</thead>
+                <tr
+                  className="border-b border-gray-50"
+                  style={{ backgroundColor: "#EFF4FF" }}
+                >
+                  <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-left text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">
+                    Employee Name
+                  </th>
+                  <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-left text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">
+                    Project Name
+                  </th>
+                  <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-left text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">
+                    Task Name
+                  </th>
+                  <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-center text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">
+                    Assigned Units
+                  </th>
+                  <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-center text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">
+                    Assigned Days
+                  </th>
+                  <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-center text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">
+                    Completed Units
+                  </th>
+                  <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-center text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">
+                    Completed Days
+                  </th>
+                  <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-center text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">
+                    Pending Units
+                  </th>
+                  <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-center text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">
+                    Pending Days
+                  </th>
+                  {!isAdmin && (
+                    <th className="sticky top-0 z-10 bg-[#EFF4FF] px-4 py-3 text-center text-[12px] font-bold text-[#434654] uppercase tracking-wider whitespace-nowrap">
+                      Action
+                    </th>
+                  )}
+                </tr>
+              </thead>
               <tbody className="divide-y divide-gray-100">
-                {existing.map(a => {
+                {existing.map((a) => {
                   const completedUnits = Number(a.units_completed || 0);
                   const assignedUnits = Number(a.units_assigned || 0);
                   const assignedDays = Number(a.estimated_days || 0);
-                  const pendingUnits = Math.max(assignedUnits - completedUnits, 0);
-                  const completedDays = assignedUnits > 0
-                    ? parseFloat(((completedUnits / assignedUnits) * assignedDays).toFixed(2))
-                    : 0;
-                  const pendingDays = parseFloat(Math.max(assignedDays - completedDays, 0).toFixed(2));
-                  const isCompleted = assignedUnits > 0 && completedUnits >= assignedUnits;
+                  const pendingUnits = Math.max(
+                    assignedUnits - completedUnits,
+                    0,
+                  );
+                  const completedDays =
+                    assignedUnits > 0
+                      ? parseFloat(
+                          (
+                            (completedUnits / assignedUnits) *
+                            assignedDays
+                          ).toFixed(2),
+                        )
+                      : 0;
+                  const pendingDays = parseFloat(
+                    Math.max(assignedDays - completedDays, 0).toFixed(2),
+                  );
+                  const isCompleted =
+                    assignedUnits > 0 && completedUnits >= assignedUnits;
                   const isEditing = !!editingRow[a.id];
                   const eRow = editingRow[a.id] || {};
                   const isSavingThis = !!savingEdit[a.id];
 
                   // Per-row remaining capacity (exclude this assignment from totals)
-                  const otherRows = existing.filter(x => x.id !== a.id);
-                  const otherUnits = otherRows.reduce((s, x) => s + Number(x.units_assigned), 0);
-                  const otherDays  = otherRows.reduce((s, x) => s + Number(x.estimated_days || 0), 0);
-                  const editMaxUnits = (modal.planned_units  || 0) - otherUnits;
-                  const editMaxDays  = (modal.estimated_days  || 0) - otherDays;
-                  const editUnitsExceeded = isEditing && eRow.units !== '' && Number(eRow.units) > editMaxUnits;
-                  const editDaysExceeded  = isEditing && eRow.days  !== '' && Number(eRow.days)  > editMaxDays;
-                  const editAnyExceeded   = editUnitsExceeded || editDaysExceeded;
+                  const otherRows = existing.filter((x) => x.id !== a.id);
+                  const otherUnits = otherRows.reduce(
+                    (s, x) => s + Number(x.units_assigned),
+                    0,
+                  );
+                  const otherDays = otherRows.reduce(
+                    (s, x) => s + Number(x.estimated_days || 0),
+                    0,
+                  );
+                  const editMaxUnits = (modal.planned_units || 0) - otherUnits;
+                  const editMaxDays = (modal.estimated_days || 0) - otherDays;
+                  const editUnitsExceeded =
+                    isEditing &&
+                    eRow.units !== "" &&
+                    Number(eRow.units) > editMaxUnits;
+                  const editDaysExceeded =
+                    isEditing &&
+                    eRow.days !== "" &&
+                    Number(eRow.days) > editMaxDays;
+                  const editAnyExceeded = editUnitsExceeded || editDaysExceeded;
                   return (
-                    <tr key={a.id} className={`transition-colors ${isCompleted ? 'bg-emerald-50/40' : 'hover:bg-gray-50/20'}`}>
+                    <tr
+                      key={a.id}
+                      className={`transition-colors ${isCompleted ? "bg-emerald-50/40" : "hover:bg-gray-50/20"}`}
+                    >
                       <td className="px-4 py-3">
-  <div className="flex items-center gap-2">
-    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ...`}>
-      {a.user_name?.[0]?.toUpperCase() || "?"}
-    </div>
-    <span className="font-semibold text-[12px] text-gray-700">{a.user_name}</span>
-  </div>
-</td>
-<td className="px-4 py-3 text-[12px] text-gray-500">{projectName || "—"}</td>
-<td className="px-4 py-3 text-[12px] text-gray-700 font-semibold">{modal.task_name}</td>
+                        <div className="flex items-center gap-2">
+                          <div
+                            className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ...`}
+                          >
+                            {a.user_name?.[0]?.toUpperCase() || "?"}
+                          </div>
+                          <span className="font-semibold text-[12px] text-gray-700">
+                            {a.user_name}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-[12px] text-gray-500">
+                        {projectName || "—"}
+                      </td>
+                      <td className="px-4 py-3 text-[12px] text-gray-700 font-semibold">
+                        {modal.task_name}
+                      </td>
                       <td className="py-3 px-3 text-center">
                         {isEditing ? (
                           <div className="flex flex-col items-center gap-0.5">
                             <input
-                              type="number" min="1" step="1"
+                              type="number"
+                              min="1"
+                              step="1"
                               value={eRow.units}
-                              onKeyDown={(e) => { if (e.key === '.' || e.key === 'e' || e.key === 'E' || e.key === '+' || e.key === '-') e.preventDefault(); }}
-                              onChange={e => handleEditField(a.id, 'units', e.target.value.replace(/\D/g, ''))}
+                              onKeyDown={(e) => {
+                                if (
+                                  e.key === "." ||
+                                  e.key === "e" ||
+                                  e.key === "E" ||
+                                  e.key === "+" ||
+                                  e.key === "-"
+                                )
+                                  e.preventDefault();
+                              }}
+                              onChange={(e) =>
+                                handleEditField(
+                                  a.id,
+                                  "units",
+                                  e.target.value.replace(/\D/g, ""),
+                                )
+                              }
                               className="w-14 px-1 py-0.5 border rounded text-center font-semibold text-xs outline-none"
-                              style={{ borderColor: editUnitsExceeded ? '#f43f5e' : '#856BFF' }}
+                              style={{
+                                borderColor: editUnitsExceeded
+                                  ? "#f43f5e"
+                                  : "#856BFF",
+                              }}
                             />
-                            {editUnitsExceeded && <span className="text-[9px] text-rose-500 font-bold">Max {editMaxUnits}</span>}
+                            {editUnitsExceeded && (
+                              <span className="text-[9px] text-rose-500 font-bold">
+                                Max {editMaxUnits}
+                              </span>
+                            )}
                           </div>
-                        ) : <span className="font-bold text-[#856BFF]">{assignedUnits}</span>}
+                        ) : (
+                          <span className="font-bold text-[#856BFF]">
+                            {assignedUnits}
+                          </span>
+                        )}
                       </td>
                       <td className="py-3 px-3 text-center">
                         {isEditing ? (
                           <div className="flex flex-col items-center gap-0.5">
-                            <input type="number" min="0" step="0.5" value={eRow.days} onChange={e => handleEditField(a.id, 'days', e.target.value)}
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.5"
+                              value={eRow.days}
+                              onChange={(e) =>
+                                handleEditField(a.id, "days", e.target.value)
+                              }
                               className="w-14 px-1 py-0.5 border rounded text-center font-semibold text-xs outline-none"
-                              style={{ borderColor: editDaysExceeded ? '#f43f5e' : '#856BFF' }} />
-                            {editDaysExceeded && <span className="text-[9px] text-rose-500 font-bold">Max {editMaxDays}</span>}
+                              style={{
+                                borderColor: editDaysExceeded
+                                  ? "#f43f5e"
+                                  : "#856BFF",
+                              }}
+                            />
+                            {editDaysExceeded && (
+                              <span className="text-[9px] text-rose-500 font-bold">
+                                Max {editMaxDays}
+                              </span>
+                            )}
                           </div>
-                        ) : <span className="font-semibold text-gray-700">{assignedDays}</span>}
+                        ) : (
+                          <span className="font-semibold text-gray-700">
+                            {assignedDays}
+                          </span>
+                        )}
                       </td>
-                      <td className="py-3 px-3 text-center font-bold text-emerald-600">{completedUnits}</td>
-                      <td className="py-3 px-3 text-center font-semibold text-emerald-500">{completedDays}</td>
-                      <td className="py-3 px-3 text-center font-bold text-rose-500">{pendingUnits}</td>
-                      <td className="py-3 px-3 text-center font-semibold text-rose-400">{pendingDays}</td>
+                      <td className="py-3 px-3 text-center font-bold text-emerald-600">
+                        {completedUnits}
+                      </td>
+                      <td className="py-3 px-3 text-center font-semibold text-emerald-500">
+                        {completedDays}
+                      </td>
+                      <td className="py-3 px-3 text-center font-bold text-rose-500">
+                        {pendingUnits}
+                      </td>
+                      <td className="py-3 px-3 text-center font-semibold text-rose-400">
+                        {pendingDays}
+                      </td>
                       {!isAdmin && (
                         <td className="py-3 px-3 text-center">
                           <div className="flex gap-2 justify-center">
                             {isCompleted ? (
                               <span className="inline-flex items-center gap-1 px-3 py-1 rounded-lg text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200 cursor-not-allowed select-none">
-                                <Icon icon="material-symbols:check-circle" width="12" height="12" color="#22c55e" />
+                                <Icon
+                                  icon="material-symbols:check-circle"
+                                  width="12"
+                                  height="12"
+                                  color="#22c55e"
+                                />
                                 Completed
                               </span>
                             ) : isEditing ? (
                               <>
-                                <button onClick={() => handleEditSave(a.id)} disabled={isSavingThis || editAnyExceeded}
-                                  className={`font-bold px-2 py-0.5 rounded-lg text-[10px] transition-all border ${isSavingThis || editAnyExceeded ? 'border-gray-200 text-gray-400 cursor-not-allowed bg-gray-50' : 'border-emerald-500 text-emerald-600 hover:bg-emerald-50'}`}>Save</button>
-                                <button onClick={() => cancelEdit(a.id)} disabled={isSavingThis}
-                                  className="border border-gray-300 text-gray-500 hover:bg-gray-50 font-bold px-2 py-0.5 rounded-lg text-[10px] transition-all">Cancel</button>
+                                <button
+                                  onClick={() => handleEditSave(a.id)}
+                                  disabled={isSavingThis || editAnyExceeded}
+                                  className={`font-bold px-2 py-0.5 rounded-lg text-[10px] transition-all border ${isSavingThis || editAnyExceeded ? "border-gray-200 text-gray-400 cursor-not-allowed bg-gray-50" : "border-emerald-500 text-emerald-600 hover:bg-emerald-50"}`}
+                                >
+                                  Save
+                                </button>
+                                <button
+                                  onClick={() => cancelEdit(a.id)}
+                                  disabled={isSavingThis}
+                                  className="border border-gray-300 text-gray-500 hover:bg-gray-50 font-bold px-2 py-0.5 rounded-lg text-[10px] transition-all"
+                                >
+                                  Cancel
+                                </button>
                               </>
                             ) : (
                               <>
-                                <button onClick={() => startEdit(a)}
-                                  className="border border-[#856BFF] text-[#856BFF] hover:bg-[#856BFF]/10 font-bold px-3 py-1 rounded-lg transition-all">Edit</button>
-                                <button onClick={() => handleDelete(a.id, a.user_name, modal.task_name)}
-                                  className="border border-rose-500 text-rose-500 hover:bg-rose-50 font-bold px-3 py-1 rounded-lg transition-all">Remove</button>
+                                <button
+                                  onClick={() => startEdit(a)}
+                                  className="border border-[#856BFF] text-[#856BFF] hover:bg-[#856BFF]/10 font-bold px-3 py-1 rounded-lg transition-all"
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    handleDelete(
+                                      a.id,
+                                      a.user_name,
+                                      modal.task_name,
+                                    )
+                                  }
+                                  className="border border-rose-500 text-rose-500 hover:bg-rose-50 font-bold px-3 py-1 rounded-lg transition-all"
+                                >
+                                  Remove
+                                </button>
                               </>
                             )}
                           </div>
@@ -649,8 +1103,10 @@ console.log('ADM employees:', deliveryEmployees.length);
 
       {/* Footer */}
       <div className="flex justify-end mt-6 pb-10">
-        <button onClick={handleDoneOrBack}
-          className="bg-[#856BFF] hover:bg-[#7259e6] text-white font-bold text-sm py-2.5 px-8 rounded-xl transition-all shadow-sm">
+        <button
+          onClick={handleDoneOrBack}
+          className="bg-[#856BFF] hover:bg-[#7259e6] text-white font-bold text-sm py-2.5 px-8 rounded-xl transition-all shadow-sm"
+        >
           Done
         </button>
       </div>
@@ -661,16 +1117,27 @@ console.log('ADM employees:', deliveryEmployees.length);
           <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border border-gray-100">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
-                <Icon icon="material-symbols:warning-rounded" width="24" height="24" color="#d97706" />
+                <Icon
+                  icon="material-symbols:warning-rounded"
+                  width="24"
+                  height="24"
+                  color="#d97706"
+                />
               </div>
               <div>
-                <h3 className="text-base font-bold text-gray-900">Unsaved Assignment Details</h3>
-                <p className="text-xs text-gray-500 mt-0.5">You have filled out employee assignment details that haven't been assigned yet.</p>
+                <h3 className="text-base font-bold text-gray-900">
+                  Unsaved Assignment Details
+                </h3>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  You have filled out employee assignment details that haven't
+                  been assigned yet.
+                </p>
               </div>
             </div>
 
             <p className="text-xs text-gray-600 mb-6 bg-amber-50/60 border border-amber-100 p-3 rounded-xl">
-              Would you like to save this assignment before leaving, or close without assigning?
+              Would you like to save this assignment before leaving, or close
+              without assigning?
             </p>
 
             <div className="flex flex-col sm:flex-row gap-2 justify-end">
@@ -710,11 +1177,20 @@ console.log('ADM employees:', deliveryEmployees.length);
             {/* Icon + Title */}
             <div className="flex items-center gap-3 mb-4">
               <div className="w-11 h-11 rounded-full bg-rose-100 flex items-center justify-center shrink-0">
-                <Icon icon="material-symbols:person-remove" width="22" height="22" color="#e11d48" />
+                <Icon
+                  icon="material-symbols:person-remove"
+                  width="22"
+                  height="22"
+                  color="#e11d48"
+                />
               </div>
               <div>
-                <h3 className="text-base font-bold text-gray-900">Remove Assignment</h3>
-                <p className="text-xs text-gray-400 mt-0.5">This action cannot be undone.</p>
+                <h3 className="text-base font-bold text-gray-900">
+                  Remove Assignment
+                </h3>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  This action cannot be undone.
+                </p>
               </div>
             </div>
 
@@ -731,7 +1207,8 @@ console.log('ADM employees:', deliveryEmployees.length);
             </div>
 
             <p className="text-xs text-gray-500 mb-6">
-              Are you sure you want to remove this employee from the task? Their assignment record will be permanently deleted.
+              Are you sure you want to remove this employee from the task? Their
+              assignment record will be permanently deleted.
             </p>
 
             <div className="flex gap-2 justify-end">
@@ -749,15 +1226,34 @@ console.log('ADM employees:', deliveryEmployees.length);
               >
                 {deleting ? (
                   <>
-                    <svg className="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                    <svg
+                      className="animate-spin w-3.5 h-3.5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8v8z"
+                      />
                     </svg>
                     Removing…
                   </>
                 ) : (
                   <>
-                    <Icon icon="material-symbols:delete" width="14" height="14" />
+                    <Icon
+                      icon="material-symbols:delete"
+                      width="14"
+                      height="14"
+                    />
                     Remove
                   </>
                 )}

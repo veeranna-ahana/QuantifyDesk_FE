@@ -15,7 +15,7 @@ axiosInstance.interceptors.request.use(
     const token = localStorage.getItem("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-      console.log("🔐 Token sent in request:", token.substring(0, 20) + "...");
+      // console.log("🔐 Token sent in request:", token.substring(0, 20) + "...");
     } else {
       console.warn("⚠️ No token found in localStorage");
     }

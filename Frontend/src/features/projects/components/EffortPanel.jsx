@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/Card";
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
+import SearchableSelect from "@/components/ui/SearchableSelect/SearchableSelect";
 import {
   Table,
   TableBody,
@@ -30,10 +31,10 @@ const DAYS_INPUT = "w-16 text-center";
 const EMPTY_PROJECT_CONTEXT = { projectName: "", pmsId: "" };
 
 /** Inline "new member" row shown under a role's Add Member button. */
-function PendingRow({ available, onConfirm, onCancel }) {
+function PendingRow({ available, employeesLoading, onConfirm, onCancel }) {
   const [empId, setEmpId] = useState("");
-  const [effortDays, setEffortDays] = useState("");
-  const [bufferDays, setBufferDays] = useState("");
+  const [effortDays, setEffortDays] = useState(0);
+  const [bufferDays, setBufferDays] = useState(0);
   const confirm = () => {
     const empName = available.find((o) => o.value === empId)?.label || "";
     onConfirm({ empId, empName, effortDays, bufferDays });
@@ -41,13 +42,15 @@ function PendingRow({ available, onConfirm, onCancel }) {
   return (
     <TableRow className="bg-action-primary-soft hover:bg-action-primary-soft">
       <TableCell>
-        <Select
-          size="md"
+        <SearchableSelect
           aria-label="Select member"
-          placeholder="Select member"
+          placeholder={
+            employeesLoading ? "Loading employees…" : "Select member"
+          }
+          loading={employeesLoading}
           value={empId}
           options={available}
-          onChange={(e) => setEmpId(e.target.value)}
+          onChange={(val) => setEmpId(val)}
         />
       </TableCell>
       <TableCell className="text-center">
@@ -140,7 +143,10 @@ export function EffortPanel({
   const [addingRole, setAddingRole] = useState(null);
   const inputRefs = useRef({});
   const canEdit = mode !== "view";
-  const showActions = mode === "edit";
+  // Remove/edit-member actions are available any time the table is editable (import wizard and
+  // edit mode alike) — previously gated to mode === "edit" only, which meant a member added
+  // during the Import wizard's Step 3 couldn't be removed again without reloading the page.
+  const showActions = canEdit;
   const colCount = 7; // Role + 5 value columns + action / spacer column
 
   // Someone can genuinely hold more than one role on the same project (e.g. a TL who's also
@@ -150,14 +156,32 @@ export function EffortPanel({
     const assignedInRole = new Set(
       effort.rows.filter((r) => r.role === role).map((r) => r.empId),
     );
-    return employees
-      .filter((e) => !assignedInRole.has(e.emp_id))
-      .map((e) => ({ value: e.emp_id, label: e.emp_name }));
+    return (
+      employees
+        // Defensive, in addition to the backend's own filter (getActiveEmployeesFromHRMS) — guards
+        // against a blank/whitespace-only emp_id or emp_name ever rendering as an empty, selectable
+        // row in the dropdown.
+        .filter(
+          (e) =>
+            String(e.emp_id || "").trim() &&
+            String(e.emp_name || "").trim() &&
+            !assignedInRole.has(e.emp_id),
+        )
+        .map((e) => ({ value: e.emp_id, label: e.emp_name }))
+    );
   };
 
+  // This table scrolls with the whole page in every mode, not in its own inner box — so NOTHING
+  // between the page's own scroll area and the sticky TableHeaderCell may set overflow to
+  // anything but 'visible': both Card's overflow-hidden and Table's own default horizontal-scroll
+  // wrapper are scroll containers in their own right (see Table.jsx's comment on `scrollable`),
+  // and a sticky element always anchors to the NEAREST one — so either of these, even with no
+  // height limit/scrollbar of its own, would silently steal the header's stickiness away from the
+  // real page scroll, exactly like the original BulkUpdateTasks bug one level up the tree.
+  const isImport = mode === "import";
   return (
-    <Card className="flex w-full flex-col overflow-hidden">
-      {mode === "import" && (
+    <Card className="flex w-full flex-col overflow-visible p-0">
+      {isImport && (
         <div className="flex flex-wrap items-center justify-between gap-3 p-4">
           <h2 className="text-sm font-semibold text-ink-primary">
             Effort Estimate
@@ -166,7 +190,10 @@ export function EffortPanel({
         </div>
       )}
 
-      <Table className="min-w-[760px]">
+      {/* scrollable={false} removes Table's own scroll wrapper entirely, so the header stays
+          sticky against the page's own scroll area (see comment above) instead of a local inner
+          scrollbar. */}
+      <Table className="min-w-[760px]" scrollable={false}>
         <TableHead>
           <TableRow className="hover:bg-transparent">
             <TableHeaderCell>Role</TableHeaderCell>
@@ -192,7 +219,10 @@ export function EffortPanel({
             return (
               <Fragment key={role}>
                 <TableRow className="bg-surface-field-disabled hover:bg-surface-field-disabled">
-                  <TableCell colSpan={colCount - 1} className="font-semibold">
+                  <TableCell
+                    colSpan={colCount - 1}
+                    className="text-xs font-bold uppercase tracking-wide text-ink-primary"
+                  >
                     {role}
                   </TableCell>
                   <TableCell className="text-right">
@@ -213,7 +243,9 @@ export function EffortPanel({
 
                 {rows.map((r) => (
                   <TableRow key={r.id}>
-                    <TableCell className="font-medium">{r.empName}</TableCell>
+                    <TableCell className="pl-6 font-normal text-ink-secondary">
+                      {r.empName}
+                    </TableCell>
                     <TableCell className="text-center">
                       <Input
                         ref={(el) => {
@@ -282,6 +314,7 @@ export function EffortPanel({
                 {addingRole === role && (
                   <PendingRow
                     available={availableForRole}
+                    employeesLoading={employeesQuery.isLoading}
                     onCancel={() => setAddingRole(null)}
                     onConfirm={(v) => {
                       if (effort.addMember(role, v)) setAddingRole(null);
@@ -292,6 +325,10 @@ export function EffortPanel({
             );
           })}
 
+          {/* No bounded scroll box in any mode any more (the whole page scrolls instead — see the
+              Table/Card comments above), and sticky-to-bottom only does anything useful within a
+              shorter-than-content scroll box — so this is back to a plain row, same as every
+              other row, instead of pinning oddly partway down a long page. */}
           <TableRow className="bg-surface-table-head font-semibold hover:bg-surface-table-head">
             <TableCell>TOTAL</TableCell>
             <TableCell className="text-center">

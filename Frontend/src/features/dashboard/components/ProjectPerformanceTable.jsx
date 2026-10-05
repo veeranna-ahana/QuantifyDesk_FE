@@ -128,6 +128,7 @@ export function ProjectPerformanceTable({ d }) {
         columns={columns}
         rows={rows}
         emptyMessage="No projects match your filters."
+        wrapperClassName="max-h-[55vh] overflow-y-auto"
       />
     </Card>
   );
