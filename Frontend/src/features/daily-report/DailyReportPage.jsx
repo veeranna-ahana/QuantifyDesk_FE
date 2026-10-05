@@ -7,11 +7,13 @@ import { FilterTabs } from '@/components/ui/FilterTabs';
 import { Input } from '@/components/ui/Input';
 import { StatCard } from '@/components/ui/StatCard';
 
+import { DailyReportSkeleton } from './components/DailyReportSkeleton';
 import { ProjectReportCard } from './components/ProjectReportCard';
 import { useDailyReport } from './hooks/useDailyReport';
 
 export default function DailyReportPage() {
   const r = useDailyReport();
+  if (r.loading) return <DailyReportSkeleton />;
   const m = r.metrics;
   const iconClass = 'h-[18px] w-[18px]';
   const tabs = r.tabs.map((t) => ({ id: t.key, label: t.label, count: t.count }));
