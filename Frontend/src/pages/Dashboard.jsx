@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import api from '../api/axios';
+import React, { useEffect, useState } from "react";
+import api from "../api/axios";
 
 const Dashboard = () => {
   const [summary, setSummary] = useState(null);
@@ -9,11 +9,11 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchSummary = async () => {
       try {
-        const res = await api.get('/dashboard');
+        const res = await api.get("/dashboard");
         setSummary(res.data);
       } catch (err) {
         console.error(err);
-        alert('Failed to load dashboard summary.');
+        alert("Failed to load dashboard summary.");
       } finally {
         setLoading(false);
       }
@@ -21,9 +21,9 @@ const Dashboard = () => {
 
     const fetchUserUtilization = async () => {
       try {
-        const res = await api.get('/dashboard/user-utilization?range=monthly');
-        console.log("setUserUtilization",res.data);
-        
+        const res = await api.get("/dashboard/user-utilization?range=monthly");
+        // console.log("setUserUtilization",res.data);
+
         setUserUtilization(res.data || []);
       } catch (err) {
         console.error(err);
@@ -48,9 +48,9 @@ const Dashboard = () => {
 
   const getUtilizationColor = (utilization) => {
     const util = parseFloat(utilization);
-    if (util < 50) return '#ff4444'; // red
-    if (util >= 50 && util <= 80) return '#ff8800'; // orange
-    return '#44ff44'; // green
+    if (util < 50) return "#ff4444"; // red
+    if (util >= 50 && util <= 80) return "#ff8800"; // orange
+    return "#44ff44"; // green
   };
 
   return (
@@ -74,7 +74,9 @@ const Dashboard = () => {
           <div className="legacy-dashboard-icon">📁</div>
           <div className="legacy-dashboard-content">
             <div className="legacy-dashboard-label">Total Projects</div>
-            <div className="legacy-dashboard-value">{summary.total_projects}</div>
+            <div className="legacy-dashboard-value">
+              {summary.total_projects}
+            </div>
           </div>
         </div>
 
@@ -96,20 +98,26 @@ const Dashboard = () => {
       </div>
 
       {/* User Utilization Section */}
-           {/* User Utilization Section */}
+      {/* User Utilization Section */}
       <div className="legacy-dashboard-section">
         <div className="legacy-heading-block">
           <h3 className="legacy-dashboard-subheading">User Utilization</h3>
           <div className="legacy-heading-underline"></div>
-      </div>
-        
+        </div>
+
         {userUtilization.length > 0 ? (
           <div className="legacy-table-card">
             <div className="legacy-dashboard-table">
               <table className="legacy-table">
                 <thead>
                   <tr>
-                    <th>Name</th><th>Projects</th><th>Total Hours</th><th>Working Days</th><th>Capacity</th><th>Available Hours</th><th>Utilization %</th>
+                    <th>Name</th>
+                    <th>Projects</th>
+                    <th>Total Hours</th>
+                    <th>Working Days</th>
+                    <th>Capacity</th>
+                    <th>Available Hours</th>
+                    <th>Utilization %</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -117,18 +125,23 @@ const Dashboard = () => {
                     <tr key={user.user_id}>
                       <td>{user.name}</td>
                       <td>
-                        {user.projects && user.projects.length > 0
-                          ? user.projects.join(", ")
-                          : (
-                            <span className="legacy-table-muted">
-                              No Projects
-                            </span>
-                          )}
+                        {user.projects && user.projects.length > 0 ? (
+                          user.projects.join(", ")
+                        ) : (
+                          <span className="legacy-table-muted">
+                            No Projects
+                          </span>
+                        )}
                       </td>
-                      <td>{user.total_hours}</td><td>{user.working_days}</td><td>{user.daily_capacity}</td><td>{user.available_hours}</td>
+                      <td>{user.total_hours}</td>
+                      <td>{user.working_days}</td>
+                      <td>{user.daily_capacity}</td>
+                      <td>{user.available_hours}</td>
                       <td
                         style={{
-                          backgroundColor: getUtilizationColor(user.utilization_percentage),
+                          backgroundColor: getUtilizationColor(
+                            user.utilization_percentage,
+                          ),
                         }}
                         className="legacy-dashboard-utilization"
                       >
