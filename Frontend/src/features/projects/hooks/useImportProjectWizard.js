@@ -11,7 +11,6 @@ import {
   getPmsProjectTitles,
   getPmsProjectIdByTitle,
 } from "../services/importProjectService";
-import { deriveEffortRowsFromTasks } from "../utils/deriveEffortRows";
 import {
   mapPmsToMilestones,
   mapProjectDetailsToPmsFields,
@@ -84,16 +83,12 @@ export function useImportProjectWizard() {
     staleTime: 60 * 1000,
   });
 
-  // Task Info (Step 2) -> Effort Estimate (Step 3) connection: whenever a task's Role tag
-  // changes, any newly-tagged (role, PMS owner) pair not already an Effort Estimate row gets
-  // added automatically — additive only, never removes or overwrites a row the user has already
-  // filled hours into. See deriveEffortRowsFromTasks for the exact rules.
+  // Task Info (Step 2) no longer auto-seeds Effort Estimate (Step 3) rows. Previously, tagging a
+  // task with a Role auto-added that task's PMS owner as a member under that role in Effort
+  // Estimate — per request, Step 3 now only ever shows the role rows themselves; the user adds
+  // members to a role manually via "+ Add Member", same as before this feature existed.
   const handleTaskMilestonesChange = (next) => {
     setTaskMilestones(next);
-    setEffortRows((prev) => {
-      const seeded = deriveEffortRowsFromTasks(next, prev);
-      return seeded.length ? [...prev, ...seeded] : prev;
-    });
   };
 
   const syncMutation = useMutation({

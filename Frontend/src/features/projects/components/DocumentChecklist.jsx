@@ -170,7 +170,12 @@ export function DocumentChecklist({
         />
       )}
 
-      <Card className="overflow-hidden">
+      {/* overflow-visible (not overflow-hidden) + scrollable={false} on the Table below: this
+          table scrolls with the whole page instead of in its own inner box. Any ancestor here
+          with overflow other than 'visible' is itself a scroll container, and TableHeaderCell's
+          built-in `sticky top-0` would anchor to it instead of the real page scroll — see
+          EffortPanel.jsx's longer comment on the same fix for the full reasoning. */}
+      <Card className="overflow-visible">
         {mode === "import" && (
           <div className="flex flex-wrap items-center justify-between gap-3 p-4">
             <h2 className="text-sm font-semibold text-ink-primary">
@@ -201,7 +206,7 @@ export function DocumentChecklist({
           )}
         </div>
 
-        <Table className="min-w-[640px]">
+        <Table className="min-w-[640px]" scrollable={false}>
           <TableHead>
             <TableRow className="hover:bg-transparent">
               <TableHeaderCell>Document Name</TableHeaderCell>
