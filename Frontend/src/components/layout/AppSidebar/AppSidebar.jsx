@@ -1,4 +1,4 @@
-import { ChevronDown, ClipboardClock, Clock3, FileCheck2, FileText, FolderKanban, LayoutDashboard, BookOpen } from 'lucide-react';
+import { ChevronDown, ClipboardClock, Clock3, FileCheck2, FileText, FolderKanban, LayoutDashboard, BookOpen, Server } from 'lucide-react';
 import Cookies from 'js-cookie';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
@@ -12,7 +12,7 @@ import { ROLE_NAVIGATION } from './sidebar-navigation';
 const ICONS = {
   dashboard: LayoutDashboard,
   projects: FolderKanban,
-  dailyReport: ClipboardClock, guideline: BookOpen,
+  dailyReport: ClipboardClock, serverInfo: Server, guideline: BookOpen,
   reports: FileText,
   timesheet: Clock3,
   documentChecklist: FileCheck2,
