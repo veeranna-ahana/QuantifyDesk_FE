@@ -7,7 +7,6 @@ import { FilterTabs } from '@/components/ui/FilterTabs';
 import { Input } from '@/components/ui/Input';
 import { StatCard } from '@/components/ui/StatCard';
 
-import { DateNavigator } from './components/DateNavigator';
 import { ProjectReportCard } from './components/ProjectReportCard';
 import { useDailyReport } from './hooks/useDailyReport';
 
@@ -19,7 +18,7 @@ export default function DailyReportPage() {
 
   return (
     <div className="flex flex-col gap-3">
-      <PageHeader title="Daily Report" actions={<DateNavigator value={r.reportDate} onChange={r.setReportDate} onShift={r.shiftDate} />} />
+      <PageHeader title="Daily Report" />
 
       <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
         <StatCard label="Total Projects" value={m.totalProjects} icon={<FolderKanban className={iconClass} />} />

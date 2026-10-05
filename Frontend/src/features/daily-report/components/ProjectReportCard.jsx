@@ -29,7 +29,7 @@ const PROJECT_FILTERS = {
 /** One project: header (lead, team, progress) + quick filters + task table. */
 export function ProjectReportCard({ project, globalTab, searchQuery }) {
   const [collapsed, setCollapsed] = useState(false);
-  const [filter, setFilter] = useState('all');
+  const [filter, setFilter] = useState('in-progress');
   const c = project.tabCounts;
 
   const tasks = useMemo(() => {
@@ -92,6 +92,7 @@ export function ProjectReportCard({ project, globalTab, searchQuery }) {
               <FilterChip active={filter === 'due-today'} onClick={() => toggle('due-today')}>Due Today ({c.dueToday})</FilterChip>
             </div>
           </div>
+          {/* Scrollable table — header sticks via sticky top-0 on TableHeaderCell (same as task info page) */}
           <ReportTaskTable tasks={tasks} />
         </>
       )}
