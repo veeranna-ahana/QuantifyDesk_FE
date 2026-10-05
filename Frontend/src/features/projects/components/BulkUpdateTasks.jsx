@@ -166,10 +166,12 @@ export function BulkUpdateTasks({
           <Select
             size="md"
             aria-label="Milestone"
-            placeholder="Milestone"
             value={milestoneId}
             onChange={(e) => setMilestoneId(e.target.value)}
-            options={milestones.map((m) => ({ value: m.id, label: m.name }))}
+            options={[
+              { value: "", label: "All Milestones" },
+              ...milestones.map((m) => ({ value: m.id, label: m.name })),
+            ]}
             wrapperClassName="w-48"
           />
           <div ref={menuRef} className="relative">
@@ -216,8 +218,20 @@ export function BulkUpdateTasks({
         </div>
       </Card>
 
-      <Card className="max-h-[55vh] overflow-auto">
-        <Table className="min-w-[760px]">
+      {/*
+        The sticky header (TableHeaderCell already has `sticky top-0`) needs exactly ONE
+        scrolling ancestor. Previously this Card scrolled vertically (max-h + overflow-auto)
+        while Table's own wrapper div ALSO became a scroll container (overflow-x-auto implicitly
+        forces overflow-y: auto per the CSS spec) — two nested scroll contexts meant `top-0`
+        anchored to the inner (non-scrolled) wrapper, so the header silently scrolled away
+        instead of sticking. Moving the vertical scroll constraint onto Table's own wrapper
+        (via wrapperClassName) makes it the single scrolling ancestor, so sticky now works.
+      */}
+      <Card className="overflow-hidden p-0">
+        <Table
+          className="min-w-[760px]"
+          wrapperClassName="max-h-[55vh] overflow-y-auto"
+        >
           <TableHead>
             <TableRow className="hover:bg-transparent">
               <TableHeaderCell>Task</TableHeaderCell>

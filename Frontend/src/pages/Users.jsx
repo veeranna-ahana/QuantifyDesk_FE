@@ -1,8 +1,7 @@
-
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 //const BASE_URL  = process.env.REACT_APP_API_BASE_URL;
-const BASE_URL  = import.meta.env.VITE_API_BASE_URL;
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const Users = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -10,14 +9,14 @@ const Users = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem("token");
 
-        const res = await axios.get('{BASE_URL}/api/users', {
+        const res = await axios.get("{BASE_URL}/api/users", {
           headers: {
-            Authorization: token ? `Bearer ${token}` : '',
+            Authorization: token ? `Bearer ${token}` : "",
           },
         });
-console.log("result",res.data);
+        // console.log("result",res.data);
 
         setUsers(res.data || []);
       } catch (err) {
@@ -50,24 +49,27 @@ console.log("result",res.data);
             <table className="legacy-table">
               <thead className="legacy-table-head">
                 <tr>
-                  <th>ID</th><th>Name</th><th>Email</th><th>Projects</th><th>Role</th>
+                  <th>ID</th>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Projects</th>
+                  <th>Role</th>
                 </tr>
               </thead>
               <tbody>
                 {users.map((u) => (
                   <tr key={u.id}>
-                    <td>{u.id}</td><td>{u.name}</td><td>{u.email}</td>
+                    <td>{u.id}</td>
+                    <td>{u.name}</td>
+                    <td>{u.email}</td>
                     <td>
-                        {u.projects && u.projects.length > 0
-                          ? u.projects
-                          : (
-                            <span className="legacy-table-muted">
-                              No Projects
-                            </span>
-                          )}
-                      </td>
+                      {u.projects && u.projects.length > 0 ? (
+                        u.projects
+                      ) : (
+                        <span className="legacy-table-muted">No Projects</span>
+                      )}
+                    </td>
                     <td>{u.role}</td>
-                    
                   </tr>
                 ))}
               </tbody>
