@@ -1,4 +1,4 @@
-import { ClipboardClock, FolderKanban, LayoutDashboard } from 'lucide-react';
+import { ClipboardClock, FolderKanban, LayoutDashboard, Server } from 'lucide-react';
 import Cookies from 'js-cookie';
 import { NavLink } from 'react-router-dom';
 import { useSelector } from 'react-redux';
@@ -8,7 +8,7 @@ import { cn } from '@/lib/cn';
 
 import { ROLE_NAVIGATION } from './sidebar-navigation';
 
-const ICONS = { dashboard: LayoutDashboard, projects: FolderKanban, dailyReport: ClipboardClock };
+const ICONS = { dashboard: LayoutDashboard, projects: FolderKanban, dailyReport: ClipboardClock, serverInfo: Server };
 
 /** Fixed sidebar on desktop; slides in over the page on small screens. */
 export function AppSidebar({ open = false, onNavigate }) {

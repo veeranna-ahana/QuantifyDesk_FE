@@ -12,6 +12,7 @@ const CORE_NAV = [
   { to: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
   { to: '/projects', label: 'Projects', icon: 'projects' },
   { to: '/dailyreport', label: 'Daily Report', icon: 'dailyReport' },
+  { to: '/server-information', label: 'Server Information', icon: 'serverInfo' },
 ];
 
 /** @type {Record<string, SidebarNavItemConfig[]>} */

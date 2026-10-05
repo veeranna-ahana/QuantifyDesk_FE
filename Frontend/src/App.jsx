@@ -23,6 +23,8 @@ import MyWork from "./pages/MyWork";
 import UtilizationDashboard from "./pages/UtilizationDashboard";
 import Approvals from "./pages/Approvals";
 import DailyUpdatesReport from "@/features/daily-report/DailyReportPage";
+import ServerInformationPage from "@/features/server-information/ServerInformationPage";
+import ServerFormPage from "@/features/server-information/ServerFormPage";
 import ReconPage from "./pages/Recon";
 import ReconciliationUpload from "./pages/ReconciliationUpload";
 
@@ -62,6 +64,9 @@ function AppShell() {
           <Route path="quantificationnew" element={<UtilizationDashboard />} />
           <Route path="dailyreport" element={<DailyUpdatesReport />} />
           <Route path="approvals" element={<Approvals />} />
+          <Route path="server-information" element={<ServerInformationPage />} />
+          <Route path="server-information/add" element={<ServerFormPage />} />
+          <Route path="server-information/:id/edit" element={<ServerFormPage />} />
           {/* ─── Reconciliation Routes ─── */}
           <Route path="reconciliation/dashboard" element={<ReconPage />} />
           <Route
