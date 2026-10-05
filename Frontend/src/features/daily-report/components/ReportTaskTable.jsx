@@ -36,7 +36,7 @@ function Remarks({ text }) {
 /** Task matrix inside one project card. */
 export function ReportTaskTable({ tasks }) {
   return (
-    <Table className="min-w-[1180px]">
+    <Table className="min-w-[1180px]" wrapperClassName="max-h-[360px] overflow-auto">
       <TableHead>
         <TableRow className="hover:bg-transparent">{COLUMNS.map((c) => <TableHeaderCell key={c}>{c}</TableHeaderCell>)}</TableRow>
       </TableHead>
