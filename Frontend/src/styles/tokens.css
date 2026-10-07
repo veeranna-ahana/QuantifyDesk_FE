@@ -241,6 +241,10 @@
   --size-control-md: 36px; /* [FIGMA] button height */
   --size-control-lg: 44px; /* [FIGMA] input height */
   --size-table-head: 44px; /* [FIGMA] table header row */
+  --size-timesheet-table-min-width: 1600px;
+  --size-timesheet-task-description: 340px;
+  --size-project-checklist-list-max-height: 360px;
+  --size-project-checklist-search-width: 340px;
   --radius-control: 4px; /* [FIGMA] buttons + inputs */
   --radius-chip: 8px; /* [FIGMA] delayed / blocker chips */
   --row-min: 28px;
