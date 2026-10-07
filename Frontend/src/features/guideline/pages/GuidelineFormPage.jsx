@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation, Link } from 'react-router-dom';
-import { Check, ExternalLink, Calendar } from 'lucide-react';
+import { Check, ExternalLink } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 import { Button } from '@/components/ui/Button';
@@ -30,7 +30,8 @@ export function GuidelineFormPage({ mode: propMode }) {
     name: 'API Integration & Security Standard 2026',
     link: 'docs.ahana.io/standards/api-sec-guidelines-v1.4',
     version: 'v1.4.0',
-    effectiveDate: '08/09/2026',
+    ownerName: 'Kusum G G',
+    effectiveDate: '',
     scope: 'v1.4.0'
   });
 
@@ -44,6 +45,7 @@ export function GuidelineFormPage({ mode: propMode }) {
         name: g.name || '',
         link: (g.link || '').replace(/^https?:\/\//, ''),
         version: g.version || '',
+        ownerName: g.ownerName || 'Kusum G G',
         effectiveDate: g.createdDate || '',
         scope: g.scope || ''
       });
@@ -57,6 +59,7 @@ export function GuidelineFormPage({ mode: propMode }) {
             name: g.name || '',
             link: (g.link || '').replace(/^https?:\/\//, ''),
             version: g.version || '',
+            ownerName: g.ownerName || 'Kusum G G',
             effectiveDate: g.createdDate || '',
             scope: g.scope || ''
           });
@@ -67,7 +70,8 @@ export function GuidelineFormPage({ mode: propMode }) {
         name: 'API Integration & Security Standard 2026',
         link: 'docs.ahana.io/standards/api-sec-guidelines-v1.4',
         version: 'v1.4.0',
-        effectiveDate: '08/09/2026',
+        ownerName: 'Kusum G G',
+        effectiveDate: '',
         scope: 'v1.4.0'
       });
     }
@@ -158,10 +162,10 @@ export function GuidelineFormPage({ mode: propMode }) {
           {/* Guideline Name */}
           <div className="flex flex-col gap-1">
             <div className="flex justify-between items-center">
-              <label className="text-[12px] font-semibold text-ink-secondary">
+              <label className="text-[12px] font-medium text-[#4B5563] tracking-[0.01em]">
                 Guideline Name <span className="text-accent-error">*</span>
               </label>
-              <span className="text-[12px] text-ink-muted font-normal">
+              <span className="text-[12px] text-[#6B7280] font-normal">
                 {formData.name.length} / 100
               </span>
             </div>
@@ -192,19 +196,16 @@ export function GuidelineFormPage({ mode: propMode }) {
 
           {/* Guideline Link */}
           <div className="flex flex-col gap-1">
-            <label className="text-[12px] font-semibold text-ink-secondary">
+            <label className="text-[12px] font-medium text-[#4B5563] tracking-[0.01em]">
               Guideline Link <span className="text-accent-error">*</span>
             </label>
             <div
               className={`relative flex items-center h-[38px] border ${
                 errors.link ? 'border-accent-error' : 'border-line-field'
-              } rounded-control bg-white overflow-hidden focus-within:border-action-primary focus-within:ring-1 focus-within:ring-action-primary transition-all ${
+              } rounded-control bg-white focus-within:border-action-primary focus-within:ring-1 focus-within:ring-action-primary transition-all ${
                 isView ? 'bg-surface-field-disabled' : ''
               }`}
             >
-              <div className="h-full bg-surface-muted px-3 flex items-center text-[13px] text-ink-muted border-r border-line-field select-none font-normal">
-                https://
-              </div>
               <input
                 type="text"
                 value={formData.link}
@@ -236,11 +237,10 @@ export function GuidelineFormPage({ mode: propMode }) {
             )}
           </div>
 
-          {/* Version & Effective Date Row */}
-          <div className="flex items-center gap-3">
-            {/* Version */}
-            <div className="flex flex-col gap-1 w-[260px] max-w-[50%]">
-              <label className="text-[12px] font-semibold text-ink-secondary">
+          {/* Version & Owner Name Row */}
+          <div className="flex items-start gap-3">
+            <div className="flex flex-col gap-1 flex-1 min-w-0">
+              <label className="text-[12px] font-medium text-[#4B5563] tracking-[0.01em]">
                 Version <span className="text-accent-error">*</span>
               </label>
               <input
@@ -248,7 +248,7 @@ export function GuidelineFormPage({ mode: propMode }) {
                 value={formData.version}
                 onChange={(e) => handleChange('version', e.target.value)}
                 readOnly={isView}
-                placeholder="v1.4.0"
+                placeholder="v1"
                 className={`w-full h-[38px] px-3.5 text-[13px] text-ink-primary bg-white border ${
                   errors.version ? 'border-accent-error' : 'border-line-field'
                 } rounded-control outline-none focus:border-action-primary focus:ring-1 focus:ring-action-primary transition-all ${
@@ -260,32 +260,26 @@ export function GuidelineFormPage({ mode: propMode }) {
               )}
             </div>
 
-            {/* Effective Date (no asterisk) */}
-            <div className="flex flex-col gap-1 w-[260px] max-w-[50%]">
-              <label className="text-[12px] font-semibold text-ink-secondary">
-                Effective Date
+            <div className="flex flex-col gap-1 flex-1 min-w-0">
+              <label className="text-[12px] font-medium text-[#4B5563] tracking-[0.01em]">
+                Owner Name
               </label>
-              <div className="relative flex items-center">
-                <input
-                  type="text"
-                  value={formData.effectiveDate}
-                  onChange={(e) => handleChange('effectiveDate', e.target.value)}
-                  readOnly={isView}
-                  placeholder="08/09/2026"
-                  className={`w-full h-[38px] px-3.5 pr-10 text-[13px] text-ink-primary bg-white border border-line-field rounded-control outline-none focus:border-action-primary focus:ring-1 focus:ring-action-primary transition-all ${
-                    isView ? 'bg-surface-field-disabled' : ''
-                  }`}
-                />
-                <span className="absolute right-3 text-ink-primary pointer-events-none flex items-center">
-                  <Calendar className="h-4 w-4" />
-                </span>
-              </div>
+              <input
+                type="text"
+                value={formData.ownerName}
+                onChange={(e) => handleChange('ownerName', e.target.value)}
+                readOnly={isView}
+                placeholder="Kusum G G"
+                className={`w-full h-[38px] px-3.5 text-[13px] text-ink-primary bg-white border border-line-field rounded-control outline-none focus:border-action-primary focus:ring-1 focus:ring-action-primary transition-all ${
+                  isView ? 'bg-surface-field-disabled' : ''
+                }`}
+              />
             </div>
           </div>
 
           {/* Scope & Objectives */}
           <div className="flex flex-col gap-1">
-            <label className="text-[12px] font-semibold text-ink-secondary">
+            <label className="text-[12px] font-medium text-[#4B5563] tracking-[0.01em]">
               Scope & Objectives <span className="text-accent-error">*</span>
             </label>
             <textarea
