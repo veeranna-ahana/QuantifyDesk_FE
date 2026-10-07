@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Pagination } from '@/components/ui/Pagination';
 import { DataTable } from '@/components/ui/Table';
@@ -12,29 +12,61 @@ import '../styles/index.css';
 
 export function GuidelinePage() {
   const navigate = useNavigate();
+  const [appliedFilters, setAppliedFilters] = useState({ versions: [], lastUpdated: 'all' });
+  const [draftFilters, setDraftFilters] = useState({ versions: [], lastUpdated: 'all' });
+  const [filterOpen, setFilterOpen] = useState(false);
   const {
     guidelines,
     totalItems,
     totalPages,
+    versions,
     loading,
     error,
     page,
     setPage,
     searchQuery,
     setSearchQuery,
-    filter,
-    setFilter,
-  } = useGuidelines();
+  } = useGuidelines(appliedFilters);
+
+  const copyFilters = (filters) => ({
+    versions: [...filters.versions],
+    lastUpdated: filters.lastUpdated,
+  });
+
+  const handleFilterOpenChange = (open) => {
+    setDraftFilters(copyFilters(appliedFilters));
+    setFilterOpen(open);
+  };
+
+  const handleResetFilters = () => {
+    const resetFilters = { versions: [], lastUpdated: 'all' };
+    setDraftFilters(resetFilters);
+    setAppliedFilters(resetFilters);
+    setPage(1);
+  };
+
+  const handleApplyFilters = () => {
+    const nextFilters = copyFilters(draftFilters);
+    setAppliedFilters(nextFilters);
+    setDraftFilters(nextFilters);
+    setPage(1);
+    setFilterOpen(false);
+  };
+
+  const handleCancelFilters = () => {
+    setDraftFilters(copyFilters(appliedFilters));
+    setFilterOpen(false);
+  };
 
   const handleAddClick = () => {
     navigate('/guideline/add');
   };
 
-  const handleEditClick = (guideline) => {
+  const handleEditClick = useCallback((guideline) => {
     navigate(`/guideline/edit/${guideline.id}`, { state: { guideline } });
-  };
+  }, [navigate]);
 
-  const columns = useMemo(() => getGuidelineColumns({ onEdit: handleEditClick }), []);
+  const columns = useMemo(() => getGuidelineColumns({ onEdit: handleEditClick }), [handleEditClick]);
 
   const startItem = totalItems === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
   const endItem = Math.min(page * PAGE_SIZE, totalItems);
@@ -51,7 +83,7 @@ export function GuidelinePage() {
         pageSize={PAGE_SIZE}
         onPageChange={setPage}
         hideLabel={true}
-        showEllipsis={true}
+        showWhenEmpty={true}
         className="guideline-list-pagination border-none bg-transparent p-0 m-0"
       />
     </div>
@@ -66,9 +98,18 @@ export function GuidelinePage() {
 
       <GuidelineToolbar
         searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        filterOption={filter}
-        onFilterChange={setFilter}
+        onSearchChange={(value) => {
+          setSearchQuery(value);
+          setPage(1);
+        }}
+        versions={versions}
+        draftFilters={draftFilters}
+        onDraftFiltersChange={setDraftFilters}
+        onResetFilters={handleResetFilters}
+        onApplyFilters={handleApplyFilters}
+        onCancelFilters={handleCancelFilters}
+        filterOpen={filterOpen}
+        onFilterOpenChange={handleFilterOpenChange}
       />
 
       <DataTable
@@ -76,7 +117,7 @@ export function GuidelinePage() {
         rows={guidelines}
         loading={loading}
         error={error}
-        emptyMessage="No guidelines found."
+        emptyMessage="No guidelines found"
         fitHeight={true}
         card={true}
         cardClassName="guideline-list-table"

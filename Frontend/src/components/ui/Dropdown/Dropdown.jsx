@@ -1,18 +1,31 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { cn } from '@/lib/cn';
 
-export function Dropdown({ trigger, children, className, align = 'left' }) {
-  const [open, setOpen] = useState(false);
+export function Dropdown({
+  trigger,
+  children,
+  className,
+  align = 'left',
+  closeOnItemClick = true,
+  open: controlledOpen,
+  onOpenChange,
+}) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
   const ref = useRef(null);
+  const updateOpen = useCallback((nextOpen) => {
+    if (controlledOpen === undefined) setInternalOpen(nextOpen);
+    onOpenChange?.(nextOpen);
+  }, [controlledOpen, onOpenChange]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (ref.current && !ref.current.contains(event.target)) {
-        setOpen(false);
+        updateOpen(false);
       }
     };
     const handleEscape = (e) => {
-      if (e.key === 'Escape') setOpen(false);
+      if (e.key === 'Escape') updateOpen(false);
     };
 
     if (open) {
@@ -23,11 +36,11 @@ export function Dropdown({ trigger, children, className, align = 'left' }) {
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleEscape);
     };
-  }, [open]);
+  }, [open, updateOpen]);
 
   return (
     <div className="relative inline-block" ref={ref}>
-      <div className="cursor-pointer inline-flex" onClick={() => setOpen(!open)}>
+      <div className="cursor-pointer inline-flex" onClick={() => updateOpen(!open)}>
         {trigger}
       </div>
       {open && (
@@ -38,8 +51,8 @@ export function Dropdown({ trigger, children, className, align = 'left' }) {
             className
           )}
           onClick={(e) => {
-            if (e.target.closest('button')) {
-              setOpen(false);
+            if (closeOnItemClick && e.target.closest('button')) {
+              updateOpen(false);
             }
           }}
         >

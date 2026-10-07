@@ -4,26 +4,55 @@ import { PAGE_SIZE } from '../constants';
 const delay = (ms) => new Promise(res => setTimeout(res, ms));
 
 export const guidelineService = {
-  getGuidelines: async ({ page = 1, searchQuery = '' }) => {
+  getGuidelines: async ({ page = 1, searchQuery = '', filters = { versions: [], lastUpdated: 'all' } }) => {
     await delay(400); // Simulate network
 
+    const query = searchQuery.toLocaleLowerCase();
+    const selectedVersions = new Set(filters.versions);
+    const today = new Date();
+    const todayString = [
+      today.getFullYear(),
+      String(today.getMonth() + 1).padStart(2, '0'),
+      String(today.getDate()).padStart(2, '0'),
+    ].join('-');
+    const daysAgo = new Date(today);
+    const days = filters.lastUpdated === '7d' ? 7 : filters.lastUpdated === '30d' ? 30 : null;
+    if (days !== null) daysAgo.setDate(daysAgo.getDate() - days);
+    const cutoffString = days === null
+      ? null
+      : [
+          daysAgo.getFullYear(),
+          String(daysAgo.getMonth() + 1).padStart(2, '0'),
+          String(daysAgo.getDate()).padStart(2, '0'),
+        ].join('-');
+
     let filtered = [...mockGuidelines];
-    if (searchQuery) {
-      filtered = filtered.filter(g => 
-        g.name.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
+    filtered = filtered.filter((guideline) => {
+      const matchesSearch = !query
+        || guideline.name.toLocaleLowerCase().includes(query)
+        || (guideline.ownerName || guideline.owner || '').toLocaleLowerCase().includes(query);
+      const matchesVersion = selectedVersions.size === 0 || selectedVersions.has(guideline.version);
+      const updated = typeof guideline.lastUpdated === 'string'
+        ? guideline.lastUpdated.slice(0, 10)
+        : '';
+      const matchesDate = cutoffString === null
+        || (/^\d{4}-\d{2}-\d{2}$/.test(updated) && updated >= cutoffString && updated <= todayString);
+      return matchesSearch && matchesVersion && matchesDate;
+    });
 
     const totalElements = filtered.length;
-    const totalPages = Math.ceil(totalElements / PAGE_SIZE);
+    const totalPages = Math.max(1, Math.ceil(totalElements / PAGE_SIZE));
     const offset = (page - 1) * PAGE_SIZE;
     const content = filtered.slice(offset, offset + PAGE_SIZE);
+    const versions = [...new Set(mockGuidelines.map((guideline) => guideline.version).filter(Boolean))]
+      .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
 
     return {
       content,
       totalElements,
       totalPages,
-      page
+      page,
+      versions,
     };
   },
 

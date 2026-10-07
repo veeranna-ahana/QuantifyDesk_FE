@@ -1,54 +1,44 @@
 import { useState, useEffect, useCallback } from 'react';
 import { guidelineService } from '../services/guideline.service';
 
-export function useGuidelines() {
-  const [data, setData] = useState({ content: [], totalElements: 0, totalPages: 1 });
+export function useGuidelines(appliedFilters) {
+  const [data, setData] = useState({ content: [], totalElements: 0, totalPages: 1, versions: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
   const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filter, setFilter] = useState('All'); // Added filter state
-
   const fetchGuidelines = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const res = await guidelineService.getGuidelines({ page, searchQuery, filter });
+      const res = await guidelineService.getGuidelines({ page, searchQuery, filters: appliedFilters });
       setData(res);
-    } catch (err) {
+    } catch {
       setError('Failed to fetch guidelines');
     } finally {
       setLoading(false);
     }
-  }, [page, searchQuery, filter]);
+  }, [page, searchQuery, appliedFilters]);
 
-  // Debounced search/filter effect
   useEffect(() => {
     const handler = setTimeout(() => {
-      setPage(1);
       fetchGuidelines();
     }, 300);
     return () => clearTimeout(handler);
-  }, [searchQuery, filter, fetchGuidelines]);
-
-  // Handle page change effect
-  useEffect(() => {
-    fetchGuidelines();
-  }, [page, fetchGuidelines]);
+  }, [fetchGuidelines]);
 
   return {
     guidelines: data.content,
     totalItems: data.totalElements,
     totalPages: data.totalPages,
+    versions: data.versions,
     loading,
     error,
     page,
     setPage,
     searchQuery,
     setSearchQuery,
-    filter,
-    setFilter,
     fetchGuidelines
   };
 }

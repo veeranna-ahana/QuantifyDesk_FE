@@ -26,9 +26,10 @@ export function Pagination({
   itemLabel = 'items',
   hideLabel = false,
   showEllipsis = false,
+  showWhenEmpty = false,
   className
 }) {
-  if (!totalItems) return null;
+  if (!totalItems && !showWhenEmpty) return null;
   const start = (page - 1) * pageSize + 1;
   const end = Math.min(page * pageSize, totalItems);
   return (
@@ -57,6 +58,7 @@ export function Pagination({
             <button
               key={p}
               type="button"
+              disabled={!totalItems}
               aria-current={p === page ? 'page' : undefined}
               onClick={() => onPageChange(p)}
               className={cn(
