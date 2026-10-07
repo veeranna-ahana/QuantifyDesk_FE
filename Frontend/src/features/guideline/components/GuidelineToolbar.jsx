@@ -8,15 +8,15 @@ export function GuidelineToolbar({ searchQuery, onSearchChange, filterOption, on
   const options = ['All', 'Last Updated', 'Versions', 'Owner Name'];
 
   return (
-    <div className="flex items-center gap-2 w-full h-[34px] shrink-0">
-      <div className="w-full max-w-[448px]">
+    <div className="guideline-list-toolbar flex items-center w-full shrink-0">
+      <div className="guideline-list-search">
         <Input
           type="search"
-          placeholder="Search by Guideline name"
+          placeholder="Search by Guideline name..."
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          leadingIcon={<Search className="h-4 w-4 text-ink-muted" />}
-          className="w-full h-[34px] text-[13px]"
+          leadingIcon={<Search className="guideline-list-search-icon" strokeWidth={1.5} />}
+          className="guideline-list-search-input"
         />
       </div>
 
@@ -25,8 +25,8 @@ export function GuidelineToolbar({ searchQuery, onSearchChange, filterOption, on
         trigger={
           <Button
             variant="outline"
-            leftIcon={<SlidersHorizontal className="h-3.5 w-3.5 text-action-primary" />}
-            className={`h-[32px] px-3 text-[12px] font-semibold border-action-primary text-action-primary hover:bg-action-primary-soft shadow-none ${
+            leftIcon={<SlidersHorizontal className="guideline-list-filter-icon" strokeWidth={1.5} />}
+            className={`guideline-list-filter-button ${
               filterOption !== 'All' ? 'bg-action-primary-soft' : ''
             }`}
           >

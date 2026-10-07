@@ -5,8 +5,9 @@ import toast from 'react-hot-toast';
 
 import { Button } from '@/components/ui/Button';
 import { guidelineService } from '../services/guideline.service';
+import '../styles/index.css';
 
-function CheckCircleFill({ className = "h-4 w-4 text-[#00A389]" }) {
+function CheckCircleFill({ className = "h-4 w-4 text-[#4CADAB]" }) {
   return (
     <svg className={className} viewBox="0 0 20 20" fill="currentColor">
       <path
@@ -132,40 +133,40 @@ export function GuidelineFormPage({ mode: propMode }) {
   const pageTitle = isView ? 'View Guideline' : isEdit ? 'Edit Guideline' : 'Add Guideline';
 
   return (
-    <div className="flex flex-col gap-2 w-full">
+    <div className="guideline-form-page flex w-full flex-col gap-2">
       {/* Breadcrumb + Title area */}
       <div className="flex flex-col gap-1 shrink-0">
-        <div className="flex items-center gap-1.5 text-[12px] font-semibold leading-[16px] tracking-[0.5px]">
+        <div className="guideline-breadcrumb">
           <Link
             to="/guideline"
-            className="text-ink-secondary hover:text-action-primary transition-colors no-underline"
+            className="guideline-breadcrumb-link no-underline transition-colors hover:text-action-primary"
           >
             Guideline
           </Link>
-          <span className="text-ink-muted">/</span>
-          <span className="text-action-primary">{pageTitle}</span>
+          <span className="guideline-breadcrumb-separator">/</span>
+          <span className="guideline-breadcrumb-active">{pageTitle}</span>
         </div>
 
         <div className="flex flex-col">
-          <h1 className="text-[24px] font-bold leading-[30px] tracking-[-0.5px] text-ink-primary m-0">
+          <h1 className="guideline-page-title">
             {pageTitle}
           </h1>
-          <p className="text-[13px] text-ink-muted leading-[18px] m-0">
+          <p className="guideline-subtitle">
             Create and publish standardized technical, quality, and compliance guidelines for cross-functional projects and sprint execution.
           </p>
         </div>
       </div>
 
       {/* Main Form Card - Hugs content */}
-      <div className="bg-surface-card border border-line-card rounded-md p-4 shadow-1 flex flex-col gap-3">
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+      <div className="guideline-card">
+        <form onSubmit={handleSubmit} className="guideline-form">
           {/* Guideline Name */}
-          <div className="flex flex-col gap-1">
+          <div className="guideline-field">
             <div className="flex justify-between items-center">
-              <label className="text-[12px] font-medium text-[#4B5563] tracking-[0.01em]">
-                Guideline Name <span className="text-accent-error">*</span>
+              <label className="guideline-field-label">
+                Guideline Name <span className="guideline-required">*</span>
               </label>
-              <span className="text-[12px] text-[#6B7280] font-normal">
+              <span className="guideline-character-counter">
                 {formData.name.length} / 100
               </span>
             </div>
@@ -177,15 +178,15 @@ export function GuidelineFormPage({ mode: propMode }) {
                 onChange={(e) => handleChange('name', e.target.value)}
                 readOnly={isView}
                 placeholder="API Integration & Security Standard 2026"
-                className={`w-full h-[38px] px-3.5 pr-10 text-[13px] text-ink-primary bg-white border ${
-                  errors.name ? 'border-accent-error' : 'border-line-field'
-                } rounded-control outline-none focus:border-action-primary focus:ring-1 focus:ring-action-primary transition-all ${
+                className={`guideline-input guideline-input--with-tick ${
+                  errors.name ? 'guideline-input--invalid' : ''
+                } ${
                   isView ? 'bg-surface-field-disabled' : ''
                 }`}
               />
               {formData.name.trim().length > 0 && !errors.name && (
-                <span className="absolute right-3 flex items-center pointer-events-none">
-                  <CheckCircleFill className="h-4 w-4 text-[#00A389]" />
+                <span className="absolute right-4 flex items-center pointer-events-none">
+                  <CheckCircleFill className="guideline-validation-tick" />
                 </span>
               )}
             </div>
@@ -195,39 +196,37 @@ export function GuidelineFormPage({ mode: propMode }) {
           </div>
 
           {/* Guideline Link */}
-          <div className="flex flex-col gap-1">
-            <label className="text-[12px] font-medium text-[#4B5563] tracking-[0.01em]">
-              Guideline Link <span className="text-accent-error">*</span>
+          <div className="guideline-field">
+            <label className="guideline-field-label">
+              Guideline Link <span className="guideline-required">*</span>
             </label>
-            <div
-              className={`relative flex items-center h-[38px] border ${
-                errors.link ? 'border-accent-error' : 'border-line-field'
-              } rounded-control bg-white focus-within:border-action-primary focus-within:ring-1 focus-within:ring-action-primary transition-all ${
-                isView ? 'bg-surface-field-disabled' : ''
-              }`}
-            >
+            <div className="relative">
               <input
                 type="text"
                 value={formData.link}
                 onChange={(e) => handleChange('link', e.target.value)}
                 readOnly={isView}
                 placeholder="docs.ahana.io/standards/api-sec-guidelines-v1.4"
-                className="flex-1 h-full px-3 text-[13px] text-ink-primary outline-none bg-transparent"
+                className={`guideline-input guideline-input--with-icons ${
+                  errors.link ? 'guideline-input--invalid' : ''
+                } ${
+                  isView ? 'bg-surface-field-disabled' : 'bg-white'
+                }`}
               />
-              <div className="flex items-center gap-2 pr-3">
+              <div className="guideline-link-icons">
                 {formData.link.trim().length > 0 && (
                   <button
                     type="button"
                     onClick={handleOpenLink}
                     title="Open link in new tab"
-                    className="text-ink-muted hover:text-ink-primary transition-colors p-0.5 rounded flex items-center justify-center border-0 bg-transparent cursor-pointer"
+                    className="guideline-link-icon"
                   >
-                    <ExternalLink className="h-4 w-4" />
+                    <ExternalLink className="h-3 w-3" />
                   </button>
                 )}
                 {formData.link.trim().length > 0 && !errors.link && (
-                  <span className="flex items-center pointer-events-none">
-                    <CheckCircleFill className="h-4 w-4 text-[#00A389]" />
+                  <span className="pointer-events-none">
+                    <CheckCircleFill className="guideline-validation-tick" />
                   </span>
                 )}
               </div>
@@ -238,10 +237,10 @@ export function GuidelineFormPage({ mode: propMode }) {
           </div>
 
           {/* Version & Owner Name Row */}
-          <div className="flex items-start gap-3">
-            <div className="flex flex-col gap-1 flex-1 min-w-0">
-              <label className="text-[12px] font-medium text-[#4B5563] tracking-[0.01em]">
-                Version <span className="text-accent-error">*</span>
+          <div className="guideline-form-row">
+            <div className="guideline-field">
+              <label className="guideline-field-label">
+                Version <span className="guideline-required">*</span>
               </label>
               <input
                 type="text"
@@ -249,9 +248,9 @@ export function GuidelineFormPage({ mode: propMode }) {
                 onChange={(e) => handleChange('version', e.target.value)}
                 readOnly={isView}
                 placeholder="v1"
-                className={`w-full h-[38px] px-3.5 text-[13px] text-ink-primary bg-white border ${
-                  errors.version ? 'border-accent-error' : 'border-line-field'
-                } rounded-control outline-none focus:border-action-primary focus:ring-1 focus:ring-action-primary transition-all ${
+                className={`guideline-input ${
+                  errors.version ? 'guideline-input--invalid' : ''
+                } ${
                   isView ? 'bg-surface-field-disabled' : ''
                 }`}
               />
@@ -260,8 +259,8 @@ export function GuidelineFormPage({ mode: propMode }) {
               )}
             </div>
 
-            <div className="flex flex-col gap-1 flex-1 min-w-0">
-              <label className="text-[12px] font-medium text-[#4B5563] tracking-[0.01em]">
+            <div className="guideline-field">
+              <label className="guideline-field-label">
                 Owner Name
               </label>
               <input
@@ -270,7 +269,7 @@ export function GuidelineFormPage({ mode: propMode }) {
                 onChange={(e) => handleChange('ownerName', e.target.value)}
                 readOnly={isView}
                 placeholder="Kusum G G"
-                className={`w-full h-[38px] px-3.5 text-[13px] text-ink-primary bg-white border border-line-field rounded-control outline-none focus:border-action-primary focus:ring-1 focus:ring-action-primary transition-all ${
+                className={`guideline-input ${
                   isView ? 'bg-surface-field-disabled' : ''
                 }`}
               />
@@ -278,9 +277,9 @@ export function GuidelineFormPage({ mode: propMode }) {
           </div>
 
           {/* Scope & Objectives */}
-          <div className="flex flex-col gap-1">
-            <label className="text-[12px] font-medium text-[#4B5563] tracking-[0.01em]">
-              Scope & Objectives <span className="text-accent-error">*</span>
+          <div className="guideline-field">
+            <label className="guideline-field-label">
+              Scope & Objectives <span className="guideline-required">*</span>
             </label>
             <textarea
               rows={3}
@@ -288,9 +287,9 @@ export function GuidelineFormPage({ mode: propMode }) {
               onChange={(e) => handleChange('scope', e.target.value)}
               readOnly={isView}
               placeholder="v1.4.0"
-              className={`w-full h-[72px] min-h-[54px] p-2.5 text-[13px] text-ink-primary bg-white border ${
-                errors.scope ? 'border-accent-error' : 'border-line-field'
-              } rounded-control outline-none focus:border-action-primary focus:ring-1 focus:ring-action-primary transition-all resize-none ${
+              className={`guideline-textarea ${
+                errors.scope ? 'guideline-textarea--invalid' : ''
+              } ${
                 isView ? 'bg-surface-field-disabled' : ''
               }`}
             />
@@ -304,7 +303,7 @@ export function GuidelineFormPage({ mode: propMode }) {
             <button
               type="button"
               onClick={() => navigate('/guideline')}
-              className="px-4 py-2 text-[14px] font-semibold text-ink-secondary hover:text-ink-primary transition-colors cursor-pointer bg-transparent border-0"
+              className="guideline-cancel-button transition-colors cursor-pointer bg-transparent border-0"
             >
               Cancel
             </button>
@@ -313,7 +312,7 @@ export function GuidelineFormPage({ mode: propMode }) {
                 type="submit"
                 disabled={submitting}
                 leftIcon={<Check className="h-4 w-4 stroke-[2.5]" />}
-                className="h-[44px] px-5 text-[14px] font-semibold bg-action-primary hover:bg-action-primary-hover shadow-1"
+                className="guideline-primary-button rounded-control px-6 py-2 text-[16px] font-semibold text-white shadow-none"
               >
                 {isEdit ? 'Update Guideline' : 'Save Guideline'}
               </Button>

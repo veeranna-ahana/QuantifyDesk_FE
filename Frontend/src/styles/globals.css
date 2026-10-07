@@ -19,6 +19,7 @@
 html,
 body,
 #root {
+  height: 100%;
   min-height: 100%;
 }
 
@@ -1631,4 +1632,3 @@ a:hover {
 .legacy-page-loading-text { color: var(--color-text-legacy-muted); font-size: 18px; }
 .legacy-dashboard-no-data { padding: 20px; }
 .legacy-table-center { display: flex; flex-direction: column; align-items: center; }
-

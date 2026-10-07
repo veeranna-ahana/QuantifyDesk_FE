@@ -39,6 +39,7 @@ export const guidelineService = {
       name: data.name,
       link: data.link ? (data.link.startsWith('http') ? data.link : `https://${data.link}`) : '',
       version: data.version,
+      ownerName: data.ownerName || '',
       createdDate: data.effectiveDate || new Date().toISOString().split('T')[0],
       lastUpdated: new Date().toISOString().split('T')[0],
       scope: data.scope || ''
@@ -56,6 +57,7 @@ export const guidelineService = {
         name: data.name,
         link: data.link ? (data.link.startsWith('http') ? data.link : `https://${data.link}`) : mockGuidelines[index].link,
         version: data.version,
+        ownerName: data.ownerName || mockGuidelines[index].ownerName || '',
         createdDate: data.effectiveDate || mockGuidelines[index].createdDate,
         lastUpdated: new Date().toISOString().split('T')[0],
         scope: data.scope || mockGuidelines[index].scope

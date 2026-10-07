@@ -11,12 +11,23 @@ export const getGuidelineColumns = ({ onEdit }) => [
     key: 'name',
     label: 'Guideline Name',
     align: 'left',
-    width: 'w-[32%]',
-    headerClassName: 'px-5 py-3 text-[12px] font-semibold text-[#64748B]',
-    cellClassName: 'px-5 py-1.5 text-[12px] font-medium text-[#1E293B]',
+    headerClassName: 'guideline-list-header-cell',
+    cellClassName: 'guideline-list-name-cell',
     render: (row) => (
-      <span className="truncate block font-medium text-[#1E293B]" title={row.name}>
+      <span className="truncate block" title={row.name}>
         {row.name}
+      </span>
+    ),
+  },
+  {
+    key: 'ownerName',
+    label: 'Owner',
+    align: 'left',
+    headerClassName: 'guideline-list-header-cell',
+    cellClassName: 'guideline-list-owner-cell',
+    render: (row) => (
+      <span className="truncate block" title={row.ownerName || row.owner || ''}>
+        {row.ownerName || row.owner || ''}
       </span>
     ),
   },
@@ -24,11 +35,10 @@ export const getGuidelineColumns = ({ onEdit }) => [
     key: 'createdDate',
     label: 'Created Date',
     align: 'left',
-    width: 'w-[15%]',
-    headerClassName: 'px-5 py-3 text-[12px] font-semibold text-[#64748B]',
-    cellClassName: 'px-5 py-1.5 text-[12px] font-medium text-[#64748B]',
+    headerClassName: 'guideline-list-header-cell',
+    cellClassName: 'guideline-list-date-cell',
     render: (row) => (
-      <span className="truncate block text-[#64748B] font-medium">
+      <span className="truncate block">
         {formatDate(row.createdDate)}
       </span>
     ),
@@ -37,11 +47,10 @@ export const getGuidelineColumns = ({ onEdit }) => [
     key: 'lastUpdated',
     label: 'Last Updated',
     align: 'left',
-    width: 'w-[15%]',
-    headerClassName: 'px-5 py-3 text-[12px] font-semibold text-[#64748B]',
-    cellClassName: 'px-5 py-1.5 text-[12px] font-medium text-[#64748B]',
+    headerClassName: 'guideline-list-header-cell',
+    cellClassName: 'guideline-list-date-cell',
     render: (row) => (
-      <span className="truncate block text-[#64748B] font-medium">
+      <span className="truncate block">
         {formatDate(row.lastUpdated)}
       </span>
     ),
@@ -50,11 +59,10 @@ export const getGuidelineColumns = ({ onEdit }) => [
     key: 'version',
     label: 'Version',
     align: 'center',
-    width: 'w-[12%]',
-    headerClassName: 'px-5 py-3 text-center text-[12px] font-semibold text-[#64748B]',
-    cellClassName: 'px-5 py-1.5 text-center',
+    headerClassName: 'guideline-list-header-cell',
+    cellClassName: 'guideline-list-version-cell',
     render: (row) => (
-      <span className="inline-flex items-center justify-center bg-[#E4EAFA] text-[#5578C2] text-[11px] font-medium px-2.5 py-0.5 rounded-full border-0 select-none">
+      <span className="guideline-version-pill" data-version={row.version}>
         {row.version}
       </span>
     ),
@@ -63,17 +71,16 @@ export const getGuidelineColumns = ({ onEdit }) => [
     key: 'link',
     label: 'Guideline Link',
     align: 'center',
-    width: 'w-[14%]',
-    headerClassName: 'px-5 py-3 text-center text-[12px] font-semibold text-[#64748B]',
-    cellClassName: 'px-5 py-1.5 text-center',
+    headerClassName: 'guideline-list-header-cell',
+    cellClassName: 'guideline-list-link-cell',
     render: (row) => (
       <a
         href={row.link}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex items-center justify-center gap-1 text-[12px] font-semibold text-[#7B61FF] hover:underline no-underline"
+        className="guideline-list-link"
       >
-        Link <ExternalLink className="h-3 w-3 stroke-[2.2]" />
+        Link <ExternalLink className="guideline-list-external-icon" strokeWidth={1} />
       </a>
     ),
   },
@@ -81,9 +88,8 @@ export const getGuidelineColumns = ({ onEdit }) => [
     key: 'actions',
     label: 'Actions',
     align: 'right',
-    width: 'w-[12%]',
-    headerClassName: 'px-5 py-3 text-right text-[12px] font-semibold text-[#64748B]',
-    cellClassName: 'px-5 py-1.5 text-right',
+    headerClassName: 'guideline-list-header-cell',
+    cellClassName: 'guideline-list-actions-cell',
     render: (row) => (
       <button
         type="button"
@@ -92,9 +98,9 @@ export const getGuidelineColumns = ({ onEdit }) => [
           onEdit?.(row);
         }}
         title="Edit Guideline"
-        className="inline-flex items-center justify-end p-0 m-0 w-6 h-6 text-action-primary hover:bg-action-primary-soft rounded transition-colors cursor-pointer bg-transparent border-0"
+        className="guideline-list-edit-button"
       >
-        <Pencil className="h-4 w-4" />
+        <Pencil className="guideline-list-edit-icon" strokeWidth={1.33} />
       </button>
     ),
   },

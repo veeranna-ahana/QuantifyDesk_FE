@@ -38,7 +38,9 @@ export function AppLayout() {
         <main
           id="main-content-scroll"
           ref={contentRef}
-          className="min-w-0 flex-1 flex flex-col min-h-0 overflow-y-auto px-page-x py-2"
+          className={`app-layout-main min-w-0 flex-1 flex flex-col min-h-0 px-page-x py-2 ${
+            pathname === "/guideline" ? "guideline-list-main" : "overflow-y-auto"
+          }`}
         >
           <Outlet />
         </main>

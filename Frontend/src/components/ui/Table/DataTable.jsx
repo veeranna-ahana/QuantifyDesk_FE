@@ -3,6 +3,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow, Tabl
 import { Skeleton } from '@/components/ui/Skeleton';
 import { cn } from '@/lib/cn';
 
+const DEFAULT_GRID_COLUMNS = 'grid-cols-[minmax(0,32%)_minmax(0,15%)_minmax(0,15%)_minmax(0,12%)_minmax(0,14%)_minmax(0,12%)]';
+
 /**
  * Config-driven table:
  *   columns: [{ key, label, className?, headerClassName?, cellClassName?, align?: 'left'|'center'|'right', width?, render?: (row, index) => node }]
@@ -33,15 +35,18 @@ export function DataTable({
   fitHeight = true,
   card = false,
   cardClassName,
+  gridClassName = DEFAULT_GRID_COLUMNS,
   headerClassName,
+  bodyClassName,
   rowClassName,
   footer,
+  rowsPerPage = 10,
   ...rest
 }) {
   const dataRows = rows ?? data ?? [];
   const shouldWrapCard = card || Boolean(footer);
 
-  // When fitHeight is enabled, render the body as a CSS grid with 10 rows sharing leftover height equally
+  // When fitHeight is enabled, render the body as a CSS grid with equally sized rows.
   if (fitHeight && shouldWrapCard) {
     return (
       <div
@@ -50,10 +55,10 @@ export function DataTable({
           cardClassName
         )}
       >
-        {/* Header Grid Row: 34px tall, natural height */}
         <div
           className={cn(
-            'grid grid-cols-[minmax(0,32%)_minmax(0,15%)_minmax(0,15%)_minmax(0,12%)_minmax(0,14%)_minmax(0,12%)] items-center h-[34px] shrink-0 bg-surface-table-head border-b border-line-card',
+            'grid items-center shrink-0 bg-surface-table-head border-b border-line-card',
+            gridClassName,
             headerClassName
           )}
         >
@@ -71,32 +76,32 @@ export function DataTable({
           ))}
         </div>
 
-        {/* Body Grid: 10 rows, each minmax(var(--row-min), var(--row-max)) */}
-        <div className="grid grid-rows-[repeat(10,minmax(var(--row-min),var(--row-max)))] flex-1 min-h-0 w-full overflow-hidden">
+        <div className={cn('flex-1 min-h-0 w-full overflow-hidden', bodyClassName)}>
           {error ? (
-            <div className="flex items-center justify-center h-full text-accent-error text-[13px]">
+            <div className="flex items-center justify-center h-full text-accent-error text-[13px] col-span-full row-span-full">
               {error}
             </div>
           ) : loading && dataRows.length === 0 ? (
-            Array.from({ length: 10 }).map((_, i) => (
+            Array.from({ length: rowsPerPage }).map((_, i) => (
               <div
                 key={i}
-                className="grid grid-cols-[minmax(0,32%)_minmax(0,15%)_minmax(0,15%)_minmax(0,12%)_minmax(0,14%)_minmax(0,12%)] items-center px-5 border-b border-[#F1F5F9] last:border-b-0 h-full"
+                className={cn('grid items-center border-b border-[#F1F5F9] last:border-b-0', gridClassName, rowClassName)}
               >
                 <Skeleton className="h-5 w-full rounded" />
               </div>
             ))
           ) : dataRows.length === 0 ? (
-            <div className="flex items-center justify-center h-full text-ink-muted text-[13px]">
+            <div className="flex items-center justify-center h-full text-ink-muted text-[13px] col-span-full row-span-full">
               {emptyState ?? emptyMessage}
             </div>
           ) : (
-            dataRows.slice(0, 10).map((row, i) => (
+            dataRows.slice(0, rowsPerPage).map((row, i) => (
               <div
                 key={row.id ?? i}
                 onClick={onRowClick ? () => onRowClick(row) : undefined}
                 className={cn(
-                  'grid grid-cols-[minmax(0,32%)_minmax(0,15%)_minmax(0,15%)_minmax(0,12%)_minmax(0,14%)_minmax(0,12%)] items-center border-b border-[#F1F5F9] transition-colors hover:bg-surface-field-disabled last:border-b-0 h-full min-h-0',
+                  'grid items-center border-b border-[#F1F5F9] transition-colors hover:bg-surface-field-disabled last:border-b-0',
+                  gridClassName,
                   onRowClick && 'cursor-pointer',
                   typeof rowClassName === 'function' ? rowClassName(row, i) : rowClassName
                 )}

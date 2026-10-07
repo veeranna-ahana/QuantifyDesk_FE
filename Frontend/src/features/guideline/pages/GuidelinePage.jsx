@@ -8,6 +8,7 @@ import { GuidelineHeader } from '../components/GuidelineHeader';
 import { GuidelineToolbar } from '../components/GuidelineToolbar';
 import { getGuidelineColumns } from '../components/guidelineColumns';
 import { PAGE_SIZE } from '../constants';
+import '../styles/index.css';
 
 export function GuidelinePage() {
   const navigate = useNavigate();
@@ -39,9 +40,9 @@ export function GuidelinePage() {
   const endItem = Math.min(page * PAGE_SIZE, totalItems);
 
   const tableFooter = (
-    <div className="flex flex-row items-center justify-between px-6 w-full h-[50px]">
-      <span className="text-[14px] font-medium text-[#64748B]">
-        Showing <strong className="font-bold text-[#1E293B]">{startItem}-{endItem}</strong> of {totalItems} guidelines
+    <div className="guideline-list-footer flex flex-row items-center justify-between px-6 w-full h-[50px]">
+      <span className="guideline-list-summary">
+        Showing <strong>{startItem}-{endItem}</strong> of <strong>{totalItems}</strong> guidelines
       </span>
       <Pagination
         page={page}
@@ -51,13 +52,13 @@ export function GuidelinePage() {
         onPageChange={setPage}
         hideLabel={true}
         showEllipsis={true}
-        className="border-none bg-transparent p-0 m-0"
+        className="guideline-list-pagination border-none bg-transparent p-0 m-0"
       />
     </div>
   );
 
   return (
-    <div className="flex flex-col gap-2 w-full h-full min-h-0">
+    <div className="guideline-list-page flex flex-col gap-2 w-full">
       <GuidelineHeader
         totalDocuments={totalItems}
         onAddClick={handleAddClick}
@@ -78,6 +79,12 @@ export function GuidelinePage() {
         emptyMessage="No guidelines found."
         fitHeight={true}
         card={true}
+        cardClassName="guideline-list-table"
+        gridClassName="guideline-list-grid"
+        headerClassName="guideline-list-header"
+        bodyClassName="guideline-list-body"
+        rowClassName="guideline-list-row"
+        rowsPerPage={PAGE_SIZE}
         footer={tableFooter}
       />
     </div>
