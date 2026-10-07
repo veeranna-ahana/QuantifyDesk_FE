@@ -18,6 +18,7 @@ export function GuidelinePage() {
   const {
     guidelines,
     totalItems,
+    totalDocuments,
     totalPages,
     versions,
     loading,
@@ -92,7 +93,7 @@ export function GuidelinePage() {
   return (
     <div className="guideline-list-page flex flex-col gap-2 w-full">
       <GuidelineHeader
-        totalDocuments={totalItems}
+        totalDocuments={totalDocuments}
         onAddClick={handleAddClick}
       />
 
