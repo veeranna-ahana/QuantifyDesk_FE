@@ -131,6 +131,25 @@ const additionalMembers = [
   ["EMP027", "Suresh V", 7.3, ["AWS", "Docker"], ["DTS_AUTOMATION"]],
   ["EMP028", "Naveen G", 6.1, ["SQL", "PostgreSQL"], ["FMS"]],
   ["EMP029", "Ishita R", 3.6, ["Angular", "TypeScript"], ["PMS"]],
+  ["EMP030", "Akash P", 4.4, ["React", "Node.js"], ["PMS"]],
+  ["EMP031", "Lavanya R", 5.7, ["Java", "Spring Boot"], ["FMS"]],
+  ["EMP032", "Harish M", 6.3, ["AWS", "Terraform"], ["Cloud Migration Q1"]],
+  ["EMP033", "Sanjana K", 3.1, ["Figma", "UI/UX"], ["Security Audit"]],
+  ["EMP034", "Pradeep N", 8.2, ["Python", "Django"], ["DTS_AUTOMATION"]],
+  ["EMP035", "Shalini D", 4.6, ["QA", "Selenium"], ["PMS", "ATS"]],
+  ["EMP036", "Mohan V", 7.4, ["SQL", "PostgreSQL"], ["FMS"]],
+  ["EMP037", "Anusha B", 3.9, ["Angular", "RxJS"], ["Cloud Migration Q1"]],
+  ["EMP038", "Karthik S", 5.2, ["Node.js", "React"], ["PMS", "FMS"]],
+  ["EMP039", "Deepa R", 4.3, ["Java", "Kafka"], ["Security Audit"]],
+  ["EMP040", "Vijay K", 6.6, ["Terraform", "CI/CD"], ["DTS_AUTOMATION"]],
+  ["EMP041", "Nisha P", 2.9, ["UI/UX", "Figma"], ["ATS"]],
+  ["EMP042", "Ganesh T", 9.1, ["Golang", "Kubernetes"], ["FMS"]],
+  ["EMP043", "Ritu S", 4.8, ["QA", "Cypress"], ["PMS"]],
+  ["EMP044", "Manish R", 5.6, ["Python", "FastAPI"], ["Cloud Migration Q1"]],
+  ["EMP045", "Asha M", 3.4, ["React", "Tailwind"], ["Security Audit"]],
+  ["EMP046", "Suresh K", 7.1, ["AWS", "Docker"], ["DTS_AUTOMATION"]],
+  ["EMP047", "Pallavi J", 5.9, ["SQL", "PostgreSQL"], ["FMS"]],
+  ["EMP048", "Rohit N", 4.2, ["Angular", "TypeScript"], ["PMS"]],
 ];
 
 const generatedMembers = additionalMembers.map(
@@ -167,61 +186,35 @@ const skillSeeds = [
   { name: "Java", total: 12, available: 5, partial: 3, allocated: 4 },
 ];
 
-const additionalSkills = [
-  "Node.js",
-  "TypeScript",
-  "Angular",
-  "Spring Boot",
-  "AWS",
-  "Docker",
-  "Kubernetes",
-  "QA",
-  "Selenium",
-  "Cypress",
-  "PostgreSQL",
-  "MongoDB",
-  "Golang",
-  "Django",
-  "FastAPI",
-  "Terraform",
-  "CI/CD",
-  "Tailwind",
-  "RxJS",
-  "Kafka",
-  "Jest",
-  "FMS",
-  "Azure",
-  "Power BI",
-  "Data Engineering",
-  "Machine Learning",
-  "Agile",
-  "Git",
-  "Linux",
-  "REST API",
-  "GraphQL",
-  "Vue.js",
-  "Next.js",
-  "Redis",
-  "NoSQL",
-  "Jenkins",
-  "Kotlin",
-  "Swift",
-  "Flutter",
-  "Security",
-];
+export const mockSkillAnalytics = skillSeeds;
 
-export const mockSkillAnalytics = [
-  ...skillSeeds,
-  ...additionalSkills.map((name, index) => {
-    const total = 8 + (index % 13);
-    const available = Math.round(total * (0.35 + (index % 4) * 0.08));
-    const partial = Math.round(total * (0.2 + (index % 3) * 0.05));
-    return {
-      name,
-      total,
-      available,
-      partial,
-      allocated: Math.max(0, total - available - partial),
-    };
-  }),
+export const mockFigmaSkillMembers = [
+  {
+    name: "Soumya H.",
+    availability: "Fully Available (100%)",
+    status: "available",
+    workload: "No project · 8h/day free",
+    skills: "Figma • Design Sys",
+  },
+  {
+    name: "Nithin G S",
+    availability: "Partially Available (50%)",
+    status: "partial",
+    workload: "PMS · 4h/day available",
+    skills: "Figma, CSS, React",
+  },
+  {
+    name: "Ranjitha K R",
+    availability: "Partially Available (25%)",
+    status: "partial",
+    workload: "Work Quantify · 2h/day",
+    skills: "Figma, QA",
+  },
+  {
+    name: "Devanshi Shah",
+    availability: "Fully Allocated (0%)",
+    status: "allocated",
+    workload: "PMS, FMS · 8h Allocated",
+    skills: "Figma, CSS, HTML",
+  },
 ];

@@ -241,14 +241,24 @@
   --size-control-md: 36px; /* [FIGMA] button height */
   --size-control-lg: 44px; /* [FIGMA] input height */
   --size-table-head: 44px; /* [FIGMA] table header row */
-  --size-member-search-width: 340px;
-  --size-member-table-min-width: 920px;
-  --size-member-summary-card-height: 72px;
-  --size-member-summary-icon: 30px;
+  --size-member-table-min-width: 1054px;
+  --size-member-summary-card-height: 80px;
+  --size-member-summary-icon: 40px;
   --size-member-summary-icon-glyph: 18px;
+  --size-member-summary-last-icon-glyph: 24px;
+  --size-member-search-width: 400px;
+  --size-member-filter-width: 80.5px;
+  --size-member-filter-icon: 13.5px;
+  --size-member-search-icon: 13.5px;
+  --size-member-export-icon: 10.67px;
+  --size-member-skill-button-width: 145px;
+  --size-member-export-button-width: 123px;
+  --size-skill-capacity-card-height: 416px;
+  --size-skill-popover-width: 346px;
+  --size-skill-popover-row-height: 45px;
   --font-size-member-page-title: 24px;
-  --font-size-member-summary-label: 11px;
-  --font-size-member-summary-value: 18px;
+  --font-size-member-summary-label: 13px;
+  --font-size-member-summary-value: 26px;
   --font-size-member-table-heading: 12px;
   --font-size-member-table-body: 13px;
   --font-size-member-name: 14px;
@@ -258,8 +268,42 @@
   --font-size-skill-heading: 24px;
   --font-size-skill-card-heading: 16px;
   --font-size-skill-legend: 11px;
-  --font-size-skill-row: 12px;
+  --font-size-skill-row: 13px;
   --font-size-skill-count: 11px;
+  --font-size-member-pagination-count: 14px;
+  --color-member-title: #0f172a;
+  --color-member-summary-label: #475569;
+  --color-member-table-heading: #545f72;
+  --color-member-name: #002045;
+  --color-member-meta: #64748b;
+  --color-member-cell: #545f72;
+  --color-member-date: #43474e;
+  --color-member-skill-bg: #e4e9ee;
+  --color-member-skill-text: #43474e;
+  --color-member-project-bg: #d8e3fa;
+  --color-member-project-text: #111c2c;
+  --color-member-allocation: #1c1a27;
+  --color-member-available-bg: #d1fae5;
+  --color-member-available-text: #006c49;
+  --color-member-partial-bg: #fef3c7;
+  --color-member-partial-text: #b45309;
+  --color-member-allocated-bg: #ffdad6;
+  --color-member-allocated-text: #ba1a1a;
+  --color-member-chart-heading: #1c1a27;
+  --color-member-chart-text: #484554;
+  --color-member-chart-track: #f1ebfe;
+  --color-member-chart-icon-bg: #e6deff;
+  --color-member-summary-icon-bg: #f0edff;
+  --color-member-allocation-track: #dee3e8;
+  --color-member-skill-subtitle: #64748b;
+  --color-pagination-label: #64748b;
+  --color-member-popover-border: rgba(201, 196, 215, 0.4);
+  --color-member-popover-divider: #ebe5f8;
+  --color-member-popover-row-bg: rgba(247, 241, 255, 0.5);
+  --color-member-popover-warning-bg: rgba(253, 230, 138, 0.2);
+  --color-member-popover-tag-bg: #e6e0f3;
+  --shadow-member-popover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  --shadow-member-summary: 0 1px 2px rgba(0, 0, 0, 0.04);
   --radius-control: 4px; /* [FIGMA] buttons + inputs */
   --radius-chip: 8px; /* [FIGMA] delayed / blocker chips */
 

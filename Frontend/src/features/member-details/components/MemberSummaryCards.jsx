@@ -1,4 +1,4 @@
-import { BadgeCheck, BriefcaseBusiness, UserRoundCheck, UsersRound } from "lucide-react";
+import { ContactRound, Share2, UserRoundPlus, UsersRound } from "lucide-react";
 
 import { Card } from "@/components/ui/Card";
 
@@ -23,32 +23,31 @@ const SUMMARY_ITEMS = [
 
 function SummaryIcon({ type }) {
   const iconProps = {
-    className:
-      "h-[var(--size-member-summary-icon-glyph)] w-[var(--size-member-summary-icon-glyph)]",
+    className: `h-[var(--size-member-summary-${type === "immediatelyAvailable" ? "last-icon-glyph" : "icon-glyph"})] w-[var(--size-member-summary-${type === "immediatelyAvailable" ? "last-icon-glyph" : "icon-glyph"})]`,
     "aria-hidden": true,
   };
-  if (type === "fullyAllocated") return <BriefcaseBusiness {...iconProps} />;
-  if (type === "partiallyAllocated") return <UserRoundCheck {...iconProps} />;
-  if (type === "immediatelyAvailable") return <BadgeCheck {...iconProps} />;
+  if (type === "fullyAllocated") return <UserRoundPlus {...iconProps} />;
+  if (type === "partiallyAllocated") return <Share2 {...iconProps} />;
+  if (type === "immediatelyAvailable") return <ContactRound {...iconProps} />;
   return <UsersRound {...iconProps} />;
 }
 
 export function MemberSummaryCards({ summary }) {
   return (
-    <div className="grid w-full grid-cols-2 gap-2.5 sm:grid-cols-4">
+    <div className="grid w-full grid-cols-2 gap-3 sm:grid-cols-4">
       {SUMMARY_ITEMS.map(({ key, label }) => (
         <Card
           key={key}
-          className="flex h-[var(--size-member-summary-card-height)] items-center justify-start gap-2.5 px-3 py-2 shadow-none"
+          className="flex h-[var(--size-member-summary-card-height)] items-center justify-start gap-[14.4px] rounded-xl px-5 py-0 shadow-[var(--shadow-member-summary)]"
         >
-          <span className="flex h-[var(--size-member-summary-icon)] w-[var(--size-member-summary-icon)] shrink-0 items-center justify-center rounded-control bg-badge-brand-bg text-action-primary">
+          <span className="flex h-[var(--size-member-summary-icon)] w-[var(--size-member-summary-icon)] shrink-0 items-center justify-center rounded-lg bg-[color:var(--color-member-summary-icon-bg)] text-action-primary">
             <SummaryIcon type={key} />
           </span>
           <div className="flex min-w-0 flex-col gap-0.5">
-            <span className="text-[length:var(--font-size-member-summary-value)] font-semibold leading-6 text-ink-primary">
+            <span className="text-[length:var(--font-size-member-summary-value)] font-bold leading-[29px] tracking-[-0.52px] text-[color:var(--color-member-title)]">
               {summary[key]}
             </span>
-            <span className="truncate text-[length:var(--font-size-member-summary-label)] font-medium text-ink-secondary">
+            <span className="truncate text-[length:var(--font-size-member-summary-label)] font-semibold leading-5 text-[color:var(--color-member-summary-label)]">
               {label}
             </span>
           </div>

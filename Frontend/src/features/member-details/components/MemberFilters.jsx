@@ -26,21 +26,22 @@ export function MemberFilters({
       <Input
         aria-label="Search members"
         placeholder="Search by employee name, ID or project..."
-        leadingIcon={<Search className="h-4 w-4" />}
-        size="md"
+        leadingIcon={<Search className="h-[var(--size-member-search-icon)] w-[var(--size-member-search-icon)] text-[color:var(--color-member-table-heading)]" />}
+        size="lg"
         value={search}
         onChange={(event) => onSearchChange(event.target.value)}
         wrapperClassName="min-w-48 flex-1 sm:flex-none sm:w-64 lg:w-[var(--size-member-search-width)]"
+        className="placeholder:text-[color:var(--color-member-table-heading)]"
       />
       <div className="relative">
         <Button
           variant="secondary"
           size="md"
-          leftIcon={<SlidersHorizontal className="h-4 w-4" />}
+          leftIcon={<SlidersHorizontal className="h-[var(--size-member-filter-icon)] w-[var(--size-member-filter-icon)]" />}
           aria-expanded={menuOpen}
           aria-haspopup="menu"
           onClick={() => setMenuOpen((open) => !open)}
-          className="border-action-primary px-3 text-action-primary hover:bg-action-primary-soft"
+          className="h-control-lg w-[var(--size-member-filter-width)] gap-1 rounded-control px-4 text-xs font-semibold tracking-[0.6px] text-action-primary hover:bg-action-primary-soft"
         >
           Filter
         </Button>
@@ -75,17 +76,18 @@ export function MemberFilters({
       <div className="ml-auto flex flex-wrap items-center gap-2">
         <Button
           size="sm"
-          leftIcon={<BarChart3 className="h-3.5 w-3.5" />}
+          leftIcon={<BarChart3 className="h-4 w-4" />}
           onClick={onSkillAnalytics}
+          className="h-9 w-[var(--size-member-skill-button-width)] px-4 text-sm font-semibold"
         >
           Skill Analytics
         </Button>
         <Button
           variant="secondary"
           size="sm"
-          leftIcon={<Download className="h-3.5 w-3.5" />}
+          leftIcon={<Download className="h-[var(--size-member-export-icon)] w-[var(--size-member-export-icon)]" />}
           onClick={onExport}
-          className="border-action-primary px-2 text-action-primary hover:bg-action-primary-soft"
+          className="h-9 w-[var(--size-member-export-button-width)] gap-2 px-3 text-xs font-semibold text-action-primary hover:bg-action-primary-soft"
         >
           Export Report
         </Button>

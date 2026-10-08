@@ -14,10 +14,10 @@ export default function MemberDetailsPage() {
   const memberDetails = useMemberDetails();
 
   return (
-    <div className="flex flex-col gap-2.5">
+    <div className="-mt-2 flex flex-col gap-4">
       <PageHeader
         title="Member Details"
-        titleClassName="text-[length:var(--font-size-member-page-title)] leading-8"
+        titleClassName="text-[length:var(--font-size-member-page-title)] leading-7 font-bold text-[color:var(--color-member-title)]"
       />
 
       <MemberSummaryCards summary={memberDetails.summary} />
@@ -31,7 +31,7 @@ export default function MemberDetailsPage() {
         onExport={memberDetails.exportMembers}
       />
 
-      <Card className="overflow-hidden shadow-none">
+      <Card className="overflow-hidden shadow-header">
         <MemberTable members={memberDetails.members} />
         <Pagination
           page={memberDetails.page}
