@@ -88,7 +88,7 @@ export const MOCK_SERVERS = [
     environment: 'Development',
     gpu: 'NVIDIA A100',
     status: 'Not Active',
-    assignedProjects: ['WPT Project'],
+    assignedProjects: ['PMS Project'],
   },
   {
     id: 8,
@@ -178,7 +178,7 @@ export const MOCK_SERVERS = [
     os: 'Ubuntu 22.04 LTS',
     environment: 'Development',
     gpu: 'NVIDIA A100 80GB',
-    status: 'Not Active',
+    status: 'Active',
     assignedProjects: ['WPT Project'],
   },
   {
@@ -247,4 +247,3 @@ export const MOCK_SERVERS = [
     assignedProjects: ['FMS Project', 'PMS Project'],
   },
 ];
-

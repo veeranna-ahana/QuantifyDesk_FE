@@ -6,7 +6,7 @@ import { cn } from '@/lib/cn';
 import { fieldStyles } from './Input.styles';
 
 export const Input = forwardRef(function Input(
-  { label, error, helperText, required, leadingIcon, size, id, className, wrapperClassName, ...rest },
+  { label, error, helperText, required, leadingIcon, leadingIconClassName, size, id, className, wrapperClassName, ...rest },
   ref,
 ) {
   const autoId = useId();
@@ -15,7 +15,7 @@ export const Input = forwardRef(function Input(
     <FormField label={label} htmlFor={inputId} required={required} error={error} helperText={helperText} className={wrapperClassName}>
       <div className="relative">
         {leadingIcon && (
-          <span aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted">
+          <span aria-hidden="true" className={cn('pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted', leadingIconClassName)}>
             {leadingIcon}
           </span>
         )}

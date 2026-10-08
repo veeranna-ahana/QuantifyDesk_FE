@@ -38,7 +38,7 @@ function AssignedProjectsTags({ projects }) {
       {projects.map((p) => (
         <span
           key={p}
-          className="inline-flex items-center rounded-[4px] border-0 bg-[#D8E2FF] px-1.5 py-0.5 text-[11px] font-medium text-[#051A3E]"
+          className="inline-flex items-center rounded-control border-0 bg-[#D8E2FF] px-1.5 py-0.5 text-[11px] font-medium text-[#051A3E]"
         >
           {p}
         </span>
@@ -49,13 +49,20 @@ function AssignedProjectsTags({ projects }) {
 
 export function ServerTable({ servers, loading, pageSize, onEdit }) {
   return (
-    <Table className="min-w-[1100px]">
+    <Table
+      wrapperClassName="max-h-[557px] overflow-auto [&_td]:border-line-field [&_td]:px-3 [&_td]:py-[9px] [&_td]:text-[13px] [&_td]:leading-[18px]"
+      className="min-w-[1058px] bg-surface-card text-[13px] leading-[18px]"
+    >
       <TableHead>
-        <TableRow className="hover:bg-transparent">
+        <TableRow className="h-[50px] hover:bg-transparent">
           {COLS.map((col, i) => (
             <TableHeaderCell
               key={col}
-              className={i === COLS.length - 1 ? 'text-right' : undefined}
+              className={[
+                'h-[50px] border-line-field py-2 text-xs font-semibold leading-4 tracking-[0.55px] text-[#6B778C]',
+                i === COLS.length - 2 ? 'whitespace-normal text-center' : '',
+                i === COLS.length - 1 ? 'text-right' : '',
+              ].join(' ')}
             >
               {col}
             </TableHeaderCell>
@@ -93,35 +100,35 @@ export function ServerTable({ servers, loading, pageSize, onEdit }) {
         {/* Data rows */}
         {!loading &&
           servers.map((s) => (
-            <TableRow key={s.id}>
+            <TableRow key={s.id} className="h-[75px]">
               <TableCell>
-                <span className="font-medium text-ink-primary">{s.serverName}</span>
+                  <span className="font-normal text-[#172B4D]">{s.serverName}</span>
               </TableCell>
               <TableCell>
-                <span className="inline-flex h-[21px] w-[92px] items-center whitespace-nowrap rounded bg-[#EDEDF8] px-1 py-[1.5px] font-mono text-[12px] text-[#434654]">
+                <span className="inline-flex h-[21px] w-[92px] items-center whitespace-nowrap rounded bg-[#EDEDF8] px-1 py-[1.5px] text-[13px] leading-[18px] text-[#434654]">
                   {s.ipAddress}
                 </span>
               </TableCell>
               <TableCell>
-                <span className="text-ink-primary">{s.ram}</span>
+                <span className="text-[#191B23]">{s.ram}</span>
               </TableCell>
               <TableCell>
-                <span className="text-ink-primary">{s.cpu}</span>
+                <span className="text-[#191B23]">{s.cpu}</span>
               </TableCell>
               <TableCell>
-                <span className="text-ink-primary">{s.storage}</span>
+                <span className="text-[#191B23]">{s.storage}</span>
               </TableCell>
               <TableCell>
-                <span className="text-ink-primary">{s.os}</span>
+                <span className="text-[#172B4D]">{s.os}</span>
               </TableCell>
               <TableCell>
                 <EnvironmentBadge environment={s.environment} />
               </TableCell>
               <TableCell>
                 {s.gpu === 'None' ? (
-                  <span className="text-[12px] text-ink-muted">None</span>
+                  <span className="text-[13px] text-ink-muted">None</span>
                 ) : (
-                  <span className="text-[12px] font-medium text-action-primary">{s.gpu}</span>
+                  <span className="text-[13px] text-action-primary">{s.gpu}</span>
                 )}
               </TableCell>
               <TableCell>

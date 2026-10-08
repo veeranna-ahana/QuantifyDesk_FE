@@ -40,10 +40,10 @@ export const EMPTY_SERVER_FORM = {
   ram: '',
   cpu: '',
   storage: '',
-  os: '',
-  environment: '',
+  os: 'Linux (Ubuntu / RHEL / Debian)',
+  environment: 'Production',
   gpu: '',
   status: 'Active',
-  assignedProjects: [],
+  assignedProjects: ['FMS Project', 'WPT Project'],
   description: '',
 };

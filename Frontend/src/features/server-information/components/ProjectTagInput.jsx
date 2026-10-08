@@ -42,10 +42,10 @@ export function ProjectTagInput({
 
   return (
     <div ref={containerRef} className="flex flex-col gap-1.5">
-      {/* ── Outer bordered container: 672 × min-102px, padding:8px, gap:16px ── */}
+      {/* ── Outer bordered container: 672 × 102px, padding:8px, gap:16px ── */}
       <div
         className={cn(
-          'w-[672px] min-h-[102px] rounded-[4px] border bg-surface-card p-2 flex flex-col gap-4 transition-colors',
+          'w-full max-w-[672px] min-h-[102px] rounded-control border bg-surface-card p-2 flex flex-col gap-4 transition-colors',
           error ? 'border-badge-danger-ink' : 'border-line-field',
         )}
       >
@@ -55,7 +55,7 @@ export function ProjectTagInput({
             {selected.map((project) => (
               <span
                 key={project}
-                className="inline-flex items-center gap-1 rounded-[4px] bg-action-primary-soft px-2 py-0.5 text-[12px] font-medium text-action-primary"
+                className="inline-flex h-6 items-center gap-1 rounded-control border border-[#D8D0FA] bg-[#EDE9FE] py-0.5 pl-2.5 pr-1.5 text-[12px] font-normal leading-[18px] text-[#5B3DC4]"
               >
                 {project}
                 <button
@@ -72,13 +72,13 @@ export function ProjectTagInput({
         )}
 
         {/* ── Dropdown search field: 497 × 44px, px-4 py-2, border-radius:4px ── */}
-        <div className="relative w-[497px]">
+        <div className="relative w-full max-w-[497px]">
           <button
             type="button"
             onClick={() => onOpenChange(!open)}
             aria-expanded={open}
             aria-haspopup="listbox"
-            className="flex h-[44px] w-full shrink-0 items-center gap-2 rounded-[4px] border border-line-field px-4 py-2 text-left transition-colors"
+            className="flex h-control-lg w-full shrink-0 items-center gap-2 rounded-control border border-line-card px-4 py-2 text-left transition-colors"
           >
             <Search className="h-3.5 w-3.5 shrink-0 text-ink-muted" aria-hidden="true" />
             <input
