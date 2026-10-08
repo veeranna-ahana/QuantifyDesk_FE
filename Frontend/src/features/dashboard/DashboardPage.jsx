@@ -1,7 +1,7 @@
 import { PageHeader } from "@/components/layout/PageHeader";
-import { Skeleton } from "@/components/ui/Skeleton";
 import { StatCard } from "@/components/ui/StatCard";
 
+import { DashboardSkeleton } from "./components/DashboardSkeleton";
 import { EmployeeUtilization } from "./components/EmployeeUtilization";
 import { HealthOverview } from "./components/HealthOverview";
 import { ProjectPerformanceTable } from "./components/ProjectPerformanceTable";
@@ -10,7 +10,7 @@ import { useDashboard } from "./hooks/useDashboard";
 
 export default function DashboardPage() {
   const d = useDashboard();
-  if (d.loading) return <Skeleton className="h-64 w-full" />;
+  if (d.loading) return <DashboardSkeleton />;
   const k = d.kpis;
 
   return (

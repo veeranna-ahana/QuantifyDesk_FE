@@ -61,7 +61,10 @@ export function EmployeeUtilization({ d }) {
           />
         </div>
       </div>
-      <Table className="min-w-[860px]">
+      <Table
+        className="min-w-[860px]"
+        wrapperClassName="max-h-[55vh] overflow-y-auto"
+      >
         <TableHead>
           <TableRow className="hover:bg-transparent">
             <TableHeaderCell className={HEAD}>Employee</TableHeaderCell>

@@ -22,6 +22,7 @@ export const Input = forwardRef(function Input(
         <input
           ref={ref}
           id={inputId}
+          autoComplete="off"
           aria-invalid={Boolean(error)}
           aria-describedby={error ? `${inputId}-error` : helperText ? `${inputId}-helper` : undefined}
           className={cn(fieldStyles({ size, invalid: Boolean(error) }), leadingIcon && 'pl-9', className)}

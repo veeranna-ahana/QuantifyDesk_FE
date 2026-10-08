@@ -8,8 +8,9 @@ import {
   syncPmsProject,
   getProjectTypes,
   createImportProject,
+  getPmsProjectTitles,
+  getPmsProjectIdByTitle,
 } from "../services/importProjectService";
-import { deriveEffortRowsFromTasks } from "../utils/deriveEffortRows";
 import {
   mapPmsToMilestones,
   mapProjectDetailsToPmsFields,
@@ -36,10 +37,19 @@ const EMPTY_FORM = {
  * State for the 4-step Import Project wizard: current step, PMS sync (real API,
  * via react-query) and the manual fields. Project Type options come from the
  * backend (project_type_catalog), not a hardcoded frontend list.
+ *
+ * Step 1's PMS selection is a searchable TITLE dropdown, not a typed numeric PMS ID — PMS mints a
+ * brand-new project_id for every new VERSION of the same project (e.g. 1101 -> 1106 when a new
+ * version is approved), flipping the old id's status to INACTIVE. A title survives across
+ * versions; a numeric id doesn't, so typing a stale id used to silently sync a now-INACTIVE
+ * project. Selecting a title resolves it to PMS's CURRENT project_id (getPmsProjectIdByTitle),
+ * then syncs with that id exactly as before — `pmsId` below is that RESOLVED id, still what
+ * ultimately gets stored/used everywhere downstream; only the Step 1 input mechanism changed.
  */
 export function useImportProjectWizard() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
+  const [projectTitle, setProjectTitleRaw] = useState("");
   const [pmsId, setPmsIdRaw] = useState("");
   const [synced, setSynced] = useState(false);
   const [pms, setPms] = useState(EMPTY_PMS);
@@ -61,21 +71,24 @@ export function useImportProjectWizard() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const setPmsId = (v) => {
-    setPmsIdRaw(v);
-    setSynced(false);
-  };
+  // Every distinct PMS project title, for Step 1's searchable dropdown — shown regardless of
+  // that title's current version's status (per confirmed decision); the APPROVED-only gate still
+  // lives server-side in syncPmsProject and rejects the sync itself if it isn't APPROVED.
+  const projectTitlesQuery = useQuery({
+    queryKey: ["pms-project-titles"],
+    queryFn: async () => {
+      const data = await getPmsProjectTitles();
+      return { titles: data?.titles || [] };
+    },
+    staleTime: 60 * 1000,
+  });
 
-  // Task Info (Step 2) -> Effort Estimate (Step 3) connection: whenever a task's Role tag
-  // changes, any newly-tagged (role, PMS owner) pair not already an Effort Estimate row gets
-  // added automatically — additive only, never removes or overwrites a row the user has already
-  // filled hours into. See deriveEffortRowsFromTasks for the exact rules.
+  // Task Info (Step 2) no longer auto-seeds Effort Estimate (Step 3) rows. Previously, tagging a
+  // task with a Role auto-added that task's PMS owner as a member under that role in Effort
+  // Estimate — per request, Step 3 now only ever shows the role rows themselves; the user adds
+  // members to a role manually via "+ Add Member", same as before this feature existed.
   const handleTaskMilestonesChange = (next) => {
     setTaskMilestones(next);
-    setEffortRows((prev) => {
-      const seeded = deriveEffortRowsFromTasks(next, prev);
-      return seeded.length ? [...prev, ...seeded] : prev;
-    });
   };
 
   const syncMutation = useMutation({
@@ -109,18 +122,44 @@ export function useImportProjectWizard() {
     },
   });
 
-  const handleSync = () => {
-    if (!pmsId.trim()) return;
-    // Clear every field BEFORE the request goes out (not just on success) — otherwise a sync
-    // that fails or gets rejected (e.g. status isn't APPROVED) leaves whatever the PREVIOUS PMS
-    // ID populated still sitting in the form/Task Info/Effort Estimate/Documents, which is wrong
-    // for this new PMS ID regardless of whether the new sync itself succeeds.
+  // Resolves the selected title to PMS's CURRENT project_id, then feeds that resolved id into the
+  // existing syncMutation unchanged — same pipeline, same server-side APPROVED gate, just fed by a
+  // title-derived id instead of a typed one.
+  const resolveMutation = useMutation({
+    mutationFn: (title) => getPmsProjectIdByTitle(title),
+    onSuccess: (data) => {
+      const resolvedId = data?.project_id;
+      if (!resolvedId) {
+        toast.error(`Could not resolve a current PMS project for this title.`);
+        setSynced(false);
+        return;
+      }
+      setPmsIdRaw(String(resolvedId));
+      syncMutation.mutate(String(resolvedId));
+    },
+    onError: (err) => {
+      const message =
+        err.response?.data?.message ||
+        "Failed to resolve this project title in PMS.";
+      toast.error(message);
+      setSynced(false);
+    },
+  });
+
+  // Single entry point for Step 1 now that there's no separate typed-ID + Sync-button step:
+  // picking a title itself clears every field (same reasoning as the old handleSync — a
+  // failed/rejected resolve or sync must never leave the PREVIOUS title's data on screen) and
+  // fires the whole resolve -> sync chain automatically.
+  const selectProjectTitle = (title) => {
+    setProjectTitleRaw(title);
+    setPmsIdRaw("");
+    setSynced(false);
     setPms(EMPTY_PMS);
     setForm(EMPTY_FORM);
     setTaskMilestones([]);
     setEffortRows([]);
     setDocuments([]);
-    syncMutation.mutate(pmsId.trim());
+    if (title) resolveMutation.mutate(title);
   };
 
   /** Single object in the shape ProjectInfoForm expects. */
@@ -151,6 +190,11 @@ export function useImportProjectWizard() {
       try {
         const payload = {
           pms_project_id: pmsId.trim(),
+          // Stored once at creation into project_info.project_title — not just read live from
+          // PMS at every view — so the Project Info tab (and Projects list) still has a real
+          // title even if a later live PMS lookup fails or this project_id goes INACTIVE (a new
+          // PMS version minting a new project_id, the reason Step 1 became a title dropdown).
+          pms_project_title: pms.projectName || projectTitle || null,
           project_info: {
             project_type: form.projectType || null,
             nbd_id: form.nbdId || null,
@@ -206,10 +250,17 @@ export function useImportProjectWizard() {
     },
     creating,
     pmsId,
-    setPmsId,
     synced,
-    syncing: syncMutation.isPending,
-    handleSync,
+    projectTitle,
+    setProjectTitle: selectProjectTitle,
+    projectTitleOptions: (projectTitlesQuery.data?.titles || []).map((t) => ({
+      value: t,
+      label: t,
+    })),
+    loadingProjectTitles: projectTitlesQuery.isLoading,
+    // Covers both network round-trips (title -> id, then id -> full sync) so the UI shows one
+    // continuous spinner across the whole selection instead of flickering between the two.
+    syncing: resolveMutation.isPending || syncMutation.isPending,
     values,
     changeValue,
     // The wizard hook is the one thing that survives step navigation (its own state isn't

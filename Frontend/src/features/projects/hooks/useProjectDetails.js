@@ -6,7 +6,6 @@ import { getImportedProject } from "@/features/projects/services/projectsService
 import { updateImportProject } from "@/features/projects/services/importProjectService";
 
 import { DETAIL_TABS } from "../constants";
-import { deriveEffortRowsFromTasks } from "../utils/deriveEffortRows";
 import {
   mapViewToDocuments,
   mapViewToEffortRows,
@@ -73,26 +72,17 @@ export function useProjectDetails() {
     setProject(data);
     const milestones = mapViewToMilestones(data?.task_info?.milestones);
     const baseEffortRows = mapViewToEffortRows(data?.effort_estimates?.members);
-    // Same Task Info -> Effort Estimate connection as the Create wizard: any (role, owner) pair
-    // already tagged in Task Info but not yet an Effort Estimate row gets added here too, so an
-    // existing project that was tagged before this feature existed catches up on load.
-    const seeded = deriveEffortRowsFromTasks(milestones, baseEffortRows);
     setTaskMilestones(milestones);
-    setEffortRows(
-      seeded.length ? [...baseEffortRows, ...seeded] : baseEffortRows,
-    );
+    setEffortRows(baseEffortRows);
     setDocuments(mapViewToDocuments(data?.documents));
     return data;
   };
 
-  // Wrapped so every Task Info edit in Edit mode also seeds any newly-tagged (role, owner) pair
-  // into Effort Estimate — additive only, see deriveEffortRowsFromTasks for the exact rules.
+  // Task Info no longer auto-seeds Effort Estimate rows (see the Import wizard's
+  // useImportProjectWizard.js for the full rationale) — tagging a task's Role in Task Info no
+  // longer adds that task's owner as a member under that role here; members are added manually.
   const handleTaskMilestonesChange = (next) => {
     setTaskMilestones(next);
-    setEffortRows((prev) => {
-      const seeded = deriveEffortRowsFromTasks(next, prev);
-      return seeded.length ? [...prev, ...seeded] : prev;
-    });
   };
 
   useEffect(() => {

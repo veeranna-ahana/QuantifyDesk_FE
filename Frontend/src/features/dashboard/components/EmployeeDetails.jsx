@@ -54,15 +54,20 @@ function AllocationCard({ project: p }) {
           >
             {p.code}
           </Badge>
-          {p.role && (
-            <Badge
-              variant="brand"
-              shape="chip"
-              size="sm"
-              className="text-[10px] font-semibold"
-            >
-              {p.role}
-            </Badge>
+          {/* An employee can genuinely hold more than one role on the same project (e.g. both
+              "BE Dev" and "FE Dev") — render every distinct role from `roles`, not just one. */}
+          {(p.roles && p.roles.length ? p.roles : p.role ? [p.role] : []).map(
+            (role) => (
+              <Badge
+                key={role}
+                variant="brand"
+                shape="chip"
+                size="sm"
+                className="text-[10px] font-semibold"
+              >
+                {role}
+              </Badge>
+            ),
           )}
         </div>
         <span className="text-[11px] text-ink-muted">{p.meta}</span>
