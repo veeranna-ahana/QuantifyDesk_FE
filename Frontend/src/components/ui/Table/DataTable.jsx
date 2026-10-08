@@ -133,7 +133,7 @@ export function DataTable({
     );
   }
 
-  // Fallback to standard Table layout for other callers (e.g. ProjectPerformanceTable)
+  // Fallback to standard Table layout for callers that do not use the grid layout.
   const standardTable = (
     <Table className={cn('w-full table-fixed', className)} wrapperClassName={wrapperClassName} {...rest}>
       <TableHead>
@@ -144,18 +144,6 @@ export function DataTable({
               align={c.align || 'left'}
               className={cn(c.width, c.headerClassName, c.className)}
             >
-  columns,
-  rows,
-  emptyMessage = "No data found.",
-  onRowClick,
-  wrapperClassName,
-}) {
-  return (
-    <Table wrapperClassName={wrapperClassName}>
-      <TableHead>
-        <TableRow className="hover:bg-transparent">
-          {columns.map((c) => (
-            <TableHeaderCell key={c.key} className={c.className}>
               {c.label}
             </TableHeaderCell>
           ))}
@@ -199,22 +187,6 @@ export function DataTable({
                   align={c.align || 'left'}
                   className={cn(c.width, c.cellClassName, c.className)}
                 >
-            <TableCell
-              colSpan={columns.length}
-              className="py-8 text-center text-ink-muted"
-            >
-              {emptyMessage}
-            </TableCell>
-          </TableRow>
-        ) : (
-          rows.map((row, i) => (
-            <TableRow
-              key={row.id ?? i}
-              onClick={onRowClick ? () => onRowClick(row) : undefined}
-              className={onRowClick ? "cursor-pointer" : undefined}
-            >
-              {columns.map((c) => (
-                <TableCell key={c.key} className={c.className}>
                   {c.render ? c.render(row, i) : row[c.key]}
                 </TableCell>
               ))}
