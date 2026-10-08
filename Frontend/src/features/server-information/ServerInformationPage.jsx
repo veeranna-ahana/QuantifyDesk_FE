@@ -43,13 +43,15 @@ export default function ServerInformationPage() {
     navigate(`/server-information/${server.id}/edit`, { state: { server } });
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex w-full flex-col gap-2">
       <PageHeader
+        titleClassName="text-2xl font-bold leading-[38px] text-[#0B1C30]"
+        actionsClassName="gap-2.5"
         title={
           <span className="inline-flex items-center gap-3">
             Server Information
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E4E9EE] px-2.5 py-1 text-xs font-medium text-[#051A3E]">
-              <span className="h-2 w-2 rounded-full bg-[#4CADAB]" aria-hidden="true" />
+            <span className="inline-flex h-[22px] items-center gap-1.5 rounded-full bg-[#E4E9EE] px-2.5 py-0.5 text-xs font-normal text-[#002045]">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#4CADAB]" aria-hidden="true" />
               {activeCount} Active Hosts
             </span>
           </span>
@@ -59,16 +61,17 @@ export default function ServerInformationPage() {
             <Button
               variant="secondary"
               size="md"
-              className="border-[#856BFF] bg-transparent text-[#856BFF] hover:bg-[#856BFF]/5"
-              leftIcon={<Download className="h-4 w-4" />}
+              className="border-action-primary bg-surface-card px-3.5 text-action-primary shadow-[var(--shadow-1)] hover:bg-action-primary-soft"
+              leftIcon={<Download className="h-3 w-3" />}
             >
               Export CSV
             </Button>
             <Button
               variant="primary"
               size="md"
-              leftIcon={<Plus className="h-4 w-4" />}
+              leftIcon={<Plus className="h-[10.5px] w-[10.5px]" />}
               onClick={handleAddServer}
+              className="shadow-[var(--shadow-1)]"
             >
               Add Server
             </Button>
@@ -81,7 +84,7 @@ export default function ServerInformationPage() {
         onSearchChange={setSearchQuery}
       />
 
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden rounded-none border-0 bg-transparent shadow-none">
         <ServerTable
           servers={servers}
           loading={false}
@@ -95,6 +98,7 @@ export default function ServerInformationPage() {
           pageSize={pageSize}
           onPageChange={setPage}
           itemLabel="Servers"
+          className="py-2 [&_b]:font-medium [&_button]:rounded-lg [&>span]:text-sm [&>span]:leading-5"
         />
       </Card>
     </div>

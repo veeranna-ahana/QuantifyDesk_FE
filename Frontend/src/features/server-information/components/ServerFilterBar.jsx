@@ -1,30 +1,31 @@
 // src/features/server-information/components/ServerFilterBar.jsx
 import { Search, SlidersHorizontal } from 'lucide-react';
 
-import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 
 export function ServerFilterBar({ searchQuery, onSearchChange }) {
   return (
-    <Card className="flex flex-wrap items-center justify-start gap-2 px-3.5 py-2.5">
+    <div className="flex flex-wrap items-center gap-2">
       <Input
         id="server-search"
-        size="md"s
+        size="lg"
         aria-label="Search servers"
-        leadingIcon={<Search className="h-4 w-4" />}
-        placeholder="Search by hostname, IP address, OS, or cluster node..."
+        leadingIcon={<Search className="h-3.5 w-3.5 text-[#545F72]" />}
+        leadingIconClassName="left-[15px] text-[#545F72]"
+        placeholder="Search by hostname, IP address, OS..."
         value={searchQuery}
         onChange={(e) => onSearchChange(e.target.value)}
-        wrapperClassName="w-full max-w-[672px] flex-1"
+        wrapperClassName="w-full max-w-[400px] flex-none"
+        className="h-control-lg rounded-control border-line-field pl-12 text-sm leading-4 placeholder:text-[#545F72]"
       />
       <button
         type="button"
-        className="inline-flex h-9 items-center gap-2 rounded-control border border-[#856BFF] bg-transparent px-3.5 text-sm font-medium text-[#856BFF] transition-colors hover:bg-[#856BFF]/5 focus-visible:outline-none"
+        className="inline-flex h-control-lg w-[80.5px] flex-none items-center gap-1 rounded-control border border-action-primary bg-surface-card px-4 text-xs font-semibold tracking-[0.6px] text-action-primary shadow-[var(--shadow-1)] transition-colors hover:bg-action-primary-soft focus-visible:outline-none"
         aria-label="Open filters"
       >
-        <SlidersHorizontal className="h-4 w-4" />
-        Filters
+        <SlidersHorizontal className="h-[13.5px] w-[13.5px]" />
+        Filter
       </button>
-    </Card>
+    </div>
   );
 }

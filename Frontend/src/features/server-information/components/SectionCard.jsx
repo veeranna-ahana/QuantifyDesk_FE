@@ -12,18 +12,16 @@ import { cn } from '@/lib/cn';
  * @param {ReactNode} children  – Section body content
  * @param {string}   className  – Optional extra classes for the outer wrapper
  */
-export function SectionCard({ icon, title, children, className }) {
+export function SectionCard({ icon, title, children, className, iconClassName }) {
   return (
-    <div className={cn('flex flex-col', className)}>
+    <div className={cn('flex flex-col gap-2', className)}>
       {/* Section header */}
-      <div className="flex items-center gap-2.5 pb-3 pt-1">
-        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[4px] bg-action-primary-soft text-action-primary">
+      <div className="flex items-center gap-2 border-b border-line-card pb-2">
+        <span className={cn('flex h-7 w-7 shrink-0 items-center justify-center rounded-control bg-[#F5F3FF] text-action-primary', iconClassName)}>
           {icon}
         </span>
-        <h3 className="text-sm font-semibold text-ink-primary">{title}</h3>
+        <h3 className="text-sm font-semibold leading-[18px] text-[#1A202C]">{title}</h3>
       </div>
-      {/* Divider */}
-      <div className="mb-4 h-px w-full bg-line-card" />
       {/* Body */}
       {children}
     </div>

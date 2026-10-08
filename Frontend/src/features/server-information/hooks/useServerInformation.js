@@ -33,7 +33,7 @@ export function useServerInformation() {
   const start = (page - 1) * PAGE_SIZE;
   const servers = filtered.slice(start, start + PAGE_SIZE);
 
-  const activeCount = MOCK_SERVERS.filter((s) => s.status === 'Active').length;
+  const activeCount = MOCK_SERVERS.filter((s) => s.status !== 'Not Active').length;
 
   return {
     servers,
@@ -47,4 +47,3 @@ export function useServerInformation() {
     activeCount,
   };
 }
-
