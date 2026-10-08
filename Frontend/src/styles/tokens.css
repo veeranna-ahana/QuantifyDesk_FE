@@ -241,6 +241,25 @@
   --size-control-md: 36px; /* [FIGMA] button height */
   --size-control-lg: 44px; /* [FIGMA] input height */
   --size-table-head: 44px; /* [FIGMA] table header row */
+  --size-member-search-width: 340px;
+  --size-member-table-min-width: 920px;
+  --size-member-summary-card-height: 72px;
+  --size-member-summary-icon: 30px;
+  --size-member-summary-icon-glyph: 18px;
+  --font-size-member-page-title: 24px;
+  --font-size-member-summary-label: 11px;
+  --font-size-member-summary-value: 18px;
+  --font-size-member-table-heading: 12px;
+  --font-size-member-table-body: 13px;
+  --font-size-member-name: 14px;
+  --font-size-member-meta: 11px;
+  --font-size-member-skill-tag: 11px;
+  --font-size-skill-breadcrumb: 12px;
+  --font-size-skill-heading: 24px;
+  --font-size-skill-card-heading: 16px;
+  --font-size-skill-legend: 11px;
+  --font-size-skill-row: 12px;
+  --font-size-skill-count: 11px;
   --radius-control: 4px; /* [FIGMA] buttons + inputs */
   --radius-chip: 8px; /* [FIGMA] delayed / blocker chips */
 

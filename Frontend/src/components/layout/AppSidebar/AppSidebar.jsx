@@ -1,6 +1,6 @@
-import { ClipboardClock, FolderKanban, LayoutDashboard } from 'lucide-react';
+import { ClipboardClock, FolderKanban, LayoutDashboard, UsersRound } from 'lucide-react';
 import Cookies from 'js-cookie';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
 import logo from '@/assets/images/ahana.png';
@@ -8,11 +8,17 @@ import { cn } from '@/lib/cn';
 
 import { ROLE_NAVIGATION } from './sidebar-navigation';
 
-const ICONS = { dashboard: LayoutDashboard, projects: FolderKanban, dailyReport: ClipboardClock };
+const ICONS = {
+  dashboard: LayoutDashboard,
+  projects: FolderKanban,
+  dailyReport: ClipboardClock,
+  members: UsersRound,
+};
 
 /** Fixed sidebar on desktop; slides in over the page on small screens. */
 export function AppSidebar({ open = false, onNavigate }) {
   const reduxUser = useSelector((state) => state.auth?.user);
+  const location = useLocation();
 
   let user = reduxUser;
   if (!user) {
@@ -46,7 +52,7 @@ export function AppSidebar({ open = false, onNavigate }) {
               className={({ isActive }) =>
                 cn(
                   'flex h-10 items-center gap-3 rounded-chip px-3 text-sm font-medium transition-colors',
-                  isActive ? 'bg-action-primary-soft text-action-primary' : 'text-ink-secondary hover:bg-surface-field-disabled',
+                  (isActive || (item.to === '/member-details' && location.pathname.startsWith('/member-details/'))) ? 'bg-action-primary-soft text-action-primary' : 'text-ink-secondary hover:bg-surface-field-disabled',
                 )
               }
             >

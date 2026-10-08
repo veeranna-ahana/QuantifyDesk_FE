@@ -4,6 +4,8 @@ import { Toaster } from "react-hot-toast";
 import Login from "./pages/Login";
 import { SessionExpiredModal } from "@/components/SessionExpiredModal";
 import Dashboard from "@/features/dashboard/DashboardPage";
+import MemberDetailsPage from "@/features/member-details/MemberDetailsPage";
+import SkillAnalyticsPage from "@/features/member-details/SkillAnalyticsPage";
 // import ProtectedRoute from '@/components/ui/ProtectedRoute/ProtectedRoute';
 import MainLayout from "@/components/layout/AppLayout/AppLayout";
 import { usePostMessageLogin } from "@/hooks/usePostMessageLogin";
@@ -48,6 +50,8 @@ function AppShell() {
           {/* Bare "/" → redirect to auth screen */}
           <Route index element={<Navigate to="/quantification" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
+          <Route path="member-details" element={<MemberDetailsPage />} />
+          <Route path="member-details/skill-analytics" element={<SkillAnalyticsPage />} />
           <Route path="projects" element={<ProjectsPage />} />
           <Route path="projects/import" element={<ImportProjectPage />} />
           <Route path="projects/:id" element={<ProjectDetailsPage />} />
