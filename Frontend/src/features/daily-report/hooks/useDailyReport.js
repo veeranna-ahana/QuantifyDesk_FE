@@ -62,7 +62,9 @@ function toCsvRow(values) {
  * `error` is set, rather than showing fabricated numbers.
  */
 export function useDailyReport() {
-  const [globalTab, setGlobalTab] = useState("In Progress");
+  // The outer All / In Progress / On Hold / Completed tab bar was removed from the UI, so this
+  // stays on "All" (no filter) — each project card has its own task filters instead.
+  const [globalTab, setGlobalTab] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [reportDate, setReportDate] = useState(todayISO());
 
@@ -104,7 +106,12 @@ export function useDailyReport() {
     return list.filter(
       (p) =>
         p.name?.toLowerCase().includes(q) ||
-        p.projectCode?.toLowerCase().includes(q),
+        p.projectCode?.toLowerCase().includes(q) ||
+        (p.tasks || []).some((t) =>
+          [t.taskName, t.ownerName, t.remarks].some((v) =>
+            (v || "").toLowerCase().includes(q),
+          ),
+        ),
     );
   }, [overview, searchQuery]);
 
