@@ -45,15 +45,23 @@ export function TaskTable({ tasks, onEdit }) {
       <TableHead>
         <TableRow className="hover:bg-transparent">
           {COLUMNS.map((c) => (
-            <TableHeaderCell key={c}>{c}</TableHeaderCell>
+            <TableHeaderCell
+              key={c}
+              className="sticky top-0 z-20 shadow-[0_1px_0_0_rgba(0,0,0,0.08)] bg-surface-table-head"
+            >
+              {c}
+            </TableHeaderCell>
           ))}
           {EDITABLE_COLUMNS.map((c) => (
-            <TableHeaderCell key={c} className="text-action-primary">
+            <TableHeaderCell
+              key={c}
+              className="sticky top-0 z-20 shadow-[0_1px_0_0_rgba(0,0,0,0.08)] bg-surface-table-head text-action-primary"
+            >
               {c}
             </TableHeaderCell>
           ))}
           {onEdit && (
-            <TableHeaderCell className="sticky right-0 z-20 w-20 min-w-20 border-l border-line-card bg-surface-table-head px-4 text-left shadow-[-3px_0_6px_-2px_rgba(0,0,0,0.06)]">
+            <TableHeaderCell className="sticky right-0 top-0 z-30 w-20 min-w-20 border-l border-line-card bg-surface-table-head px-4 text-left shadow-[-3px_0_6px_-2px_rgba(0,0,0,0.06)]">
               Action
             </TableHeaderCell>
           )}
