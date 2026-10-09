@@ -24,6 +24,8 @@ import MyWork from "./pages/MyWork";
 import UtilizationDashboard from "./pages/UtilizationDashboard";
 import Approvals from "./pages/Approvals";
 import DailyUpdatesReport from "@/features/daily-report/DailyReportPage";
+import TimesheetReportPage from "@/features/reports/timesheet-report/TimesheetReportPage";
+import ProjectDocumentChecklistPage from "@/features/reports/project-document-checklist/ProjectDocumentChecklistPage";
 import ReconPage from "./pages/Recon";
 import ReconciliationUpload from "./pages/ReconciliationUpload";
 import { GuidelinePage, GuidelineFormPage } from "@/features/guideline";
@@ -63,6 +65,8 @@ function AppShell() {
           <Route path="my-work" element={<MyWork />} />
           <Route path="quantificationnew" element={<UtilizationDashboard />} />
           <Route path="dailyreport" element={<DailyUpdatesReport />} />
+          <Route path="reports/timesheet" element={<TimesheetReportPage />} />
+          <Route path="reports/project-document-checklist" element={<ProjectDocumentChecklistPage />} />
           <Route path="approvals" element={<Approvals />} />
           <Route path="guideline" element={<GuidelinePage />} />
           <Route path="guideline/add" element={<GuidelineFormPage mode="add" />} />

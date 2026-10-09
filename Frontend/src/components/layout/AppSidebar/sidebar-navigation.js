@@ -6,6 +6,7 @@
  * @property {string} label
  * @property {string} icon  - key resolved by AppSidebar (dashboard | projects | dailyReport)
  * @property {string} to    - route path
+ * @property {SidebarNavItemConfig[]} [children] - nested navigation links
  */
 
 const CORE_NAV = [
@@ -13,6 +14,14 @@ const CORE_NAV = [
   { to: '/projects', label: 'Projects', icon: 'projects' },
   { to: '/dailyreport', label: 'Daily Report', icon: 'dailyReport' },
   { to: '/guideline', label: 'Guideline', icon: 'guideline' },
+  {
+    label: 'Reports',
+    icon: 'reports',
+    children: [
+      { to: '/reports/timesheet', label: 'Timesheet Report', icon: 'timesheet' },
+      { to: '/reports/project-document-checklist', label: 'Project Document Checklist', icon: 'documentChecklist' },
+    ],
+  },
 ];
 
 /** @type {Record<string, SidebarNavItemConfig[]>} */
