@@ -14,17 +14,17 @@ export default function TimesheetReportPage() {
   const report = useTimesheetReport();
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-2">
       <PageHeader
         title="Timesheet Report"
         subtitle="Centralized cross-project employee time tracking and verification log"
         actions={
           <Button
             variant="secondary"
-            size="sm"
-            leftIcon={<Download className="h-4 w-4" />}
+            size="md"
+            leftIcon={<Download className="h-3 w-3" />}
             onClick={report.exportReport}
-            className="border-action-primary px-2 text-action-primary hover:bg-action-primary-soft"
+            className="w-[117px] gap-1 border-action-primary px-3 text-xs text-action-primary hover:bg-action-primary-soft"
           >
             Export Report
           </Button>

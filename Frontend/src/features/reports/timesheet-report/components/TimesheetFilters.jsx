@@ -41,7 +41,7 @@ export function TimesheetFilters({
         value={filters.project}
         onChange={update("project")}
         options={[{ value: "", label: "All Projects" }, ...PROJECTS]}
-        wrapperClassName="w-full sm:w-32"
+        wrapperClassName="w-full sm:w-[139px]"
       />
       <Select
         label="Select Employee"
@@ -50,9 +50,9 @@ export function TimesheetFilters({
         value={filters.employee}
         onChange={update("employee")}
         options={[{ value: "", label: "Select Employee" }, ...EMPLOYEES]}
-        wrapperClassName="w-full sm:w-32"
+        wrapperClassName="w-full sm:w-[138px]"
       />
-      <div className="flex w-full flex-col gap-1 sm:w-60">
+      <div className="flex w-full flex-col gap-1 sm:w-[189px]">
         <span className="text-xs font-medium text-ink-secondary">Date Range</span>
         <div className="flex h-control-md items-center gap-2 rounded-control border border-line-field bg-surface-card px-2.5 focus-within:border-action-primary focus-within:ring-2 focus-within:ring-action-primary-ring">
           <div className="relative min-w-0 flex-1">

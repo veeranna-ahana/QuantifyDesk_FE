@@ -31,11 +31,11 @@ function formatDate(value) {
 
 export function TimesheetTable({ records }) {
   return (
-    <Table className="min-w-[var(--size-timesheet-table-min-width)]" wrapperClassName="w-full">
+    <Table className="w-full min-w-[var(--size-timesheet-table-min-width)]" wrapperClassName="w-full">
       <TableHead>
         <TableRow className="hover:bg-transparent">
           {COLUMNS.map(([, label]) => (
-            <TableHeaderCell key={label} className="h-8 px-2 text-[11px]">
+            <TableHeaderCell key={label} className="h-9 px-2 text-xs">
               {label}
             </TableHeaderCell>
           ))}
@@ -57,7 +57,7 @@ export function TimesheetTable({ records }) {
               {COLUMNS.map(([key, , className]) => (
                 <TableCell
                   key={key}
-                  className={`px-2 py-2 text-xs text-ink-secondary ${className}`}
+                  className={`px-2 py-1.5 text-xs text-ink-secondary ${className}`}
                 >
                   {key === "approvalStatus" ? (
                     <Badge

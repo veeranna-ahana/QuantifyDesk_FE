@@ -25,12 +25,15 @@ export function ChecklistReportFilters({
   const isStatusFilter = filterBy === "status";
 
   return (
-    <Card className="flex flex-wrap items-center gap-2 p-2 shadow-none">
+    <Card className="flex flex-wrap items-center gap-2 rounded-control border-0 p-2 shadow-none lg:h-[60px] lg:flex-nowrap lg:justify-between">
       <Input
         aria-label="Search projects and documents"
         placeholder="Search by Project name, Document name..."
-        leadingIcon={<Search className="h-4 w-4" />}
-        size="md"
+        leadingIcon={
+          <Search className="relative left-[3px] h-[13.5px] w-[13.5px] text-ink-muted" />
+        }
+        size="lg"
+        className="pl-12 text-sm leading-4"
         value={search}
         onChange={(event) => onSearchChange(event.target.value)}
         wrapperClassName="w-full min-w-0 sm:w-[var(--size-project-checklist-search-width)] sm:flex-none"
@@ -39,11 +42,11 @@ export function ChecklistReportFilters({
         <Button
           variant="secondary"
           size="md"
-          leftIcon={<ListFilter className="h-4 w-4" />}
+          leftIcon={<ListFilter className="h-[13.5px] w-[13.5px]" />}
           aria-expanded={menuOpen}
           aria-haspopup="menu"
           onClick={() => setMenuOpen((open) => !open)}
-          className="border-action-primary px-3 text-action-primary hover:bg-action-primary-soft"
+          className="h-control-lg w-[80.5px] gap-1 border-action-primary px-4 text-xs font-semibold tracking-[0.6px] text-action-primary shadow-header hover:bg-action-primary-soft"
         >
           Filter
         </Button>
@@ -90,9 +93,9 @@ export function ChecklistReportFilters({
       <Button
         variant="secondary"
         size="md"
-        leftIcon={<Download className="h-4 w-4" />}
+        leftIcon={<Download className="h-3 w-3" />}
         onClick={onExport}
-        className="ml-auto border-action-primary px-2 text-action-primary hover:bg-action-primary-soft"
+        className="ml-auto h-9 w-[122.67px] shrink-0 border-action-primary px-2 text-xs text-action-primary hover:bg-action-primary-soft"
       >
         Export Report
       </Button>

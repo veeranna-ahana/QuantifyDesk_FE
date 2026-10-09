@@ -243,8 +243,8 @@
   --size-table-head: 44px; /* [FIGMA] table header row */
   --size-timesheet-table-min-width: 1600px;
   --size-timesheet-task-description: 340px;
-  --size-project-checklist-list-max-height: 360px;
-  --size-project-checklist-search-width: 340px;
+  --size-project-checklist-list-max-height: 400px;
+  --size-project-checklist-search-width: 400px;
   --radius-control: 4px; /* [FIGMA] buttons + inputs */
   --radius-chip: 8px; /* [FIGMA] delayed / blocker chips */
   --row-min: 28px;
