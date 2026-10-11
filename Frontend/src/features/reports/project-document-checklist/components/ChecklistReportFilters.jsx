@@ -28,7 +28,7 @@ export function ChecklistReportFilters({
     <Card className="flex flex-wrap items-center gap-2 rounded-control border-0 p-2 shadow-none lg:h-[60px] lg:flex-nowrap lg:justify-between">
       <Input
         aria-label="Search projects and documents"
-        placeholder="Search by Project name, Document name..."
+        placeholder="Search by Project name"
         leadingIcon={
           <Search className="relative left-[3px] h-[13.5px] w-[13.5px] text-ink-muted" />
         }

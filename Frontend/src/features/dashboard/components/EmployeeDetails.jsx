@@ -117,8 +117,8 @@ export function EmployeeDetails({ employee: e }) {
             Project Allocation Matrix
           </h3>
           <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
-            {e.matrix.map((p) => (
-              <AllocationCard key={p.code} project={p} />
+            {e.matrix.map((p, i) => (
+              <AllocationCard key={`${p.code}-${i}`} project={p} />
             ))}
           </div>
         </div>

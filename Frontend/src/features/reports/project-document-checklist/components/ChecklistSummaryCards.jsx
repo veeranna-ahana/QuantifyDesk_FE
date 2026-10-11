@@ -1,4 +1,4 @@
-import { AlertTriangle, Building2, CircleCheck, LoaderCircle } from "lucide-react";
+import { AlertTriangle, Building2, CircleCheck } from "lucide-react";
 
 import { Card } from "@/components/ui/Card";
 
@@ -28,10 +28,46 @@ const SUMMARY_ITEMS = [
     key: "complianceRate",
     label: "Compliance Rate",
     tone: "brand",
-    icon: LoaderCircle,
+    ring: true,
     format: (value) => `${value}%`,
   },
 ];
+
+/** Circular gauge that fills to `value` percent (0-100). */
+function ComplianceRing({ value }) {
+  const radius = 8;
+  const circumference = 2 * Math.PI * radius;
+  const percent = Math.min(100, Math.max(0, Number(value) || 0));
+  return (
+    <svg
+      className="h-5 w-5 -rotate-90"
+      viewBox="0 0 20 20"
+      role="img"
+      aria-label={`${percent}% compliant`}
+    >
+      <circle
+        cx="10"
+        cy="10"
+        r={radius}
+        fill="none"
+        stroke="currentColor"
+        strokeOpacity="0.2"
+        strokeWidth="2.5"
+      />
+      <circle
+        cx="10"
+        cy="10"
+        r={radius}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeDasharray={circumference}
+        strokeDashoffset={circumference * (1 - percent / 100)}
+      />
+    </svg>
+  );
+}
 
 const TONE_STYLES = {
   brand: "text-action-primary bg-surface-table-head",
@@ -43,7 +79,6 @@ export function ChecklistSummaryCards({ summary }) {
   return (
     <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
       {SUMMARY_ITEMS.map((item) => {
-        const Icon = item.icon;
         return (
           <Card
             key={item.key}
@@ -74,11 +109,11 @@ export function ChecklistSummaryCards({ summary }) {
             <span
               className={`flex h-10 shrink-0 items-center justify-center rounded-control px-2 ${TONE_STYLES[item.tone]}`}
             >
-              <Icon
-                className="h-5 w-5"
-                aria-hidden="true"
-                strokeWidth={item.key === "complianceRate" ? 2.5 : 2}
-              />
+              {item.ring ? (
+                <ComplianceRing value={summary[item.key]} />
+              ) : (
+                <item.icon className="h-5 w-5" aria-hidden="true" />
+              )}
             </span>
           </Card>
         );

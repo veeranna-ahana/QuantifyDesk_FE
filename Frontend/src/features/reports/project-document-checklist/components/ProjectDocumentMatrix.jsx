@@ -3,8 +3,8 @@ import { cn } from "@/lib/cn";
 
 export function ProjectDocumentMatrix({ documents }) {
   return (
-    <div className="w-full rounded-lg border border-line-card bg-surface-card p-2.5 xl:h-36">
-      <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 xl:h-[122px] xl:grid-cols-4 xl:grid-rows-4">
+    <div className="w-full rounded-lg border border-line-card bg-surface-card p-2.5">
+      <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 xl:grid-cols-4">
         {documents.map((document, index) => (
           <div
             key={document.id}

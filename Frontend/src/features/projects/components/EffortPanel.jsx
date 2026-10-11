@@ -1,5 +1,5 @@
-import { ArrowRight, Check, Pencil, Plus, UserMinus, X } from "lucide-react";
-import { Fragment, useRef, useState } from "react";
+import { ArrowRight, Plus, Trash2, X } from "lucide-react";
+import { Fragment, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/Button";
@@ -28,16 +28,22 @@ import {
 import { ProjectContextBar } from "./ProjectContextBar";
 
 const DAYS_INPUT = "w-16 text-center";
+const PILL =
+  "inline-block min-w-[64px] rounded-md px-2.5 py-1 text-xs font-medium";
+const HRS_PILL = `${PILL} bg-badge-neutral-bg text-ink-primary`;
+const BUFFER_PILL = `${PILL} border border-badge-warning-line bg-badge-warning-bg text-badge-warning-ink`;
 const EMPTY_PROJECT_CONTEXT = { projectName: "", pmsId: "" };
 
-/** Inline "new member" row shown under a role's Add Member button. */
+/**
+ * Inline "new member" row shown under a role's Add Member button. Picking a person adds them
+ * to the role immediately (Effort / Buffer days start at 0 and are edited in the new row) — there
+ * is no separate confirm step. The X just dismisses the picker if nobody is wanted after all.
+ */
 function PendingRow({ available, employeesLoading, onConfirm, onCancel }) {
-  const [empId, setEmpId] = useState("");
-  const [effortDays, setEffortDays] = useState(0);
-  const [bufferDays, setBufferDays] = useState(0);
-  const confirm = () => {
+  const pick = (empId) => {
+    if (!empId) return;
     const empName = available.find((o) => o.value === empId)?.label || "";
-    onConfirm({ empId, empName, effortDays, bufferDays });
+    onConfirm({ empId, empName, effortDays: 0, bufferDays: 0 });
   };
   return (
     <TableRow className="bg-action-primary-soft hover:bg-action-primary-soft">
@@ -48,53 +54,16 @@ function PendingRow({ available, employeesLoading, onConfirm, onCancel }) {
             employeesLoading ? "Loading employees…" : "Select member"
           }
           loading={employeesLoading}
-          value={empId}
+          value=""
           options={available}
-          onChange={(val) => setEmpId(val)}
+          onChange={pick}
         />
       </TableCell>
-      <TableCell className="text-center">
-        <Input
-          size="md"
-          type="number"
-          min="0"
-          aria-label="Effort days"
-          value={effortDays}
-          onChange={(e) => setEffortDays(e.target.value)}
-          wrapperClassName="mx-auto w-16"
-          className={DAYS_INPUT}
-        />
-      </TableCell>
-      <TableCell className="text-center">
-        {formatHrs(toHrs(effortDays))}
-      </TableCell>
-      <TableCell className="text-center">
-        <Input
-          size="md"
-          type="number"
-          min="0"
-          aria-label="Buffer days"
-          value={bufferDays}
-          onChange={(e) => setBufferDays(e.target.value)}
-          wrapperClassName="mx-auto w-16"
-          className={DAYS_INPUT}
-        />
-      </TableCell>
-      <TableCell className="text-center">
-        {formatHrs(toHrs(bufferDays))}
-      </TableCell>
-      <TableCell className="text-center">
-        {formatHrs(toHrs(effortDays) + toHrs(bufferDays))}
-      </TableCell>
+      <TableCell colSpan={5} />
       <TableCell className="text-right">
-        <span className="inline-flex gap-1">
-          <IconButton label="Cancel" variant="neutral" onClick={onCancel}>
-            <X className="h-4 w-4 text-badge-danger-ink" />
-          </IconButton>
-          <IconButton label="Confirm" variant="neutral" onClick={confirm}>
-            <Check className="h-4 w-4" />
-          </IconButton>
-        </span>
+        <IconButton label="Cancel" variant="neutral" onClick={onCancel}>
+          <X className="h-4 w-4 text-badge-danger-ink" />
+        </IconButton>
       </TableCell>
     </TableRow>
   );
@@ -117,6 +86,7 @@ export function EffortPanel({
   mode,
   onBack,
   onNext,
+  nextLoading = false,
   rows: rowsProp,
   onRowsChange,
   projectContext = EMPTY_PROJECT_CONTEXT,
@@ -141,7 +111,6 @@ export function EffortPanel({
 
   const effort = useEffortEstimate(rows, setRows, roleOptions);
   const [addingRole, setAddingRole] = useState(null);
-  const inputRefs = useRef({});
   const canEdit = mode !== "view";
   // Remove/edit-member actions are available any time the table is editable (import wizard and
   // edit mode alike) — previously gated to mode === "edit" only, which meant a member added
@@ -221,9 +190,14 @@ export function EffortPanel({
                 <TableRow className="bg-surface-field-disabled hover:bg-surface-field-disabled">
                   <TableCell
                     colSpan={colCount - 1}
-                    className="text-xs font-bold uppercase tracking-wide text-ink-primary"
+                    className="text-sm font-semibold text-ink-primary"
                   >
-                    {role}
+                    <span className="inline-flex items-center gap-2">
+                      {role}
+                      <span className="rounded-full border border-action-primary/30 bg-white px-2 py-0.5 text-[11px] font-medium text-action-primary">
+                        {rows.length} {rows.length === 1 ? "Member" : "Members"}
+                      </span>
+                    </span>
                   </TableCell>
                   <TableCell className="text-right">
                     {canEdit && (
@@ -233,7 +207,7 @@ export function EffortPanel({
                           addingRole === role || availableForRole.length === 0
                         }
                         onClick={() => setAddingRole(role)}
-                        className="inline-flex items-center gap-1 whitespace-nowrap text-xs font-medium text-ink-primary hover:text-action-primary disabled:opacity-50"
+                        className="inline-flex items-center gap-1 whitespace-nowrap rounded-md border border-action-primary/40 bg-white px-2.5 py-1 text-xs font-medium text-action-primary hover:bg-action-primary-soft disabled:opacity-50"
                       >
                         <Plus className="h-3.5 w-3.5" /> Add Member
                       </button>
@@ -242,15 +216,12 @@ export function EffortPanel({
                 </TableRow>
 
                 {rows.map((r) => (
-                  <TableRow key={r.id}>
-                    <TableCell className="pl-6 font-normal text-ink-secondary">
+                  <TableRow key={r.id} className="hover:bg-transparent">
+                    <TableCell className="pl-6 font-semibold text-ink-primary">
                       {r.empName}
                     </TableCell>
                     <TableCell className="text-center">
                       <Input
-                        ref={(el) => {
-                          inputRefs.current[r.id] = el;
-                        }}
                         size="md"
                         type="number"
                         min="0"
@@ -265,7 +236,9 @@ export function EffortPanel({
                       />
                     </TableCell>
                     <TableCell className="text-center">
-                      {formatHrs(toHrs(r.effortDays))}
+                      <span className={HRS_PILL}>
+                        {formatHrs(toHrs(r.effortDays))}
+                      </span>
                     </TableCell>
                     <TableCell className="text-center">
                       <Input
@@ -283,27 +256,24 @@ export function EffortPanel({
                       />
                     </TableCell>
                     <TableCell className="text-center">
-                      {formatHrs(toHrs(r.bufferDays))}
+                      <span className={BUFFER_PILL}>
+                        {formatHrs(toHrs(r.bufferDays))}
+                      </span>
                     </TableCell>
                     <TableCell className="text-center">
-                      {formatHrs(toHrs(r.effortDays) + toHrs(r.bufferDays))}
+                      <span className={HRS_PILL}>
+                        {formatHrs(toHrs(r.effortDays) + toHrs(r.bufferDays))}
+                      </span>
                     </TableCell>
                     <TableCell className="text-right">
                       {showActions && (
                         <span className="inline-flex gap-1">
                           <IconButton
-                            label={`Edit ${r.empName}`}
-                            variant="neutral"
-                            onClick={() => inputRefs.current[r.id]?.focus()}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </IconButton>
-                          <IconButton
                             label={`Remove ${r.empName}`}
                             variant="neutral"
                             onClick={() => effort.removeMember(r.id)}
                           >
-                            <UserMinus className="h-4 w-4 text-badge-danger-ink" />
+                            <Trash2 className="h-4 w-4 text-badge-danger-ink" />
                           </IconButton>
                         </span>
                       )}
@@ -354,13 +324,21 @@ export function EffortPanel({
       {canEdit && (
         <div className="flex justify-end gap-3 border-t border-line-card p-4">
           <Button variant="ghost" onClick={onBack}>
-            Back
+            {mode === "edit" ? "Cancel" : "Back"}
           </Button>
           <Button
-            rightIcon={<ArrowRight className="h-4 w-4" />}
+            rightIcon={
+              mode === "import" ? <ArrowRight className="h-4 w-4" /> : undefined
+            }
             onClick={onNext}
+            isLoading={nextLoading}
+            disabled={nextLoading}
           >
-            Next:
+            {mode === "import"
+              ? "Save and Next"
+              : mode === "edit"
+                ? "Update"
+                : "Next:"}
           </Button>
         </div>
       )}

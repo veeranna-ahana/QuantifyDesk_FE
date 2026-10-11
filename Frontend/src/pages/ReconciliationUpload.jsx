@@ -703,7 +703,7 @@ const ReconciliationUpload = ({ onUploadSuccess }) => {
                 <CheckCircleOutlined /> {foundProjects} Found
               </span>
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-50 text-[#BA1A1A] text-xs font-semibold">
-                <CloseCircleOutlined /> {notFoundProjects} Missing
+                <CloseCircleOutlined /> {notFoundProjects} Not Available
               </span>
             </div>
           </div>

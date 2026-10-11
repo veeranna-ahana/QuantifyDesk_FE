@@ -190,7 +190,7 @@ export function BulkUpdateTasks({
             {menuOpen && (
               <div
                 role="menu"
-                className="absolute left-0 top-full z-20 mt-1 w-32 overflow-hidden rounded-chip border border-line-card bg-surface-card py-1 shadow-lg"
+                className="absolute left-0 top-full z-50 mt-1 w-32 overflow-hidden rounded-chip border border-line-card bg-surface-card py-1 shadow-lg"
               >
                 {SORT_OPTIONS.map((o) => (
                   <button

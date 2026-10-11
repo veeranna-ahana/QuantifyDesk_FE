@@ -16,7 +16,13 @@ import { DETAIL_TABS } from "../constants";
 import { useProjectDetails } from "../hooks/useProjectDetails";
 import { formatProjectDate } from "../utils/formatProjectDate";
 
-const TAB_ORDER = DETAIL_TABS.map((t) => t.id);
+// The four tabs that can be edited on their own (Project Overview and Timesheet Data are read-only).
+const EDIT_LABELS = {
+  "Project Info": "Edit Project Info",
+  "Task Info": "Edit Task Info",
+  "Effort Details": "Edit Effort Details",
+  "Documents Checklist": "Edit Documents",
+};
 // PMS dates are full ISO timestamps ("...T18:30:00.000Z", really midnight IST stored as UTC) —
 // formatProjectDate reads UTC calendar fields so this doesn't roll over a day in IST, unlike a
 // plain `new Date(d).toLocaleDateString()` would.
@@ -65,9 +71,8 @@ export default function ProjectDetailsPage() {
       ? `${start ? fmt(start) : "—"} - ${end ? fmt(end) : "—"}`
       : "—";
 
-  const back = () =>
-    d.setActiveTab(TAB_ORDER[Math.max(0, TAB_ORDER.indexOf(d.activeTab) - 1)]);
-  const mode = d.isEditing ? "edit" : "view";
+  const editingHere = d.editingTab === d.activeTab;
+  const modeFor = (tab) => (d.editingTab === tab ? "edit" : "view");
   const projectContext = { projectName: name, pmsId };
 
   return (
@@ -86,7 +91,7 @@ export default function ProjectDetailsPage() {
           </button>
           <span aria-hidden="true">›</span>
           <span className="font-semibold text-ink-primary">
-            {d.isEditing ? "Edit" : "View"}
+            {d.editingTab ? "Edit" : "View"}
           </span>
         </nav>
 
@@ -105,19 +110,19 @@ export default function ProjectDetailsPage() {
               <Meta icon={Calendar}>{range}</Meta>
             </div>
           </div>
-          {d.activeTab === "Project Info" && !d.isEditing && (
+          {EDIT_LABELS[d.activeTab] && !editingHere && (
             <Button
               id="edit-project-btn"
               leftIcon={<Pencil className="h-4 w-4" />}
-              onClick={() => d.setIsEditing(true)}
+              onClick={() => d.startEdit(d.activeTab)}
             >
-              Edit Project
+              {EDIT_LABELS[d.activeTab]}
             </Button>
           )}
         </div>
       </div>
 
-      <Tabs items={DETAIL_TABS} value={d.activeTab} onChange={d.setActiveTab} />
+      <Tabs items={DETAIL_TABS} value={d.activeTab} onChange={d.changeTab} />
 
       <div className="w-full">
         {d.activeTab === "Project Overview" && (
@@ -126,17 +131,19 @@ export default function ProjectDetailsPage() {
         {d.activeTab === "Project Info" && (
           <ProjectInfoPanel
             project={p}
-            isEditing={d.isEditing}
+            isEditing={d.editingTab === "Project Info"}
             onCancel={d.cancelEdit}
-            onNext={(fields) => d.goToTab("Task Info", fields)}
+            onNext={(fields) => d.saveTab("Project Info", fields)}
             onFormChange={d.setFormData}
+            saving={d.saving}
           />
         )}
         {d.activeTab === "Task Info" && (
           <TaskInfoPanel
-            mode={mode}
-            onBack={back}
-            onNext={() => d.goToTab("Effort Details")}
+            mode={modeFor("Task Info")}
+            onBack={d.cancelEdit}
+            onNext={() => d.saveTab("Task Info")}
+            nextLoading={d.saving}
             milestones={d.taskMilestones}
             onMilestonesChange={d.setTaskMilestones}
             projectContext={projectContext}
@@ -144,9 +151,10 @@ export default function ProjectDetailsPage() {
         )}
         {d.activeTab === "Effort Details" && (
           <EffortPanel
-            mode={mode}
-            onBack={back}
-            onNext={() => d.goToTab("Documents Checklist")}
+            mode={modeFor("Effort Details")}
+            onBack={d.cancelEdit}
+            onNext={() => d.saveTab("Effort Details")}
+            nextLoading={d.saving}
             rows={d.effortRows}
             onRowsChange={d.setEffortRows}
             projectContext={projectContext}
@@ -154,9 +162,10 @@ export default function ProjectDetailsPage() {
         )}
         {d.activeTab === "Documents Checklist" && (
           <DocumentChecklist
-            mode={mode}
-            onBack={back}
-            onSubmit={() => d.save(d.formData)}
+            mode={modeFor("Documents Checklist")}
+            onBack={d.cancelEdit}
+            onSubmit={() => d.saveTab("Documents Checklist")}
+            submitting={d.saving}
             docs={d.documents}
             onDocsChange={d.setDocuments}
             projectContext={projectContext}

@@ -49,7 +49,6 @@ export function useEffortEstimate(rows, onRowsChange, roleOptions) {
         bufferDays: Number(bufferDays) || 0,
       },
     ]);
-    toast.success(`Member ${empName} added successfully!`);
     return true;
   };
 
