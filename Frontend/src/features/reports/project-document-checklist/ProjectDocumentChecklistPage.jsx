@@ -13,7 +13,7 @@ export default function ProjectDocumentChecklistPage() {
     <div className="flex flex-col gap-2">
       <PageHeader
         title="Project Document Checklist"
-        subtitle="Track required project documents and availability compliance across active projects."
+        subtitle="Track required project documents and availability compliance across imported projects."
       />
 
       <ChecklistSummaryCards summary={report.summary} />
@@ -25,6 +25,7 @@ export default function ProjectDocumentChecklistPage() {
         onFilterByChange={report.setFilterBy}
         statusFilter={report.statusFilter}
         onStatusFilterChange={report.setStatusFilter}
+        statuses={report.statuses}
         onExport={report.exportReport}
       />
 
@@ -33,6 +34,8 @@ export default function ProjectDocumentChecklistPage() {
           projects={report.projects}
           expandedProject={report.expandedProject}
           onToggleProject={report.setExpandedProject}
+          loading={report.loading}
+          error={report.error}
         />
         {report.totalProjects ? (
           <Pagination

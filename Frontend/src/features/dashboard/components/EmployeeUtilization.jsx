@@ -109,15 +109,16 @@ export function EmployeeUtilization({ d }) {
                   <TableCell>
                     <div className="flex flex-wrap gap-1.5">
                       {e.projects?.length ? (
-                        e.projects.map((p) => (
+                        e.projects.map((p, i) => (
                           <Badge
-                            key={p}
+                            key={`${p}-${i}`}
                             variant="neutral"
                             shape="chip"
                             size="sm"
-                            className="text-[10px] font-semibold"
+                            title={p}
+                            className="max-w-[200px] text-[10px] font-semibold"
                           >
-                            {p}
+                            <span className="truncate">{p}</span>
                           </Badge>
                         ))
                       ) : (

@@ -1,9 +1,18 @@
+import { useQuery } from "@tanstack/react-query";
+
 import { Card } from "@/components/ui/Card";
+import { FormField } from "@/components/ui/FormField";
 import { Input } from "@/components/ui/Input";
+import MultiSelect from "@/components/ui/MultiSelect/MultiSelect";
+import SearchableSelect from "@/components/ui/SearchableSelect/SearchableSelect";
 import { Select } from "@/components/ui/Select";
 import { Textarea } from "@/components/ui/Textarea";
 
 import { PROJECT_STATUS_OPTIONS, PROJECT_TYPE_OPTIONS } from "../constants";
+import {
+  getActiveEmployees,
+  getTechStacks,
+} from "../services/importProjectService";
 
 const withCurrent = (options, value) =>
   value && !options.includes(value) ? [value, ...options] : options;
@@ -20,7 +29,10 @@ const withCurrent = (options, value) =>
  * GET /api/import-project/project-types. Falls back to the local constant only if that hasn't
  * loaded yet, so the dropdown never renders empty.
  *
- * values: { projectName, projectType, customer, presaleId, nbdId, o2dId, projectCode, subCategory, startDate, endDate, status, description }
+ * values: { projectName, projectType, customer, presaleId, nbdId, o2dId, projectCode, subCategory, startDate, endDate, status, description,
+ *            techStackIds[], techLeadEmpId, projectManagerEmpId, techLeadName, projectManagerName }
+ * Tech Stack options come from tech_stack_master (GET /import-project/tech-stacks); Tech Lead and
+ * Project Manager are picked from the same active-employee list Effort Estimate's "+ Add Member" uses.
  *
  * No placeholder text anywhere: an empty PMS field just displays "—", never example/fake data
  * that could be mistaken for a real value.
@@ -40,6 +52,31 @@ export function ProjectInfoForm({
     ? projectTypeOptions
     : PROJECT_TYPE_OPTIONS;
   const show = (v) => v || EMPTY;
+
+  const techStacksQuery = useQuery({
+    queryKey: ["tech-stacks"],
+    queryFn: async () => (await getTechStacks())?.techStacks || [],
+    staleTime: 5 * 60 * 1000,
+  });
+  const employeesQuery = useQuery({
+    queryKey: ["employees"],
+    queryFn: async () => (await getActiveEmployees())?.employees || [],
+    staleTime: 5 * 60 * 1000,
+  });
+  const techStackOptions = (techStacksQuery.data || []).map((t) => ({
+    value: String(t.tech_stack_id),
+    label: t.tech_stack_name,
+  }));
+  const employeeOptions = (employeesQuery.data || [])
+    .filter(
+      (e) => String(e.emp_id || "").trim() && String(e.emp_name || "").trim(),
+    )
+    .map((e) => ({ value: e.emp_id, label: e.emp_name }));
+  // Someone saved as lead/manager who's no longer in the Active list must still display by name.
+  const withEmployee = (empId, name) =>
+    empId && !employeeOptions.some((o) => String(o.value) === String(empId))
+      ? [{ value: empId, label: name || empId }, ...employeeOptions]
+      : employeeOptions;
 
   return (
     <Card className="flex flex-col gap-3 p-4">
@@ -112,6 +149,45 @@ export function ProjectInfoForm({
           options={withCurrent(PROJECT_STATUS_OPTIONS, show(values.status))}
           disabled
         />
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <FormField label="Tech Stack" htmlFor="tech-stack-select">
+          <MultiSelect
+            id="tech-stack-select"
+            placeholder="Add Tech Stack"
+            value={values.techStackIds || []}
+            options={techStackOptions}
+            onChange={(ids) => onChange("techStackIds", ids)}
+            loading={techStacksQuery.isLoading}
+            disabled={!editable}
+          />
+        </FormField>
+        <FormField label="Tech Lead" htmlFor="tech-lead-select">
+          <SearchableSelect
+            id="tech-lead-select"
+            placeholder="Add Tech Lead"
+            value={values.techLeadEmpId || ""}
+            options={withEmployee(values.techLeadEmpId, values.techLeadName)}
+            onChange={(v) => onChange("techLeadEmpId", v)}
+            loading={employeesQuery.isLoading}
+            disabled={!editable}
+          />
+        </FormField>
+        <FormField label="Project Manager" htmlFor="project-manager-select">
+          <SearchableSelect
+            id="project-manager-select"
+            placeholder="Add Project Manager"
+            value={values.projectManagerEmpId || ""}
+            options={withEmployee(
+              values.projectManagerEmpId,
+              values.projectManagerName,
+            )}
+            onChange={(v) => onChange("projectManagerEmpId", v)}
+            loading={employeesQuery.isLoading}
+            disabled={!editable}
+          />
+        </FormField>
       </div>
 
       <Textarea

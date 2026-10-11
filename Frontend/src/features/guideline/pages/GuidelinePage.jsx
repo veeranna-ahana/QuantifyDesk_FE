@@ -1,19 +1,25 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Pagination } from '@/components/ui/Pagination';
-import { DataTable } from '@/components/ui/Table';
+import React, { useCallback, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Pagination } from "@/components/ui/Pagination";
+import { DataTable } from "@/components/ui/Table";
 
-import { useGuidelines } from '../hooks/useGuidelines';
-import { GuidelineHeader } from '../components/GuidelineHeader';
-import { GuidelineToolbar } from '../components/GuidelineToolbar';
-import { getGuidelineColumns } from '../components/guidelineColumns';
-import { PAGE_SIZE } from '../constants';
-import '../styles/index.css';
+import { useGuidelines } from "../hooks/useGuidelines";
+import { GuidelineHeader } from "../components/GuidelineHeader";
+import { GuidelineToolbar } from "../components/GuidelineToolbar";
+import { getGuidelineColumns } from "../components/guidelineColumns";
+import { PAGE_SIZE } from "../constants";
+import "../styles/index.css";
 
 export function GuidelinePage() {
   const navigate = useNavigate();
-  const [appliedFilters, setAppliedFilters] = useState({ versions: [], lastUpdated: 'all' });
-  const [draftFilters, setDraftFilters] = useState({ versions: [], lastUpdated: 'all' });
+  const [appliedFilters, setAppliedFilters] = useState({
+    versions: [],
+    lastUpdated: "all",
+  });
+  const [draftFilters, setDraftFilters] = useState({
+    versions: [],
+    lastUpdated: "all",
+  });
   const [filterOpen, setFilterOpen] = useState(false);
   const {
     guidelines,
@@ -40,7 +46,7 @@ export function GuidelinePage() {
   };
 
   const handleResetFilters = () => {
-    const resetFilters = { versions: [], lastUpdated: 'all' };
+    const resetFilters = { versions: [], lastUpdated: "all" };
     setDraftFilters(resetFilters);
     setAppliedFilters(resetFilters);
     setPage(1);
@@ -60,14 +66,20 @@ export function GuidelinePage() {
   };
 
   const handleAddClick = () => {
-    navigate('/guideline/add');
+    navigate("/guideline/add");
   };
 
-  const handleEditClick = useCallback((guideline) => {
-    navigate(`/guideline/edit/${guideline.id}`, { state: { guideline } });
-  }, [navigate]);
+  const handleEditClick = useCallback(
+    (guideline) => {
+      navigate(`/guideline/edit/${guideline.id}`);
+    },
+    [navigate],
+  );
 
-  const columns = useMemo(() => getGuidelineColumns({ onEdit: handleEditClick }), [handleEditClick]);
+  const columns = useMemo(
+    () => getGuidelineColumns({ onEdit: handleEditClick }),
+    [handleEditClick],
+  );
 
   const startItem = totalItems === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
   const endItem = Math.min(page * PAGE_SIZE, totalItems);
@@ -75,7 +87,11 @@ export function GuidelinePage() {
   const tableFooter = (
     <div className="guideline-list-footer flex flex-row items-center justify-between px-6 w-full h-[50px]">
       <span className="guideline-list-summary">
-        Showing <strong>{startItem}-{endItem}</strong> of <strong>{totalItems}</strong> guidelines
+        Showing{" "}
+        <strong>
+          {startItem}-{endItem}
+        </strong>{" "}
+        of <strong>{totalItems}</strong> guidelines
       </span>
       <Pagination
         page={page}

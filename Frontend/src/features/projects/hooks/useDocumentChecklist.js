@@ -61,7 +61,7 @@ export function useDocumentChecklist(docs, onDocsChange, uploaderName) {
       {
         id: `custom_${Date.now()}`,
         documentId: null,
-        name: name || "Custom Document",
+        name,
         icon: "file-text",
         status: "Uploaded",
         uploadedBy: uploaderName || "—",

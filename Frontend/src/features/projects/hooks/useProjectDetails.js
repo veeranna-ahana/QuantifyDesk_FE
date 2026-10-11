@@ -14,30 +14,13 @@ import {
 
 const TAB_IDS = DETAIL_TABS.map((t) => t.id);
 
-/** Applies the Project Info form's edited fields onto the nested project_info sub-object (both snake_case and camelCase keys, since ProjectInfoForm/ProjectInfoPanel use camelCase). */
-const applyFormFields = (prevProjectInfo, f) => ({
-  ...prevProjectInfo,
-  project_type: f.projectType ?? prevProjectInfo?.project_type,
-  projectType: f.projectType ?? prevProjectInfo?.projectType,
-  nbd_id: f.nbdId ?? prevProjectInfo?.nbd_id,
-  nbdId: f.nbdId ?? prevProjectInfo?.nbdId,
-  o2d_id: f.o2dId ?? prevProjectInfo?.o2d_id,
-  o2dId: f.o2dId ?? prevProjectInfo?.o2dId,
-  project_code: f.projectCode ?? prevProjectInfo?.project_code,
-  projectCode: f.projectCode ?? prevProjectInfo?.projectCode,
-  sub_category: f.subCategory ?? prevProjectInfo?.sub_category,
-  subCategory: f.subCategory ?? prevProjectInfo?.subCategory,
-  description: f.description ?? prevProjectInfo?.description,
-});
-
 /**
  * State + actions for the project view / edit screen (tabs, edit mode, save).
  *
- * Save posts everything the four editable tabs (Project Info, Task Info, Effort Details,
- * Documents Checklist) currently hold, in one PUT to the same `/api/import-project/:id` the
- * Import wizard's Create Project posts to (see updateImportProject / the backend's
- * updateProjectInfo) — task_info is upserted per task, effort_estimate is fully replaced, and
- * document_checklist is upserted per document. After a successful save, the whole project is
+ * Each editable tab (Project Info, Task Info, Effort Details, Documents Checklist) has its own
+ * Edit / Update: saveTab PUTs only that tab's section to `/api/import-project/:id` (the same
+ * endpoint the Import wizard uses) — task_info is upserted per task, effort_estimate is fully
+ * replaced, document_checklist is upserted per document. After a successful save, the project is
  * refetched so every tab (and Project Overview) shows exactly what's now in the DB, rather than
  * trusting an optimistic local patch.
  */
@@ -49,7 +32,10 @@ export function useProjectDetails() {
   const [activeTab, setActiveTab] = useState(
     searchParams.get("tab") || "Project Overview",
   );
-  const [isEditing, setIsEditing] = useState(false);
+  // Which tab is currently being edited (null = viewing). Each of the four editable tabs has its
+  // own Edit / Cancel / Update, and Update saves only that tab.
+  const [editingTab, setEditingTab] = useState(null);
+  const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState(null);
 
   // Task Info / Effort Details / Documents Checklist tabs need their own lifted state (same
@@ -109,66 +95,82 @@ export function useProjectDetails() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
-  const save = async (fields) => {
+  // Saves ONLY the given tab. The backend leaves any section that isn't in the body untouched,
+  // so e.g. updating Effort Details can never overwrite Task Info or the Documents Checklist.
+  const saveTab = async (tab, fields) => {
     const info = fields || formData;
-    try {
-      const payload = {
-        project_info: {
-          project_type:
-            info?.projectType ?? project?.project_info?.project_type ?? null,
-          nbd_id: info?.nbdId ?? project?.project_info?.nbd_id ?? null,
-          o2d_id: info?.o2dId ?? project?.project_info?.o2d_id ?? null,
-          project_code:
-            info?.projectCode ?? project?.project_info?.project_code ?? null,
-          sub_category:
-            info?.subCategory ?? project?.project_info?.sub_category ?? null,
-        },
-        // Same shape as the Import wizard's Create Project payload (mapPmsSync's pmsTaskId /
-        // pmsEmpId), since Task Info's tasks here came from the same mapViewToMilestones mapper.
-        tasks: taskMilestones.flatMap((m) =>
-          (m.tasks || [])
-            .filter((t) => t.pmsTaskId)
-            .map((t) => ({
-              pms_task_id: t.pmsTaskId,
-              emp_id: t.pmsEmpId || null,
-              role: t.role || null,
-              task_type: t.taskType || null,
-              unit: t.unit || null,
-              // Risk Category / Remark are PMS-owned, read-only fields — never sent back.
-            })),
-        ),
-        effort_estimates: effortRows.map((r) => ({
-          emp_id: r.empId,
-          role: r.role,
-          effort_days: r.effortDays,
-          buffer_days: r.bufferDays,
-        })),
-        documents: documents
-          .filter((d) => d.link)
-          .map((d) => ({
-            document_id: d.documentId || null,
-            document_name: d.documentId ? null : d.name,
-            sharepoint_url: d.link,
-          })),
+    const payload = {};
+    if (tab === "Project Info") {
+      payload.project_info = {
+        project_type:
+          info?.projectType ?? project?.project_info?.project_type ?? null,
+        nbd_id: info?.nbdId ?? project?.project_info?.nbd_id ?? null,
+        o2d_id: info?.o2dId ?? project?.project_info?.o2d_id ?? null,
+        project_code:
+          info?.projectCode ?? project?.project_info?.project_code ?? null,
+        sub_category:
+          info?.subCategory ?? project?.project_info?.sub_category ?? null,
+        tech_stack_ids:
+          info?.techStackIds ?? project?.project_info?.tech_stack_ids ?? [],
+        tech_lead_emp_id:
+          info?.techLeadEmpId ??
+          project?.project_info?.tech_lead_emp_id ??
+          null,
+        project_manager_emp_id:
+          info?.projectManagerEmpId ??
+          project?.project_info?.project_manager_emp_id ??
+          null,
       };
+    } else if (tab === "Task Info") {
+      // Same shape as the Import wizard's payload (pmsTaskId / pmsEmpId from mapViewToMilestones).
+      payload.tasks = taskMilestones.flatMap((m) =>
+        (m.tasks || [])
+          .filter((t) => t.pmsTaskId)
+          .map((t) => ({
+            pms_task_id: t.pmsTaskId,
+            emp_id: t.pmsEmpId || null,
+            role: t.role || null,
+            task_type: t.taskType || null,
+            unit: t.unit || null,
+            // Risk Category / Remark are PMS-owned, read-only fields — never sent back.
+          })),
+      );
+    } else if (tab === "Effort Details") {
+      payload.effort_estimates = effortRows.map((r) => ({
+        emp_id: r.empId,
+        role: r.role,
+        effort_days: r.effortDays,
+        buffer_days: r.bufferDays,
+      }));
+    } else if (tab === "Documents Checklist") {
+      payload.documents = documents
+        .filter((d) => d.link)
+        .map((d) => ({
+          document_id: d.documentId || null,
+          document_name: d.documentId ? null : d.name,
+          sharepoint_url: d.link,
+        }));
+    } else return;
 
+    setSaving(true);
+    try {
       await updateImportProject(id, payload);
       await loadProject(); // reload from the DB so every tab reflects exactly what was saved
-      toast.success("Project updated successfully!");
-      setIsEditing(false);
+      toast.success(`${tab} updated successfully!`);
+      setEditingTab(null);
       setFormData(null);
     } catch (err) {
       console.error("Save error:", err);
       toast.error(err.response?.data?.message || "Failed to update project.");
+    } finally {
+      setSaving(false);
     }
   };
 
-  // Cancel discards ALL unsaved edits across all four tabs (not just Project Info's `formData`)
-  // by refetching the real, currently-saved data from the server — Task Info/Effort
-  // Details/Documents Checklist are lifted state here too, so simply flipping `isEditing` off
-  // would otherwise leave whatever was typed on those tabs sitting around unsaved.
+  // Cancel discards the unsaved edits (every editable tab's state is lifted here) by refetching
+  // what is currently saved on the server.
   const cancelEdit = async () => {
-    setIsEditing(false);
+    setEditingTab(null);
     setFormData(null);
     try {
       await loadProject();
@@ -177,17 +179,16 @@ export function useProjectDetails() {
     }
   };
 
-  const goToTab = (tab, fields) => {
-    if (fields) {
-      setFormData((prev) => ({ ...prev, ...fields }));
-      setProject((prev) =>
-        prev
-          ? {
-              ...prev,
-              project_info: applyFormFields(prev.project_info, fields),
-            }
-          : prev,
-      );
+  const startEdit = (tab) => {
+    setActiveTab(tab);
+    setEditingTab(tab);
+  };
+
+  // Leaving a tab mid-edit would leave stale unsaved state behind, so confirm and discard it.
+  const changeTab = (tab) => {
+    if (editingTab && tab !== editingTab) {
+      if (!window.confirm("You have unsaved changes. Discard them?")) return;
+      cancelEdit();
     }
     setActiveTab(tab);
   };
@@ -197,13 +198,14 @@ export function useProjectDetails() {
     loading,
     activeTab,
     setActiveTab,
-    isEditing,
-    setIsEditing,
+    changeTab,
+    editingTab,
+    startEdit,
+    saving,
     formData,
     setFormData,
-    save,
+    saveTab,
     cancelEdit,
-    goToTab,
     taskMilestones,
     setTaskMilestones: handleTaskMilestonesChange,
     effortRows,

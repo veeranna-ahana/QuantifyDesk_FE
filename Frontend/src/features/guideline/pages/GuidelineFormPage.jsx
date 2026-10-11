@@ -1,11 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams, useLocation, Link } from 'react-router-dom';
-import { Check, ExternalLink } from 'lucide-react';
-import toast from 'react-hot-toast';
+import React, { useState, useEffect } from "react";
+import { useNavigate, useParams, useLocation, Link } from "react-router-dom";
+import { Check, ExternalLink } from "lucide-react";
+import toast from "react-hot-toast";
 
-import { Button } from '@/components/ui/Button';
-import { guidelineService } from '../services/guideline.service';
-import '../styles/index.css';
+import { Button } from "@/components/ui/Button";
+import { guidelineService } from "../services/guideline.service";
+import "../styles/index.css";
+
+const isValidLink = (raw) => {
+  const value = raw.trim();
+  try {
+    const u = new URL(/^https?:\/\//i.test(value) ? value : `https://${value}`);
+    return u.hostname.includes(".");
+  } catch {
+    return false;
+  }
+};
 
 function CheckCircleFill({ className = "h-4 w-4 text-[#4CADAB]" }) {
   return (
@@ -24,59 +34,53 @@ export function GuidelineFormPage({ mode: propMode }) {
   const { id } = useParams();
   const location = useLocation();
 
-  const isEdit = propMode === 'edit' || location.pathname.includes('/edit/');
-  const isView = propMode === 'view' || (Boolean(id) && !isEdit && !location.pathname.includes('/add'));
+  const isEdit = propMode === "edit" || location.pathname.includes("/edit/");
+  const isView =
+    propMode === "view" ||
+    (Boolean(id) && !isEdit && !location.pathname.includes("/add"));
 
-  const [formData, setFormData] = useState({
-    name: 'API Integration & Security Standard 2026',
-    link: 'docs.ahana.io/standards/api-sec-guidelines-v1.4',
-    version: 'v1.4.0',
-    ownerName: 'Kusum G G',
-    effectiveDate: '',
-    scope: 'v1.4.0'
-  });
+  const EMPTY_FORM = {
+    name: "",
+    link: "",
+    version: "",
+    ownerName: "",
+    scope: "",
+  };
+  const [formData, setFormData] = useState(EMPTY_FORM);
+  const [loading, setLoading] = useState(Boolean(id));
 
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
 
+  // Edit / view: pre-populate from the saved guideline.
   useEffect(() => {
-    if (location.state?.guideline) {
-      const g = location.state.guideline;
-      setFormData({
-        name: g.name || '',
-        link: (g.link || '').replace(/^https?:\/\//, ''),
-        version: g.version || '',
-        ownerName: g.ownerName || 'Kusum G G',
-        effectiveDate: g.createdDate || '',
-        scope: g.scope || ''
+    if (!id) return undefined;
+    let cancelled = false;
+    setLoading(true);
+    guidelineService
+      .getGuidelineById(id)
+      .then((g) => {
+        if (cancelled || !g) return;
+        setFormData({
+          name: g.name || "",
+          link: (g.link || "").replace(/^https?:\/\//, ""),
+          version: g.version || "",
+          ownerName: g.ownerName || "",
+          scope: g.scope || "",
+        });
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        toast.error(err.response?.data?.message || "Failed to load guideline");
+        navigate("/guideline", { replace: true });
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
       });
-      return;
-    }
-
-    if (id) {
-      guidelineService.getGuidelineById(id).then((g) => {
-        if (g) {
-          setFormData({
-            name: g.name || '',
-            link: (g.link || '').replace(/^https?:\/\//, ''),
-            version: g.version || '',
-            ownerName: g.ownerName || 'Kusum G G',
-            effectiveDate: g.createdDate || '',
-            scope: g.scope || ''
-          });
-        }
-      });
-    } else if (!isEdit && !isView) {
-      setFormData({
-        name: 'API Integration & Security Standard 2026',
-        link: 'docs.ahana.io/standards/api-sec-guidelines-v1.4',
-        version: 'v1.4.0',
-        ownerName: 'Kusum G G',
-        effectiveDate: '',
-        scope: 'v1.4.0'
-      });
-    }
-  }, [id, isEdit, isView, location.state]);
+    return () => {
+      cancelled = true;
+    };
+  }, [id, navigate]);
 
   const handleChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -87,16 +91,22 @@ export function GuidelineFormPage({ mode: propMode }) {
 
   const handleOpenLink = () => {
     if (!formData.link) return;
-    const url = formData.link.startsWith('http') ? formData.link : `https://${formData.link}`;
-    window.open(url, '_blank', 'noopener,noreferrer');
+    const url = formData.link.startsWith("http")
+      ? formData.link
+      : `https://${formData.link}`;
+    window.open(url, "_blank", "noopener,noreferrer");
   };
 
   const validate = () => {
     const newErrors = {};
-    if (!formData.name.trim()) newErrors.name = 'Guideline name is required';
-    if (!formData.link.trim()) newErrors.link = 'Guideline link is required';
-    if (!formData.version.trim()) newErrors.version = 'Version is required';
-    if (!formData.scope.trim()) newErrors.scope = 'Scope & Objectives is required';
+    if (!formData.name.trim()) newErrors.name = "Guideline name is required";
+    if (!formData.link.trim()) newErrors.link = "Guideline link is required";
+    else if (!isValidLink(formData.link))
+      newErrors.link =
+        "Enter a valid link, e.g. docs.ahana.io/standards/guideline";
+    if (!formData.version.trim()) newErrors.version = "Version is required";
+    if (!formData.scope.trim())
+      newErrors.scope = "Scope & Objectives is required";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -104,12 +114,12 @@ export function GuidelineFormPage({ mode: propMode }) {
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
     if (isView) {
-      navigate('/guideline');
+      navigate("/guideline");
       return;
     }
 
     if (!validate()) {
-      toast.error('Please fill in all required fields');
+      toast.error("Please fill in all required fields");
       return;
     }
 
@@ -117,20 +127,32 @@ export function GuidelineFormPage({ mode: propMode }) {
       setSubmitting(true);
       if (isEdit && id) {
         await guidelineService.updateGuideline(id, formData);
-        toast.success('Guideline updated successfully');
+        toast.success("Guideline updated successfully");
       } else {
         await guidelineService.createGuideline(formData);
-        toast.success('Guideline created successfully');
+        toast.success("Guideline created successfully");
       }
-      navigate('/guideline');
+      navigate("/guideline");
     } catch (err) {
-      toast.error('Failed to save guideline');
+      toast.error(err.response?.data?.message || "Failed to save guideline");
     } finally {
       setSubmitting(false);
     }
   };
 
-  const pageTitle = isView ? 'View Guideline' : isEdit ? 'Edit Guideline' : 'Add Guideline';
+  if (loading) {
+    return (
+      <div className="guideline-form-page flex w-full justify-center py-16 text-sm text-ink-muted">
+        Loading guideline…
+      </div>
+    );
+  }
+
+  const pageTitle = isView
+    ? "View Guideline"
+    : isEdit
+      ? "Edit Guideline"
+      : "Add Guideline";
 
   return (
     <div className="guideline-form-page flex w-full flex-col gap-2">
@@ -148,11 +170,10 @@ export function GuidelineFormPage({ mode: propMode }) {
         </div>
 
         <div className="flex flex-col">
-          <h1 className="guideline-page-title">
-            {pageTitle}
-          </h1>
+          <h1 className="guideline-page-title">{pageTitle}</h1>
           <p className="guideline-subtitle">
-            Create and publish standardized technical, quality, and compliance guidelines for cross-functional projects and sprint execution.
+            Create and publish standardized technical, quality, and compliance
+            guidelines for cross-functional projects and sprint execution.
           </p>
         </div>
       </div>
@@ -175,14 +196,12 @@ export function GuidelineFormPage({ mode: propMode }) {
                 type="text"
                 maxLength={100}
                 value={formData.name}
-                onChange={(e) => handleChange('name', e.target.value)}
+                onChange={(e) => handleChange("name", e.target.value)}
                 readOnly={isView}
                 placeholder="API Integration & Security Standard 2026"
                 className={`guideline-input guideline-input--with-tick ${
-                  errors.name ? 'guideline-input--invalid' : ''
-                } ${
-                  isView ? 'bg-surface-field-disabled' : ''
-                }`}
+                  errors.name ? "guideline-input--invalid" : ""
+                } ${isView ? "bg-surface-field-disabled" : ""}`}
               />
               {formData.name.trim().length > 0 && !errors.name && (
                 <span className="absolute right-4 flex items-center pointer-events-none">
@@ -191,7 +210,9 @@ export function GuidelineFormPage({ mode: propMode }) {
               )}
             </div>
             {errors.name && (
-              <span className="text-[11px] text-accent-error">{errors.name}</span>
+              <span className="text-[11px] text-accent-error">
+                {errors.name}
+              </span>
             )}
           </div>
 
@@ -204,14 +225,12 @@ export function GuidelineFormPage({ mode: propMode }) {
               <input
                 type="text"
                 value={formData.link}
-                onChange={(e) => handleChange('link', e.target.value)}
+                onChange={(e) => handleChange("link", e.target.value)}
                 readOnly={isView}
                 placeholder="docs.ahana.io/standards/api-sec-guidelines-v1.4"
                 className={`guideline-input guideline-input--with-icons ${
-                  errors.link ? 'guideline-input--invalid' : ''
-                } ${
-                  isView ? 'bg-surface-field-disabled' : 'bg-white'
-                }`}
+                  errors.link ? "guideline-input--invalid" : ""
+                } ${isView ? "bg-surface-field-disabled" : "bg-white"}`}
               />
               <div className="guideline-link-icons">
                 {formData.link.trim().length > 0 && (
@@ -232,7 +251,9 @@ export function GuidelineFormPage({ mode: propMode }) {
               </div>
             </div>
             {errors.link && (
-              <span className="text-[11px] text-accent-error">{errors.link}</span>
+              <span className="text-[11px] text-accent-error">
+                {errors.link}
+              </span>
             )}
           </div>
 
@@ -245,32 +266,30 @@ export function GuidelineFormPage({ mode: propMode }) {
               <input
                 type="text"
                 value={formData.version}
-                onChange={(e) => handleChange('version', e.target.value)}
+                onChange={(e) => handleChange("version", e.target.value)}
                 readOnly={isView}
                 placeholder="v1"
                 className={`guideline-input ${
-                  errors.version ? 'guideline-input--invalid' : ''
-                } ${
-                  isView ? 'bg-surface-field-disabled' : ''
-                }`}
+                  errors.version ? "guideline-input--invalid" : ""
+                } ${isView ? "bg-surface-field-disabled" : ""}`}
               />
               {errors.version && (
-                <span className="text-[11px] text-accent-error">{errors.version}</span>
+                <span className="text-[11px] text-accent-error">
+                  {errors.version}
+                </span>
               )}
             </div>
 
             <div className="guideline-field">
-              <label className="guideline-field-label">
-                Owner Name
-              </label>
+              <label className="guideline-field-label">Owner Name</label>
               <input
                 type="text"
                 value={formData.ownerName}
-                onChange={(e) => handleChange('ownerName', e.target.value)}
+                onChange={(e) => handleChange("ownerName", e.target.value)}
                 readOnly={isView}
-                placeholder="Kusum G G"
+                placeholder="Enter owner name"
                 className={`guideline-input ${
-                  isView ? 'bg-surface-field-disabled' : ''
+                  isView ? "bg-surface-field-disabled" : ""
                 }`}
               />
             </div>
@@ -284,17 +303,17 @@ export function GuidelineFormPage({ mode: propMode }) {
             <textarea
               rows={3}
               value={formData.scope}
-              onChange={(e) => handleChange('scope', e.target.value)}
+              onChange={(e) => handleChange("scope", e.target.value)}
               readOnly={isView}
-              placeholder="v1.4.0"
+              placeholder="Describe the scope and objectives of this guideline"
               className={`guideline-textarea ${
-                errors.scope ? 'guideline-textarea--invalid' : ''
-              } ${
-                isView ? 'bg-surface-field-disabled' : ''
-              }`}
+                errors.scope ? "guideline-textarea--invalid" : ""
+              } ${isView ? "bg-surface-field-disabled" : ""}`}
             />
             {errors.scope && (
-              <span className="text-[11px] text-accent-error">{errors.scope}</span>
+              <span className="text-[11px] text-accent-error">
+                {errors.scope}
+              </span>
             )}
           </div>
 
@@ -302,7 +321,7 @@ export function GuidelineFormPage({ mode: propMode }) {
           <div className="flex items-center justify-end gap-3 pt-1">
             <button
               type="button"
-              onClick={() => navigate('/guideline')}
+              onClick={() => navigate("/guideline")}
               className="guideline-cancel-button transition-colors cursor-pointer bg-transparent border-0"
             >
               Cancel
@@ -312,9 +331,9 @@ export function GuidelineFormPage({ mode: propMode }) {
                 type="submit"
                 disabled={submitting}
                 leftIcon={<Check className="h-4 w-4 stroke-[2.5]" />}
-                className="guideline-primary-button rounded-control px-6 py-2 text-[16px] font-semibold text-white shadow-none"
+                className="guideline-primary-button rounded-control font-semibold text-white shadow-none"
               >
-                {isEdit ? 'Update Guideline' : 'Save Guideline'}
+                {isEdit ? "Update Guideline" : "Save Guideline"}
               </Button>
             )}
           </div>

@@ -59,6 +59,10 @@ function AppShell() {
           <Route path="member-details/skill-analytics" element={<SkillAnalyticsPage />} />
           <Route path="projects" element={<ProjectsPage />} />
           <Route path="projects/import" element={<ImportProjectPage />} />
+          <Route
+            path="projects/import/:projectInfoId"
+            element={<ImportProjectPage />}
+          />
           <Route path="projects/:id" element={<ProjectDetailsPage />} />
           <Route path="projects/create" element={<CreateProject />} />
           <Route path="projects/edit" element={<EditProject />} />
@@ -72,15 +76,33 @@ function AppShell() {
           <Route path="quantificationnew" element={<UtilizationDashboard />} />
           <Route path="dailyreport" element={<DailyUpdatesReport />} />
           <Route path="reports/timesheet" element={<TimesheetReportPage />} />
-          <Route path="reports/project-document-checklist" element={<ProjectDocumentChecklistPage />} />
+          <Route
+            path="reports/project-document-checklist"
+            element={<ProjectDocumentChecklistPage />}
+          />
           <Route path="approvals" element={<Approvals />} />
           <Route path="guideline" element={<GuidelinePage />} />
-          <Route path="guideline/add" element={<GuidelineFormPage mode="add" />} />
-          <Route path="guideline/edit/:id" element={<GuidelineFormPage mode="edit" />} />
-          <Route path="guideline/:id" element={<GuidelineFormPage mode="view" />} />
-          <Route path="server-information" element={<ServerInformationPage />} />
+          <Route
+            path="guideline/add"
+            element={<GuidelineFormPage mode="add" />}
+          />
+          <Route
+            path="guideline/edit/:id"
+            element={<GuidelineFormPage mode="edit" />}
+          />
+          <Route
+            path="guideline/:id"
+            element={<GuidelineFormPage mode="view" />}
+          />
+          <Route
+            path="server-information"
+            element={<ServerInformationPage />}
+          />
           <Route path="server-information/add" element={<ServerFormPage />} />
-          <Route path="server-information/:id/edit" element={<ServerFormPage />} />
+          <Route
+            path="server-information/:id/edit"
+            element={<ServerFormPage />}
+          />
           {/* ─── Reconciliation Routes ─── */}
           <Route path="reconciliation/dashboard" element={<ReconPage />} />
           <Route

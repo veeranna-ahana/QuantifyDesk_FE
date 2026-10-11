@@ -104,7 +104,7 @@ function toPendingRow(doc) {
 /**
  * Document checklist, shared by:
  *   mode="import" - wizard step 4 (Pending docs, "Add Link", Back / Create Project)
- *   mode="edit"   - project edit tab (open + edit-link icons, Add Document, Back / Save changes)
+ *   mode="edit"   - project edit tab (open + edit-link icons, Add Document, Cancel / Update)
  *   mode="view"   - project view tab (open-link icon only)
  *
  * `docs`/`onDocsChange`: the caller's own lifted state (same controlled pattern as
@@ -293,7 +293,7 @@ export function DocumentChecklist({
       {canEdit && (
         <div className="flex justify-end gap-3">
           <Button variant="ghost" onClick={onBack}>
-            Back
+            {mode === "edit" ? "Cancel" : "Back"}
           </Button>
           {mode === "import" ? (
             <Button
@@ -302,10 +302,16 @@ export function DocumentChecklist({
               rightIcon={<Rocket className="h-4 w-4" />}
               onClick={onSubmit}
             >
-              Create Project
+              Save and Finish
             </Button>
           ) : (
-            <Button onClick={onSubmit}>Save changes</Button>
+            <Button
+              isLoading={submitting}
+              disabled={submitting}
+              onClick={onSubmit}
+            >
+              Update
+            </Button>
           )}
         </div>
       )}
