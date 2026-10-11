@@ -26,8 +26,13 @@ import MyWork from "./pages/MyWork";
 import UtilizationDashboard from "./pages/UtilizationDashboard";
 import Approvals from "./pages/Approvals";
 import DailyUpdatesReport from "@/features/daily-report/DailyReportPage";
+import TimesheetReportPage from "@/features/reports/timesheet-report/TimesheetReportPage";
+import ProjectDocumentChecklistPage from "@/features/reports/project-document-checklist/ProjectDocumentChecklistPage";
+import ServerInformationPage from "@/features/server-information/ServerInformationPage";
+import ServerFormPage from "@/features/server-information/ServerFormPage";
 import ReconPage from "./pages/Recon";
 import ReconciliationUpload from "./pages/ReconciliationUpload";
+import { GuidelinePage, GuidelineFormPage } from "@/features/guideline";
 
 /**
  * Runs the app-wide UAT postMessage listener and shows the role picker when
@@ -66,7 +71,16 @@ function AppShell() {
           <Route path="my-work" element={<MyWork />} />
           <Route path="quantificationnew" element={<UtilizationDashboard />} />
           <Route path="dailyreport" element={<DailyUpdatesReport />} />
+          <Route path="reports/timesheet" element={<TimesheetReportPage />} />
+          <Route path="reports/project-document-checklist" element={<ProjectDocumentChecklistPage />} />
           <Route path="approvals" element={<Approvals />} />
+          <Route path="guideline" element={<GuidelinePage />} />
+          <Route path="guideline/add" element={<GuidelineFormPage mode="add" />} />
+          <Route path="guideline/edit/:id" element={<GuidelineFormPage mode="edit" />} />
+          <Route path="guideline/:id" element={<GuidelineFormPage mode="view" />} />
+          <Route path="server-information" element={<ServerInformationPage />} />
+          <Route path="server-information/add" element={<ServerFormPage />} />
+          <Route path="server-information/:id/edit" element={<ServerFormPage />} />
           {/* ─── Reconciliation Routes ─── */}
           <Route path="reconciliation/dashboard" element={<ReconPage />} />
           <Route

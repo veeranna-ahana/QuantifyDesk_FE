@@ -17,12 +17,14 @@ export const buttonStyles = cva(
       variant: {
         primary: 'bg-action-primary text-ink-on-primary hover:bg-action-primary-hover',
         secondary: 'bg-surface-card text-ink-primary border border-line hover:bg-surface-field-disabled',
+        outline: 'bg-transparent text-action-primary border border-action-primary hover:bg-action-primary-soft',
         ghost: 'bg-transparent text-ink-secondary hover:bg-surface-field-disabled',
         danger: 'bg-badge-danger-ink text-ink-on-primary hover:opacity-90',
       },
       size: {
         sm: 'h-control-sm px-3 text-xs',
         md: 'h-control-md px-4 text-sm',
+        lg: 'h-control-lg px-4 text-base',
       },
       fullWidth: { true: 'w-full' },
     },

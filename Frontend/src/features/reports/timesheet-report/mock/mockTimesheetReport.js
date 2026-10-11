@@ -1,0 +1,252 @@
+const seedRows = [
+  {
+    id: 1,
+    employeeId: "EMP-1042",
+    employeeName: "Devanshi Shah",
+    designation: "Sr. Business Analyst",
+    projectCode: "PRJ-FMS-01",
+    projectName: "FMS",
+    categoryCode: "CAT-BFSI-01",
+    category: "Enterprise Solutions",
+    taskDescription: "BRD Walkthrough & Traceability Matrix",
+    hoursSpent: 8,
+    fromDate: "2024-08-01",
+    toDate: "2024-08-01",
+    approvalStatus: "Approved",
+    approvedBy: "John Smith",
+    submittedOn: "2024-08-02",
+    approvedOn: "2024-08-03",
+  },
+  {
+    id: 2,
+    employeeId: "EMP-1088",
+    employeeName: "Rahul Sharma",
+    designation: "Lead Frontend Dev",
+    projectCode: "PRJ-DTS-02",
+    projectName: "DTS_AUTOMATION1",
+    categoryCode: "CAT-AUTO-02",
+    category: "Automation Core",
+    taskDescription: "UI Development & React Components",
+    hoursSpent: 7.5,
+    fromDate: "2024-08-02",
+    toDate: "2024-08-02",
+    approvalStatus: "Approved",
+    approvedBy: "Sarah Jenkins",
+    submittedOn: "2024-08-03",
+    approvedOn: "2024-08-04",
+  },
+  {
+    id: 3,
+    employeeId: "EMP-0945",
+    employeeName: "Priya Nair",
+    designation: "QA Lead",
+    projectCode: "PRJ-CLD-01",
+    projectName: "Cloud Migration Q1",
+    categoryCode: "CAT-CLD-03",
+    category: "Infrastructure",
+    taskDescription: "Automation Test Scripts & Signoff",
+    hoursSpent: 8,
+    fromDate: "2024-08-08",
+    toDate: "2024-08-08",
+    approvalStatus: "Approved",
+    approvedBy: "John Smith",
+    submittedOn: "2024-08-09",
+    approvedOn: "2024-08-10",
+  },
+  {
+    id: 4,
+    employeeId: "EMP-1033",
+    employeeName: "Amit Patel",
+    designation: "UI/UX Designer",
+    projectCode: "PRJ-SEC-04",
+    projectName: "Security Audit FY24",
+    categoryCode: "CAT-SEC-01",
+    category: "Compliance",
+    taskDescription: "Responsive Mockup Alignment & Review",
+    hoursSpent: 4,
+    fromDate: "2024-08-10",
+    toDate: "2024-08-10",
+    approvalStatus: "Submitted",
+    approvedBy: "Sarah Jenkins",
+    submittedOn: "2024-08-11",
+    approvedOn: "",
+  },
+  {
+    id: 5,
+    employeeId: "EMP-1120",
+    employeeName: "Navithkumar V",
+    designation: "Senior Fullstack",
+    projectCode: "PRJ-MOB-03",
+    projectName: "Mobile App Revamp",
+    categoryCode: "CAT-MOB-01",
+    category: "Application Dev",
+    taskDescription: "RBAC Permission Matrix & API Endpoints",
+    hoursSpent: 8,
+    fromDate: "2024-08-11",
+    toDate: "2024-08-11",
+    approvalStatus: "Approved",
+    approvedBy: "Sudheendra G",
+    submittedOn: "2024-08-12",
+    approvedOn: "2024-08-12",
+  },
+  {
+    id: 6,
+    employeeId: "EMP-0872",
+    employeeName: "Sneha Reddy",
+    designation: "DevOps Engineer",
+    projectCode: "PRJ-FMS-01",
+    projectName: "FMS",
+    categoryCode: "CAT-BFSI-01",
+    category: "Enterprise Solutions",
+    taskDescription: "CI/CD Pipeline Setup & Docker Containerization",
+    hoursSpent: 6,
+    fromDate: "2024-08-12",
+    toDate: "2024-08-12",
+    approvalStatus: "Approved",
+    approvedBy: "John Smith",
+    submittedOn: "2024-08-13",
+    approvedOn: "2024-08-14",
+  },
+  {
+    id: 7,
+    employeeId: "EMP-1055",
+    employeeName: "Bedasur V",
+    designation: "Data Engineer",
+    projectCode: "PRJ-DTS-02",
+    projectName: "DTS_AUTOMATION1",
+    categoryCode: "CAT-AUTO-02",
+    category: "Automation Core",
+    taskDescription: "ETL Process optimization and validation queries",
+    hoursSpent: 8,
+    fromDate: "2024-08-13",
+    toDate: "2024-08-13",
+    approvalStatus: "Approved",
+    approvedBy: "Sarah Jenkins",
+    submittedOn: "2024-08-14",
+    approvedOn: "2024-08-15",
+  },
+  {
+    id: 8,
+    employeeId: "EMP-1042",
+    employeeName: "Devanshi Shah",
+    designation: "Sr. Business Analyst",
+    projectCode: "PRJ-SEC-04",
+    projectName: "Security Audit FY24",
+    categoryCode: "CAT-SEC-01",
+    category: "Compliance",
+    taskDescription: "Vulnerability Remediation documentation & Client Signoff",
+    hoursSpent: 8,
+    fromDate: "2024-08-14",
+    toDate: "2024-08-14",
+    approvalStatus: "Submitted",
+    approvedBy: "Sudheendra G",
+    submittedOn: "2024-08-15",
+    approvedOn: "",
+  },
+  {
+    id: 9,
+    employeeId: "EMP-1088",
+    employeeName: "Rahul Sharma",
+    designation: "Lead Frontend Dev",
+    projectCode: "PRJ-CLD-01",
+    projectName: "Cloud Migration Q1",
+    categoryCode: "CAT-CLD-03",
+    category: "Infrastructure",
+    taskDescription: "Telemetry Dashboard & Real-Time Grafana Alerts",
+    hoursSpent: 5.5,
+    fromDate: "2024-08-15",
+    toDate: "2024-08-15",
+    approvalStatus: "Approved",
+    approvedBy: "Sarah Jenkins",
+    submittedOn: "2024-08-15",
+    approvedOn: "2024-08-16",
+  },
+  {
+    id: 10,
+    employeeId: "EMP-0945",
+    employeeName: "Priya Nair",
+    designation: "QA Lead",
+    projectCode: "PRJ-MOB-03",
+    projectName: "Mobile App Revamp",
+    categoryCode: "CAT-MOB-01",
+    category: "Application Dev",
+    taskDescription: "iOS & Android Cross-Device Compatibility Suite",
+    hoursSpent: 8,
+    fromDate: "2024-08-16",
+    toDate: "2024-08-16",
+    approvalStatus: "Approved",
+    approvedBy: "Sudheendra G",
+    submittedOn: "2024-08-16",
+    approvedOn: "2024-08-17",
+  },
+];
+
+const generatedEmployees = [
+  ["EMP-1042", "Devanshi Shah", "Sr. Business Analyst"],
+  ["EMP-1088", "Rahul Sharma", "Lead Frontend Dev"],
+  ["EMP-0945", "Priya Nair", "QA Lead"],
+  ["EMP-1033", "Amit Patel", "UI/UX Designer"],
+  ["EMP-1120", "Navithkumar V", "Senior Fullstack"],
+  ["EMP-0872", "Sneha Reddy", "DevOps Engineer"],
+  ["EMP-1055", "Bedasur V", "Data Engineer"],
+];
+
+const projectDetails = [
+  ["PRJ-FMS-01", "FMS", "CAT-BFSI-01", "Enterprise Solutions"],
+  ["PRJ-DTS-02", "DTS_AUTOMATION1", "CAT-AUTO-02", "Automation Core"],
+  ["PRJ-CLD-01", "Cloud Migration Q1", "CAT-CLD-03", "Infrastructure"],
+  ["PRJ-SEC-04", "Security Audit FY24", "CAT-SEC-01", "Compliance"],
+  ["PRJ-MOB-03", "Mobile App Revamp", "CAT-MOB-01", "Application Dev"],
+];
+
+const taskDescriptions = [
+  "Requirements review and stakeholder walkthrough",
+  "Feature implementation and code review",
+  "Test automation and regression verification",
+  "Design review and responsive layout updates",
+  "API integration and endpoint validation",
+];
+
+const approvers = ["John Smith", "Sarah Jenkins", "Sudheendra G"];
+
+const generatedRows = Array.from({ length: 135 }, (_, index) => {
+  const id = index + seedRows.length + 1;
+  const [employeeId, employeeName, designation] =
+    generatedEmployees[index % generatedEmployees.length];
+  const [projectCode, projectName, categoryCode, category] =
+    projectDetails[index % projectDetails.length];
+  const submitted = index >= 120;
+  const hoursSpent = submitted
+    ? index < 132
+      ? 27
+      : 28
+    : index < 42
+      ? 20
+      : 19.5;
+  const day = String(17 + (index % 15)).padStart(2, "0");
+  const date = `2024-08-${day}`;
+  const nextDate = new Date(`2024-08-${day}T00:00:00`);
+  nextDate.setDate(nextDate.getDate() + 1);
+  const approvedOn = nextDate.toISOString().slice(0, 10);
+
+  return {
+    id,
+    employeeId,
+    employeeName,
+    designation,
+    projectCode,
+    projectName,
+    categoryCode,
+    category,
+    taskDescription: taskDescriptions[index % taskDescriptions.length],
+    hoursSpent,
+    fromDate: date,
+    toDate: date,
+    approvalStatus: submitted ? "Submitted" : "Approved",
+    approvedBy: approvers[index % approvers.length],
+    submittedOn: date,
+    approvedOn: submitted ? "" : approvedOn,
+  };
+});
+
+export const mockTimesheetRecords = [...seedRows, ...generatedRows];

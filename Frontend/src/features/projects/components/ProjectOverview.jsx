@@ -60,14 +60,13 @@ const EMPTY_OVERVIEW = {
 
 /**
  * Pie chart drawn as plain SVG (no chart library needed).
- * Sliced by Units (from each member's assigned task_info.unit total) — not task count — per the
- * effort-estimation-driven "Work Allocation" definition.
+ * Sliced by each member's number of assigned Tasks (m.tasks) — not by Units.
  */
 function PieChart({ members }) {
   const size = 160;
   const c = size / 2;
   const r = 62;
-  const total = members.reduce((s, m) => s + m.units, 0);
+  const total = members.reduce((s, m) => s + m.tasks, 0);
   // hovered holds the slice's own data plus the mouse position *within this component's own
   // wrapper div* (clientX/Y minus that div's own bounding rect) — a plain native <title> tooltip
   // can't be styled at all (it's the browser's own OS-drawn yellow box), so this renders a real,
@@ -75,7 +74,7 @@ function PieChart({ members }) {
   const [hovered, setHovered] = useState(null);
   if (total === 0) return null;
   const starts = members.reduce(
-    (acc, m) => [...acc, acc[acc.length - 1] + (m.units / total) * 2 * Math.PI],
+    (acc, m) => [...acc, acc[acc.length - 1] + (m.tasks / total) * 2 * Math.PI],
     [-Math.PI / 2],
   );
   return (
@@ -88,11 +87,11 @@ function PieChart({ members }) {
         onMouseLeave={() => setHovered(null)}
       >
         {members.map((m, i) => {
-          const sweep = (m.units / total) * 2 * Math.PI;
+          const sweep = (m.tasks / total) * 2 * Math.PI;
           const [a1, a2] = [starts[i], starts[i + 1]];
           const [x1, y1] = [c + r * Math.cos(a1), c + r * Math.sin(a1)];
           const [x2, y2] = [c + r * Math.cos(a2), c + r * Math.sin(a2)];
-          const pct = Math.round((m.units / total) * 100);
+          const pct = Math.round((m.tasks / total) * 100);
           return (
             <path
               key={m.emp_id}
@@ -106,7 +105,7 @@ function PieChart({ members }) {
                   .getBoundingClientRect();
                 setHovered({
                   name: m.emp_name,
-                  units: m.units,
+                  tasks: m.tasks,
                   pct,
                   x: e.clientX - hostRect.left,
                   y: e.clientY - hostRect.top,
@@ -128,7 +127,7 @@ function PieChart({ members }) {
           />
           {hovered.name}
           <span className="text-white/70">
-            · {hovered.units} unit{hovered.units === 1 ? "" : "s"} (
+            · {hovered.tasks} task{hovered.tasks === 1 ? "" : "s"} (
             {hovered.pct}%)
           </span>
         </div>
@@ -253,20 +252,24 @@ export function ProjectOverview({ project, overview }) {
             <p className="py-8 text-center text-sm text-ink-muted">
               No team members assigned yet.
             </p>
+          ) : o.team_members.every((m) => !m.tasks) ? (
+            <p className="py-8 text-center text-sm text-ink-muted">
+              No tasks assigned to team members yet.
+            </p>
           ) : (
             <div className="flex flex-col items-center gap-3">
               <PieChart members={o.team_members} />
               <ul className="flex flex-wrap justify-center gap-x-4 gap-y-1">
                 {(() => {
-                  const totalUnits = o.team_members.reduce(
-                    (s, m) => s + m.units,
+                  const totalTasks = o.team_members.reduce(
+                    (s, m) => s + m.tasks,
                     0,
                   );
                   return o.team_members.map((m, i) => (
                     <li
                       key={m.emp_id}
                       className="flex items-center gap-1.5 text-[11px] text-ink-secondary"
-                      title={`${m.units} unit${m.units === 1 ? "" : "s"}${totalUnits > 0 ? ` (${Math.round((m.units / totalUnits) * 100)}%)` : ""}`}
+                      title={`${m.tasks} task${m.tasks === 1 ? "" : "s"}${totalTasks > 0 ? ` (${Math.round((m.tasks / totalTasks) * 100)}%)` : ""}`}
                     >
                       <span
                         className="h-2.5 w-2.5 shrink-0 rounded-full"
@@ -291,9 +294,14 @@ export function ProjectOverview({ project, overview }) {
           >
             <TableHead>
               <TableRow className="hover:bg-transparent">
-                <TableHeaderCell>Member</TableHeaderCell>
+                <TableHeaderCell className="sticky top-0 z-20 bg-surface-table-head shadow-[0_1px_0_0_rgba(0,0,0,0.08)]">
+                  Member
+                </TableHeaderCell>
                 {["Tasks", "Logged", "Done", "Pending"].map((h) => (
-                  <TableHeaderCell key={h} className="text-center">
+                  <TableHeaderCell
+                    key={h}
+                    className="sticky top-0 z-20 bg-surface-table-head shadow-[0_1px_0_0_rgba(0,0,0,0.08)] text-center"
+                  >
                     {h}
                   </TableHeaderCell>
                 ))}
@@ -367,7 +375,12 @@ export function ProjectOverview({ project, overview }) {
                 "Progress",
                 "Status",
               ].map((h) => (
-                <TableHeaderCell key={h}>{h}</TableHeaderCell>
+                <TableHeaderCell
+                  key={h}
+                  className="sticky top-0 z-20 bg-surface-table-head shadow-[0_1px_0_0_rgba(0,0,0,0.08)]"
+                >
+                  {h}
+                </TableHeaderCell>
               ))}
             </TableRow>
           </TableHead>

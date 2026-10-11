@@ -304,8 +304,14 @@
   --color-member-popover-tag-bg: #e6e0f3;
   --shadow-member-popover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
   --shadow-member-summary: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --size-timesheet-table-min-width: 1600px;
+  --size-timesheet-task-description: 340px;
+  --size-project-checklist-list-max-height: 400px;
+  --size-project-checklist-search-width: 400px;
   --radius-control: 4px; /* [FIGMA] buttons + inputs */
   --radius-chip: 8px; /* [FIGMA] delayed / blocker chips */
+  --row-min: 28px;
+  --row-max: 50px;
 
   /* -- App shell -- */
   --size-sidebar: 260px; /* [FIGMA] */

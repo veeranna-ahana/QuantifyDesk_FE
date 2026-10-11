@@ -234,11 +234,20 @@ export function BulkUpdateTasks({
         >
           <TableHead>
             <TableRow className="hover:bg-transparent">
-              <TableHeaderCell>Task</TableHeaderCell>
-              <TableHeaderCell>Milestone</TableHeaderCell>
-              <TableHeaderCell>Owner</TableHeaderCell>
+              <TableHeaderCell className="sticky top-0 z-20 shadow-[0_1px_0_0_rgba(0,0,0,0.08)] bg-surface-table-head">
+                Task
+              </TableHeaderCell>
+              <TableHeaderCell className="sticky top-0 z-20 shadow-[0_1px_0_0_rgba(0,0,0,0.08)] bg-surface-table-head">
+                Milestone
+              </TableHeaderCell>
+              <TableHeaderCell className="sticky top-0 z-20 shadow-[0_1px_0_0_rgba(0,0,0,0.08)] bg-surface-table-head">
+                Owner
+              </TableHeaderCell>
               {["Role", "Task Type", "Unit"].map((h) => (
-                <TableHeaderCell key={h} className="bg-action-primary-soft">
+                <TableHeaderCell
+                  key={h}
+                  className="sticky top-0 z-20 shadow-[0_1px_0_0_rgba(0,0,0,0.08)] bg-action-primary-soft"
+                >
                   {h}
                 </TableHeaderCell>
               ))}

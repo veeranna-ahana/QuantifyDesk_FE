@@ -14,12 +14,16 @@ const axiosInstance = axios.create({
 // Request interceptor — attach token
 axiosInstance.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-      console.log("🔐 Token sent in request:", token.substring(0, 20) + "...");
-    } else {
-      console.warn("⚠️ No token found in localStorage");
+    // Never overwrite an Authorization header the caller set on purpose. The login call sends
+    // the MyAhana PORTAL token explicitly (api/AuthApi.js); replacing it here with the stored
+    // Quantify JWT made RBAC and PMS reject the login with 401.
+    if (!config.headers.Authorization) {
+      const token = localStorage.getItem("token");
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      } else {
+        console.warn("⚠️ No token found in localStorage");
+      }
     }
 
     // Read user role from cookie and attach as header

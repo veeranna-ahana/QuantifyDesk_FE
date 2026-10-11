@@ -34,7 +34,9 @@ export default function Login() {
       if (event.data?.type !== "TOKEN" && event.data?.type !== "token") return;
       const { token, email, emp_id } = event.data;
       if (!token) return;
-      if (token) localStorage.setItem("token", token);
+      // The portal token is kept in memory only (userData below) and sent explicitly on the
+      // login call — it is NOT written to localStorage, where it would sit readable by any
+      // script and be mistaken for the app's own session token.
       if (email) localStorage.setItem("email", email);
       if (emp_id) localStorage.setItem("emp_id", emp_id);
       setUserData({ token, email, emp_id });
@@ -43,14 +45,16 @@ export default function Login() {
 
     window.addEventListener("message", handleMessage);
 
-    // 1.5 s timeout: if token already in localStorage (returning session), use it
+    // 1.5 s timeout: a token already in localStorage is the app's OWN session token (saved after
+    // the last login), not a MyAhana portal token — so it must not be sent to /api/auth/login
+    // again (the backend rejects it, and it can never be validated by the portal). A returning
+    // session simply continues to the app; if that session has expired, the first API call
+    // returns 401 and the session-expired prompt sends the user back through MyAhana.
     const t = setTimeout(() => {
+      if (loginCalledRef.current) return; // a fresh portal login is already in progress
       const token = localStorage.getItem("token");
-      const email = localStorage.getItem("email");
-      const emp_id = localStorage.getItem("emp_id");
       if (token) {
-        setUserData({ token, email, emp_id });
-        setAuthReady(true);
+        navigate("/dashboard", { replace: true });
       } else {
         // No token — show SSO-required screen
         setLoading(false);
@@ -61,6 +65,7 @@ export default function Login() {
       window.removeEventListener("message", handleMessage);
       clearTimeout(t);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   /* ─── Determine landing page from role ─── */
@@ -75,8 +80,8 @@ export default function Login() {
     const rolesList = Array.isArray(rawResult)
       ? rawResult
       : rawResult
-      ? [rawResult]
-      : [];
+        ? [rawResult]
+        : [];
 
     if (rolesList.length > 1) {
       setPendingLogin({ response });
@@ -96,7 +101,9 @@ export default function Login() {
       ? response.result
       : [response.result];
     const otherRoles = allRoles.filter((r) => r !== selectedRoleObj);
-    dispatch(loginUser({ ...response, result: [selectedRoleObj, ...otherRoles] }));
+    dispatch(
+      loginUser({ ...response, result: [selectedRoleObj, ...otherRoles] }),
+    );
     setShowRoleModal(false);
     setPendingLogin(null);
     navigate(getRoleBasedRedirect(selectedRoleObj?.role));
@@ -183,10 +190,9 @@ export default function Login() {
 
         <h1 style={ss.title}>Authentication Required</h1>
         <p style={ss.desc}>
-          The{" "}
-          <strong style={{ color: "#856bff" }}>Work Quantify Tool</strong> is
-          accessible only through the MyAhana portal. Please log in via MyAhana
-          to sync your employee credentials and access this tool.
+          The <strong style={{ color: "#856bff" }}>Work Quantify Tool</strong>{" "}
+          is accessible only through the MyAhana portal. Please log in via
+          MyAhana to sync your employee credentials and access this tool.
         </p>
 
         {/* SSO info pill */}
@@ -276,18 +282,16 @@ export default function Login() {
                 : [pendingLogin.response.result]
               ).map((roleItem, index) => {
                 const roleName =
-                  roleItem.role ||
-                  roleItem.designation ||
-                  `Role ${index + 1}`;
+                  roleItem.role || roleItem.designation || `Role ${index + 1}`;
                 const isManager =
                   roleName.toLowerCase().includes("manager") ||
                   roleName.toLowerCase().includes("lead");
                 const isAdmin = roleName.toLowerCase().includes("admin");
                 const iconColor = isManager
-                  ? "#856bff"   /* --color-brand-primary */
+                  ? "#856bff" /* --color-brand-primary */
                   : isAdmin
-                  ? "#7062e4"   /* --color-brand-button */
-                  : "#10b981"; /* success green */
+                    ? "#7062e4" /* --color-brand-button */
+                    : "#10b981"; /* success green */
                 return (
                   <button
                     key={index}
@@ -358,15 +362,15 @@ const ss = {
     alignItems: "center",
     justifyContent: "center",
     minHeight: "100vh",
-    background: "#faf8ff",                        /* --color-surface-page */
+    background: "#faf8ff" /* --color-surface-page */,
     fontFamily:
       "'Roboto', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
     padding: "24px",
     boxSizing: "border-box",
   },
   card: {
-    background: "#ffffff",                         /* --color-surface-card */
-    border: "1px solid #e2e8f0",                  /* --color-line-card */
+    background: "#ffffff" /* --color-surface-card */,
+    border: "1px solid #e2e8f0" /* --color-line-card */,
     borderRadius: "20px",
     boxShadow:
       "0 0 0 1px rgba(133,107,255,0.08), 0 12px 40px rgba(133,107,255,0.12), 0 2px 8px rgba(0,0,0,0.06)",
@@ -385,7 +389,8 @@ const ss = {
     width: "72px",
     height: "72px",
     borderRadius: "20px",
-    background: "linear-gradient(135deg,#856bff 0%,#7062e4 100%)",  /* --color-brand-primary */
+    background:
+      "linear-gradient(135deg,#856bff 0%,#7062e4 100%)" /* --color-brand-primary */,
     boxShadow: "0 8px 24px rgba(133,107,255,0.35)",
     display: "flex",
     alignItems: "center",
@@ -406,18 +411,18 @@ const ss = {
   title: {
     fontSize: "24px",
     fontWeight: "800",
-    color: "#1e272e",                             /* --color-ink-primary */
+    color: "#1e272e" /* --color-ink-primary */,
     margin: "0 0 14px 0",
     letterSpacing: "-0.3px",
   },
   sub: {
     fontSize: "14px",
-    color: "#8a91a0",                             /* --color-ink-muted */
+    color: "#8a91a0" /* --color-ink-muted */,
     margin: "0 0 20px 0",
   },
   desc: {
     fontSize: "14px",
-    color: "#434655",                             /* --color-ink-secondary */
+    color: "#434655" /* --color-ink-secondary */,
     lineHeight: "1.65",
     margin: "0 0 28px 0",
   },
@@ -425,8 +430,8 @@ const ss = {
     display: "flex",
     alignItems: "flex-start",
     gap: "14px",
-    background: "#f1eeff",                        /* --color-action-primary-soft */
-    border: "1px solid #d9d0ff",                 /* --color-badge-brand-line */
+    background: "#f1eeff" /* --color-action-primary-soft */,
+    border: "1px solid #d9d0ff" /* --color-badge-brand-line */,
     borderRadius: "12px",
     padding: "16px 18px",
     marginBottom: "28px",
@@ -436,12 +441,12 @@ const ss = {
     fontSize: "11px",
     fontWeight: "700",
     letterSpacing: "0.08em",
-    color: "#856bff",                             /* --color-brand-primary */
+    color: "#856bff" /* --color-brand-primary */,
     margin: "0 0 4px 0",
   },
   ssoPillSub: {
     fontSize: "13px",
-    color: "#434655",                             /* --color-ink-secondary */
+    color: "#434655" /* --color-ink-secondary */,
     margin: 0,
     lineHeight: "1.5",
   },
@@ -451,9 +456,10 @@ const ss = {
     justifyContent: "center",
     width: "100%",
     padding: "14px 24px",
-    background: "linear-gradient(135deg,#856bff 0%,#7062e4 100%)",  /* --color-brand-primary */
+    background:
+      "linear-gradient(135deg,#856bff 0%,#7062e4 100%)" /* --color-brand-primary */,
     boxShadow: "0 4px 16px rgba(133,107,255,0.3)",
-    color: "#ffffff",                             /* --color-ink-on-primary */
+    color: "#ffffff" /* --color-ink-on-primary */,
     border: "none",
     borderRadius: "10px",
     fontSize: "15px",
@@ -465,14 +471,14 @@ const ss = {
   },
   footer: {
     fontSize: "11px",
-    color: "#8a91a0",                             /* --color-ink-muted */
+    color: "#8a91a0" /* --color-ink-muted */,
     margin: 0,
   },
   spinner: {
     width: "28px",
     height: "28px",
-    border: "3px solid #f1eeff",                 /* --color-action-primary-soft */
-    borderTop: "3px solid #856bff",              /* --color-brand-primary */
+    border: "3px solid #f1eeff" /* --color-action-primary-soft */,
+    borderTop: "3px solid #856bff" /* --color-brand-primary */,
     borderRadius: "50%",
     animation: "spin 0.9s linear infinite",
     margin: "20px auto 0",
@@ -484,7 +490,7 @@ const rm = {
   overlay: {
     position: "fixed",
     inset: 0,
-    backgroundColor: "rgba(30, 39, 46, 0.6)",   /* --color-ink-primary at 60% */
+    backgroundColor: "rgba(30, 39, 46, 0.6)" /* --color-ink-primary at 60% */,
     backdropFilter: "blur(6px)",
     display: "flex",
     alignItems: "center",
@@ -493,8 +499,8 @@ const rm = {
     padding: "20px",
   },
   modal: {
-    background: "#ffffff",                        /* --color-surface-card */
-    border: "1px solid #e2e8f0",                 /* --color-line-card */
+    background: "#ffffff" /* --color-surface-card */,
+    border: "1px solid #e2e8f0" /* --color-line-card */,
     borderRadius: "16px",
     boxShadow: "0 12px 40px rgba(133,107,255,0.12), 0 2px 8px rgba(0,0,0,0.08)",
     width: "100%",
@@ -513,8 +519,8 @@ const rm = {
     width: "60px",
     height: "60px",
     borderRadius: "50%",
-    background: "#f1eeff",                        /* --color-action-primary-soft */
-    border: "2px solid #d9d0ff",                 /* --color-badge-brand-line */
+    background: "#f1eeff" /* --color-action-primary-soft */,
+    border: "2px solid #d9d0ff" /* --color-badge-brand-line */,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -523,13 +529,13 @@ const rm = {
   title: {
     fontSize: "20px",
     fontWeight: "700",
-    color: "#1e272e",                            /* --color-ink-primary */
+    color: "#1e272e" /* --color-ink-primary */,
     margin: "0 0 6px 0",
     letterSpacing: "-0.2px",
   },
   subtitle: {
     fontSize: "13px",
-    color: "#8a91a0",                            /* --color-ink-muted */
+    color: "#8a91a0" /* --color-ink-muted */,
     lineHeight: "1.5",
     margin: 0,
   },
@@ -545,8 +551,8 @@ const rm = {
     alignItems: "center",
     gap: "14px",
     padding: "13px 16px",
-    background: "#faf8ff",                       /* --color-surface-page */
-    border: "1.5px solid #e2e8f0",              /* --color-line-card */
+    background: "#faf8ff" /* --color-surface-page */,
+    border: "1.5px solid #e2e8f0" /* --color-line-card */,
     borderRadius: "10px",
     cursor: "pointer",
     textAlign: "left",
@@ -573,18 +579,18 @@ const rm = {
   roleTitle: {
     fontSize: "14px",
     fontWeight: "600",
-    color: "#1e272e",                           /* --color-ink-primary */
+    color: "#1e272e" /* --color-ink-primary */,
   },
   roleSub: {
     fontSize: "12px",
-    color: "#8a91a0",                           /* --color-ink-muted */
+    color: "#8a91a0" /* --color-ink-muted */,
     marginTop: "2px",
   },
   footer: { display: "flex", justifyContent: "center", paddingTop: "4px" },
   cancelButton: {
     background: "transparent",
-    border: "1px solid #e2e8f0",               /* --color-line-card */
-    color: "#434655",                           /* --color-ink-secondary */
+    border: "1px solid #e2e8f0" /* --color-line-card */,
+    color: "#434655" /* --color-ink-secondary */,
     fontSize: "13px",
     fontWeight: "500",
     cursor: "pointer",

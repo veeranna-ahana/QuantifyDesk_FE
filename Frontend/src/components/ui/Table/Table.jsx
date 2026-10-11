@@ -1,13 +1,37 @@
-import { cn } from '@/lib/cn';
+import React from "react";
+import { cn } from "@/lib/cn";
 
 /**
- * Table building blocks. Header = surface-table-head, 44px (Figma).
- * Wrapper scrolls horizontally so wide tables never break the page layout.
+ * Table building blocks. Header = surface-table-head, 41px.
+ * No scrollbar when fitHeight is enabled; rows share height equally.
  */
-export function Table({ className, wrapperClassName, children, ...rest }) {
+export function Table({
+  className,
+  wrapperClassName,
+  fitHeight = false,
+  children,
+  ...rest
+}) {
   return (
-    <div className={cn('w-full overflow-x-auto figma-table-scroll', wrapperClassName)}>
-      <table className={cn('w-full border-collapse text-left text-[13px]', className)} {...rest}>{children}</table>
+    <div
+      className={cn(
+        "w-full",
+        fitHeight
+          ? "h-full flex flex-col min-h-0 overflow-hidden"
+          : "overflow-x-auto figma-table-scroll",
+        wrapperClassName,
+      )}
+    >
+      <table
+        className={cn(
+          "w-full border-collapse text-left text-[12px]",
+          fitHeight && "h-full table-fixed",
+          className,
+        )}
+        {...rest}
+      >
+        {children}
+      </table>
     </div>
   );
 }
@@ -17,6 +41,30 @@ export const TableRow = ({ className, ...rest }) => <tr className={cn('group tra
 export const TableHeaderCell = ({ className, ...rest }) => (
   <th className={cn('sticky top-0 z-10 h-table-head whitespace-nowrap border-b border-line-table-head bg-surface-table-head px-3 text-xs font-semibold text-ink-secondary', className)} {...rest} />
 );
-export const TableCell = ({ className, ...rest }) => (
-  <td className={cn('border-b border-line-card px-3 py-2.5 align-middle text-[13px] text-ink-primary', className)} {...rest} />
+
+export const TableCell = ({ className, align = "left", ...rest }) => (
+  <td
+    className={cn(
+      "border-b border-[#F1F5F9] px-5 py-1.5 align-middle text-[12px] text-ink-primary",
+      align === "center"
+        ? "text-center"
+        : align === "right"
+          ? "text-right"
+          : "text-left",
+      className,
+    )}
+    {...rest}
+  />
+);
+
+export const TableFooter = ({ className, children, ...rest }) => (
+  <div
+    className={cn(
+      "h-[50px] shrink-0 border-t border-line-card bg-surface-table-head px-6 flex items-center justify-between",
+      className,
+    )}
+    {...rest}
+  >
+    {children}
+  </div>
 );

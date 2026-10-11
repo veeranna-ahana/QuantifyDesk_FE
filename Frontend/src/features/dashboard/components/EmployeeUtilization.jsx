@@ -27,7 +27,7 @@ const UTIL_TEXT = {
   warning: "text-badge-warning-ink",
 };
 const HEAD =
-  "bg-surface-card text-[11px] font-medium uppercase tracking-wider text-ink-muted";
+  "sticky top-0 z-20 bg-surface-card text-xs font-semibold text-ink-muted shadow-[0_1px_0_0_rgba(0,0,0,0.08)]";
 
 export function EmployeeUtilization({ d }) {
   return (

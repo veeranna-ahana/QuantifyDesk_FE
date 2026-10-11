@@ -109,7 +109,12 @@ export function TimesheetPanel({ projectcategoryCode }) {
         <TableHead>
           <TableRow className="hover:bg-transparent">
             {COLUMNS.map((c) => (
-              <TableHeaderCell key={c}>{c}</TableHeaderCell>
+              <TableHeaderCell
+                key={c}
+                className="sticky top-0 z-20 bg-surface-table-head shadow-[0_1px_0_0_rgba(0,0,0,0.08)]"
+              >
+                {c}
+              </TableHeaderCell>
             ))}
           </TableRow>
         </TableHead>
