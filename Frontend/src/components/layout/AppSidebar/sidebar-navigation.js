@@ -13,6 +13,7 @@ const CORE_NAV = [
   { to: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
   { to: '/projects', label: 'Projects', icon: 'projects' },
   { to: '/dailyreport', label: 'Daily Report', icon: 'dailyReport' },
+  { to: '/member-details', label: 'Member Details', icon: 'members' },
   { to: '/guideline', label: 'Guideline', icon: 'guideline' },
   {
     label: 'Reports',

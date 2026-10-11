@@ -14,7 +14,7 @@ function pageList(page, total, showEllipsis = false) {
   return sorted.flatMap((n, i) => (i > 0 && n - sorted[i - 1] > 1 ? ['…', n] : [n]));
 }
 
-const btn = 'flex h-8 w-8 items-center justify-center rounded-[8px] border text-xs transition-colors disabled:cursor-not-allowed disabled:opacity-50 select-none';
+const btn = 'flex h-8 w-8 items-center justify-center rounded-lg border text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50';
 
 /** Props-driven footer: "Showing 1-10 of 145 tasks   < 1 2 3 ... >" */
 export function Pagination({
