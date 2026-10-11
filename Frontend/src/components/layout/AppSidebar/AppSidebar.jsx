@@ -1,6 +1,6 @@
-import { ChevronDown, ClipboardClock, Clock3, FileCheck2, FileText, FolderKanban, LayoutDashboard, BookOpen, Server } from 'lucide-react';
+import { ChevronDown, ClipboardClock, Clock3, FileCheck2, FileText, FolderKanban, LayoutDashboard, BookOpen, Server, UsersRound } from 'lucide-react';
 import Cookies from 'js-cookie';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation} from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useState } from 'react';
 
@@ -12,7 +12,9 @@ import { ROLE_NAVIGATION } from './sidebar-navigation';
 const ICONS = {
   dashboard: LayoutDashboard,
   projects: FolderKanban,
-  dailyReport: ClipboardClock, serverInfo: Server, guideline: BookOpen,
+  dailyReport: ClipboardClock,
+  members: UsersRound,
+  serverInfo: Server, guideline: BookOpen,
   reports: FileText,
   timesheet: Clock3,
   documentChecklist: FileCheck2,
@@ -25,6 +27,7 @@ export function AppSidebar({ open = false, onNavigate }) {
   const [reportsExpanded, setReportsExpanded] = useState(
     pathname.startsWith('/reports'),
   );
+  const location = useLocation();
 
   let user = reduxUser;
   if (!user) {
@@ -117,7 +120,7 @@ export function AppSidebar({ open = false, onNavigate }) {
               className={({ isActive }) =>
                 cn(
                   'flex h-10 items-center gap-3 rounded-chip px-3 text-sm font-medium transition-colors',
-                  isActive ? 'bg-action-primary-soft text-action-primary' : 'text-ink-secondary hover:bg-surface-field-disabled',
+                  (isActive || (item.to === '/member-details' && location.pathname.startsWith('/member-details/'))) ? 'bg-action-primary-soft text-action-primary' : 'text-ink-secondary hover:bg-surface-field-disabled',
                 )
               }
             >
