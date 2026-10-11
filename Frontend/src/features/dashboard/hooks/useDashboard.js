@@ -147,7 +147,7 @@ export function useDashboard() {
             roles: p.roles && p.roles.length ? p.roles : p.role ? [p.role] : [],
             role: p.role || null,
             meta: `${p.assigned_task_count} tasks · ${p.assigned_units} units`,
-            name: p.description || p.project_code || "—",
+            name: p.project_title || p.description || p.project_code || "—",
             pct,
             statusText: `${p.completed_tasks}/${p.total_tasks_in_project || 0} tasks completed`,
             stats: [
@@ -270,7 +270,9 @@ export function useDashboard() {
         initials: initialsOf(u.emp_name || u.emp_id),
         role,
         roles,
-        projects: (u.projects || []).map((p) => p.project_code).filter(Boolean),
+        projects: (u.projects || [])
+          .map((p) => p.project_title || p.project_code)
+          .filter(Boolean),
         days: `${u.total_assigned_days ?? 0} business days`,
         // No capacity-calendar data yet for a date window — left blank; ProgressBar below already
         // falls back to a neutral default when windowPct is unset, not a fabricated real value.

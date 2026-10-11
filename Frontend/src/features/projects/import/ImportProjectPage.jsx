@@ -15,6 +15,15 @@ import { useImportProjectWizard } from "../hooks/useImportProjectWizard";
 export default function ImportProjectPage() {
   const wiz = useImportProjectWizard();
 
+  if (wiz.loadingDraft) {
+    return (
+      <div className="flex flex-col gap-4">
+        <PageHeader title="Import Project" />
+        <p className="text-sm text-ink-secondary">Loading your draft…</p>
+      </div>
+    );
+  }
+
   // Step 1's PMS project selection: a searchable TITLE dropdown, not a typed numeric PMS ID.
   // Picking a title resolves it to PMS's current project_id and syncs automatically — see
   // useImportProjectWizard's selectProjectTitle for why (PMS mints a new project_id per version).
@@ -76,8 +85,10 @@ export default function ImportProjectPage() {
               id="import-next-btn"
               rightIcon={<ArrowRight className="h-4 w-4" />}
               onClick={wiz.next}
+              isLoading={wiz.saving}
+              disabled={wiz.saving || wiz.syncing}
             >
-              Next
+              Save and Next
             </Button>
           </div>
         </>
@@ -87,6 +98,7 @@ export default function ImportProjectPage() {
           mode="import"
           onBack={wiz.back}
           onNext={wiz.next}
+          nextLoading={wiz.saving}
           milestones={wiz.taskMilestones}
           onMilestonesChange={wiz.setTaskMilestones}
           projectContext={{
@@ -100,6 +112,7 @@ export default function ImportProjectPage() {
           mode="import"
           onBack={wiz.back}
           onNext={wiz.next}
+          nextLoading={wiz.saving}
           rows={wiz.effortRows}
           onRowsChange={wiz.setEffortRows}
           projectContext={{

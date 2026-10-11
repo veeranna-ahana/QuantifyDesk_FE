@@ -1,17 +1,17 @@
 // src/features/server-information/ServerInformationPage.jsx
-import { useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Download, Plus } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { Download, Plus } from "lucide-react";
+import toast from "react-hot-toast";
 
-import { PageHeader } from '@/components/layout/PageHeader';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
-import { Pagination } from '@/components/ui/Pagination';
+import { PageHeader } from "@/components/layout/PageHeader";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Pagination } from "@/components/ui/Pagination";
 
-import { ServerFilterBar } from './components/ServerFilterBar';
-import { ServerTable } from './components/ServerTable';
-import { useServerInformation } from './hooks/useServerInformation';
+import { ServerFilterBar } from "./components/ServerFilterBar";
+import { ServerTable } from "./components/ServerTable";
+import { useServerInformation } from "./hooks/useServerInformation";
 
 export default function ServerInformationPage() {
   const navigate = useNavigate();
@@ -27,20 +27,24 @@ export default function ServerInformationPage() {
     totalItems,
     pageSize,
     activeCount,
+    loading,
+    error,
+    exporting,
+    exportCsv,
   } = useServerInformation();
 
   // Show a success toast when navigated back from the Add/Edit form
   useEffect(() => {
     if (state?.successMessage) {
-      toast.success(state.successMessage);
-      window.history.replaceState({}, '');
+      toast.success(state.successMessage, { id: "server-saved" });
+      window.history.replaceState({}, "");
     }
   }, [state]);
 
-  const handleAddServer = () => navigate('/server-information/add');
+  const handleAddServer = () => navigate("/server-information/add");
 
   const handleEditServer = (server) =>
-    navigate(`/server-information/${server.id}/edit`, { state: { server } });
+    navigate(`/server-information/${server.id}/edit`);
 
   return (
     <div className="flex w-full flex-col gap-2">
@@ -51,7 +55,10 @@ export default function ServerInformationPage() {
           <span className="inline-flex items-center gap-3">
             Server Information
             <span className="inline-flex h-[22px] items-center gap-1.5 rounded-full bg-[#E4E9EE] px-2.5 py-0.5 text-xs font-normal text-[#002045]">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#4CADAB]" aria-hidden="true" />
+              <span
+                className="h-1.5 w-1.5 rounded-full bg-[#4CADAB]"
+                aria-hidden="true"
+              />
               {activeCount} Active Hosts
             </span>
           </span>
@@ -63,8 +70,10 @@ export default function ServerInformationPage() {
               size="md"
               className="border-action-primary bg-surface-card px-3.5 text-action-primary shadow-[var(--shadow-1)] hover:bg-action-primary-soft"
               leftIcon={<Download className="h-3 w-3" />}
+              onClick={exportCsv}
+              disabled={exporting}
             >
-              Export CSV
+              {exporting ? "Exporting..." : "Export CSV"}
             </Button>
             <Button
               variant="primary"
@@ -84,10 +93,12 @@ export default function ServerInformationPage() {
         onSearchChange={setSearchQuery}
       />
 
+      {error && <p className="px-1 text-sm text-badge-danger-ink">{error}</p>}
+
       <Card className="overflow-hidden rounded-none border-0 bg-transparent shadow-none">
         <ServerTable
           servers={servers}
-          loading={false}
+          loading={loading}
           pageSize={pageSize}
           onEdit={handleEditServer}
         />

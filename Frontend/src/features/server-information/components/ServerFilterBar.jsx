@@ -1,7 +1,7 @@
 // src/features/server-information/components/ServerFilterBar.jsx
-import { Search, SlidersHorizontal } from 'lucide-react';
+import { Search, SlidersHorizontal } from "lucide-react";
 
-import { Input } from '@/components/ui/Input';
+import { Input } from "@/components/ui/Input";
 
 export function ServerFilterBar({ searchQuery, onSearchChange }) {
   return (
@@ -12,7 +12,7 @@ export function ServerFilterBar({ searchQuery, onSearchChange }) {
         aria-label="Search servers"
         leadingIcon={<Search className="h-3.5 w-3.5 text-[#545F72]" />}
         leadingIconClassName="left-[15px] text-[#545F72]"
-        placeholder="Search by hostname, IP address, OS..."
+        placeholder="Search by server name, IP address, OS..."
         value={searchQuery}
         onChange={(e) => onSearchChange(e.target.value)}
         wrapperClassName="w-full max-w-[400px] flex-none"

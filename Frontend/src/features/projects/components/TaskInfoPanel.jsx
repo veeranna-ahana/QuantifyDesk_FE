@@ -34,6 +34,7 @@ export function TaskInfoPanel({
   mode,
   onBack,
   onNext,
+  nextLoading = false,
   milestones,
   onMilestonesChange,
   projectContext = EMPTY_PROJECT_CONTEXT,
@@ -118,13 +119,21 @@ export function TaskInfoPanel({
       {canEdit && (
         <div className="flex justify-end gap-3">
           <Button variant="ghost" onClick={onBack}>
-            Back
+            {mode === "edit" ? "Cancel" : "Back"}
           </Button>
           <Button
-            rightIcon={<ArrowRight className="h-4 w-4" />}
+            rightIcon={
+              mode === "import" ? <ArrowRight className="h-4 w-4" /> : undefined
+            }
             onClick={onNext}
+            isLoading={nextLoading}
+            disabled={nextLoading}
           >
-            Next:
+            {mode === "import"
+              ? "Save and Next"
+              : mode === "edit"
+                ? "Update"
+                : "Next:"}
           </Button>
         </div>
       )}

@@ -1,4 +1,3 @@
-import { ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -31,6 +30,7 @@ export function ProjectInfoPanel({
   onCancel,
   onNext,
   onFormChange,
+  saving = false,
 }) {
   const navigate = useNavigate();
 
@@ -50,6 +50,8 @@ export function ProjectInfoPanel({
     o2dId: pick(project, "o2d_id", "o2dId"),
     projectCode: pick(project, "project_code", "projectCode"),
     subCategory: pick(project, "sub_category", "subCategory"),
+    techLeadName: pick(project, "tech_lead_name"),
+    projectManagerName: pick(project, "project_manager_name"),
     startDate: project?.start_date
       ? formatProjectDate(project.start_date)
       : "—",
@@ -63,6 +65,13 @@ export function ProjectInfoPanel({
     o2dId: display.o2dId,
     projectCode: display.projectCode,
     subCategory: display.subCategory,
+    techStackIds: (project?.tech_stack_ids || []).map(String),
+    techLeadEmpId: pick(project, "tech_lead_emp_id", "techLeadEmpId"),
+    projectManagerEmpId: pick(
+      project,
+      "project_manager_emp_id",
+      "projectManagerEmpId",
+    ),
     description: display.description,
   });
   const [editable, setEditable] = useState(initialEditable);
@@ -99,10 +108,11 @@ export function ProjectInfoPanel({
             Cancel
           </Button>
           <Button
-            rightIcon={<ArrowRight className="h-4 w-4" />}
             onClick={() => onNext?.(editable)}
+            isLoading={saving}
+            disabled={saving}
           >
-            Next:
+            Update
           </Button>
         </div>
       )}

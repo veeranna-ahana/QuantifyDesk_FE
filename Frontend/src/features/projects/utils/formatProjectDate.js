@@ -27,6 +27,10 @@ const MONTHS_SHORT = [
  */
 function parseDateOnly(dateStr) {
   if (!dateStr) return null;
+  // MySQL DATETIME as the backend sends it (dateStrings: true): "2026-10-11 12:34:56"
+  const sql = /^(\d{4})-(\d{2})-(\d{2}) \d{2}:\d{2}/.exec(dateStr);
+  if (sql)
+    return { y: Number(sql[1]), m: Number(sql[2]) - 1, day: Number(sql[3]) };
   if (dateStr.includes("T")) {
     const d = new Date(dateStr);
     if (Number.isNaN(d.getTime())) return null;

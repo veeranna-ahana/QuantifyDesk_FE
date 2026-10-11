@@ -126,9 +126,6 @@ export function useTaskInfo(milestones, onMilestonesChange) {
         ),
       })),
     );
-    toast.success(
-      `Successfully updated ${Object.keys(valuesById).length} tasks!`,
-    );
   };
 
   const summary = useMemo(() => {

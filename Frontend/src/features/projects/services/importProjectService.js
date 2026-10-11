@@ -23,6 +23,10 @@ export const syncPmsProject = (projectId) =>
 export const getProjectTypes = () =>
   axiosInstance.get("/api/import-project/project-types");
 
+/** Step 1 / Project Info: Tech Stack multi-select options from tech_stack_master. */
+export const getTechStacks = () =>
+  axiosInstance.get("/api/import-project/tech-stacks");
+
 /** Step 2/3: distinct Role list from role_task_catalog (BA, UI, TL, FE Dev, BE Dev, Tester, ...). */
 export const getRoles = () => axiosInstance.get("/api/import-project/roles");
 
