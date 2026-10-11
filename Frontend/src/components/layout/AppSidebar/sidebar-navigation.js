@@ -22,6 +22,7 @@ const CORE_NAV = [
       { to: '/reports/project-document-checklist', label: 'Project Document Checklist', icon: 'documentChecklist' },
     ],
   },
+  { to: '/server-information', label: 'Server Information', icon: 'serverInfo' },
 ];
 
 /** @type {Record<string, SidebarNavItemConfig[]>} */

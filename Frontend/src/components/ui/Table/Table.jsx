@@ -35,48 +35,11 @@ export function Table({
     </div>
   );
 }
-
-export const TableHead = ({ className, children, ...rest }) => (
-  <thead className={cn("bg-surface-table-head shrink-0", className)} {...rest}>
-    {children}
-  </thead>
-);
-
-export const TableBody = ({
-  className,
-  fitHeight = false,
-  children,
-  ...rest
-}) => (
-  <tbody className={cn(fitHeight && "h-full", className)} {...rest}>
-    {children}
-  </tbody>
-);
-
-export const TableRow = ({ className, fitHeight = false, ...rest }) => (
-  <tr
-    className={cn(
-      "group transition-colors hover:bg-surface-field-disabled border-b border-[#F1F5F9] last:border-b-0",
-      fitHeight && "h-[10%] min-h-[28px] max-h-[50px]",
-      className,
-    )}
-    {...rest}
-  />
-);
-
-export const TableHeaderCell = ({ className, align = "left", ...rest }) => (
-  <th
-    className={cn(
-      "h-[41px] whitespace-nowrap border-b border-line-card bg-surface-table-head px-5 py-3 text-[12px] font-semibold text-ink-secondary",
-      align === "center"
-        ? "text-center"
-        : align === "right"
-          ? "text-right"
-          : "text-left",
-      className,
-    )}
-    {...rest}
-  />
+export const TableHead = ({ children }) => <thead>{children}</thead>;
+export const TableBody = ({ children }) => <tbody>{children}</tbody>;
+export const TableRow = ({ className, ...rest }) => <tr className={cn('group transition-colors hover:bg-surface-field-disabled', className)} {...rest} />;
+export const TableHeaderCell = ({ className, ...rest }) => (
+  <th className={cn('sticky top-0 z-10 h-table-head whitespace-nowrap border-b border-line-table-head bg-surface-table-head px-3 text-xs font-semibold text-ink-secondary', className)} {...rest} />
 );
 
 export const TableCell = ({ className, align = "left", ...rest }) => (
