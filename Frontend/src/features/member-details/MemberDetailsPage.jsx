@@ -20,7 +20,10 @@ export default function MemberDetailsPage() {
         titleClassName="text-[length:var(--font-size-member-page-title)] leading-7 font-bold text-[color:var(--color-member-title)]"
       />
 
-      <MemberSummaryCards summary={memberDetails.summary} />
+      <MemberSummaryCards
+        summary={memberDetails.summary}
+        loading={memberDetails.loading}
+      />
 
       <MemberFilters
         search={memberDetails.search}
@@ -31,8 +34,17 @@ export default function MemberDetailsPage() {
         onExport={memberDetails.exportMembers}
       />
 
+      {memberDetails.error && (
+        <p className="px-1 text-sm text-badge-danger-ink">
+          {memberDetails.error}
+        </p>
+      )}
+
       <Card className="overflow-hidden shadow-header">
-        <MemberTable members={memberDetails.members} />
+        <MemberTable
+          members={memberDetails.members}
+          loading={memberDetails.loading}
+        />
         <Pagination
           page={memberDetails.page}
           totalPages={memberDetails.totalPages}

@@ -12,6 +12,7 @@ import {
   setLoading,
   setProjects,
 } from "@/store/slices/projectsSlice";
+import { normalizeProjectStatus } from "../utils/mapPmsSync";
 
 /**
  * Data + filter/pagination state for the Projects list.
@@ -64,7 +65,8 @@ export function useProjects() {
   const counts = useMemo(() => {
     const c = { all: allProjects.length };
     allProjects.forEach((p) => {
-      c[p.status] = (c[p.status] ?? 0) + 1;
+      const bucket = normalizeProjectStatus(p.status); // "COMPLETED" → "Completed"
+      c[bucket] = (c[bucket] ?? 0) + 1;
     });
     return c;
   }, [allProjects]);
@@ -72,7 +74,9 @@ export function useProjects() {
   const filtered = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     return allProjects.filter((p) => {
-      const okStatus = statusFilter === "all" || p.status === statusFilter;
+      const okStatus =
+        statusFilter === "all" ||
+        normalizeProjectStatus(p.status) === statusFilter;
       const okSearch =
         !q ||
         [p.projectName, p.pmsId, p.customer].some((v) =>

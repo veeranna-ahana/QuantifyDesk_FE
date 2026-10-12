@@ -18,9 +18,28 @@ function SummaryItem({ label, value, variant }) {
 export function TimesheetSummary({ summary, className = "" }) {
   return (
     <div className={`flex flex-wrap items-center gap-2 ${className}`}>
-      <SummaryItem label="Total Hours" value={summary.total} variant="neutral" />
-      <SummaryItem label="Approved" value={summary.approved} variant="success" />
-      <SummaryItem label="Pending" value={summary.pending} variant="warning" />
+      <SummaryItem
+        label="Total Hours"
+        value={summary.totalHours}
+        variant="neutral"
+      />
+      <SummaryItem
+        label="Approved"
+        value={summary.approvedHours}
+        variant="success"
+      />
+      <SummaryItem
+        label="Pending"
+        value={summary.pendingHours}
+        variant="warning"
+      />
+      {summary.rejectedHours > 0 && (
+        <SummaryItem
+          label="Rejected"
+          value={summary.rejectedHours}
+          variant="danger"
+        />
+      )}
     </div>
   );
 }
