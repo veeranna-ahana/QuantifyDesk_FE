@@ -15,7 +15,7 @@ import {
 import { statusVariant } from "@/lib/status";
 
 import { useTimesheet } from "../hooks/useTimesheet";
-import { formatProjectDate } from "../utils/formatProjectDate";
+import { formatDayMonthYear } from "../utils/formatProjectDate";
 
 // One row per employee (aggregated across all their timesheet entries for this project
 // category) — this is the real shape GET /api/hrms/timesheets-by-category returns, not a
@@ -159,10 +159,10 @@ export function TimesheetPanel({ projectcategoryCode }) {
                   {r.projectcategory_name || r.projectcategory_code || "—"}
                 </TableCell>
                 <TableCell>
-                  {r.from_date ? formatProjectDate(r.from_date) : "—"}
+                  {r.from_date ? formatDayMonthYear(r.from_date) : "—"}
                 </TableCell>
                 <TableCell>
-                  {r.to_date ? formatProjectDate(r.to_date) : "—"}
+                  {r.to_date ? formatDayMonthYear(r.to_date) : "—"}
                 </TableCell>
                 <TableCell>{r.total_hours ?? 0} hrs</TableCell>
                 <TableCell>{r.approved_hours ?? 0} hrs</TableCell>
@@ -180,7 +180,7 @@ export function TimesheetPanel({ projectcategoryCode }) {
                 <TableCell>{r.last_approved_by || "—"}</TableCell>
                 <TableCell className="text-ink-secondary">
                   {r.last_approved_on
-                    ? formatProjectDate(r.last_approved_on)
+                    ? formatDayMonthYear(r.last_approved_on)
                     : "—"}
                 </TableCell>
               </TableRow>

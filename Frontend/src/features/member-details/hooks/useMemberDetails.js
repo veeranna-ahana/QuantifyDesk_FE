@@ -1,44 +1,83 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
 
+import { memberService } from "../services/member.service";
 import {
-  mockMemberSummary,
-  mockMembers,
-  mockSkillAnalytics,
-} from "../mock/mockMemberDetails";
+  decodeEntities,
+  downloadCsv,
+  formatAvailableFrom,
+  formatDate,
+  formatExperience,
+  isImmediate,
+} from "../utils";
 
 const PAGE_SIZE = 10;
 
-function toCsvRow(values) {
-  return values
-    .map((value) => `"${String(value ?? "").replace(/"/g, '""')}"`)
-    .join(",");
+const csvCell = (value) => {
+  let text = String(value ?? "");
+  if (/^[=+\-@]/.test(text)) text = `'${text}`; // keep Excel from reading it as a formula
+  return `"${text.replace(/"/g, '""')}"`;
+};
+
+/** API employee (GET /api/employees/delivery-details) -> the member shape the table works with. */
+function toMember(employee) {
+  return {
+    id: employee.emp_id,
+    name: decodeEntities(employee.emp_name),
+    designation: decodeEntities(employee.designation),
+    experience: employee.experience_years,
+    joiningDate: formatDate(employee.doj),
+    skills: [
+      ...new Set([...(employee.skills || []), ...(employee.sub_skills || [])]),
+    ],
+    projects: employee.projects || [],
+    availableFrom: formatAvailableFrom(employee.available),
+    immediate: isImmediate(employee),
+  };
 }
 
-function downloadCsv(filename, header, rows) {
-  const blob = new Blob(
-    [[header, ...rows].map(toCsvRow).join("\n")],
-    { type: "text/csv" },
-  );
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  link.click();
-  URL.revokeObjectURL(url);
-}
-
+/**
+ * Member Details data + search / paging. One API call loads every delivery employee, so search
+ * and paging run in the browser. There is no allocation data yet, so only "Available From"
+ * (immediate / a date) is shown.
+ */
 export function useMemberDetails() {
+  const [members, setMembers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
   const [filterBy, setFilterBy] = useState("all");
   const [page, setPage] = useState(1);
 
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const res = await memberService.getDeliveryDetails();
+        if (active) setMembers((res.employees || []).map(toMember));
+      } catch (err) {
+        if (active)
+          setError(
+            err.response?.data?.message || "Failed to load member details",
+          );
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const filteredMembers = useMemo(() => {
     const query = search.trim().toLowerCase();
-    if (!query) return mockMembers;
-    return mockMembers.filter((member) => {
+    if (!query) return members;
+    return members.filter((member) => {
       const values =
         filterBy === "experience"
-          ? [member.experience, `${member.experience} years`]
+          ? [formatExperience(member.experience), member.experience]
           : filterBy === "skill"
             ? member.skills
             : filterBy === "member"
@@ -46,65 +85,72 @@ export function useMemberDetails() {
               : [
                   member.name,
                   member.id,
-                  member.experience,
+                  formatExperience(member.experience),
                   member.joiningDate,
                   ...member.skills,
                   ...member.projects,
-                  member.availability,
+                  member.availableFrom,
                 ];
       return values.some((value) =>
-        String(value).toLowerCase().includes(query),
+        String(value ?? "")
+          .toLowerCase()
+          .includes(query),
       );
     });
-  }, [filterBy, search]);
+  }, [filterBy, search, members]);
 
-  const offset = (page - 1) * PAGE_SIZE;
+  const totalPages = Math.max(1, Math.ceil(filteredMembers.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const offset = (currentPage - 1) * PAGE_SIZE;
+
+  const summary = useMemo(
+    () => ({
+      totalResources: members.length,
+      immediatelyAvailable: members.filter((m) => m.immediate).length,
+    }),
+    [members],
+  );
 
   const exportMembers = () => {
+    if (filteredMembers.length === 0) {
+      toast.error("No members to export");
+      return;
+    }
     const header = [
       "Member",
       "Employee ID",
+      "Designation",
       "Experience",
       "DOJ",
       "Skills",
       "Current Project",
-      "Allocation",
-      "Availability",
       "Available From",
     ];
     const rows = filteredMembers.map((member) => [
       member.name,
       member.id,
-      `${member.experience} Years`,
+      member.designation,
+      formatExperience(member.experience),
       member.joiningDate,
       member.skills.join("; "),
       member.projects.join("; "),
-      `${member.allocation}%`,
-      member.availability,
       member.availableFrom,
     ]);
-    downloadCsv("member-details.csv", header, rows);
-  };
-
-  const exportSkills = () => {
-    const header = ["Skill", "Total Members", "Available", "Partial", "Allocated"];
-    const rows = mockSkillAnalytics.map((skill) => [
-      skill.name,
-      skill.total,
-      skill.available,
-      skill.partial,
-      skill.allocated,
-    ]);
-    downloadCsv("skill-analytics.csv", header, rows);
+    downloadCsv(
+      [header, ...rows].map((r) => r.map(csvCell).join(",")).join("\r\n"),
+      `member-details-${new Date().toISOString().slice(0, 10)}.csv`,
+    );
   };
 
   return {
     members: filteredMembers.slice(offset, offset + PAGE_SIZE),
     totalMembers: filteredMembers.length,
-    summary: mockMemberSummary,
-    page,
+    summary,
+    loading,
+    error,
+    page: currentPage,
     pageSize: PAGE_SIZE,
-    totalPages: Math.max(1, Math.ceil(filteredMembers.length / PAGE_SIZE)),
+    totalPages,
     search,
     setSearch: (value) => {
       setSearch(value);
@@ -116,9 +162,6 @@ export function useMemberDetails() {
       setPage(1);
     },
     setPage,
-    skills: mockSkillAnalytics.slice(offset, offset + PAGE_SIZE),
-    totalSkills: mockSkillAnalytics.length,
     exportMembers,
-    exportSkills,
   };
 }

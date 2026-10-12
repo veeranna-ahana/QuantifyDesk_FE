@@ -32,4 +32,8 @@ const NORMALIZED_STATUS_VARIANT = Object.fromEntries(
 );
 
 export const statusVariant = (status) =>
-  NORMALIZED_STATUS_VARIANT[String(status || "").toUpperCase()] ?? "neutral";
+  NORMALIZED_STATUS_VARIANT[
+    String(status || "")
+      .toUpperCase()
+      .replace(/_/g, " ")
+  ] ?? "neutral"; // "ON_HOLD" → "ON HOLD"

@@ -35,6 +35,9 @@ export default function TimesheetReportPage() {
         filters={report.draftFilters}
         onChange={report.setDraftFilters}
         onApply={report.applyFilters}
+        onClear={report.clearFilters}
+        projects={report.options.projects}
+        employees={report.options.employees}
         summary={
           <TimesheetSummary
             summary={report.summary}
@@ -43,8 +46,12 @@ export default function TimesheetReportPage() {
         }
       />
 
+      {report.error && (
+        <p className="px-1 text-sm text-badge-danger-ink">{report.error}</p>
+      )}
+
       <Card className="overflow-hidden">
-        <TimesheetTable records={report.records} />
+        <TimesheetTable records={report.records} loading={report.loading} />
         {report.totalRecords ? (
           <Pagination
             page={report.page}
@@ -54,7 +61,7 @@ export default function TimesheetReportPage() {
             onPageChange={report.setPage}
             itemLabel="records"
           />
-        ) : (
+        ) : report.loading ? null : (
           <div className="border-t border-line-table-head bg-surface-table-head px-4 py-2 text-xs text-ink-secondary">
             Showing 0-0 of 0 records
           </div>

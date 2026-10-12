@@ -1,14 +1,22 @@
-import { Search } from 'lucide-react';
+import { Search } from "lucide-react";
 
-import { Card } from '@/components/ui/Card';
-import { FilterTabs } from '@/components/ui/FilterTabs';
-import { Input } from '@/components/ui/Input';
+import { Card } from "@/components/ui/Card";
+import { FilterTabs } from "@/components/ui/FilterTabs";
+import { Input } from "@/components/ui/Input";
 
-export function ProjectsFilterBar({ searchQuery, onSearchChange, statusFilter, onStatusFilterChange, counts }) {
+export function ProjectsFilterBar({
+  searchQuery,
+  onSearchChange,
+  statusFilter,
+  onStatusFilterChange,
+  counts,
+}) {
   const tabs = [
-    { id: 'all', label: `All (${counts.all ?? 0})` },
-    { id: 'In Progress', label: `In Progress (${counts['In Progress'] ?? 0})` },
-    { id: 'Completed', label: `Completed (${counts.Completed ?? 0})` },
+    { id: "all", label: `All (${counts.all ?? 0})` },
+    { id: "Approved", label: `Approved (${counts.Approved ?? 0})` },
+    { id: "Inactive", label: `Inactive (${counts.Inactive ?? 0})` },
+    { id: "On Hold", label: `On Hold (${counts["On Hold"] ?? 0})` },
+    { id: "Completed", label: `Completed (${counts.Completed ?? 0})` },
   ];
   return (
     <Card className="flex flex-wrap items-center justify-between gap-3 p-3">
@@ -22,7 +30,11 @@ export function ProjectsFilterBar({ searchQuery, onSearchChange, statusFilter, o
         onChange={(e) => onSearchChange(e.target.value)}
         wrapperClassName="w-full max-w-md flex-1"
       />
-      <FilterTabs items={tabs} value={statusFilter} onChange={onStatusFilterChange} />
+      <FilterTabs
+        items={tabs}
+        value={statusFilter}
+        onChange={onStatusFilterChange}
+      />
     </Card>
   );
 }

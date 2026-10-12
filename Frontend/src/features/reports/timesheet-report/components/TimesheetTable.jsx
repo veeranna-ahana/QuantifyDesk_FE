@@ -1,15 +1,25 @@
 import { Badge } from "@/components/ui/Badge";
-import { Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow } from "@/components/ui/Table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeaderCell,
+  TableRow,
+} from "@/components/ui/Table";
 
 const COLUMNS = [
   ["employeeId", "Emp ID", "whitespace-nowrap"],
   ["employeeName", "Emp Name", "whitespace-nowrap font-semibold"],
   ["designation", "Designation", "whitespace-nowrap"],
   ["projectCode", "Project Code", "whitespace-nowrap font-mono"],
-  ["projectName", "Project Name", "whitespace-nowrap font-semibold text-action-primary"],
+  [
+    "projectName",
+    "Project Name",
+    "whitespace-nowrap font-semibold text-action-primary",
+  ],
   ["categoryCode", "Cat. Code", "whitespace-nowrap font-mono text-ink-muted"],
   ["category", "Category", "whitespace-nowrap"],
-  ["taskDescription", "Task Description", "min-w-[var(--size-timesheet-task-description)] whitespace-nowrap text-ink-primary"],
   ["hoursSpent", "Hours Spent", "whitespace-nowrap text-right font-semibold"],
   ["fromDate", "From Date", "whitespace-nowrap"],
   ["toDate", "To Date", "whitespace-nowrap"],
@@ -19,9 +29,16 @@ const COLUMNS = [
   ["approvedOn", "Approved On", "whitespace-nowrap"],
 ];
 
+const STATUS_VARIANTS = {
+  Approved: "success",
+  Rejected: "danger",
+  Pending: "brand",
+  Mixed: "warning",
+};
+
 function formatDate(value) {
   if (!value) return "—";
-  const [year, month, day] = value.split("-").map(Number);
+  const [year, month, day] = String(value).slice(0, 10).split("-").map(Number);
   return new Date(year, month - 1, day).toLocaleDateString("en-GB", {
     day: "2-digit",
     month: "short",
@@ -29,9 +46,12 @@ function formatDate(value) {
   });
 }
 
-export function TimesheetTable({ records }) {
+export function TimesheetTable({ records, loading = false }) {
   return (
-    <Table className="w-full min-w-[var(--size-timesheet-table-min-width)]" wrapperClassName="w-full">
+    <Table
+      className="w-full min-w-[var(--size-timesheet-table-min-width)]"
+      wrapperClassName="w-full"
+    >
       <TableHead>
         <TableRow className="hover:bg-transparent">
           {COLUMNS.map(([, label]) => (
@@ -48,12 +68,16 @@ export function TimesheetTable({ records }) {
               colSpan={COLUMNS.length}
               className="py-8 text-center text-ink-muted"
             >
-              No timesheet records match these filters.
+              {loading
+                ? "Loading timesheet records..."
+                : "No timesheet records match these filters."}
             </TableCell>
           </TableRow>
         ) : (
-          records.map((record) => (
-            <TableRow key={record.id}>
+          records.map((record, index) => (
+            <TableRow
+              key={`${record.employeeId}-${record.projectCode}-${record.categoryCode}-${record.fromDate}-${index}`}
+            >
               {COLUMNS.map(([key, , className]) => (
                 <TableCell
                   key={key}
@@ -61,18 +85,23 @@ export function TimesheetTable({ records }) {
                 >
                   {key === "approvalStatus" ? (
                     <Badge
-                      variant={record.approvalStatus === "Approved" ? "success" : "brand"}
+                      variant={
+                        STATUS_VARIANTS[record.approvalStatus] ?? "neutral"
+                      }
                       size="sm"
                       dot
                     >
-                      {record.approvalStatus}
+                      {record.approvalStatus || "—"}
                     </Badge>
                   ) : key === "hoursSpent" ? (
-                    `${record.hoursSpent.toFixed(1)} hrs`
-                  ) : key === "fromDate" || key === "toDate" || key === "submittedOn" || key === "approvedOn" ? (
+                    `${Number(record.hoursSpent || 0).toFixed(1)} hrs`
+                  ) : key === "fromDate" ||
+                    key === "toDate" ||
+                    key === "submittedOn" ||
+                    key === "approvedOn" ? (
                     formatDate(record[key])
                   ) : (
-                    record[key]
+                    record[key] || "—"
                   )}
                 </TableCell>
               ))}

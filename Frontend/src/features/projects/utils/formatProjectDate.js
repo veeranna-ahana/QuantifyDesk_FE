@@ -55,5 +55,12 @@ export const formatShortDate = (dateStr) => {
   return `${String(p.day).padStart(2, "0")} ${MONTHS_SHORT[p.m]} ${String(p.y).slice(-2)}`;
 };
 
+/** "2026-04-27" or "2023-03-19T18:30:00.000Z" -> "27 Apr 2026" */
+export const formatDayMonthYear = (dateStr) => {
+  const p = parseDateOnly(dateStr);
+  if (!p) return "—";
+  return `${String(p.day).padStart(2, "0")} ${MONTHS_SHORT[p.m]} ${p.y}`;
+};
+
 export const formatDateRange = (startDate, endDate) =>
   `${formatProjectDate(startDate)} - ${formatProjectDate(endDate)}`;
