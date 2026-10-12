@@ -15,7 +15,7 @@ import {
 import { cn } from "@/lib/cn";
 import { statusVariant } from "@/lib/status";
 
-import { formatProjectDate } from "../utils/formatProjectDate";
+import { formatDayMonthYear } from "../utils/formatProjectDate";
 
 // Hours are often the result of a division/sum of fractional values (e.g. minutes converted to
 // hours), which can land on a binary floating-point value like 680.8000000000001 instead of a
@@ -202,15 +202,15 @@ export function ProjectOverview({ project, overview }) {
           centered
           size="md"
           label="Start Date"
-          value={plannedStart ? formatProjectDate(plannedStart) : "—"}
-          caption={`Actual: ${actualStart ? formatProjectDate(actualStart) : "—"}`}
+          value={plannedStart ? formatDayMonthYear(plannedStart) : "—"}
+          caption={`Actual: ${actualStart ? formatDayMonthYear(actualStart) : "—"}`}
         />
         <StatCard
           centered
           size="md"
           label="End Date"
-          value={plannedEnd ? formatProjectDate(plannedEnd) : "—"}
-          caption={`Actual: ${actualEnd ? formatProjectDate(actualEnd) : "—"}`}
+          value={plannedEnd ? formatDayMonthYear(plannedEnd) : "—"}
+          caption={`Actual: ${actualEnd ? formatDayMonthYear(actualEnd) : "—"}`}
         />
         <StatCard
           centered
