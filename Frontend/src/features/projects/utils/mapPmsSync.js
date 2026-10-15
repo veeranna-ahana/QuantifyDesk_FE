@@ -101,7 +101,7 @@ export function mapPmsToMilestones(milestoneDetails = [], tasksDetails = []) {
     const rawTasks = tasksByMilestoneId.get(milestoneId) || [];
 
     const tasks = rawTasks.map((t) => {
-      const status = normalizeStatus(t.status);
+      const statusBucket = normalizeStatus(t.status);
       return {
         id: `T-${t.task_id}`,
         taskId: `T-${t.task_id}`,
@@ -121,12 +121,13 @@ export function mapPmsToMilestones(milestoneDetails = [], tasksDetails = []) {
         actualStart: formatPmsDate(t.actual_start_date),
         actualEnd: formatPmsDate(t.actual_end_date),
         allocation: "—",
-        status,
-        // Shown on the Status badge instead of the translated `status` bucket above — the user
-        // wants PMS's own wording visible (e.g. "YET_TO_START"), not a relabeled "Not Started".
-        // `status` (the bucket) is kept as-is for filtering/counts (TaskFilters, useTaskInfo
-        // summary tallies), which compare against 'Not Started'/'In Progress'/'Completed'.
-        statusLabel: t.status || status,
+        // PMS's own raw status text (e.g. "STARTED", "YET_TO_START", "COMPLETED") — shown as-is
+        // everywhere, never relabeled. `statusBucket` below is internal-only (never shown in the
+        // UI), used purely for filtering/counts (TaskFilters, useTaskInfo summary tallies, the
+        // milestone completion % just below), which still need Not Started/In Progress/Completed
+        // buckets grouping PMS's many possible raw values.
+        status: t.status || null,
+        statusBucket,
         // Risk Category and Remark are both fields WE fill in (via the Edit Task drawer /
         // inline edit) — they are not PMS data at all, so they start genuinely empty here.
         // `dependency` (PMS's task-ordering field, e.g. "Analysis of Intune Platform") is a
@@ -140,7 +141,9 @@ export function mapPmsToMilestones(milestoneDetails = [], tasksDetails = []) {
       };
     });
 
-    const completedTasks = tasks.filter((t) => t.status === "Completed").length;
+    const completedTasks = tasks.filter(
+      (t) => t.statusBucket === "Completed",
+    ).length;
     const totalTasks = tasks.length;
     const percentage =
       totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100);
@@ -149,7 +152,8 @@ export function mapPmsToMilestones(milestoneDetails = [], tasksDetails = []) {
         ? "Not Started"
         : percentage === 100
           ? "Completed"
-          : completedTasks > 0 || tasks.some((t) => t.status === "In Progress")
+          : completedTasks > 0 ||
+              tasks.some((t) => t.statusBucket === "In Progress")
             ? "In Progress"
             : "Not Started";
 
