@@ -64,7 +64,7 @@ export function SessionExpiredModal() {
 
         <div style={styles.actions}>
           <button type="button" onClick={goToUat} style={styles.primaryBtn}>
-            Logout
+            Login Again
           </button>
         </div>
       </div>

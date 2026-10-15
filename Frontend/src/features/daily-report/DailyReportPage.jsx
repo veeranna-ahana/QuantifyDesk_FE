@@ -65,6 +65,7 @@ export default function DailyReportPage() {
             leadingIcon={<Search className="h-4 w-4" />}
             value={r.searchQuery}
             onChange={(e) => r.setSearchQuery(e.target.value)}
+            onClear={() => r.setSearchQuery('')}
             wrapperClassName="w-72"
           />
           <Button
@@ -82,6 +83,8 @@ export default function DailyReportPage() {
           project={p}
           globalTab={r.globalTab}
           searchQuery={r.searchQuery}
+          filter={r.projectFilters[p.id] || "in-progress"}
+          onFilterChange={(filter) => r.setProjectFilter(p.id, filter)}
         />
       ))}
     </div>

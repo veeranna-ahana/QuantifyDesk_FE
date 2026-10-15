@@ -1,6 +1,7 @@
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
+import { useSelector } from "react-redux";
 import Login from "./pages/Login";
 import { SessionExpiredModal } from "@/components/SessionExpiredModal";
 import Dashboard from "@/features/dashboard/DashboardPage";
@@ -33,6 +34,8 @@ import ServerFormPage from "@/features/server-information/ServerFormPage";
 import ReconPage from "./pages/Recon";
 import ReconciliationUpload from "./pages/ReconciliationUpload";
 import { GuidelinePage, GuidelineFormPage } from "@/features/guideline";
+import { useSingleActiveTab } from "@/hooks/useSingleActiveTab";
+import { SingleTabRestriction } from "@/components/SingleTabRestriction";
 
 /**
  * Runs the app-wide UAT postMessage listener and shows the role picker when
@@ -41,6 +44,43 @@ import { GuidelinePage, GuidelineFormPage } from "@/features/guideline";
  * on every screen, not just /quantification.
  */
 function AppShell() {
+  const userId = useSelector((state) => state.auth?.user?.emp_id);
+  const accountId = userId || localStorage.getItem("emp_id") || "anonymous";
+  const { status, retry } = useSingleActiveTab(accountId);
+
+  if (status !== "active") {
+    return status === "checking" ? (
+      <main className="flex min-h-screen items-center justify-center bg-[#070c16] text-slate-300">
+        <p role="status">Checking application access…</p>
+      </main>
+    ) : status === "blocked" ? (
+      <SingleTabRestriction />
+    ) : (
+      <main className="flex min-h-screen items-center justify-center bg-[#070c16] p-6 text-center text-slate-300">
+        <section role="alert" className="max-w-md">
+          <h1 className="text-xl font-semibold text-white">
+            Unable to verify this tab
+          </h1>
+          <p className="mt-3 text-sm">
+            We could not verify that this tab has exclusive access. Please try
+            again.
+          </p>
+          <button
+            type="button"
+            onClick={retry}
+            className="mt-6 rounded-control bg-action-primary px-4 py-2 text-sm font-medium text-ink-on-primary hover:bg-action-primary-hover"
+          >
+            Try again
+          </button>
+        </section>
+      </main>
+    );
+  }
+
+  return <AuthenticatedApp />;
+}
+
+function AuthenticatedApp() {
   const { pendingRoleChoice, selectRole, dismissRoleChoice } =
     usePostMessageLogin();
 

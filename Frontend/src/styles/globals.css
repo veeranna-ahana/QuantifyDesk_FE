@@ -92,6 +92,17 @@ a:hover {
   background-color: var(--color-surface-app);
 }
 
+/* ── Hide number-input spinner arrows ── */
+.no-spinner::-webkit-outer-spin-button,
+.no-spinner::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.no-spinner[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
 /* ── Custom Figma-style table horizontal scrollbar ── */
 .figma-table-scroll {
   overflow-x: auto;

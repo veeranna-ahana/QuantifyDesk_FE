@@ -1065,8 +1065,18 @@ useEffect(() => {
                         placeholder="Search resources..."
                         value={resourceSearch}
                         onChange={(e) => setResourceSearch(e.target.value)}
-                        className="w-56 pl-9 pr-3.5 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#856BFF]/30"
+                        className="w-56 pl-9 pr-8 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#856BFF]/30"
                       />
+                      {resourceSearch && (
+                        <button
+                          type="button"
+                          onClick={() => setResourceSearch('')}
+                          aria-label="Clear search"
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                        >
+                          <Icon icon="material-symbols:close" width="14" height="14" />
+                        </button>
+                      )}
                     </div>
                     {/* <button
                       type="button"
@@ -1574,8 +1584,18 @@ useEffect(() => {
                           placeholder="Search projects..."
                           value={projectSearch}
                           onChange={(e) => setProjectSearch(e.target.value)}
-                          className="w-56 pl-9 pr-3.5 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#856BFF]/30"
+                          className="w-56 pl-9 pr-8 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#856BFF]/30"
                         />
+                        {projectSearch && (
+                          <button
+                            type="button"
+                            onClick={() => setProjectSearch('')}
+                            aria-label="Clear search"
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                          >
+                            <Icon icon="material-symbols:close" width="14" height="14" />
+                          </button>
+                        )}
                       </div>
                       <button
                         onClick={() => exportProjectLevelExcel(filters)}

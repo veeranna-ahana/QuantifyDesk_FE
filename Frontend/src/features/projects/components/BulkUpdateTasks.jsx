@@ -161,6 +161,7 @@ export function BulkUpdateTasks({
             leadingIcon={<Search className="h-4 w-4" />}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            onClear={() => setSearch('')}
             wrapperClassName="w-full max-w-sm flex-1"
           />
           <Select
