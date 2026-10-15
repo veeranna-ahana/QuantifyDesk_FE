@@ -19,6 +19,12 @@ const STATUS_VARIANT = {
   "Over Utilized": "danger",
   "Under Utilized": "warning",
   "Optimally Used": "success",
+
+  // PMS's own raw task-status vocabulary (Task Info shows these as-is now, not a relabeled
+  // "Not Started"/"In Progress"/"Completed" bucket — see mapProjectView.js/mapPmsSync.js).
+  STARTED: "warning",
+  COMPLETED: "success",
+  YET_TO_START: "neutral",
 };
 
 // Case-insensitive lookup — PMS sends statuses ALL CAPS (e.g. "APPROVED"), while some local/mock
@@ -32,8 +38,4 @@ const NORMALIZED_STATUS_VARIANT = Object.fromEntries(
 );
 
 export const statusVariant = (status) =>
-  NORMALIZED_STATUS_VARIANT[
-    String(status || "")
-      .toUpperCase()
-      .replace(/_/g, " ")
-  ] ?? "neutral"; // "ON_HOLD" → "ON HOLD"
+  NORMALIZED_STATUS_VARIANT[String(status || "").toUpperCase()] ?? "neutral";

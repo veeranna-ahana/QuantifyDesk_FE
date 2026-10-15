@@ -61,7 +61,7 @@ export function useTaskInfo(milestones, onMilestonesChange) {
       .map((m) => {
         let tasks = m.tasks;
         if (TAB_STATUS[tab])
-          tasks = tasks.filter((t) => t.status === TAB_STATUS[tab]);
+          tasks = tasks.filter((t) => t.statusBucket === TAB_STATUS[tab]);
         if (q)
           tasks = tasks.filter(
             (t) =>
@@ -126,6 +126,9 @@ export function useTaskInfo(milestones, onMilestonesChange) {
         ),
       })),
     );
+    toast.success(
+      `Successfully updated ${Object.keys(valuesById).length} tasks!`,
+    );
   };
 
   const summary = useMemo(() => {
@@ -137,8 +140,12 @@ export function useTaskInfo(milestones, onMilestonesChange) {
     safeMilestones.forEach((m) => {
       total += m.totalTasks;
       completed += m.completedTasks;
-      inProgress += m.tasks.filter((t) => t.status === "In Progress").length;
-      notStarted += m.tasks.filter((t) => t.status === "Not Started").length;
+      inProgress += m.tasks.filter(
+        (t) => t.statusBucket === "In Progress",
+      ).length;
+      notStarted += m.tasks.filter(
+        (t) => t.statusBucket === "Not Started",
+      ).length;
       if (m.status === "Completed") milestoneCompleted++;
     });
     return {

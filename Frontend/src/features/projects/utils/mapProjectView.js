@@ -41,12 +41,12 @@ export function mapViewToMilestones(milestones = []) {
       actualStart: formatPmsDate(t.actual_start_date),
       actualEnd: formatPmsDate(t.actual_end_date),
       allocation: t.allocation ?? "—",
-      // `status` here is the normalized bucket (Not Started/In Progress/Completed) — kept for
-      // filtering/counts (TaskFilters, useTaskInfo tallies compare against these exact strings).
-      // `statusLabel` is what the Status badge actually displays: PMS's own raw status text (e.g.
-      // "YET_TO_START"), not a relabeled "Not Started" — the user wants to see PMS's own wording.
-      status: normalizeStatus(t.status),
-      statusLabel: t.status || normalizeStatus(t.status),
+      // `status` is PMS's own raw status text — "STARTED", "YET_TO_START" or "COMPLETED" (the
+      // only 3 values PMS sends) — shown as-is everywhere (Status badge, Edit Task Details,
+      // filtering, counts) and compared as-is too. No separate normalized/bucketed field: with
+      // only 3 real values, there's nothing a bucket would add — it would just be another name
+      // for the same 3 strings.
+      status: t.status || null,
       dependency: t.dependency || "",
       riskCategory: t.risk_category || "",
       remark: t.remark || "",
@@ -90,7 +90,7 @@ export function mapViewToDocuments(documents = []) {
     name: d.document_name || "Document",
     icon:
       ICON_BY_DOC_NAME[String(d.document_name).toLowerCase()] || "file-text",
-    status: d.status || "Pending",
+    status: d.status || "—",
     uploadedBy: d.uploaded_by || "—",
     uploadDate: d.uploaded_date ? formatProjectDate(d.uploaded_date) : "—",
     link: d.sharepoint_url || "",

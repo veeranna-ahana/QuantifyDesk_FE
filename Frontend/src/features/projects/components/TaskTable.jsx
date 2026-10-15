@@ -37,6 +37,7 @@ const EDITABLE_COLUMNS = ["Role", "Task Type", "Unit"];
  * Task drawer, `onEdit`) are ours to change.
  */
 export function TaskTable({ tasks, onEdit }) {
+  console.log(tasks);
   return (
     <Table
       className="min-w-[1250px] whitespace-nowrap border-t border-line-card border-separate border-spacing-0"
