@@ -45,7 +45,7 @@ const ChevDown = () => (
 );
 
 // ── Compact number input ──────────────────────────────────────────────────────
-const NumInput = ({ value, onChange, readOnly, placeholder = '0', step = '0.5', integerOnly = false }) =>
+const NumInput = ({ value, onChange, readOnly, placeholder = '0', step = 'any', integerOnly = false }) =>
   readOnly ? (
     <span className="inline-block w-16 text-center text-sm font-semibold text-gray-700">
       {value || '—'}
@@ -57,7 +57,10 @@ const NumInput = ({ value, onChange, readOnly, placeholder = '0', step = '0.5', 
       step={step}
       value={value}
       placeholder={placeholder}
-      onKeyDown={integerOnly ? (e) => { if (e.key === '.' || e.key === 'e' || e.key === 'E' || e.key === '+' || e.key === '-') e.preventDefault(); } : undefined}
+      onKeyDown={(e) => {
+        if (['e', 'E', '+', '-'].includes(e.key)) e.preventDefault();
+        if (integerOnly && e.key === '.') e.preventDefault();
+      }}
       onChange={e => {
         let val = e.target.value;
         if (integerOnly && val !== '') {
@@ -65,9 +68,11 @@ const NumInput = ({ value, onChange, readOnly, placeholder = '0', step = '0.5', 
         }
         onChange(val);
       }}
-      className="w-16 text-center border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white"
+      className="no-spinner w-16 text-center border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white"
     />
   );
+
+
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function EffortEstimate() {
@@ -264,8 +269,8 @@ export default function EffortEstimate() {
         {
           rows: rows.map(r => ({
             role: r.role,
-            effort_days: r.days,
-            buffer_days: r.bufferDays,
+            effort_days: Number(r.days) || 0,
+            buffer_days: Number(r.bufferDays) || 0,
             units: r.units,
             unit_label: r.unitLabel,
           })),

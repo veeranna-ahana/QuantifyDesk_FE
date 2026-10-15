@@ -103,6 +103,7 @@ export function ProjectPerformanceTable({ d }) {
             leadingIcon={<Search className="h-4 w-4" />}
             value={d.projectSearch}
             onChange={(e) => d.setProjectSearch(e.target.value)}
+            onClear={() => d.setProjectSearch('')}
             size="md"
             wrapperClassName="w-48"
           />

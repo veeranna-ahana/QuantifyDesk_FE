@@ -1,3 +1,5 @@
+import { useRef, useState } from "react";
+
 import { BarChart3 } from "lucide-react";
 
 import { Card } from "@/components/ui/Card";
@@ -21,6 +23,70 @@ function SkillCountBar({ skill, maxCount }) {
       <span
         className="h-full rounded-full bg-action-primary"
         style={{ width: `${width}%` }}
+      />
+    </div>
+  );
+}
+
+/**
+ * A single skill row. Manages its own hover state with enter (120 ms) and leave (220 ms)
+ * delays so the popover doesn’t flash when the cursor passes quickly over rows and stays
+ * visible long enough for the user to move their mouse into it.
+ */
+function SkillRow({ skill, maxCount, index }) {
+  const [open, setOpen] = useState(false);
+  const enterTimer = useRef(null);
+  const leaveTimer = useRef(null);
+  const popoverId = `skill-members-${index}`;
+
+  const handleMouseEnter = () => {
+    clearTimeout(leaveTimer.current);
+    // Small delay before showing — prevents triggering on quick cursor passes.
+    enterTimer.current = setTimeout(() => setOpen(true), 120);
+  };
+
+  const handleMouseLeave = () => {
+    clearTimeout(enterTimer.current);
+    // Longer delay before hiding — gives the user time to move into the popover.
+    leaveTimer.current = setTimeout(() => setOpen(false), 220);
+  };
+
+  // Keep the popover open when the cursor moves into it.
+  const handlePopoverEnter = () => clearTimeout(leaveTimer.current);
+  const handlePopoverLeave = () => {
+    leaveTimer.current = setTimeout(() => setOpen(false), 220);
+  };
+
+  return (
+    <div
+      key={skill.skill_name}
+      className="relative flex flex-col gap-1"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      <div
+        className="flex h-[18px] flex-wrap items-center justify-between gap-1 text-[length:var(--font-size-skill-row)] leading-[18px]"
+        tabIndex={0}
+        aria-describedby={popoverId}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setOpen(false)}
+      >
+        <span className="font-medium text-[color:var(--color-member-chart-heading)]">
+          <span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-action-primary" />
+          {skill.skill_name}
+        </span>
+        <span className="text-[length:var(--font-size-skill-count)] font-medium leading-[14px] tracking-[0.33px] text-[color:var(--color-member-chart-text)]">
+          {skill.employee_count}{" "}
+          {skill.employee_count === 1 ? "Member" : "Members"}
+        </span>
+      </div>
+      <SkillCountBar skill={skill} maxCount={maxCount} />
+      <SkillMembersPopover
+        id={popoverId}
+        skill={skill}
+        open={open}
+        onMouseEnter={handlePopoverEnter}
+        onMouseLeave={handlePopoverLeave}
       />
     </div>
   );
@@ -62,32 +128,14 @@ export function SkillCapacityCard({
       )}
 
       <div className="flex flex-col gap-2 pt-1">
-        {skills.map((skill, index) => {
-          const popoverId = `skill-members-${index}`;
-          return (
-            <div
-              key={skill.skill_name}
-              className="group relative flex flex-col gap-1"
-            >
-              <div
-                className="flex h-[18px] flex-wrap items-center justify-between gap-1 text-[length:var(--font-size-skill-row)] leading-[18px]"
-                tabIndex={0}
-                aria-describedby={popoverId}
-              >
-                <span className="font-medium text-[color:var(--color-member-chart-heading)]">
-                  <span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-action-primary" />
-                  {skill.skill_name}
-                </span>
-                <span className="text-[length:var(--font-size-skill-count)] font-medium leading-[14px] tracking-[0.33px] text-[color:var(--color-member-chart-text)]">
-                  {skill.employee_count}{" "}
-                  {skill.employee_count === 1 ? "Member" : "Members"}
-                </span>
-              </div>
-              <SkillCountBar skill={skill} maxCount={maxCount} />
-              <SkillMembersPopover id={popoverId} skill={skill} />
-            </div>
-          );
-        })}
+        {skills.map((skill, index) => (
+          <SkillRow
+            key={skill.skill_name}
+            skill={skill}
+            maxCount={maxCount}
+            index={index}
+          />
+        ))}
       </div>
     </Card>
   );

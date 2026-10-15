@@ -139,8 +139,8 @@ export function useProjectDetails() {
       payload.effort_estimates = effortRows.map((r) => ({
         emp_id: r.empId,
         role: r.role,
-        effort_days: r.effortDays,
-        buffer_days: r.bufferDays,
+        effort_days: Number(r.effortDays) || 0,
+        buffer_days: Number(r.bufferDays) || 0,
       }));
     } else if (tab === "Documents Checklist") {
       payload.documents = documents

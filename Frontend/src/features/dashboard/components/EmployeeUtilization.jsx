@@ -48,6 +48,7 @@ export function EmployeeUtilization({ d }) {
             leadingIcon={<Search className="h-4 w-4" />}
             value={d.employeeSearch}
             onChange={(e) => d.setEmployeeSearch(e.target.value)}
+            onClear={() => d.setEmployeeSearch('')}
             size="md"
             wrapperClassName="w-48"
           />

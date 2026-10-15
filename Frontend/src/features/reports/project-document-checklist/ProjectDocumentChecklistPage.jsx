@@ -21,11 +21,10 @@ export default function ProjectDocumentChecklistPage() {
       <ChecklistReportFilters
         search={report.search}
         onSearchChange={report.setSearch}
-        filterBy={report.filterBy}
-        onFilterByChange={report.setFilterBy}
-        statusFilter={report.statusFilter}
-        onStatusFilterChange={report.setStatusFilter}
-        statuses={report.statuses}
+        filters={report.filters}
+        onFiltersChange={report.setFilters}
+        activeFilterCount={report.activeFilterCount}
+        documentTypes={report.documentTypes}
         onExport={report.exportReport}
       />
 

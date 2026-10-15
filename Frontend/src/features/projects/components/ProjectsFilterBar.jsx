@@ -28,6 +28,7 @@ export function ProjectsFilterBar({
         placeholder="Search by PMS ID, Project name, or Client..."
         value={searchQuery}
         onChange={(e) => onSearchChange(e.target.value)}
+        onClear={() => onSearchChange('')}
         wrapperClassName="w-full max-w-md flex-1"
       />
       <FilterTabs

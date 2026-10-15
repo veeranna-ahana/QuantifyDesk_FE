@@ -41,11 +41,11 @@ function parseDateOnly(dateStr) {
   return { y: d.getFullYear(), m: d.getMonth(), day: d.getDate() };
 }
 
-/** "2023-03-19" or "2023-03-19T18:30:00.000Z" -> "Mar 19, 2023" */
+/** "2023-03-19" or "2023-03-19T18:30:00.000Z" -> "19 Mar, 2023" */
 export const formatProjectDate = (dateStr) => {
   const p = parseDateOnly(dateStr);
   if (!p) return "—";
-  return `${MONTHS_SHORT[p.m]} ${String(p.day).padStart(2, "0")}, ${p.y}`;
+  return `${String(p.day).padStart(2, "0")} ${MONTHS_SHORT[p.m]}, ${p.y}`;
 };
 
 /** "2026-03-15" or "2023-03-19T18:30:00.000Z" -> "15 Mar 26" */

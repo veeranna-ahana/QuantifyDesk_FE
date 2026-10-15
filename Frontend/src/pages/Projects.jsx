@@ -669,8 +669,8 @@ const EffortEstimateModal = ({ projects, onClose, onSaved, initialProjectId, rea
         {
           rows: rows.map(r => ({
             role: r.role,
-            effort_days: r.days,
-            buffer_days: r.bufferDays,
+            effort_days: Number(r.days) || 0,
+            buffer_days: Number(r.bufferDays) || 0,
             units: r.units,
             unit_label: r.unitLabel,
           })),
@@ -773,10 +773,12 @@ const EffortEstimateModal = ({ projects, onClose, onSaved, initialProjectId, rea
                       <span style={E.readOnlyVal}>{r.days || '—'}</span>
                     ) : (
                       <input
-                        type="number" min="0" step="0.5"
+                        type="number" min="0" step="any"
                         value={r.days} placeholder="0"
+                        onKeyDown={e => { if (['e', 'E', '+', '-'].includes(e.key)) e.preventDefault(); }}
                         onChange={e => handleChange(i, 'days', e.target.value)}
                         style={E.numInput}
+                        className="no-spinner"
                       />
                     )}
                   </td>
@@ -788,10 +790,12 @@ const EffortEstimateModal = ({ projects, onClose, onSaved, initialProjectId, rea
                       <span style={E.readOnlyVal}>{r.bufferDays || '—'}</span>
                     ) : (
                       <input
-                        type="number" min="0" step="0.5"
+                        type="number" min="0" step="any"
                         value={r.bufferDays} placeholder="0"
+                        onKeyDown={e => { if (['e', 'E', '+', '-'].includes(e.key)) e.preventDefault(); }}
                         onChange={e => handleChange(i, 'bufferDays', e.target.value)}
                         style={E.numInput}
+                        className="no-spinner"
                       />
                     )}
                   </td>

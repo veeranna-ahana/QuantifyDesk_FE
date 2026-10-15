@@ -9,42 +9,21 @@ import { IconButton } from "@/components/ui/IconButton";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 
 import { ReportTaskTable } from "./ReportTaskTable";
-
-const GLOBAL_FILTERS = {
-  "In Progress": (t) => t.status === "In Progress",
-  Completed: (t) => t.status === "Completed",
-  "On Hold": (t) => t.status === "Blocked" || t.status === "On Hold",
-};
-
-const PROJECT_FILTERS = {
-  "in-progress": (t) => t.status === "In Progress",
-  "last-completed": (t) => t.classification.includes("LAST COMPLETED"),
-  "total-completed": (t) => t.status === "Completed",
-  "not-started": (t) => t.status === "Not Started",
-  blockers: (t) => t.isBlocker || t.status === "Blocked",
-  delayed: (t) => t.isDelayed,
-  "due-today": (t) => t.isDueToday,
-};
+import { filterReportTasks } from "../utils";
 
 /** One project: header (lead, team, progress) + quick filters + task table. */
-export function ProjectReportCard({ project, globalTab, searchQuery }) {
+export function ProjectReportCard({
+  project,
+  globalTab,
+  searchQuery,
+  filter,
+  onFilterChange,
+}) {
   const [collapsed, setCollapsed] = useState(false);
-  const [filter, setFilter] = useState("in-progress");
   const c = project.tabCounts;
 
   const tasks = useMemo(() => {
-    let list = project.tasks;
-    if (GLOBAL_FILTERS[globalTab])
-      list = list.filter(GLOBAL_FILTERS[globalTab]);
-    if (PROJECT_FILTERS[filter]) list = list.filter(PROJECT_FILTERS[filter]);
-    const q = searchQuery.trim().toLowerCase();
-    if (q)
-      list = list.filter((t) =>
-        [t.taskName, t.ownerName, t.remarks].some((v) =>
-          (v || "").toLowerCase().includes(q),
-        ),
-      );
-    return list;
+    return filterReportTasks(project.tasks, { globalTab, filter, searchQuery });
   }, [project.tasks, globalTab, filter, searchQuery]);
 
   const tabs = [
@@ -58,7 +37,7 @@ export function ProjectReportCard({ project, globalTab, searchQuery }) {
     },
     { id: "not-started", label: "Not Started", count: c.notStarted },
   ];
-  const toggle = (id) => setFilter(filter === id ? "all" : id);
+  const toggle = (id) => onFilterChange(filter === id ? "all" : id);
 
   return (
     <Card className="overflow-hidden">
@@ -129,7 +108,11 @@ export function ProjectReportCard({ project, globalTab, searchQuery }) {
       {!collapsed && (
         <>
           <div className="flex flex-wrap items-center gap-3 border-b border-line-card px-4 py-2">
-            <FilterTabs items={tabs} value={filter} onChange={setFilter} />
+            <FilterTabs
+              items={tabs}
+              value={filter}
+              onChange={onFilterChange}
+            />
             <span
               aria-hidden="true"
               className="hidden h-5 w-px bg-line sm:block"

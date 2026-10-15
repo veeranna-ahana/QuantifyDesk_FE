@@ -54,6 +54,7 @@ export function TaskFilters({ task, projectContext, showBulk, onBulk }) {
             leadingIcon={<Search className="h-4 w-4" />}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            onClear={() => setSearch('')}
             wrapperClassName="w-full max-w-xs flex-1"
           />
           <Select
