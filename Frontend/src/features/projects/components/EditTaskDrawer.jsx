@@ -92,8 +92,8 @@ export function EditTaskDrawer({
             <Detail label="Task Title" value={task.title} />
             <Detail label="Task Owner" value={task.owner} />
             {/* PMS's own raw status wording (e.g. "YET_TO_START"), same as the Status badge in
-                TaskTable — not the translated "Not Started" bucket used internally for filtering. */}
-            <Detail label="Status" value={task.statusLabel || task.status} />
+                TaskTable. */}
+            <Detail label="Status" value={task.status} />
             <Detail label="Planned Start" value={task.plannedStart} />
             <Detail label="Actual Start" value={task.actualStart} />
             <Detail label="Planned End" value={task.plannedEnd} />
