@@ -2,6 +2,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
 import { projectDocumentChecklistService } from "../services/projectDocumentChecklist.service";
+import {
+  EMPTY_CHECKLIST_FILTERS,
+  getActiveChecklistFilterCount,
+  matchesChecklistFilters,
+} from "../constants";
 
 const PAGE_SIZE = 10;
 const EXPORT_PAGE_SIZE = 100; // the API's maximum page size
@@ -25,8 +30,11 @@ function csvRow(values) {
 
 export function useProjectDocumentChecklistReport() {
   const [search, setSearch] = useState("");
-  const [filterBy, setFilterBy] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [filters, setFilters] = useState({
+    ...EMPTY_CHECKLIST_FILTERS,
+  });
+  const [filteredProjects, setFilteredProjects] = useState([]);
+  const [filteredDocumentTypes, setFilteredDocumentTypes] = useState([]);
   const [page, setPage] = useState(1);
   const [expandedProject, setExpandedProject] = useState(null);
   const [data, setData] = useState({
@@ -39,10 +47,10 @@ export function useProjectDocumentChecklistReport() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const latestRequest = useRef(0);
-
-  const status = statusFilter === "all" ? "" : statusFilter;
+  const filtersApplied = getActiveChecklistFilterCount(filters) > 0;
 
   const fetchReport = useCallback(async () => {
+    if (filtersApplied) return;
     const requestId = latestRequest.current + 1;
     latestRequest.current = requestId;
     try {
@@ -52,7 +60,6 @@ export function useProjectDocumentChecklistReport() {
         page,
         pageSize: PAGE_SIZE,
         search,
-        status,
       });
       if (requestId !== latestRequest.current) return;
       setData(res);
@@ -65,7 +72,7 @@ export function useProjectDocumentChecklistReport() {
     } finally {
       if (requestId === latestRequest.current) setLoading(false);
     }
-  }, [page, search, status]);
+  }, [filtersApplied, page, search]);
 
   // Debounced, so typing in the search box doesn't fire a request per keystroke
   useEffect(() => {
@@ -73,7 +80,74 @@ export function useProjectDocumentChecklistReport() {
     return () => clearTimeout(handle);
   }, [fetchReport]);
 
-  // Exports every project matching the current search/status, not just the visible page
+  useEffect(() => {
+    if (!filtersApplied) {
+      setFilteredProjects([]);
+      setFilteredDocumentTypes([]);
+      return undefined;
+    }
+
+    let cancelled = false;
+    const requestId = latestRequest.current + 1;
+    latestRequest.current = requestId;
+
+    const loadFilteredProjects = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const allProjects = [];
+        let firstPageResponse;
+        let current = 1;
+        let totalPages = 1;
+
+        do {
+          const response = await projectDocumentChecklistService.getReport({
+            page: current,
+            pageSize: EXPORT_PAGE_SIZE,
+            search,
+          });
+          firstPageResponse ||= response;
+          allProjects.push(...response.content);
+          totalPages = response.totalPages;
+          current += 1;
+        } while (current <= totalPages);
+
+        if (cancelled || requestId !== latestRequest.current) return;
+        setData(firstPageResponse);
+        setFilteredProjects(
+          allProjects.filter((project) =>
+            matchesChecklistFilters(project, filters),
+          ),
+        );
+        setFilteredDocumentTypes([
+          ...new Set(
+            allProjects.flatMap((project) =>
+              (project.documents || []).map((document) => document.name),
+            ),
+          ),
+        ]);
+      } catch (err) {
+        if (!cancelled && requestId === latestRequest.current) {
+          setFilteredProjects([]);
+          setError(
+            err.response?.data?.message ||
+              "Failed to load the document checklist",
+          );
+        }
+      } finally {
+        if (!cancelled && requestId === latestRequest.current) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadFilteredProjects();
+    return () => {
+      cancelled = true;
+    };
+  }, [filters, filtersApplied, search]);
+
+  // Exports every project matching the current search and applied filters.
   const exportReport = async () => {
     try {
       const all = [];
@@ -84,14 +158,16 @@ export function useProjectDocumentChecklistReport() {
           page: current,
           pageSize: EXPORT_PAGE_SIZE,
           search,
-          status,
         });
         all.push(...res.content);
         totalPages = res.totalPages;
         current += 1;
       } while (current <= totalPages);
 
-      if (all.length === 0) {
+      const filtered = all.filter((project) =>
+        matchesChecklistFilters(project, filters),
+      );
+      if (filtered.length === 0) {
         toast.error("No projects to export");
         return;
       }
@@ -102,12 +178,12 @@ export function useProjectDocumentChecklistReport() {
         "Received",
         "Pending",
         "Compliance",
-        ...all[0].documents
+        ...filtered[0].documents
           .filter((document) => !document.custom)
           .map((document) => document.name),
         "Custom Documents",
       ];
-      const rows = all.map((project) => [
+      const rows = filtered.map((project) => [
         project.name,
         project.code,
         project.status,
@@ -139,33 +215,50 @@ export function useProjectDocumentChecklistReport() {
     }
   };
 
+  const setSearchQuery = (value) => {
+    setSearch(value);
+    setPage(1);
+    setExpandedProject(null);
+    if (filtersApplied) setFilteredProjects([]);
+  };
+
+  const applyFilters = (nextFilters) => {
+    setFilters(nextFilters);
+    setPage(1);
+    setExpandedProject(null);
+    setFilteredProjects([]);
+  };
+
   return {
-    projects: data.content,
-    totalProjects: data.totalElements,
+    projects: filtersApplied
+      ? filteredProjects.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+      : data.content,
+    totalProjects: filtersApplied
+      ? filteredProjects.length
+      : data.totalElements,
     page,
     pageSize: PAGE_SIZE,
-    totalPages: data.totalPages,
+    totalPages: filtersApplied
+      ? Math.max(1, Math.ceil(filteredProjects.length / PAGE_SIZE))
+      : data.totalPages,
     summary: data.summary,
-    statuses: data.statuses,
+    documentTypes: filtersApplied
+      ? filteredDocumentTypes
+      : [
+          ...new Set(
+            data.content.flatMap((project) =>
+              (project.documents || []).map((document) => document.name),
+            ),
+          ),
+        ],
+    filters,
+    filtersApplied,
+    activeFilterCount: getActiveChecklistFilterCount(filters),
     loading,
     error,
     search,
-    setSearch: (value) => {
-      setSearch(value);
-      setPage(1);
-    },
-    filterBy,
-    setFilterBy: (value) => {
-      setFilterBy(value);
-      setSearch("");
-      setStatusFilter("all");
-      setPage(1);
-    },
-    statusFilter,
-    setStatusFilter: (value) => {
-      setStatusFilter(value);
-      setPage(1);
-    },
+    setSearch: setSearchQuery,
+    setFilters: applyFilters,
     expandedProject,
     setExpandedProject,
     setPage,

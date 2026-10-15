@@ -9,9 +9,16 @@ import {
   formatDate,
   formatExperience,
   isImmediate,
+  matchesMemberFilters,
+  countMembersByAvailability,
 } from "../utils";
 
 const PAGE_SIZE = 10;
+const EMPTY_FILTERS = {
+  availabilityStatuses: [],
+  experience: "all",
+  timing: "",
+};
 
 const csvCell = (value) => {
   let text = String(value ?? "");
@@ -32,21 +39,32 @@ function toMember(employee) {
     ],
     projects: employee.projects || [],
     availableFrom: formatAvailableFrom(employee.available),
-    immediate: isImmediate(employee),
+    availabilityValue: employee.available ?? employee.availability ?? "",
+    availabilityStatus:
+      employee.availability_status ??
+      employee.availabilityStatus ??
+      employee.availability,
+    allocation:
+      employee.allocation_percentage ??
+      employee.allocationPercentage ??
+      employee.allocation,
+    immediate: isImmediate({
+      available: employee.available ?? employee.availability,
+    }),
   };
 }
 
 /**
- * Member Details data + search / paging. One API call loads every delivery employee, so search
- * and paging run in the browser. There is no allocation data yet, so only "Available From"
- * (immediate / a date) is shown.
+ * Member Details data + search / paging. One API call loads every delivery employee, so search,
+ * filtering, and paging run in the browser. Availability classification uses optional
+ * allocation/status fields when present and does not infer missing values.
  */
 export function useMemberDetails() {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
-  const [filterBy, setFilterBy] = useState("all");
+  const [filters, setFilters] = useState(EMPTY_FILTERS);
   const [page, setPage] = useState(1);
 
   useEffect(() => {
@@ -71,48 +89,48 @@ export function useMemberDetails() {
     };
   }, []);
 
-  const filteredMembers = useMemo(() => {
+  const matchingMembers = useMemo(() => {
     const query = search.trim().toLowerCase();
-    if (!query) return members;
     return members.filter((member) => {
-      const values =
-        filterBy === "experience"
-          ? [formatExperience(member.experience), member.experience]
-          : filterBy === "skill"
-            ? member.skills
-            : filterBy === "member"
-              ? [member.name, member.id]
-              : [
-                  member.name,
-                  member.id,
-                  formatExperience(member.experience),
-                  member.joiningDate,
-                  ...member.skills,
-                  ...member.projects,
-                  member.availableFrom,
-                ];
-      return values.some((value) =>
-        String(value ?? "")
-          .toLowerCase()
-          .includes(query),
+      const matchesSearch =
+        !query ||
+        [
+          member.name,
+          member.id,
+          formatExperience(member.experience),
+          member.joiningDate,
+          ...member.skills,
+          ...member.projects,
+          member.availableFrom,
+        ].some((value) =>
+          String(value ?? "")
+            .toLowerCase()
+            .includes(query),
       );
+      return matchesSearch && matchesMemberFilters(member, filters);
     });
-  }, [filterBy, search, members]);
+  }, [filters, search, members]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredMembers.length / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(matchingMembers.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
   const offset = (currentPage - 1) * PAGE_SIZE;
 
+  const availabilityCounts = useMemo(
+    () => countMembersByAvailability(members),
+    [members],
+  );
   const summary = useMemo(
     () => ({
       totalResources: members.length,
+      fullyAllocated: availabilityCounts.allocated,
+      partiallyAllocated: availabilityCounts.partial,
       immediatelyAvailable: members.filter((m) => m.immediate).length,
     }),
-    [members],
+    [availabilityCounts, members],
   );
 
   const exportMembers = () => {
-    if (filteredMembers.length === 0) {
+    if (matchingMembers.length === 0) {
       toast.error("No members to export");
       return;
     }
@@ -126,7 +144,7 @@ export function useMemberDetails() {
       "Current Project",
       "Available From",
     ];
-    const rows = filteredMembers.map((member) => [
+    const rows = matchingMembers.map((member) => [
       member.name,
       member.id,
       member.designation,
@@ -143,8 +161,9 @@ export function useMemberDetails() {
   };
 
   return {
-    members: filteredMembers.slice(offset, offset + PAGE_SIZE),
-    totalMembers: filteredMembers.length,
+    members: matchingMembers.slice(offset, offset + PAGE_SIZE),
+    totalMembers: matchingMembers.length,
+    availabilityCounts,
     summary,
     loading,
     error,
@@ -156,9 +175,9 @@ export function useMemberDetails() {
       setSearch(value);
       setPage(1);
     },
-    filterBy,
-    setFilterBy: (value) => {
-      setFilterBy(value);
+    filters,
+    setFilters: (value) => {
+      setFilters(value);
       setPage(1);
     },
     setPage,

@@ -28,7 +28,7 @@ export function useEffortEstimate(rows, onRowsChange, roleOptions) {
     onRowsChange(
       safeRows.map((r) =>
         r.id === id
-          ? { ...r, [field]: value === "" ? 0 : Number(value) || 0 }
+          ? { ...r, [field]: value }
           : r,
       ),
     );

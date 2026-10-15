@@ -2,13 +2,32 @@ import { Layers2 } from "lucide-react";
 
 import { decodeEntities, formatExperience } from "../utils";
 
-/** Hover / keyboard-focus list of the members who have a skill (shown by SkillCapacityCard's row). */
-export function SkillMembersPopover({ id, skill }) {
+/**
+ * Hover / keyboard-focus list of the members who have a skill.
+ *
+ * `open` is controlled by SkillCapacityCard's SkillRow (JS state with enter/leave
+ * delay timers) — no longer driven by CSS group-hover, which caused adjacent rows
+ * to flash immediately as the cursor moved between them.
+ *
+ * `onMouseEnter` / `onMouseLeave` are forwarded to the popover element itself so
+ * that moving the cursor INTO the popover cancels the hide timer, letting the user
+ * scroll through the member list without it disappearing.
+ */
+export function SkillMembersPopover({ id, skill, open, onMouseEnter, onMouseLeave }) {
   return (
     <div
       id={id}
       role="tooltip"
-      className="invisible absolute left-1/2 top-10 z-20 w-[var(--size-skill-popover-width)] -translate-x-1/2 rounded-chip border border-[color:var(--color-member-popover-border)] bg-surface-card p-4 opacity-0 shadow-[var(--shadow-member-popover)] transition-opacity group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100"
+      aria-hidden={!open}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      className={[
+        "absolute left-1/2 top-10 z-20 w-[var(--size-skill-popover-width)] -translate-x-1/2",
+        "rounded-chip border border-[color:var(--color-member-popover-border)]",
+        "bg-surface-card p-4 shadow-[var(--shadow-member-popover)]",
+        "transition-[opacity,visibility] duration-150",
+        open ? "visible opacity-100" : "invisible opacity-0 pointer-events-none",
+      ].join(" ")}
     >
       <span className="absolute -top-2 left-1/2 h-4 w-4 -translate-x-1/2 rotate-45 border-l border-t border-[color:var(--color-member-popover-border)] bg-surface-card" />
       <div className="relative flex flex-col gap-2">
@@ -54,3 +73,4 @@ export function SkillMembersPopover({ id, skill }) {
     </div>
   );
 }
+

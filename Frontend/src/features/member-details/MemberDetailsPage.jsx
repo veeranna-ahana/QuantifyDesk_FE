@@ -28,8 +28,9 @@ export default function MemberDetailsPage() {
       <MemberFilters
         search={memberDetails.search}
         onSearchChange={memberDetails.setSearch}
-        filterBy={memberDetails.filterBy}
-        onFilterByChange={memberDetails.setFilterBy}
+        filters={memberDetails.filters}
+        onFiltersChange={memberDetails.setFilters}
+        availabilityCounts={memberDetails.availabilityCounts}
         onSkillAnalytics={() => navigate("/member-details/skill-analytics")}
         onExport={memberDetails.exportMembers}
       />

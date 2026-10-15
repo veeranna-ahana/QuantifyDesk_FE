@@ -283,12 +283,12 @@
   --color-member-project-bg: #d8e3fa;
   --color-member-project-text: #111c2c;
   --color-member-allocation: #1c1a27;
-  --color-member-available-bg: #d1fae5;
-  --color-member-available-text: #006c49;
-  --color-member-partial-bg: #fef3c7;
-  --color-member-partial-text: #b45309;
-  --color-member-allocated-bg: #ffdad6;
-  --color-member-allocated-text: #ba1a1a;
+  --color-member-available-bg: #d1fae5; /* [FIGMA] Filter Members count badge */
+  --color-member-available-text: #065f46; /* [FIGMA] */
+  --color-member-partial-bg: #fef3c7; /* [FIGMA] */
+  --color-member-partial-text: #92400e; /* [FIGMA] */
+  --color-member-allocated-bg: #ffe4e6; /* [FIGMA] */
+  --color-member-allocated-text: #9f1239; /* [FIGMA] */
   --color-member-chart-heading: #1c1a27;
   --color-member-chart-text: #484554;
   --color-member-chart-track: #f1ebfe;

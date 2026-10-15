@@ -3,7 +3,7 @@ import { cn } from '@/lib/cn';
 /** Underline tab bar (project view: Overview / Info / Task Info ...). Scrolls sideways on small screens. */
 export function Tabs({ items, value, onChange, className }) {
   return (
-    <div role="tablist" className={cn('flex gap-6 overflow-x-auto border-b border-line-card', className)}>
+    <div role="tablist" className={cn('flex gap-6 overflow-x-auto overflow-y-hidden border-b border-line-card', className)}>
       {items.map((t) => {
         const active = t.id === value;
         return (

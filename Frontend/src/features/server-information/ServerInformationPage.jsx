@@ -21,6 +21,8 @@ export default function ServerInformationPage() {
     servers,
     searchQuery,
     setSearchQuery,
+    filters,
+    setFilters,
     page,
     setPage,
     totalPages,
@@ -91,6 +93,9 @@ export default function ServerInformationPage() {
       <ServerFilterBar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
+        filters={filters}
+        onFiltersChange={setFilters}
+        activeCount={activeCount}
       />
 
       {error && <p className="px-1 text-sm text-badge-danger-ink">{error}</p>}

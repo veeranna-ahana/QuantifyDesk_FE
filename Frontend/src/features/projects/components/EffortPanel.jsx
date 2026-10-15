@@ -32,6 +32,8 @@ const PILL =
   "inline-block min-w-[64px] rounded-md px-2.5 py-1 text-xs font-medium";
 const HRS_PILL = `${PILL} bg-badge-neutral-bg text-ink-primary`;
 const BUFFER_PILL = `${PILL} border border-badge-warning-line bg-badge-warning-bg text-badge-warning-ink`;
+const TOTAL_CELL =
+  "sticky bottom-0 z-10 bg-surface-table-head shadow-[0_-1px_0_0_rgba(0,0,0,0.08)]";
 const EMPTY_PROJECT_CONTEXT = { projectName: "", pmsId: "" };
 
 /**
@@ -159,10 +161,10 @@ export function EffortPanel({
         </div>
       )}
 
-      {/* scrollable={false} removes Table's own scroll wrapper entirely, so the header stays
-          sticky against the page's own scroll area (see comment above) instead of a local inner
-          scrollbar. */}
-      <Table className="min-w-[760px]" scrollable={false}>
+      <Table
+        className="min-w-[760px]"
+        wrapperClassName="max-h-[58vh] overflow-y-auto"
+      >
         <TableHead>
           <TableRow className="hover:bg-transparent">
             <TableHeaderCell>Role</TableHeaderCell>
@@ -225,14 +227,16 @@ export function EffortPanel({
                         size="md"
                         type="number"
                         min="0"
+                        step="any"
                         aria-label={`Effort days for ${r.empName}`}
                         value={r.effortDays}
                         readOnly={!canEdit}
+                        onKeyDown={(e) => { if (['e', 'E', '+', '-'].includes(e.key)) e.preventDefault(); }}
                         onChange={(e) =>
                           effort.updateRow(r.id, "effortDays", e.target.value)
                         }
                         wrapperClassName="mx-auto w-16"
-                        className={DAYS_INPUT}
+                        className={`no-spinner ${DAYS_INPUT}`}
                       />
                     </TableCell>
                     <TableCell className="text-center">
@@ -245,14 +249,16 @@ export function EffortPanel({
                         size="md"
                         type="number"
                         min="0"
+                        step="any"
                         aria-label={`Buffer days for ${r.empName}`}
                         value={r.bufferDays}
                         readOnly={!canEdit}
+                        onKeyDown={(e) => { if (['e', 'E', '+', '-'].includes(e.key)) e.preventDefault(); }}
                         onChange={(e) =>
                           effort.updateRow(r.id, "bufferDays", e.target.value)
                         }
                         wrapperClassName="mx-auto w-16"
-                        className={DAYS_INPUT}
+                        className={`no-spinner ${DAYS_INPUT}`}
                       />
                     </TableCell>
                     <TableCell className="text-center">
@@ -295,28 +301,24 @@ export function EffortPanel({
             );
           })}
 
-          {/* No bounded scroll box in any mode any more (the whole page scrolls instead — see the
-              Table/Card comments above), and sticky-to-bottom only does anything useful within a
-              shorter-than-content scroll box — so this is back to a plain row, same as every
-              other row, instead of pinning oddly partway down a long page. */}
-          <TableRow className="bg-surface-table-head font-semibold hover:bg-surface-table-head">
-            <TableCell>TOTAL</TableCell>
-            <TableCell className="text-center">
+          <TableRow className="font-semibold hover:bg-surface-table-head">
+            <TableCell className={TOTAL_CELL}>TOTAL</TableCell>
+            <TableCell className={`${TOTAL_CELL} text-center`}>
               {effort.totals.effortDays} days
             </TableCell>
-            <TableCell className="text-center">
+            <TableCell className={`${TOTAL_CELL} text-center`}>
               {formatHrs(effort.totals.effortHrs)}
             </TableCell>
-            <TableCell className="text-center">
+            <TableCell className={`${TOTAL_CELL} text-center`}>
               {effort.totals.bufferDays} days
             </TableCell>
-            <TableCell className="text-center">
+            <TableCell className={`${TOTAL_CELL} text-center`}>
               {formatHrs(effort.totals.bufferHrs)}
             </TableCell>
-            <TableCell className="text-center">
+            <TableCell className={`${TOTAL_CELL} text-center`}>
               {formatHrs(effort.totals.totalHrs)}
             </TableCell>
-            <TableCell />
+            <TableCell className={TOTAL_CELL} />
           </TableRow>
         </TableBody>
       </Table>

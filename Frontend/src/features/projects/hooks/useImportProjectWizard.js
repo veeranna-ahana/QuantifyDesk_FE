@@ -280,8 +280,8 @@ export function useImportProjectWizard() {
     effort_estimates: effortRows.map((r) => ({
       emp_id: r.empId,
       role: r.role,
-      effort_days: r.effortDays,
-      buffer_days: r.bufferDays,
+      effort_days: Number(r.effortDays) || 0,
+      buffer_days: Number(r.bufferDays) || 0,
     })),
     // A checklist document is either one of the fixed document_master rows (documentId set) or a
     // custom one from "Add Document" (documentId null, only a name).

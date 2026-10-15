@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 
 import api from "@/api/axios";
 
+import { filterReportTasks } from "../utils";
+
 const EMPTY_METRICS = {
   totalProjects: 0,
   notStartedTasks: 0,
@@ -67,6 +69,7 @@ export function useDailyReport() {
   const [globalTab, setGlobalTab] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [reportDate, setReportDate] = useState(todayISO());
+  const [projectFilters, setProjectFilters] = useState({});
 
   const [overview, setOverview] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -117,6 +120,10 @@ export function useDailyReport() {
 
   const shiftDate = (days) => setReportDate((prev) => shiftISO(prev, days));
 
+  const setProjectFilter = (projectId, filter) => {
+    setProjectFilters((previous) => ({ ...previous, [projectId]: filter }));
+  };
+
   const exportCsv = () => {
     const rows = [
       toCsvRow([
@@ -131,8 +138,13 @@ export function useDailyReport() {
         "Planned End",
       ]),
     ];
-    (overview?.projects || []).forEach((p) => {
-      (p.tasks || []).forEach((t) => {
+    projects.forEach((p) => {
+      const tasks = filterReportTasks(p.tasks, {
+        globalTab,
+        filter: projectFilters[p.id] || "in-progress",
+        searchQuery,
+      });
+      tasks.forEach((t) => {
         rows.push(
           toCsvRow([
             p.name,
@@ -165,6 +177,8 @@ export function useDailyReport() {
     error,
     globalTab,
     setGlobalTab,
+    projectFilters,
+    setProjectFilter,
     searchQuery,
     setSearchQuery,
     reportDate,
