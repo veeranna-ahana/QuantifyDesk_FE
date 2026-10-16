@@ -5,20 +5,17 @@
 const pad2 = (n) => String(n).padStart(2, "0");
 
 /**
- * PMS dates come back as ISO strings like "2023-03-19T18:30:00.000Z" — display as
- * DD/MM/YYYY, same format the mock data used.
- *
- * Uses UTC getters, not local ones: PMS's "18:30:00.000Z" is really just midnight
- * IST stored as UTC, so reading it back with local getDate()/getMonth() in an IST
- * browser rolls it over to the next calendar day (19th shows as 20th). Reading the
- * UTC fields instead reproduces the calendar date PMS actually means, regardless of
- * the viewer's timezone.
+ * PMS dates come back as ISO strings like "2026-10-14T18:30:00.000Z" — display as
+ * DD/MM/YYYY. That instant is midnight of 15 Oct in IST, so convert in a fixed
+ * Asia/Kolkata zone (not UTC getters, which give the previous day, and not local
+ * getters, which depend on the browser timezone).
  */
 export function formatPmsDate(value) {
   if (!value) return "";
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return "";
-  return `${pad2(d.getUTCDate())}/${pad2(d.getUTCMonth() + 1)}/${d.getUTCFullYear()}`;
+  const ist = new Date(d.getTime() + 5.5 * 60 * 60 * 1000);
+  return `${pad2(ist.getUTCDate())}/${pad2(ist.getUTCMonth() + 1)}/${ist.getUTCFullYear()}`;
 }
 
 /** Task status strings vary in casing/wording — normalize to the 3 buckets the Task Info UI expects. */

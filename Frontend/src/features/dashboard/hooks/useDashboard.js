@@ -273,7 +273,7 @@ export function useDashboard() {
         projects: (u.projects || [])
           .map((p) => p.project_title || p.project_code)
           .filter(Boolean),
-        days: `${u.total_assigned_days ?? 0} business days`,
+        days: `${u.total_assigned_days ?? 0} effort days`,
         // No capacity-calendar data yet for a date window — left blank; ProgressBar below already
         // falls back to a neutral default when windowPct is unset, not a fabricated real value.
         window: "",
