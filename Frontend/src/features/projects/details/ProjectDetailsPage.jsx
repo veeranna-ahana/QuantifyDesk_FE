@@ -24,8 +24,8 @@ const EDIT_LABELS = {
   "Documents Checklist": "Edit Documents",
 };
 // PMS dates are full ISO timestamps ("...T18:30:00.000Z", really midnight IST stored as UTC) —
-// formatProjectDate reads UTC calendar fields so this doesn't roll over a day in IST, unlike a
-// plain `new Date(d).toLocaleDateString()` would.
+// formatProjectDate converts them to their IST calendar date (fixed zone), so the result doesn't
+// depend on the browser timezone.
 const fmt = formatProjectDate;
 
 // eslint-disable-next-line no-unused-vars
