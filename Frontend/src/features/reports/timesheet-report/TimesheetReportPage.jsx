@@ -120,23 +120,35 @@ export function TimesheetReportPage() {
       ) : (
         <Card className={pageStyles.reportTableCard}>
           {activeView === "timesheet" ? (
-            <TimesheetTable
-              records={timesheetPageRows}
-              loading={report.loading}
-            />
+            <>
+              <div className={pageStyles.tableBody}>
+                <TimesheetTable
+                  records={timesheetPageRows}
+                  loading={report.loading}
+                />
+              </div>
+              <ReportPagination
+                page={viewPage}
+                totalRecords={TOTAL_RECORDS}
+                pageSize={PAGE_SIZE}
+                onPageChange={changePage}
+              />
+            </>
           ) : (
-            <ProjectSummaryTable
-              records={projectPageRows}
-              loading={report.loading}
-            />
-          )}
-          {(
-            <ReportPagination
-              page={viewPage}
-              totalRecords={TOTAL_RECORDS}
-              pageSize={PAGE_SIZE}
-              onPageChange={changePage}
-            />
+            <>
+              <div className={pageStyles.tableBody}>
+                <ProjectSummaryTable
+                  records={projectPageRows}
+                  loading={report.loading}
+                />
+              </div>
+              <ReportPagination
+                page={viewPage}
+                totalRecords={TOTAL_RECORDS}
+                pageSize={PAGE_SIZE}
+                onPageChange={changePage}
+              />
+            </>
           )}
         </Card>
       )}

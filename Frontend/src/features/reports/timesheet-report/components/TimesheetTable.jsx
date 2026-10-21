@@ -68,7 +68,7 @@ function StatusPill({ status }) {
 
 export function TimesheetTable({ records = [], loading = false }) {
   return (
-    <div className={styles.timesheetFrame}>
+    <div className={`${styles.tableBody} ${styles.timesheetFrame}`}>
       <table className={styles.table}>
         <colgroup>
           {COLUMNS.map(([key, , columnClass]) => (
