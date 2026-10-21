@@ -1,4 +1,4 @@
-import { formatCategory, formatINR } from "../formatters";
+import { formatCategory } from "../formatters";
 import { ReportPagination } from "./ReportPagination";
 import styles from "./ResourceBreakdownTable.module.css";
 
@@ -41,7 +41,6 @@ export function ResourceBreakdownTable({
             <col className={styles.memberIdColumn} />
             <col className={styles.memberNameColumn} />
             <col className={styles.hoursColumn} />
-            <col className={styles.amountColumn} />
             <col className={styles.categoryColumn} />
           </colgroup>
           <thead>
@@ -55,7 +54,6 @@ export function ResourceBreakdownTable({
                 Logged Hrs
                 <span className={styles.headerSubLabel}>(Sep2026)</span>
               </th>
-              <th scope="col">Billing Rate/Cost</th>
               <th scope="col">Parent Category</th>
             </tr>
           </thead>
@@ -83,9 +81,6 @@ export function ResourceBreakdownTable({
                   >
                     {Number(row.hours).toFixed(1)} hrs
                   </td>
-                  <td className={styles.amount}>
-                    {formatINR(row.amount)}
-                  </td>
                   <td>
                     <CategoryTag category={row.category} />
                   </td>
@@ -93,7 +88,7 @@ export function ResourceBreakdownTable({
               ))
             ) : (
               <tr>
-                <td className={styles.emptyCell} colSpan={8}>
+                <td className={styles.emptyCell} colSpan={7}>
                   No resource records available on this page.
                 </td>
               </tr>
