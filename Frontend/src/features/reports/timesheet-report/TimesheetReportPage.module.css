@@ -33,6 +33,12 @@
   box-shadow: none;
 }
 
+.tableBody {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .reportError {
   margin: 4px 0 0;
   font-size: 12px;

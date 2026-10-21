@@ -1,4 +1,4 @@
-import { formatCategory, formatINR } from "../formatters";
+import { formatCategory } from "../formatters";
 import { ProjectCodeBadge } from "./ResourceBreakdownTable";
 import styles from "./DataTable.module.css";
 
@@ -34,7 +34,7 @@ function formatHours(value) {
 }
 
 export function ProjectSummaryTable({ records, loading = false }) {
-  const columns = 8;
+  const columns = 7;
 
   return (
     <div className={styles.tableBody}>
@@ -45,7 +45,6 @@ export function ProjectSummaryTable({ records, loading = false }) {
           <col className={styles.customerColumn} />
           <col className={styles.memberCountColumn} />
           <col className={styles.totalHoursColumn} />
-          <col className={styles.resourceCostColumn} />
           <col className={styles.monthColumn} />
           <col className={styles.parentCategoryColumn} />
         </colgroup>
@@ -59,7 +58,6 @@ export function ProjectSummaryTable({ records, loading = false }) {
               Total Hrs
               <span className={styles.subLabel}>(SEPT2026)</span>
             </th>
-            <th scope="col">Total Resource Cost</th>
             <th scope="col">
               Month Seen
               <span className={styles.subLabel}>Apr-Sep2026</span>
@@ -89,9 +87,6 @@ export function ProjectSummaryTable({ records, loading = false }) {
                 <td className={styles.hoursCell}>
                   <strong>{formatHours(record.totalHours)}</strong>
                   <span>hrs</span>
-                </td>
-                <td className={styles.resourceCost}>
-                  {formatINR(record.totalResourceCost)}
                 </td>
                 <td>
                   <span className={styles.monthPill}>

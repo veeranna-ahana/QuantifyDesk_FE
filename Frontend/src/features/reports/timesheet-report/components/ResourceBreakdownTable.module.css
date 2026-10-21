@@ -54,10 +54,6 @@
   width: 90px;
 }
 
-.amountColumn {
-  width: 100px;
-}
-
 .categoryColumn {
   width: 150px;
 }
@@ -160,12 +156,6 @@
 
 .overtimeHours {
   color: #5b3fd9;
-  white-space: nowrap;
-}
-
-.amount {
-  color: #5b3fd9;
-  text-align: right;
   white-space: nowrap;
 }
 

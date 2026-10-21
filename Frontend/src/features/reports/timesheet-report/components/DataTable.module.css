@@ -3,6 +3,12 @@
   flex: 0 0 auto;
 }
 
+.tableBody {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .table {
   width: 100%;
   border-collapse: collapse;
@@ -19,23 +25,22 @@
 }
 
 .table th {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  height: 44px;
-  padding: 0 12px;
+  height: 34px;
+  padding: 0 6px;
   border-bottom: 1px solid #e2e8f0;
   background: #eef4ff;
   color: #475569;
   font-family: "Roboto", sans-serif;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 500;
-  letter-spacing: 0.5px;
-  line-height: 15px;
+  letter-spacing: 0;
+  line-height: 14px;
   text-align: left;
   text-transform: capitalize;
   vertical-align: middle;
-  white-space: normal;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   word-break: normal;
   overflow-wrap: normal;
   hyphens: none;
@@ -43,7 +48,7 @@
 
 .table td {
   overflow: hidden;
-  padding: 12.25px 12px 12.75px;
+  padding: 0 6px;
   border-bottom: 1px solid #f1f5f9;
   color: #64748b;
   font-family: "Roboto", sans-serif;
@@ -56,7 +61,7 @@
 }
 
 .table tbody tr {
-  height: 42px;
+  height: 34px;
 }
 
 .table tbody tr:hover {
@@ -189,35 +194,31 @@
 }
 
 .projectCodeColumn {
-  width: 11%;
+  width: 12.5%;
 }
 
 .projectNameColumn {
-  width: 27%;
+  width: 30.68%;
 }
 
 .customerColumn {
-  width: 12%;
+  width: 13.64%;
 }
 
 .memberCountColumn {
-  width: 8%;
+  width: 9.09%;
 }
 
 .totalHoursColumn {
-  width: 8%;
-}
-
-.resourceCostColumn {
-  width: 12%;
+  width: 9.09%;
 }
 
 .monthColumn {
-  width: 9%;
+  width: 10.23%;
 }
 
 .parentCategoryColumn {
-  width: 13%;
+  width: 14.77%;
 }
 
 .projectHeaderTwoLine th {
@@ -289,14 +290,6 @@
   text-align: center;
 }
 
-.projectSummaryTable td.resourceCost {
-  color: #5b3fd9;
-  font-size: 11px;
-  font-weight: 600;
-  white-space: nowrap;
-  text-align: center;
-}
-
 .hoursCell strong {
   display: block;
   color: #0f172a;
@@ -357,70 +350,70 @@
 }
 
 .timesheetEmpIdColumn {
-  width: 6.8%;
+  width: 5.8%;
 }
 
 .timesheetEmpNameColumn {
-  width: 6.5%;
+  width: 8.6%;
 }
 
 .timesheetDesignationColumn {
-  width: 6.5%;
+  width: 9.6%;
 }
 
 .timesheetProjectCodeColumn {
-  width: 5.5%;
-}
-
-.timesheetProjectNameColumn {
-  width: 6.5%;
-}
-
-.timesheetCategoryCodeColumn {
-  width: 5.5%;
-}
-
-.timesheetCategoryColumn {
   width: 7%;
 }
 
+.timesheetProjectNameColumn {
+  width: 8%;
+}
+
+.timesheetCategoryCodeColumn {
+  width: 6.8%;
+}
+
+.timesheetCategoryColumn {
+  width: 8.4%;
+}
+
 .timesheetTaskColumn {
-  width: 10%;
+  width: 14%;
 }
 
 .timesheetHoursColumn {
-  width: 5.5%;
+  width: 5%;
 }
 
 .timesheetDateColumn {
-  width: 6.8%;
+  width: 5.6%;
 }
 
 .timesheetStatusColumn {
-  width: 7.5%;
+  width: 6.4%;
 }
 
 .timesheetApproverColumn {
-  width: 5.5%;
+  width: 5.2%;
 }
 
 .timesheetSubmittedColumn {
-  width: 6.8%;
+  width: 5%;
 }
 
 .timesheetApprovedColumn {
-  width: 6.8%;
+  width: 5%;
 }
 
 .timesheetOptionalColumn {
-  width: 5.5%;
+  width: 5%;
 }
 
 .timesheetFrame .table th {
-  height: 36px;
+  height: 34px;
   padding: 0 6px;
-  font-size: 11px;
-  letter-spacing: 0.2px;
+  font-size: 10px;
+  letter-spacing: 0;
   line-height: 14px;
   word-break: normal;
   overflow-wrap: normal;
@@ -459,93 +452,7 @@
   white-space: nowrap;
 }
 
-@container (min-width: 1300px) {
-  .timesheetFrame .table th {
-    height: 44px;
-    padding: 0 12px;
-    font-size: 12px;
-    letter-spacing: 0.5px;
-    line-height: 15px;
-  }
-
-  .timesheetFrame .table td {
-    padding: 12.25px 12px 12.75px;
-  }
-
-  .timesheetFrame .table tbody tr {
-    height: 42px;
-  }
-
-  .timesheetEmpIdColumn {
-    width: 6.8%;
-  }
-
-  .timesheetEmpNameColumn {
-    width: 6.5%;
-  }
-
-  .timesheetDesignationColumn {
-    width: 6.5%;
-  }
-
-  .timesheetProjectCodeColumn {
-    width: 6%;
-  }
-
-  .timesheetProjectNameColumn {
-    width: 7%;
-  }
-
-  .timesheetCategoryCodeColumn {
-    width: 5.5%;
-  }
-
-  .timesheetCategoryColumn {
-    width: 7%;
-  }
-
-  .timesheetTaskColumn {
-    width: 10%;
-  }
-
-  .timesheetHoursColumn {
-    width: 5%;
-  }
-
-  .timesheetDateColumn {
-    width: 6.8%;
-  }
-
-  .timesheetStatusColumn {
-    width: 7.5%;
-  }
-
-  .timesheetApproverColumn {
-    width: 5%;
-  }
-
-  .timesheetSubmittedColumn {
-    width: 6.8%;
-  }
-
-  .timesheetApprovedColumn {
-    width: 6.8%;
-  }
-}
-
-@container (min-width: 1100px) and (max-width: 1299.98px) {
-  .timesheetFrame .table th,
-  .timesheetFrame .table td {
-    padding-right: 8px;
-    padding-left: 8px;
-  }
-
-  .timesheetFrame .table tbody tr {
-    height: 36px;
-  }
-}
-
-@container (max-width: 1099.98px) {
+@media (max-width: 1249.98px) {
   .timesheetFrame .table th,
   .timesheetFrame .table td {
     padding-right: 5px;
@@ -554,7 +461,6 @@
 
   .timesheetFrame .table th {
     font-size: 10px;
-    letter-spacing: 0;
     line-height: 13px;
   }
 
@@ -566,21 +472,27 @@
   .timesheetFrame .table tbody tr {
     height: 32px;
   }
+}
 
-  .timesheetTaskColumn {
-    width: 22.3%;
+@media (max-width: 1099.98px) {
+  .timesheetFrame .table th,
+  .timesheetFrame .table td {
+    padding-right: 4px;
+    padding-left: 4px;
   }
 
-  .timesheetApproverColumn,
-  .timesheetSubmittedColumn {
-    display: none;
+  .timesheetFrame .table th {
+    font-size: 9px;
+    line-height: 12px;
   }
 
-  .timesheetFrame .table th:nth-child(13),
-  .timesheetFrame .table td:nth-child(13),
-  .timesheetFrame .table th:nth-child(14),
-  .timesheetFrame .table td:nth-child(14) {
-    display: none;
+  .timesheetFrame .table td {
+    font-size: 10px;
+    line-height: 14px;
+  }
+
+  .timesheetFrame .table tbody tr {
+    height: 30px;
   }
 }
 

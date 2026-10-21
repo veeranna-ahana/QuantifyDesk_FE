@@ -40,12 +40,10 @@ export function TimesheetReportPage() {
         parentCategory: record.parentCategory || record.category,
         members: new Set(),
         totalHours: 0,
-        totalResourceCost: 0,
         latestDate: "",
       };
       if (record.employeeId) project.members.add(record.employeeId);
       project.totalHours += record.hoursSpent;
-      project.totalResourceCost += record.totalResourceCost || 0;
       if (record.toDate > project.latestDate) project.latestDate = record.toDate;
       projects.set(key, project);
     });
