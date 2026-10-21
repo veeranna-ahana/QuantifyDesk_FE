@@ -88,12 +88,12 @@ function AuthenticatedApp() {
     <>
       <Routes>
         {/* Login Route (manual fallback + still works if opened directly) */}
-        <Route path="/quantification" element={<Login />} />
+        <Route path="/" element={<Login />} />
 
         {/* Protected Routes with MainLayout */}
         <Route path="/" element={<MainLayout />}>
           {/* Bare "/" → redirect to auth screen */}
-          <Route index element={<Navigate to="/quantification" replace />} />
+          {/* <Route index element={<Navigate to="/quantification" replace />} /> */}
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="member-details" element={<MemberDetailsPage />} />
           <Route path="member-details/skill-analytics" element={<SkillAnalyticsPage />} />
@@ -156,7 +156,7 @@ function AuthenticatedApp() {
         </Route>
 
         {/* Default redirect to login */}
-        <Route path="*" element={<Navigate to="/quantification" />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 
       {pendingRoleChoice && (
@@ -368,7 +368,7 @@ const roleModalStyles = {
 
 function App() {
   return (
-    <BrowserRouter>
+   <BrowserRouter basename="/quantification">
       <Toaster
         position="top-right"
         toastOptions={{
