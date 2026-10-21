@@ -1,9 +1,10 @@
 .header {
   display: flex;
+  flex: 0 0 auto;
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 12px;
+  margin-bottom: 0;
   font-family: "Roboto", sans-serif;
 }
 
@@ -71,5 +72,11 @@
 
   .exportButton {
     padding: 0 8px;
+  }
+}
+
+@media (max-height: 760px) {
+  .subtitle {
+    display: none;
   }
 }

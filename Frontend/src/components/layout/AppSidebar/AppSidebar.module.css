@@ -1,0 +1,137 @@
+.sidebar {
+  display: flex;
+  width: clamp(200px, 13vw, 240px);
+  height: 100%;
+  flex: 0 0 clamp(200px, 13vw, 240px);
+  flex-direction: column;
+  overflow-y: auto;
+  border-right: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #1e293b;
+  font-family: "Roboto", sans-serif;
+}
+
+.logoArea {
+  display: flex;
+  height: 80px;
+  flex: 0 0 80px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.logo {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: 48px;
+  object-fit: contain;
+}
+
+.navigation {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 12px;
+}
+
+.itemLink,
+.itemButton {
+  display: flex;
+  width: 100%;
+  height: 40px;
+  flex: 0 0 40px;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #1e293b;
+  cursor: pointer;
+  font-family: "Roboto", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  text-align: left;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.itemLink:hover,
+.itemButton:hover,
+.submenuLink:hover {
+  background: #f8fafc;
+}
+
+.itemLinkActive {
+  background: #ede9fe;
+  color: #856bff;
+}
+
+.icon {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  stroke-width: 1.8;
+}
+
+.itemButton span {
+  flex: 0 0 auto;
+}
+
+.chevron {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 12px;
+  margin-left: 8px;
+  transition: transform 150ms ease;
+}
+
+.chevronExpanded {
+  transform: rotate(180deg);
+}
+
+.submenu {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 4px 0 4px 24px;
+  padding-left: 12px;
+  border-left: 1px solid #e2e8f0;
+}
+
+.submenuLink {
+  display: flex;
+  min-height: 40px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px;
+  border-radius: 8px;
+  color: #1e293b;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  text-decoration: none;
+}
+
+.submenuLink span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.submenuLinkActive {
+  background: #ede9fe;
+  color: #856bff;
+}
+
+.submenuIcon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  stroke-width: 1.8;
+}

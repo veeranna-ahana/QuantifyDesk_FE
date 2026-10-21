@@ -1,9 +1,15 @@
 .pageWrapper {
-  min-height: 100%;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 12px;
   box-sizing: border-box;
-  padding: 16px;
   background: #f8f7ff;
   font-family: "Roboto", sans-serif;
+  overflow: hidden;
 }
 
 .pageWrapper,
@@ -13,8 +19,22 @@
   box-sizing: border-box;
 }
 
-@media (max-width: 680px) {
-  .pageWrapper {
-    padding: 16px;
-  }
+.reportTableCard {
+  display: flex;
+  container-type: inline-size;
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: none;
+}
+
+.reportError {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 16px;
 }

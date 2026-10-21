@@ -1,0 +1,89 @@
+.footer {
+  display: flex;
+  min-height: 40px;
+  flex: 0 0 40px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 16px;
+  margin-top: auto;
+  border-top: 1px solid #e2e8f0;
+  background: #f8faff;
+}
+
+.footerLabel {
+  color: #475569;
+  font-family: "Roboto", sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 16px;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pageButton {
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #475569;
+  cursor: pointer;
+  font-family: "Roboto", sans-serif;
+  font-size: 11px;
+  line-height: 14px;
+}
+
+.pageButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.activePage {
+  border-color: #856bff;
+  background: #856bff;
+  color: #ffffff;
+}
+
+.ellipsis {
+  display: inline-flex;
+  width: 16px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  font-size: 11px;
+}
+
+@media (max-height: 900px) {
+  .footer {
+    min-height: 36px;
+    flex-basis: 36px;
+  }
+}
+
+@media (max-height: 760px) {
+  .footer {
+    min-height: 34px;
+    flex-basis: 34px;
+  }
+}
+
+@media (max-width: 600px) {
+  .footer {
+    padding: 0 8px;
+  }
+
+  .pagination {
+    gap: 2px;
+  }
+}

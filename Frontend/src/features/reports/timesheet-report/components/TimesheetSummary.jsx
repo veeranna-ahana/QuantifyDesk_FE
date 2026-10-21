@@ -1,12 +1,14 @@
 import styles from "./TimesheetSummary.module.css";
 
 export function StatChip({ label, value, variant }) {
+  const hours = value === undefined ? 0 : value;
+
   return (
     <div className={`${styles.statChip} ${styles[variant]}`}>
       <span className={styles.dot} aria-hidden="true" />
       <span className={styles.label}>{label}:</span>
       <span className={styles.value}>
-        {Number(value || 0).toLocaleString()} hrs
+        {Number(hours)} hrs
       </span>
     </div>
   );

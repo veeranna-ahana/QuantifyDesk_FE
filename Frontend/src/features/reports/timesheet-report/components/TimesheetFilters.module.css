@@ -1,7 +1,6 @@
 .filterCard {
-  container-name: filter-card;
-  container-type: inline-size;
   width: 100%;
+  flex: 0 0 auto;
   box-sizing: border-box;
   padding: 16px;
   border: 1px solid #e2e8f0;
@@ -21,9 +20,16 @@
 
 .filtersGroup {
   display: flex;
-  flex: 0 1 auto;
+  flex: 1 1 auto;
   min-width: 0;
   align-items: flex-end;
+  gap: 8px;
+}
+
+.buttonsGroup {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
   gap: 8px;
 }
 
@@ -38,8 +44,9 @@
 
 .selectField {
   display: flex;
-  min-width: 146px;
-  flex: 0 0 146px;
+  min-width: 110px;
+  max-width: 200px;
+  flex: 1 1 146px;
   flex-direction: column;
   gap: 2px;
   font-family: "Roboto", sans-serif;
@@ -49,17 +56,17 @@
   position: relative;
   display: flex;
   height: 34px;
-  min-width: 146px;
+  min-width: 0;
   align-items: center;
 }
 
 .selectControl select {
   width: 100%;
   height: 34px;
-  min-width: 146px;
+  min-width: 0;
   box-sizing: border-box;
   appearance: none;
-  padding: 8px 32px 8px 8px;
+  padding: 8px 28px 8px 8px;
   border: 1px solid #e2e8f0;
   border-radius: 4px;
   background-color: #ffffff;
@@ -111,8 +118,8 @@
 }
 
 .applyButton {
-  width: 54px;
-  padding: 8px;
+  min-width: 54px;
+  padding: 0 8px;
   border: 0;
   background: #856bff;
   color: #ffffff;
@@ -124,8 +131,8 @@
 }
 
 .clearButton {
-  width: 45px;
-  padding: 8px 4px;
+  min-width: 45px;
+  padding: 0 4px;
   border: 1px solid #856bff;
   background: transparent;
   color: #856bff;
@@ -136,7 +143,7 @@
   background: rgba(133, 107, 255, 0.06);
 }
 
-@container filter-card (max-width: 1010px) {
+@media (max-width: 1279.98px) {
   .filterRow {
     flex-wrap: wrap;
     row-gap: 16px;
@@ -148,45 +155,46 @@
     flex-wrap: wrap;
   }
 
-  .statsGroup {
+  .filterRow > :last-child {
     justify-content: flex-start;
     margin-left: 0;
     flex-wrap: wrap;
   }
 }
 
-@media (max-width: 1099px) {
-  .filterRow {
-    flex-wrap: wrap;
-    row-gap: 16px;
-    justify-content: flex-start;
-  }
-
-  .filtersGroup {
-    flex-wrap: wrap;
-  }
-
-  .statsGroup {
-    justify-content: flex-start;
-    margin-left: 0;
-    flex-wrap: wrap;
-  }
-}
-
-@media (max-width: 680px) {
+@media (max-width: 899.98px) {
   .filterCard {
     padding: 12px;
   }
 
   .filtersGroup {
     width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: flex-end;
   }
 
   .selectField {
-    flex: 1 1 calc(50% - 6px);
+    width: 100%;
+    flex: initial;
   }
 
   .dateFieldGroup {
+    width: 100%;
+    grid-column: 1 / -1;
+    flex: initial;
+  }
+
+  .buttonsGroup {
+    grid-column: 1 / -1;
+  }
+
+  .applyButton,
+  .clearButton {
+    flex: 0 0 auto;
+  }
+
+  .buttonsGroup {
     flex: 1 1 100%;
   }
 }

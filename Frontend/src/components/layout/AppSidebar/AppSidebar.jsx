@@ -1,58 +1,69 @@
-import { ChevronDown, ClipboardClock, Clock3, FileCheck2, FileText, FolderKanban, LayoutDashboard, BookOpen, Server, UsersRound } from 'lucide-react';
-import Cookies from 'js-cookie';
-import { NavLink, useLocation} from 'react-router-dom';
-import { useSelector } from 'react-redux';
-import { useState } from 'react';
+import {
+  BookOpen,
+  ChevronDown,
+  ClipboardClock,
+  Clock3,
+  FileCheck2,
+  FileText,
+  FolderKanban,
+  LayoutDashboard,
+  Server,
+  UsersRound,
+} from "lucide-react";
+import Cookies from "js-cookie";
+import { useState } from "react";
+import { NavLink, useLocation } from "react-router-dom";
+import { useSelector } from "react-redux";
 
-import logo from '@/assets/images/ahana.png';
-import { cn } from '@/lib/cn';
+import logo from "@/assets/images/ahana.png";
+import { cn } from "@/lib/cn";
 
-import { ROLE_NAVIGATION } from './sidebar-navigation';
+import { ROLE_NAVIGATION } from "./sidebar-navigation";
+import styles from "./AppSidebar.module.css";
 
 const ICONS = {
   dashboard: LayoutDashboard,
   projects: FolderKanban,
   dailyReport: ClipboardClock,
   members: UsersRound,
-  serverInfo: Server, guideline: BookOpen,
+  serverInfo: Server,
+  guideline: BookOpen,
   reports: FileText,
   timesheet: Clock3,
   documentChecklist: FileCheck2,
 };
 
-/** Fixed sidebar on desktop; slides in over the page on small screens. */
-export function AppSidebar({ open = false, onNavigate }) {
+export function AppSidebar() {
   const reduxUser = useSelector((state) => state.auth?.user);
-  const { pathname } = useLocation();
-  const [reportsExpanded, setReportsExpanded] = useState(
-    pathname.startsWith('/reports'),
-  );
   const location = useLocation();
+  const [reportsExpanded, setReportsExpanded] = useState(
+    location.pathname.startsWith("/reports"),
+  );
 
   let user = reduxUser;
   if (!user) {
-    try { user = JSON.parse(Cookies.get('user') || 'null'); } catch { user = null; }
+    try {
+      user = JSON.parse(Cookies.get("user") || "null");
+    } catch {
+      user = null;
+    }
   }
 
-  const rawRole = user?.role || localStorage.getItem('role') || 'Employee';
-  const roleMap = { ADMIN: 'Admin', MANAGER: 'Manager', EMPLOYEE: 'Employee' };
-  const links = ROLE_NAVIGATION[roleMap[rawRole] ?? rawRole] ?? ROLE_NAVIGATION.Employee;
+  const rawRole = user?.role || localStorage.getItem("role") || "Employee";
+  const roleMap = { ADMIN: "Admin", MANAGER: "Manager", EMPLOYEE: "Employee" };
+  const links =
+    ROLE_NAVIGATION[roleMap[rawRole] ?? rawRole] ?? ROLE_NAVIGATION.Employee;
 
   return (
-    <aside
-      className={cn(
-        'fixed inset-y-0 left-0 z-40 flex w-sidebar shrink-0 flex-col border-r border-line bg-surface-card transition-transform',
-        'lg:static lg:translate-x-0',
-        open ? 'translate-x-0' : '-translate-x-full',
-      )}
-    >
-      <div className="flex h-[78px] shrink-0 items-center justify-center border-b border-line px-6">
-        <img src={logo} alt="Ahana" className="h-12 w-auto max-w-full object-contain" />
+    <aside className={styles.sidebar}>
+      <div className={styles.logoArea}>
+        <img src={logo} alt="Ahana" className={styles.logo} />
       </div>
 
-      <nav aria-label="Primary navigation" className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
+      <nav aria-label="Primary navigation" className={styles.navigation}>
         {links.map((item) => {
           const Icon = ICONS[item.icon];
+
           if (item.children) {
             return (
               <div key={item.label}>
@@ -60,50 +71,40 @@ export function AppSidebar({ open = false, onNavigate }) {
                   type="button"
                   aria-expanded={reportsExpanded}
                   onClick={() => setReportsExpanded((expanded) => !expanded)}
-                  className="flex h-10 w-full items-center gap-3 rounded-chip px-3 text-sm font-medium text-ink-secondary transition-colors hover:bg-surface-field-disabled"
+                  className={styles.itemButton}
                 >
-                  {Icon && (
-                    <Icon
-                      className="h-[18px] w-[18px] shrink-0"
-                      strokeWidth={1.8}
-                      aria-hidden="true"
-                    />
-                  )}
-                  <span className="flex-1 truncate text-left">{item.label}</span>
+                  {Icon && <Icon className={styles.icon} aria-hidden="true" />}
+                  <span>{item.label}</span>
                   <ChevronDown
                     className={cn(
-                      'h-4 w-4 transition-transform',
-                      reportsExpanded && 'rotate-180',
+                      styles.chevron,
+                      reportsExpanded && styles.chevronExpanded,
                     )}
                     aria-hidden="true"
                   />
                 </button>
                 {reportsExpanded && (
-                  <div className="ml-3 mt-1 flex flex-col gap-1 border-l border-line-card pl-3">
+                  <div className={styles.submenu}>
                     {item.children.map((child) => {
                       const ChildIcon = ICONS[child.icon];
                       return (
                         <NavLink
                           key={child.to}
                           to={child.to}
-                          onClick={onNavigate}
                           className={({ isActive }) =>
                             cn(
-                              'flex h-9 items-center gap-2 rounded-chip px-2 text-xs font-medium transition-colors',
-                              isActive
-                                ? 'bg-action-primary-soft text-action-primary'
-                                : 'text-ink-secondary hover:bg-surface-field-disabled',
+                              styles.submenuLink,
+                              isActive && styles.submenuLinkActive,
                             )
                           }
                         >
                           {ChildIcon && (
                             <ChildIcon
-                              className="h-4 w-4 shrink-0"
-                              strokeWidth={1.8}
+                              className={styles.submenuIcon}
                               aria-hidden="true"
                             />
                           )}
-                          <span className="truncate">{child.label}</span>
+                          <span>{child.label}</span>
                         </NavLink>
                       );
                     })}
@@ -112,20 +113,23 @@ export function AppSidebar({ open = false, onNavigate }) {
               </div>
             );
           }
+
           return (
             <NavLink
               key={item.to}
               to={item.to}
-              onClick={onNavigate}
               className={({ isActive }) =>
                 cn(
-                  'flex h-10 items-center gap-3 rounded-chip px-3 text-sm font-medium transition-colors',
-                  (isActive || (item.to === '/member-details' && location.pathname.startsWith('/member-details/'))) ? 'bg-action-primary-soft text-action-primary' : 'text-ink-secondary hover:bg-surface-field-disabled',
+                  styles.itemLink,
+                  (isActive ||
+                    (item.to === "/member-details" &&
+                      location.pathname.startsWith("/member-details/"))) &&
+                    styles.itemLinkActive,
                 )
               }
             >
-              {Icon && <Icon className="h-[18px] w-[18px] shrink-0" strokeWidth={1.8} aria-hidden="true" />}
-              <span className="truncate">{item.label}</span>
+              {Icon && <Icon className={styles.icon} aria-hidden="true" />}
+              <span>{item.label}</span>
             </NavLink>
           );
         })}

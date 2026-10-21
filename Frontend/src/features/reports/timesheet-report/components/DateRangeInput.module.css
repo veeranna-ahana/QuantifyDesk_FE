@@ -1,7 +1,8 @@
 .dateFieldGroup {
   display: flex;
   min-width: 183px;
-  flex: 0 0 183px;
+  max-width: 260px;
+  flex: 1.3 1 183px;
   flex-direction: column;
   gap: 2px;
   font-family: "Roboto", sans-serif;
@@ -17,9 +18,9 @@
 
 .dateRange {
   display: flex;
-  width: 183px;
+  width: 100%;
   height: 34px;
-  min-width: 183px;
+  min-width: 0;
   box-sizing: border-box;
   align-items: center;
   gap: 8px;
@@ -43,11 +44,22 @@
   font-weight: 400;
   line-height: 14px;
   appearance: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .dateField::placeholder {
   color: #94a3b8;
   opacity: 1;
+}
+
+.dateField[aria-label="Select Date"] {
+  flex-grow: 1.3;
+}
+
+.dateField[aria-label="End Date"] {
+  flex-grow: 1;
 }
 
 .dateField:focus {
@@ -67,6 +79,8 @@
 
 .calendarButton {
   display: inline-flex;
+  width: 16px;
+  height: 16px;
   flex: 0 0 16px;
   align-items: center;
   justify-content: center;
