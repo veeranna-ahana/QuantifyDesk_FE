@@ -2,31 +2,32 @@
   display: flex;
   flex: 0 1 auto;
   align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
+  gap: 12px;
+  margin-left: auto;
   white-space: nowrap;
 }
 
 .statChip {
   display: inline-flex;
-  height: 30px;
+  height: 40px;
+  flex: 0 1 auto;
   box-sizing: border-box;
   align-items: center;
-  gap: 6px;
-  padding: 6px 4px;
+  gap: 8px;
+  padding: 0 12px;
   border: 1px solid;
   border-radius: 8px;
   font-family: "Roboto", sans-serif;
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 400;
-  line-height: 16px;
+  line-height: 20px;
   white-space: nowrap;
 }
 
 .dot {
-  width: 8px;
-  height: 8px;
-  flex: 0 0 8px;
+  width: 10px;
+  height: 10px;
+  flex: 0 0 10px;
   border-radius: 50%;
 }
 
@@ -84,4 +85,13 @@
 
 .warning .value {
   color: #92400e;
+}
+
+@media (max-width: 1279px) {
+  .statsGroup {
+    flex: 0 1 auto;
+    justify-content: flex-start;
+    margin-left: 0;
+    flex-wrap: wrap;
+  }
 }

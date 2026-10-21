@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
+import { mockTimesheetRecords } from "../mock/mockTimesheetReport";
 import { timesheetReportService } from "../services/timesheetReport.service";
 
 const PAGE_SIZE = 10;
@@ -18,27 +19,43 @@ function decodeEntities(value) {
 
 // One API row = one employee within one project category (already grouped by the backend)
 function toRecord(row) {
+  const hoursSpent = Number(row.total_hours ?? row.hoursSpent) || 0;
+  const approvalStatus = row.overall_status ?? row.approvalStatus;
   return {
-    employeeId: row.employee_id,
-    employeeName: decodeEntities(row.employee_name),
+    employeeId: row.employee_id ?? row.employeeId,
+    employeeName: decodeEntities(row.employee_name ?? row.employeeName),
     designation: decodeEntities(row.designation),
-    projectCode: row.project_code,
-    projectName: decodeEntities(row.project_name),
+    projectCode: row.project_code ?? row.projectCode,
+    projectName: decodeEntities(row.project_name ?? row.projectName),
     customerName: decodeEntities(row.customer_name),
-    categoryCode: row.projectcategory_code,
-    category: decodeEntities(row.projectcategory_name),
+    categoryCode: row.projectcategory_code ?? row.categoryCode,
+    category: decodeEntities(row.projectcategory_name ?? row.category),
     parentCategory: decodeEntities(row.parent_category),
-    taskDescription: decodeEntities(row.task_description || row.remarks),
-    hoursSpent: Number(row.total_hours) || 0,
-    approvedHours: Number(row.approved_hours) || 0,
-    pendingHours: Number(row.pending_hours) || 0,
-    rejectedHours: Number(row.rejected_hours) || 0,
-    fromDate: dateOnly(row.from_date),
-    toDate: dateOnly(row.to_date),
-    approvalStatus: row.overall_status,
-    approvedBy: decodeEntities(row.last_approved_by),
-    submittedOn: dateOnly(row.last_submitted_on),
-    approvedOn: dateOnly(row.last_approved_on),
+    hoursSpent,
+    approvedHours:
+      row.approved_hours != null
+        ? Number(row.approved_hours) || 0
+        : approvalStatus === "Approved"
+          ? hoursSpent
+          : 0,
+    pendingHours:
+      row.pending_hours != null
+        ? Number(row.pending_hours) || 0
+        : ["Pending", "Submitted"].includes(approvalStatus)
+          ? hoursSpent
+          : 0,
+    rejectedHours:
+      Number(row.rejected_hours) ||
+      (approvalStatus === "Rejected" ? hoursSpent : 0),
+    fromDate: dateOnly(row.from_date ?? row.fromDate),
+    toDate: dateOnly(row.to_date ?? row.toDate),
+    approvalStatus,
+    approvedBy: decodeEntities(row.last_approved_by ?? row.approvedBy),
+    submittedOn: dateOnly(row.last_submitted_on ?? row.submittedOn),
+    approvedOn: dateOnly(row.last_approved_on ?? row.approvedOn),
+    taskDescription: decodeEntities(
+      row.task_description ?? row.remarks ?? row.taskDescription,
+    ),
   };
 }
 
@@ -59,6 +76,7 @@ export function useTimesheetReport() {
   const [allRecords, setAllRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [usingMockData, setUsingMockData] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -66,6 +84,8 @@ export function useTimesheetReport() {
       .getReport()
       .then((res) => {
         if (!active) return;
+        setUsingMockData(false);
+        setError(null);
         const rows = (res.categories ?? []).flatMap((category) =>
           (category.data ?? []).map(toRecord),
         );
@@ -73,8 +93,10 @@ export function useTimesheetReport() {
       })
       .catch((err) => {
         if (!active) return;
+        setUsingMockData(true);
+        setAllRecords(mockTimesheetRecords.map(toRecord));
         setError(
-          err.response?.data?.message || "Failed to load the timesheet report",
+          `${err.response?.data?.message || "Failed to load the timesheet report"}. Showing sample report data.`,
         );
       })
       .finally(() => {
@@ -223,6 +245,7 @@ export function useTimesheetReport() {
   return {
     draftFilters,
     setDraftFilters,
+    filters,
     options,
     records: filteredRecords.slice(start, start + PAGE_SIZE),
     filteredRecords,
@@ -233,6 +256,7 @@ export function useTimesheetReport() {
     summary,
     loading,
     error,
+    usingMockData,
     applyFilters,
     clearFilters,
     setPage,

@@ -1,0 +1,13 @@
+.pageWrapper {
+  min-height: 100%;
+  box-sizing: border-box;
+  padding: 16px 24px;
+  background: #f8f7ff;
+  font-family: "Roboto", sans-serif;
+}
+
+@media (max-width: 680px) {
+  .pageWrapper {
+    padding: 16px;
+  }
+}

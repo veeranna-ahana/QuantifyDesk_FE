@@ -1,8 +1,10 @@
 .filterCard {
+  container-name: filter-card;
+  container-type: inline-size;
   width: 100%;
   box-sizing: border-box;
   padding: 16px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #e8e6f5;
   border-radius: 8px;
   background: #ffffff;
   box-shadow: none;
@@ -13,155 +15,154 @@
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 16px;
+  gap: 32px;
+  flex-wrap: nowrap;
 }
 
 .filtersGroup {
   display: flex;
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-width: 0;
   align-items: flex-end;
-  gap: 8px;
-  flex-wrap: nowrap;
+  gap: 12px;
+}
+
+.label {
+  color: #475569;
+  font-family: "Roboto", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 16px;
 }
 
 .selectField {
-  flex: 1 1 146px;
-  min-width: 146px;
-  gap: 2px;
+  display: flex;
+  min-width: 200px;
+  flex: 0 1 200px;
+  flex-direction: column;
+  gap: 6px;
   font-family: "Roboto", sans-serif;
 }
 
-.selectField :global(label),
-.dateRange > span:first-child {
-  color: #545f72;
-  font-family: "Roboto", sans-serif;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 14px;
-}
-
-.selectField > :global(div),
-.selectField :global(select) {
+.selectControl {
+  position: relative;
+  display: flex;
+  height: 44px;
   min-width: 0;
-  height: 34px;
-  box-sizing: border-box;
+  align-items: center;
 }
 
-.filterCard .selectField :global(select) {
+.selectControl select {
   width: 100%;
+  height: 44px;
   min-width: 0;
-  height: 34px;
-  padding: 8px 30px 8px 8px;
+  box-sizing: border-box;
+  appearance: none;
+  padding: 0 36px 0 12px;
   border: 1px solid #e2e8f0;
   border-radius: 4px;
   background-color: #ffffff;
   color: #94a3b8;
   font-family: "Roboto", sans-serif;
-  font-size: 12px;
-  font-weight: 400;
-  line-height: 16px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.filterCard .selectField :global(svg) {
-  right: 8px;
-  width: 16px;
-  height: 16px;
-  color: #c3c6d6;
-}
-
-.dateRange {
-  flex: 1 1 183px;
-  min-width: 183px;
-  gap: 2px;
-  font-family: "Roboto", sans-serif;
-}
-
-.filterCard .dateRangeTrigger {
-  height: 34px;
-  min-height: 34px;
-  box-sizing: border-box;
-  gap: 8px;
-  padding: 8px;
-  border: 1px solid #e2e8f0;
-  border-radius: 4px;
-  background: #ffffff;
-  color: #94a3b8;
-  font-family: "Roboto", sans-serif;
-  font-size: 12px;
-  font-weight: 400;
-  line-height: 16px;
-}
-
-.dateRangeTrigger > span {
-  overflow: hidden;
-  color: #94a3b8;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.filterCard .dateRangeTrigger :global(svg) {
-  flex: 0 0 16px;
-  width: 16px;
-  height: 16px;
-  color: #c3c6d6;
-}
-
-.filterCard .applyButton,
-.filterCard .clearButton {
-  height: 34px;
-  min-height: 34px;
-  box-sizing: border-box;
-  justify-content: center;
-  padding: 0;
-  border-radius: 4px;
-  font-family: "Roboto", sans-serif;
   font-size: 14px;
-  letter-spacing: 0.6px;
-  line-height: 16px;
+  font-weight: 400;
+  line-height: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.filterCard .applyButton {
-  flex: 0 1 54px;
-  min-width: 54px;
-  border: 1px solid #856bff;
+.selectControl select.selectedValue {
+  color: #0f172a;
+}
+
+.chevron {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  display: inline-flex;
+  width: 16px;
+  height: 16px;
+  align-items: center;
+  color: #c3c6d6;
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.chevron svg {
+  display: block;
+}
+
+.applyButton,
+.clearButton {
+  display: inline-flex;
+  height: 44px;
+  min-height: 44px;
+  flex: 0 1 auto;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: "Roboto", sans-serif;
+  font-size: 16px;
+  letter-spacing: 0.6px;
+  line-height: 20px;
+  white-space: nowrap;
+}
+
+.applyButton {
+  min-width: 68px;
+  padding: 0 12px;
+  border: 0;
   background: #856bff;
   color: #ffffff;
-  font-weight: 600;
+  font-weight: 700;
 }
 
-.filterCard .applyButton:hover {
-  border-color: #856bff;
-  background: #856bff;
+.applyButton:hover {
+  background: #7458f5;
 }
 
-.filterCard .clearButton {
-  flex: 0 1 45px;
-  min-width: 45px;
+.clearButton {
+  min-width: 60px;
+  padding: 0 10px;
   border: 1px solid #856bff;
   background: transparent;
   color: #856bff;
-  font-weight: 400;
+  font-weight: 500;
 }
 
-.filterCard .clearButton:hover {
-  background: #ffffff;
-  color: #856bff;
+.clearButton:hover {
+  background: rgba(133, 107, 255, 0.06);
 }
 
-@media (max-width: 1099px) {
+@container filter-card (max-width: 1341px) {
   .filterRow {
     flex-wrap: wrap;
+    row-gap: 16px;
   }
 
   .filtersGroup {
-    flex-basis: 100%;
+    flex: 1 1 100%;
     flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 680px) {
+  .filterCard {
+    padding: 12px;
+  }
+
+  .filtersGroup {
+    align-items: stretch;
+  }
+
+  .selectField {
+    flex: 1 1 calc(50% - 6px);
   }
 
   .statsGroup {
-    margin-left: auto;
+    justify-content: flex-start;
+    flex-wrap: wrap;
   }
 }

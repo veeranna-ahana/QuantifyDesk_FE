@@ -1,32 +1,30 @@
 import { useMemo, useState } from "react";
-import {
-  ClipboardList,
-  Download,
-  FolderKanban,
-  UsersRound,
-} from "lucide-react";
-
-import { PageHeader } from "@/components/layout/PageHeader";
-import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { FilterTabs } from "@/components/ui/FilterTabs";
 import { Pagination } from "@/components/ui/Pagination";
 
 import { TimesheetFilters } from "./components/TimesheetFilters";
-import {
-  ProjectSummaryTable,
-  ResourceBreakdownTable,
-} from "./components/TimesheetReportTables";
+import { ReportHeader } from "./components/ReportHeader";
+import { ResourceBreakdownTabs } from "./components/ResourceBreakdownTabs";
+import { ResourceBreakdownTable } from "./components/ResourceBreakdownTable";
+import { ProjectSummaryTable } from "./components/TimesheetReportTables";
 import { TimesheetTable } from "./components/TimesheetTable";
 import { useTimesheetReport } from "./hooks/useTimesheetReport";
+import { mockProjectSummaryRecords } from "./mock/mockTimesheetReport";
+import { resourceLogs } from "./mock/mockResourceLogs";
+import pageStyles from "./TimesheetReportPage.module.css";
 
 const PAGE_SIZE = 10;
+const RESOURCE_TOTAL_RECORDS = 145;
 
 export default function TimesheetReportPage() {
   const report = useTimesheetReport();
   const [activeView, setActiveView] = useState("timesheet");
 
-  const projectRows = useMemo(() => {
+  const hasAppliedFilters = Object.values(report.filters).some(Boolean);
+  const useMockViews =
+    (report.usingMockData || report.totalRecords === 0) && !hasAppliedFilters;
+
+  const derivedProjectRows = useMemo(() => {
     const projects = new Map();
     report.filteredRecords.forEach((record) => {
       const key = record.projectCode || record.projectName;
@@ -54,65 +52,24 @@ export default function TimesheetReportPage() {
       }))
       .sort((a, b) => (a.projectName || "").localeCompare(b.projectName || ""));
   }, [report.filteredRecords]);
-
+  const projectRows = useMockViews
+    ? mockProjectSummaryRecords
+    : derivedProjectRows;
   const viewTotalItems =
-    activeView === "projects" ? projectRows.length : report.totalRecords;
+    activeView === "projects"
+      ? projectRows.length
+      : activeView === "resources"
+        ? RESOURCE_TOTAL_RECORDS
+        : report.totalRecords;
   const viewTotalPages = Math.max(1, Math.ceil(viewTotalItems / PAGE_SIZE));
   const viewPage = Math.min(report.page, viewTotalPages);
   const projectPageRows = projectRows.slice(
     (viewPage - 1) * PAGE_SIZE,
     viewPage * PAGE_SIZE,
   );
-
-  const tabs = [
-    {
-      id: "timesheet",
-      label: (
-        <span className="inline-flex items-center gap-1.5">
-          <ClipboardList className="h-3.5 w-3.5" aria-hidden="true" />
-          Timesheet Report
-        </span>
-      ),
-    },
-    {
-      id: "projects",
-      label: (
-        <span className="inline-flex items-center gap-1.5">
-          <FolderKanban className="h-3.5 w-3.5" aria-hidden="true" />
-          Project-wise Summary
-        </span>
-      ),
-      count: projectRows.length,
-    },
-    {
-      id: "resources",
-      label: (
-        <span className="inline-flex items-center gap-1.5">
-          <UsersRound className="h-3.5 w-3.5" aria-hidden="true" />
-          Resource Breakdown
-        </span>
-      ),
-      count: report.totalRecords,
-    },
-  ];
-
   return (
-    <div className="flex flex-col gap-2">
-      <PageHeader
-        title="Timesheet Report"
-        subtitle="Centralized cross-project employee time tracking and verification log"
-        actions={
-          <Button
-            variant="secondary"
-            size="md"
-            leftIcon={<Download className="h-3 w-3" />}
-            onClick={report.exportReport}
-            className="w-[117px] gap-1 border-action-primary px-3 text-xs text-action-primary hover:bg-action-primary-soft"
-          >
-            Export Report
-          </Button>
-        }
-      />
+    <div className={pageStyles.pageWrapper}>
+      <ReportHeader onExport={report.exportReport} />
 
       <TimesheetFilters
         filters={report.draftFilters}
@@ -132,41 +89,49 @@ export default function TimesheetReportPage() {
         <p className="px-1 text-sm text-badge-danger-ink">{report.error}</p>
       )}
 
-      <Card className="overflow-hidden">
-        <FilterTabs
-          items={tabs}
-          value={activeView}
-          onChange={(view) => {
-            setActiveView(view);
-            report.setPage(1);
-          }}
-          className="w-full flex-wrap justify-start gap-1 rounded-none bg-surface-card px-1 py-1"
+      <ResourceBreakdownTabs
+        activeTab={activeView}
+        onTabChange={(view) => {
+          setActiveView(view);
+          report.setPage(1);
+        }}
+        projectCount={projectRows.length}
+        resourceCount={resourceLogs.length}
+      />
+      {activeView === "resources" ? (
+        <ResourceBreakdownTable
+          rows={resourceLogs}
+          totalRecords={RESOURCE_TOTAL_RECORDS}
+          page={viewPage}
+          pageSize={PAGE_SIZE}
+          onPageChange={report.setPage}
         />
-        {activeView === "timesheet" ? (
-          <TimesheetTable records={report.records} loading={report.loading} />
-        ) : activeView === "projects" ? (
-          <ProjectSummaryTable records={projectPageRows} loading={report.loading} />
-        ) : (
-          <ResourceBreakdownTable
-            records={report.records}
-            loading={report.loading}
-          />
-        )}
-        {viewTotalItems ? (
-          <Pagination
-            page={viewPage}
-            totalPages={viewTotalPages}
-            totalItems={viewTotalItems}
-            pageSize={PAGE_SIZE}
-            onPageChange={report.setPage}
-            itemLabel={activeView === "projects" ? "projects" : "records"}
-          />
-        ) : report.loading ? null : (
-          <div className="border-t border-line-table-head bg-surface-table-head px-4 py-2 text-xs text-ink-secondary">
-            Showing 0-0 of 0 {activeView === "projects" ? "projects" : "records"}
-          </div>
-        )}
-      </Card>
+      ) : (
+        <Card className="overflow-hidden">
+          {activeView === "timesheet" ? (
+            <TimesheetTable records={report.records} loading={report.loading} />
+          ) : (
+            <ProjectSummaryTable
+              records={projectPageRows}
+              loading={report.loading}
+            />
+          )}
+          {viewTotalItems ? (
+            <Pagination
+              page={viewPage}
+              totalPages={viewTotalPages}
+              totalItems={viewTotalItems}
+              pageSize={PAGE_SIZE}
+              onPageChange={report.setPage}
+              itemLabel="records"
+            />
+          ) : report.loading ? null : (
+            <div className="border-t border-line-table-head bg-surface-table-head px-4 py-2 text-xs text-ink-secondary">
+              Showing 0-0 of 0 records
+            </div>
+          )}
+        </Card>
+      )}
     </div>
   );
 }
