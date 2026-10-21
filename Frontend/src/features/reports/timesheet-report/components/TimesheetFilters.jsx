@@ -35,7 +35,6 @@ export function TimesheetFilters({
               })),
             ]}
             wrapperClassName={styles.selectField}
-            className={styles.selectControl}
           />
           <Select
             label="Select Employee"
@@ -51,7 +50,6 @@ export function TimesheetFilters({
               })),
             ]}
             wrapperClassName={styles.selectField}
-            className={styles.selectControl}
           />
           <DateRangePicker
             startDate={filters.startDate}
