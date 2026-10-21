@@ -24,16 +24,6 @@ function formatMonth(value) {
   });
 }
 
-function formatCurrency(value) {
-  if (value == null || value === "") return "—";
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(Number(value) || 0);
-}
-
 function ProjectCode({ children }) {
   return (
     <span className="inline-flex whitespace-nowrap rounded bg-action-primary-soft px-2 py-1 text-[11px] font-semibold text-action-primary">
@@ -62,7 +52,6 @@ export function ProjectSummaryTable({ records, loading = false }) {
     "Customer Name",
     "Members Worked",
     "Total Hrs",
-    "Total Resource Cost",
     "Month Seen",
     "Parent Category",
   ];
@@ -103,9 +92,6 @@ export function ProjectSummaryTable({ records, loading = false }) {
               </TableCell>
               <TableCell className="whitespace-nowrap px-3 py-3 text-right font-semibold">
                 {formatHours(record.totalHours)}
-              </TableCell>
-              <TableCell className="whitespace-nowrap px-3 py-3 text-right font-semibold text-action-primary">
-                {formatCurrency(record.totalResourceCost)}
               </TableCell>
               <TableCell className="px-3 py-3 text-center">
                 <span className="rounded-full bg-surface-field-disabled px-2.5 py-1 text-[11px] font-medium text-ink-secondary">

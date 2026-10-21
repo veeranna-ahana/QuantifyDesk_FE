@@ -15,39 +15,44 @@
   margin: 0;
   color: #0f172a;
   font-family: "Roboto", sans-serif;
-  font-size: 28px;
+  font-size: 22px;
   font-weight: 700;
-  line-height: 32px;
+  line-height: 28px;
 }
 
 .subtitle {
-  margin: 4px 0 0;
+  margin: 2px 0 0;
   color: #64748b;
   font-family: "Roboto", sans-serif;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 400;
-  line-height: 20px;
+  line-height: 16px;
 }
 
 .exportButton {
   display: inline-flex;
-  min-height: 40px;
-  flex: 0 1 auto;
+  height: 36px;
+  flex: 0 0 auto;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 0 16px;
+  gap: 6px;
+  padding: 0 14px;
   border: 1px solid #856bff;
   border-radius: 4px;
   background: #ffffff;
   color: #856bff;
   cursor: pointer;
   font-family: "Roboto", sans-serif;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.4px;
-  line-height: 20px;
+  letter-spacing: 0.3px;
+  line-height: 16px;
   white-space: nowrap;
+}
+
+.exportButton svg {
+  width: 14px;
+  height: 14px;
 }
 
 .exportButton:hover {
@@ -64,18 +69,7 @@
     align-items: flex-start;
   }
 
-  .title {
-    font-size: 23px;
-    line-height: 28px;
-  }
-
-  .subtitle {
-    max-width: 42ch;
-    font-size: 13px;
-  }
-
   .exportButton {
-    padding: 0 10px;
-    font-size: 12px;
+    padding: 0 8px;
   }
 }

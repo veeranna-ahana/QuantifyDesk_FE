@@ -1,46 +1,48 @@
 .dateFieldGroup {
   display: flex;
-  min-width: 270px;
-  flex: 0 1 270px;
+  min-width: 183px;
+  flex: 0 0 183px;
   flex-direction: column;
-  gap: 6px;
+  gap: 2px;
   font-family: "Roboto", sans-serif;
 }
 
 .label {
-  color: #475569;
+  color: #545f72;
   font-family: "Roboto", sans-serif;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
-  line-height: 16px;
+  line-height: 14px;
 }
 
 .dateRange {
   display: flex;
-  height: 44px;
-  min-width: 0;
+  width: 183px;
+  height: 34px;
+  min-width: 183px;
   box-sizing: border-box;
   align-items: center;
-  gap: 10px;
-  padding: 0 12px;
+  gap: 8px;
+  padding: 8px;
   border: 1px solid #e2e8f0;
   border-radius: 4px;
   background: #ffffff;
 }
 
 .dateField {
-  width: 90px;
+  width: auto;
   min-width: 0;
-  flex: 1 1 90px;
+  flex: 1 1 0;
   padding: 0;
   border: 0;
   outline: none;
   background: transparent;
   color: #0f172a;
   font-family: "Roboto", sans-serif;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 400;
-  line-height: 20px;
+  line-height: 14px;
+  appearance: none;
 }
 
 .dateField::placeholder {
@@ -68,7 +70,6 @@
   flex: 0 0 16px;
   align-items: center;
   justify-content: center;
-  margin-left: auto;
   padding: 0;
   border: 0;
   background: transparent;

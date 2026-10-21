@@ -16,7 +16,7 @@ import pageStyles from "./TimesheetReportPage.module.css";
 const PAGE_SIZE = 10;
 const RESOURCE_TOTAL_RECORDS = 145;
 
-export default function TimesheetReportPage() {
+export function TimesheetReportPage() {
   const report = useTimesheetReport();
   const [activeView, setActiveView] = useState("timesheet");
 
@@ -135,3 +135,5 @@ export default function TimesheetReportPage() {
     </div>
   );
 }
+
+export default TimesheetReportPage;
