@@ -1,0 +1,63 @@
+.tabBar {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 6px 8px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #ffffff;
+  font-family: "Roboto", sans-serif;
+}
+
+.tab {
+  display: inline-flex;
+  height: 36px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #475569;
+  cursor: pointer;
+  font-family: "Roboto", sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.tab svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.activeTab {
+  background: #856bff;
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.countBadge {
+  display: inline-flex;
+  min-height: 18px;
+  align-items: center;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: #ede9fe;
+  color: #5b3fd9;
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.activeBadge {
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}

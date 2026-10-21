@@ -1,6 +1,6 @@
 import styles from "./TimesheetSummary.module.css";
 
-function SummaryItem({ label, value, variant }) {
+export function StatChip({ label, value, variant }) {
   return (
     <div className={`${styles.statChip} ${styles[variant]}`}>
       <span className={styles.dot} aria-hidden="true" />
@@ -15,17 +15,17 @@ function SummaryItem({ label, value, variant }) {
 export function TimesheetSummary({ stats = {} }) {
   return (
     <div className={styles.statsGroup}>
-      <SummaryItem
+      <StatChip
         label="Total Hours"
         value={stats.total}
         variant="total"
       />
-      <SummaryItem
+      <StatChip
         label="Approved"
         value={stats.approved}
         variant="success"
       />
-      <SummaryItem
+      <StatChip
         label="Pending"
         value={stats.pending}
         variant="warning"

@@ -1,0 +1,250 @@
+.tableCard {
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #ffffff;
+  font-family: "Roboto", sans-serif;
+}
+
+.tableScroll {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  min-width: 1040px;
+  table-layout: fixed;
+  border-collapse: collapse;
+  color: #1e293b;
+  font-family: "Roboto", sans-serif;
+}
+
+.projectCodeColumn {
+  width: 90px;
+}
+
+.projectNameColumn {
+  width: auto;
+  min-width: 260px;
+}
+
+.customerColumn {
+  width: 120px;
+}
+
+.memberIdColumn {
+  width: 90px;
+}
+
+.memberNameColumn {
+  width: 150px;
+}
+
+.hoursColumn {
+  width: 90px;
+}
+
+.amountColumn {
+  width: 110px;
+}
+
+.categoryColumn {
+  width: 130px;
+}
+
+.table thead {
+  background: #eef4ff;
+}
+
+.table thead tr {
+  height: 44px;
+}
+
+.table th {
+  padding: 0 12px;
+  color: #334155;
+  font-family: "Roboto", sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 15px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.headerSubLabel {
+  display: block;
+  font-size: 10px;
+  line-height: 12px;
+}
+
+.table tbody tr {
+  height: 30px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.table td {
+  overflow: hidden;
+  padding: 0 12px;
+  color: #1e293b;
+  font-family: "Roboto", sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ellipsized {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.memberId {
+  color: #475569 !important;
+  font-family: "Roboto Mono", monospace !important;
+}
+
+.projectCodeBadge {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: #ede9fe;
+  color: #3b2a8f;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 14px;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.hours {
+  color: #1e293b !important;
+  white-space: nowrap;
+}
+
+.overtimeHours {
+  color: #5b3fd9 !important;
+  white-space: nowrap;
+}
+
+.amount {
+  color: #5b3fd9 !important;
+  white-space: nowrap;
+}
+
+.categoryTag {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 13px;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.categoryProject {
+  background: #d1fae5;
+  color: #047857;
+}
+
+.categorySupport {
+  background: #e5e7eb;
+  color: #475569;
+}
+
+.categoryDefault {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.emptyCell {
+  height: 90px;
+  color: #64748b !important;
+  text-align: center;
+}
+
+.footer {
+  display: flex;
+  min-height: 52px;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-top: 1px solid #e2e8f0;
+  background: #f8faff;
+}
+
+.footerLabel {
+  color: #475569;
+  font-family: "Roboto", sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pageButton {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #475569;
+  cursor: pointer;
+  font-family: "Roboto", sans-serif;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.pageButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.activePage {
+  border-color: #856bff;
+  background: #856bff;
+  color: #ffffff;
+}
+
+.ellipsis {
+  display: inline-flex;
+  width: 16px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  color: #475569;
+  font-size: 12px;
+}
+
+@media (max-width: 640px) {
+  .footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
