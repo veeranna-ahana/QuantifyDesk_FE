@@ -1,0 +1,87 @@
+.statsGroup {
+  display: flex;
+  flex: 0 1 auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  white-space: nowrap;
+}
+
+.statChip {
+  display: inline-flex;
+  height: 30px;
+  box-sizing: border-box;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 4px;
+  border: 1px solid;
+  border-radius: 8px;
+  font-family: "Roboto", sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 8px;
+  border-radius: 50%;
+}
+
+.label,
+.value {
+  white-space: nowrap;
+}
+
+.total {
+  border-color: #e2e8f0;
+  background: #f8fafc;
+}
+
+.total .dot {
+  background: #64748b;
+}
+
+.total .label {
+  color: #64748b;
+}
+
+.total .value {
+  color: #0f172a;
+}
+
+.success {
+  border-color: #a7f3d0;
+  background: #ecfdf5;
+}
+
+.success .dot {
+  background: #10b981;
+}
+
+.success .label {
+  color: #047857;
+}
+
+.success .value {
+  color: #065f46;
+}
+
+.warning {
+  border-color: #fde68a;
+  background: #fffbeb;
+}
+
+.warning .dot {
+  background: #f59e0b;
+}
+
+.warning .label {
+  color: #b45309;
+}
+
+.warning .value {
+  color: #92400e;
+}

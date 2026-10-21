@@ -24,8 +24,11 @@ function toRecord(row) {
     designation: decodeEntities(row.designation),
     projectCode: row.project_code,
     projectName: decodeEntities(row.project_name),
+    customerName: decodeEntities(row.customer_name),
     categoryCode: row.projectcategory_code,
     category: decodeEntities(row.projectcategory_name),
+    parentCategory: decodeEntities(row.parent_category),
+    taskDescription: decodeEntities(row.task_description || row.remarks),
     hoursSpent: Number(row.total_hours) || 0,
     approvedHours: Number(row.approved_hours) || 0,
     pendingHours: Number(row.pending_hours) || 0,
@@ -133,18 +136,19 @@ export function useTimesheetReport() {
     [filteredRecords],
   );
 
-  const applyFilters = () => {
+  const applyFilters = (nextFilters = draftFilters) => {
     if (
-      draftFilters.startDate &&
-      draftFilters.endDate &&
-      draftFilters.startDate > draftFilters.endDate
+      nextFilters.startDate &&
+      nextFilters.endDate &&
+      nextFilters.startDate > nextFilters.endDate
     ) {
       toast.error("Start date must be on or before the end date", {
         id: "timesheet-date-range",
       });
       return;
     }
-    setFilters(draftFilters);
+    setDraftFilters(nextFilters);
+    setFilters(nextFilters);
     setPage(1);
   };
 
@@ -171,6 +175,7 @@ export function useTimesheetReport() {
         "Project Name",
         "Cat. Code",
         "Category",
+        "Task Description",
         "Hours Spent",
         "From Date",
         "To Date",
@@ -187,6 +192,7 @@ export function useTimesheetReport() {
         record.projectName,
         record.categoryCode,
         record.category,
+        record.taskDescription,
         record.hoursSpent,
         record.fromDate,
         record.toDate,
@@ -219,6 +225,7 @@ export function useTimesheetReport() {
     setDraftFilters,
     options,
     records: filteredRecords.slice(start, start + PAGE_SIZE),
+    filteredRecords,
     totalRecords: filteredRecords.length,
     page: currentPage,
     pageSize: PAGE_SIZE,

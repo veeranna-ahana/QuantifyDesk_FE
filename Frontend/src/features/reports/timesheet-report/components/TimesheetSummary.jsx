@@ -1,45 +1,35 @@
-import { Badge } from "@/components/ui/Badge";
+import styles from "./TimesheetSummary.module.css";
 
 function SummaryItem({ label, value, variant }) {
   return (
-    <Badge
-      variant={variant}
-      shape="pill"
-      size="sm"
-      dot
-      className="px-2 py-1.5 font-medium"
-    >
-      <span>{label}:</span>
-      <span className="font-semibold">{value.toLocaleString()} hrs</span>
-    </Badge>
+    <div className={`${styles.statChip} ${styles[variant]}`}>
+      <span className={styles.dot} aria-hidden="true" />
+      <span className={styles.label}>{label}:</span>
+      <span className={styles.value}>
+        {Number(value || 0).toLocaleString()} hrs
+      </span>
+    </div>
   );
 }
 
-export function TimesheetSummary({ summary, className = "" }) {
+export function TimesheetSummary({ stats = {} }) {
   return (
-    <div className={`flex flex-wrap items-center gap-2 ${className}`}>
+    <div className={styles.statsGroup}>
       <SummaryItem
         label="Total Hours"
-        value={summary.totalHours}
-        variant="neutral"
+        value={stats.total}
+        variant="total"
       />
       <SummaryItem
         label="Approved"
-        value={summary.approvedHours}
+        value={stats.approved}
         variant="success"
       />
       <SummaryItem
         label="Pending"
-        value={summary.pendingHours}
+        value={stats.pending}
         variant="warning"
       />
-      {summary.rejectedHours > 0 && (
-        <SummaryItem
-          label="Rejected"
-          value={summary.rejectedHours}
-          variant="danger"
-        />
-      )}
     </div>
   );
 }

@@ -20,6 +20,7 @@ const COLUMNS = [
   ],
   ["categoryCode", "Cat. Code", "whitespace-nowrap font-mono text-ink-muted"],
   ["category", "Category", "whitespace-nowrap"],
+  ["taskDescription", "Task Description", "min-w-[220px]"],
   ["hoursSpent", "Hours Spent", "whitespace-nowrap text-right font-semibold"],
   ["fromDate", "From Date", "whitespace-nowrap"],
   ["toDate", "To Date", "whitespace-nowrap"],
@@ -95,6 +96,8 @@ export function TimesheetTable({ records, loading = false }) {
                     </Badge>
                   ) : key === "hoursSpent" ? (
                     `${Number(record.hoursSpent || 0).toFixed(1)} hrs`
+                  ) : key === "taskDescription" ? (
+                    record.taskDescription || "—"
                   ) : key === "fromDate" ||
                     key === "toDate" ||
                     key === "submittedOn" ||

@@ -1,0 +1,167 @@
+.filterCard {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: none;
+  font-family: "Roboto", sans-serif;
+}
+
+.filterRow {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.filtersGroup {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  align-items: flex-end;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+.selectField {
+  flex: 1 1 146px;
+  min-width: 146px;
+  gap: 2px;
+  font-family: "Roboto", sans-serif;
+}
+
+.selectField :global(label),
+.dateRange > span:first-child {
+  color: #545f72;
+  font-family: "Roboto", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 14px;
+}
+
+.selectField > :global(div),
+.selectField :global(select) {
+  min-width: 0;
+  height: 34px;
+  box-sizing: border-box;
+}
+
+.filterCard .selectField :global(select) {
+  width: 100%;
+  min-width: 0;
+  height: 34px;
+  padding: 8px 30px 8px 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  background-color: #ffffff;
+  color: #94a3b8;
+  font-family: "Roboto", sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.filterCard .selectField :global(svg) {
+  right: 8px;
+  width: 16px;
+  height: 16px;
+  color: #c3c6d6;
+}
+
+.dateRange {
+  flex: 1 1 183px;
+  min-width: 183px;
+  gap: 2px;
+  font-family: "Roboto", sans-serif;
+}
+
+.filterCard .dateRangeTrigger {
+  height: 34px;
+  min-height: 34px;
+  box-sizing: border-box;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #94a3b8;
+  font-family: "Roboto", sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+}
+
+.dateRangeTrigger > span {
+  overflow: hidden;
+  color: #94a3b8;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.filterCard .dateRangeTrigger :global(svg) {
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  color: #c3c6d6;
+}
+
+.filterCard .applyButton,
+.filterCard .clearButton {
+  height: 34px;
+  min-height: 34px;
+  box-sizing: border-box;
+  justify-content: center;
+  padding: 0;
+  border-radius: 4px;
+  font-family: "Roboto", sans-serif;
+  font-size: 14px;
+  letter-spacing: 0.6px;
+  line-height: 16px;
+}
+
+.filterCard .applyButton {
+  flex: 0 1 54px;
+  min-width: 54px;
+  border: 1px solid #856bff;
+  background: #856bff;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.filterCard .applyButton:hover {
+  border-color: #856bff;
+  background: #856bff;
+}
+
+.filterCard .clearButton {
+  flex: 0 1 45px;
+  min-width: 45px;
+  border: 1px solid #856bff;
+  background: transparent;
+  color: #856bff;
+  font-weight: 400;
+}
+
+.filterCard .clearButton:hover {
+  background: #ffffff;
+  color: #856bff;
+}
+
+@media (max-width: 1099px) {
+  .filterRow {
+    flex-wrap: wrap;
+  }
+
+  .filtersGroup {
+    flex-basis: 100%;
+    flex-wrap: wrap;
+  }
+
+  .statsGroup {
+    margin-left: auto;
+  }
+}
