@@ -1,110 +1,113 @@
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeaderCell,
-  TableRow,
-} from "@/components/ui/Table";
+import { formatCategory, formatINR } from "../formatters";
+import { ProjectCodeBadge } from "./ResourceBreakdownTable";
+import styles from "./DataTable.module.css";
 
-function formatHours(value) {
-  return `${Number(value || 0).toLocaleString(undefined, {
-    minimumFractionDigits: 1,
-    maximumFractionDigits: 1,
-  })} hrs`;
-}
-
-function formatMonth(value) {
-  if (!value) return "—";
-  if (!value.includes("-")) return value;
-  const [year, month, day] = value.split("-").map(Number);
-  return new Date(year, month - 1, day).toLocaleDateString("en", {
-    month: "short",
-    year: "numeric",
-  });
-}
-
-function ProjectCode({ children }) {
+function EmptyRow({ columns, loading, label }) {
   return (
-    <span className="inline-flex whitespace-nowrap rounded bg-action-primary-soft px-2 py-1 text-[11px] font-semibold text-action-primary">
-      {children || "—"}
+    <tr>
+      <td className={styles.emptyCell} colSpan={columns}>
+        {loading ? "Loading report data..." : `No ${label} found.`}
+      </td>
+    </tr>
+  );
+}
+
+function ParentCategory({ value }) {
+  const categoryClass = value?.includes(":SP:")
+    ? styles.categoryProject
+    : value?.includes(":SS:")
+      ? styles.categorySupport
+      : styles.categoryDefault;
+
+  return (
+    <span className={`${styles.categoryTag} ${categoryClass}`} title={value}>
+      {formatCategory(value) || "—"}
     </span>
   );
 }
 
-function EmptyRow({ columns, loading, label }) {
-  return (
-    <TableRow className="hover:bg-transparent">
-      <TableCell
-        colSpan={columns}
-        className="py-8 text-center text-ink-muted"
-      >
-        {loading ? "Loading report data..." : `No ${label} found.`}
-      </TableCell>
-    </TableRow>
-  );
+function formatHours(value) {
+  return Number(value || 0).toLocaleString("en-US", {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  });
 }
 
 export function ProjectSummaryTable({ records, loading = false }) {
-  const columns = [
-    "Project Code",
-    "Project Name",
-    "Customer Name",
-    "Members Worked",
-    "Total Hrs",
-    "Month Seen",
-    "Parent Category",
-  ];
+  const columns = 8;
 
   return (
-    <Table className="min-w-[1100px]" wrapperClassName="w-full">
-      <TableHead>
-        <TableRow className="hover:bg-transparent">
-          {columns.map((column) => (
-            <TableHeaderCell
-              key={column}
-              className="h-11 whitespace-normal px-3 text-center text-[11px]"
-            >
-              {column}
-            </TableHeaderCell>
-          ))}
-        </TableRow>
-      </TableHead>
-      <TableBody>
-        {records.length === 0 ? (
-          <EmptyRow columns={columns.length} loading={loading} label="projects" />
-        ) : (
-          records.map((record) => (
-            <TableRow key={record.projectCode || record.projectName}>
-              <TableCell className="px-3 py-3">
-                <ProjectCode>{record.projectCode}</ProjectCode>
-              </TableCell>
-              <TableCell className="min-w-[250px] px-3 py-3 font-medium">
-                {record.projectName || "—"}
-              </TableCell>
-              <TableCell className="px-3 py-3 text-ink-secondary">
-                {record.customerName || "—"}
-              </TableCell>
-              <TableCell className="px-3 py-3 text-center">
-                <span className="inline-flex min-w-5 justify-center rounded-full bg-action-primary-soft px-1.5 py-1 text-[11px] font-semibold text-action-primary">
-                  {record.memberCount}
-                </span>
-              </TableCell>
-              <TableCell className="whitespace-nowrap px-3 py-3 text-right font-semibold">
-                {formatHours(record.totalHours)}
-              </TableCell>
-              <TableCell className="px-3 py-3 text-center">
-                <span className="rounded-full bg-surface-field-disabled px-2.5 py-1 text-[11px] font-medium text-ink-secondary">
-                  {formatMonth(record.monthSeen || record.latestDate)}
-                </span>
-              </TableCell>
-              <TableCell className="px-3 py-3 text-ink-secondary">
-                {record.parentCategory || "—"}
-              </TableCell>
-            </TableRow>
-          ))
-        )}
-      </TableBody>
-    </Table>
+    <div className={styles.scroller}>
+      <table className={`${styles.table} ${styles.projectSummaryTable}`}>
+        <colgroup>
+          <col className={styles.projectCodeColumn} />
+          <col className={styles.projectNameColumn} />
+          <col className={styles.customerColumn} />
+          <col className={styles.memberCountColumn} />
+          <col className={styles.totalHoursColumn} />
+          <col className={styles.resourceCostColumn} />
+          <col className={styles.monthColumn} />
+          <col className={styles.parentCategoryColumn} />
+        </colgroup>
+        <thead>
+          <tr className={styles.projectHeaderTwoLine}>
+            <th scope="col">Project Code</th>
+            <th scope="col">Project Name</th>
+            <th scope="col">Customer Name</th>
+            <th scope="col">Member Worked</th>
+            <th scope="col">
+              Total Hrs
+              <span className={styles.subLabel}>(SEPT2026)</span>
+            </th>
+            <th scope="col">Total Resource Cost</th>
+            <th scope="col">
+              Month Seen
+              <span className={styles.subLabel}>Apr-Sep2026</span>
+            </th>
+            <th scope="col">Parent Category</th>
+          </tr>
+        </thead>
+        <tbody>
+          {records.length === 0 ? (
+            <EmptyRow columns={columns} loading={loading} label="projects" />
+          ) : (
+            records.map((record) => (
+              <tr
+                className={styles.projectRow}
+                key={record.projectCode || record.projectName}
+              >
+                <td title={record.projectCode}>
+                  <ProjectCodeBadge>{record.projectCode}</ProjectCodeBadge>
+                </td>
+                <td title={record.projectName}>{record.projectName || "—"}</td>
+                <td title={record.customerName}>{record.customerName || "—"}</td>
+                <td>
+                  <span className={styles.memberCount}>
+                    {record.memberCount ?? 0}
+                  </span>
+                </td>
+                <td className={styles.hoursCell}>
+                  <strong>{formatHours(record.totalHours)}</strong>
+                  <span>hrs</span>
+                </td>
+                <td className={styles.resourceCost}>
+                  {formatINR(record.totalResourceCost)}
+                </td>
+                <td>
+                  <span className={styles.monthPill}>
+                    {record.monthSeen || "—"}
+                  </span>
+                </td>
+                <td>
+                  <ParentCategory
+                    value={record.parentCategory || record.category}
+                  />
+                </td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
   );
 }

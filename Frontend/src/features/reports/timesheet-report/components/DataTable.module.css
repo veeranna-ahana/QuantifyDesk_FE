@@ -1,0 +1,616 @@
+.scroller {
+  width: 100%;
+  flex: 0 0 auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #64748b;
+  font-family: "Roboto", sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 16px;
+  table-layout: fixed;
+}
+
+.table thead {
+  background: #eef4ff;
+}
+
+.table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  height: 44px;
+  padding: 0 12px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #eef4ff;
+  color: #475569;
+  font-family: "Roboto", sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  line-height: 15px;
+  text-align: left;
+  text-transform: capitalize;
+  vertical-align: middle;
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
+}
+
+.table td {
+  overflow: hidden;
+  padding: 12.25px 12px 12.75px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #64748b;
+  font-family: "Roboto", sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 16px;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.table tbody tr {
+  height: 42px;
+}
+
+.table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.subLabel {
+  display: block;
+  color: #94a3b8;
+  font-family: "Roboto", sans-serif;
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 12px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.emptyCell {
+  color: #64748b;
+  text-align: center;
+}
+
+.projectCode {
+  color: #64748b;
+  font-family: "Roboto Mono", monospace;
+  font-size: 10px;
+  font-weight: 400;
+}
+
+.employeeId {
+  color: #64748b;
+}
+
+.employeeName {
+  color: #0f172a;
+}
+
+.designation,
+.dateMuted {
+  color: #64748b;
+}
+
+.projectName {
+  color: #4f46e5;
+}
+
+.categoryCode {
+  color: #94a3b8;
+  font-family: "Roboto Mono", monospace;
+  font-size: 10px;
+  font-weight: 400;
+}
+
+.hours {
+  color: #0f172a;
+  font-weight: 700;
+  text-align: right;
+}
+
+.taskDescription {
+  color: #1e293b;
+}
+
+.submittedDate {
+  color: #94a3b8;
+}
+
+.approvedDate {
+  color: #475569;
+}
+
+.statusPill {
+  display: inline-flex;
+  max-width: 100%;
+  min-width: 0;
+  height: 18px;
+  align-items: center;
+  gap: 4px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  line-height: 14px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.statusLabel {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.statusDot {
+  width: 5px;
+  height: 5px;
+  flex: 0 0 5px;
+  border-radius: 50%;
+}
+
+.statusApproved {
+  background: #d1fae5;
+  color: #047857;
+}
+
+.statusApproved .statusDot {
+  background: #10b981;
+}
+
+.statusSubmitted {
+  background: #ede9fe;
+  color: #6d4ae0;
+}
+
+.statusSubmitted .statusDot {
+  background: #856bff;
+}
+
+.statusOther {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.statusOther .statusDot {
+  background: #94a3b8;
+}
+
+.projectSummaryTable {
+  width: 100%;
+}
+
+.projectCodeColumn {
+  width: 11%;
+}
+
+.projectNameColumn {
+  width: 27%;
+}
+
+.customerColumn {
+  width: 12%;
+}
+
+.memberCountColumn {
+  width: 8%;
+}
+
+.totalHoursColumn {
+  width: 8%;
+}
+
+.resourceCostColumn {
+  width: 12%;
+}
+
+.monthColumn {
+  width: 9%;
+}
+
+.parentCategoryColumn {
+  width: 13%;
+}
+
+.projectHeaderTwoLine th {
+  height: 48px;
+  white-space: normal;
+}
+
+.projectSummaryTable th {
+  height: 48px;
+  padding: 0 8px;
+  color: #334155;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 14px;
+  letter-spacing: normal;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.projectSummaryTable th:nth-child(2) {
+  text-align: left;
+}
+
+.projectSummaryTable .subLabel {
+  color: #94a3b8;
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 12px;
+}
+
+.projectSummaryTable td {
+  height: 36px;
+  padding: 0 8px;
+  color: #1e293b;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 16px;
+  text-align: center;
+}
+
+.projectSummaryTable td:nth-child(2) {
+  text-align: left;
+}
+
+.projectRow td {
+  height: 36px;
+  padding: 0 8px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.memberCount {
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #ede9fe;
+  color: #5b3fd9;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.hoursCell {
+  text-align: center;
+}
+
+.textCenter {
+  text-align: center;
+}
+
+.projectSummaryTable td.resourceCost {
+  color: #5b3fd9;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.hoursCell strong {
+  display: block;
+  color: #0f172a;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 14px;
+}
+
+.hoursCell span {
+  display: block;
+  margin-top: 0;
+  color: #94a3b8;
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 10px;
+}
+
+.monthPill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 10px;
+  line-height: 14px;
+}
+
+.categoryTag {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  line-height: 13px;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+}
+
+.categoryProject {
+  background: #d1fae5;
+  color: #047857;
+}
+
+.categorySupport {
+  background: #e5e7eb;
+  color: #475569;
+}
+
+.categoryDefault {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.timesheetFrame {
+  width: 100%;
+  flex: 0 0 auto;
+}
+
+.timesheetEmpIdColumn {
+  width: 6.8%;
+}
+
+.timesheetEmpNameColumn {
+  width: 6.5%;
+}
+
+.timesheetDesignationColumn {
+  width: 6.5%;
+}
+
+.timesheetProjectCodeColumn {
+  width: 5.5%;
+}
+
+.timesheetProjectNameColumn {
+  width: 6.5%;
+}
+
+.timesheetCategoryCodeColumn {
+  width: 5.5%;
+}
+
+.timesheetCategoryColumn {
+  width: 7%;
+}
+
+.timesheetTaskColumn {
+  width: 10%;
+}
+
+.timesheetHoursColumn {
+  width: 5.5%;
+}
+
+.timesheetDateColumn {
+  width: 6.8%;
+}
+
+.timesheetStatusColumn {
+  width: 7.5%;
+}
+
+.timesheetApproverColumn {
+  width: 5.5%;
+}
+
+.timesheetSubmittedColumn {
+  width: 6.8%;
+}
+
+.timesheetApprovedColumn {
+  width: 6.8%;
+}
+
+.timesheetOptionalColumn {
+  width: 5.5%;
+}
+
+.timesheetFrame .table th {
+  height: 36px;
+  padding: 0 6px;
+  font-size: 11px;
+  letter-spacing: 0.2px;
+  line-height: 14px;
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
+}
+
+.timesheetFrame .table td {
+  height: 34px;
+  padding: 0 6px;
+}
+
+.timesheetFrame .table tbody tr {
+  height: 34px;
+}
+
+.timesheetFrame .table .employeeId,
+.timesheetFrame .table .dateMuted,
+.timesheetFrame .table .submittedDate,
+.timesheetFrame .table .approvedDate {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+.timesheetFrame .table .projectCode,
+.timesheetFrame .table .categoryCode {
+  padding-right: 6px;
+  padding-left: 6px;
+  letter-spacing: 0;
+}
+
+.timesheetFrame .table .hours {
+  text-align: left;
+}
+
+.timesheetFrame .table .nowrapCell {
+  white-space: nowrap;
+}
+
+@container (min-width: 1300px) {
+  .timesheetFrame .table th {
+    height: 44px;
+    padding: 0 12px;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    line-height: 15px;
+  }
+
+  .timesheetFrame .table td {
+    padding: 12.25px 12px 12.75px;
+  }
+
+  .timesheetFrame .table tbody tr {
+    height: 42px;
+  }
+
+  .timesheetEmpIdColumn {
+    width: 6.8%;
+  }
+
+  .timesheetEmpNameColumn {
+    width: 6.5%;
+  }
+
+  .timesheetDesignationColumn {
+    width: 6.5%;
+  }
+
+  .timesheetProjectCodeColumn {
+    width: 6%;
+  }
+
+  .timesheetProjectNameColumn {
+    width: 7%;
+  }
+
+  .timesheetCategoryCodeColumn {
+    width: 5.5%;
+  }
+
+  .timesheetCategoryColumn {
+    width: 7%;
+  }
+
+  .timesheetTaskColumn {
+    width: 10%;
+  }
+
+  .timesheetHoursColumn {
+    width: 5%;
+  }
+
+  .timesheetDateColumn {
+    width: 6.8%;
+  }
+
+  .timesheetStatusColumn {
+    width: 7.5%;
+  }
+
+  .timesheetApproverColumn {
+    width: 5%;
+  }
+
+  .timesheetSubmittedColumn {
+    width: 6.8%;
+  }
+
+  .timesheetApprovedColumn {
+    width: 6.8%;
+  }
+}
+
+@container (min-width: 1100px) and (max-width: 1299.98px) {
+  .timesheetFrame .table th,
+  .timesheetFrame .table td {
+    padding-right: 8px;
+    padding-left: 8px;
+  }
+
+  .timesheetFrame .table tbody tr {
+    height: 36px;
+  }
+}
+
+@container (max-width: 1099.98px) {
+  .timesheetFrame .table th,
+  .timesheetFrame .table td {
+    padding-right: 5px;
+    padding-left: 5px;
+  }
+
+  .timesheetFrame .table th {
+    font-size: 10px;
+    letter-spacing: 0;
+    line-height: 13px;
+  }
+
+  .timesheetFrame .table td {
+    font-size: 10px;
+    line-height: 14px;
+  }
+
+  .timesheetFrame .table tbody tr {
+    height: 32px;
+  }
+
+  .timesheetTaskColumn {
+    width: 22.3%;
+  }
+
+  .timesheetApproverColumn,
+  .timesheetSubmittedColumn {
+    display: none;
+  }
+
+  .timesheetFrame .table th:nth-child(13),
+  .timesheetFrame .table td:nth-child(13),
+  .timesheetFrame .table th:nth-child(14),
+  .timesheetFrame .table td:nth-child(14) {
+    display: none;
+  }
+}
+
+@media (max-height: 900px) {
+  .timesheetFrame .table thead th {
+    height: 32px;
+  }
+
+  .timesheetFrame .table tbody tr {
+    height: 30px;
+  }
+
+  .timesheetFrame .table td {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+}
+
+@media (max-height: 760px) {
+  .timesheetFrame .table thead th {
+    height: 30px;
+  }
+
+  .timesheetFrame .table tbody tr {
+    height: 26px;
+  }
+}
+
+@media (max-height: 640px) {
+  .timesheetFrame .table tbody tr {
+    height: 24px;
+  }
+}

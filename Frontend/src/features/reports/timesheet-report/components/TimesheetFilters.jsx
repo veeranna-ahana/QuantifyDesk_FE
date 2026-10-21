@@ -79,7 +79,7 @@ export function FilterAndStatsCard({
             onChange={update("project")}
           />
           <Select
-            label="Employee"
+            label="Select Employee"
             value={filters.employee}
             options={employees.map((employee) => ({
               value: employee.value ?? employee.id,
@@ -93,35 +93,37 @@ export function FilterAndStatsCard({
             endDate={filters.endDate}
             onChange={(range) => onChange((current) => ({ ...current, ...range }))}
           />
-          <button
-            type="button"
-            className={styles.applyButton}
-            onClick={() =>
-              onApply({
-                project: filters.project,
-                employee: filters.employee,
-                startDate: filters.startDate,
-                endDate: filters.endDate,
-              })
-            }
-          >
-            Apply
-          </button>
-          <button
-            type="button"
-            className={styles.clearButton}
-            onClick={() => {
-              onChange({
-                project: "",
-                employee: "",
-                startDate: "",
-                endDate: "",
-              });
-              onClear();
-            }}
-          >
-            Clear
-          </button>
+          <div className={styles.buttonsGroup}>
+            <button
+              type="button"
+              className={styles.applyButton}
+              onClick={() =>
+                onApply({
+                  project: filters.project,
+                  employee: filters.employee,
+                  startDate: filters.startDate,
+                  endDate: filters.endDate,
+                })
+              }
+            >
+              Apply
+            </button>
+            <button
+              type="button"
+              className={styles.clearButton}
+              onClick={() => {
+                onChange({
+                  project: "",
+                  employee: "",
+                  startDate: "",
+                  endDate: "",
+                });
+                onClear();
+              }}
+            >
+              Clear
+            </button>
+          </div>
         </div>
         <TimesheetSummary stats={stats} />
       </div>

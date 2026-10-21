@@ -1,0 +1,51 @@
+.header {
+  display: flex;
+  height: 64px;
+  flex: 0 0 64px;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 24px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #ffffff;
+  font-family: "Roboto", sans-serif;
+}
+
+.account {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  background: #856bff;
+  color: #ffffff;
+}
+
+.accountText {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.name {
+  color: #856bff;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 16px;
+}
+
+.employeeId {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 14px;
+}
+
+.accountChevron {
+  width: 16px;
+  height: 16px;
+  color: #64748b;
+}

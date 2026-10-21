@@ -79,3 +79,5 @@ export function ResourceBreakdownTabs({
     </div>
   );
 }
+
+export const ReportTabs = ResourceBreakdownTabs;

@@ -31,6 +31,9 @@ function toRecord(row) {
     categoryCode: row.projectcategory_code ?? row.categoryCode,
     category: decodeEntities(row.projectcategory_name ?? row.category),
     parentCategory: decodeEntities(row.parent_category),
+    totalResourceCost: Number(
+      row.total_resource_cost ?? row.totalResourceCost,
+    ) || 0,
     hoursSpent,
     approvedHours:
       row.approved_hours != null

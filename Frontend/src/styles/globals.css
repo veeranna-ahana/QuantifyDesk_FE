@@ -5,6 +5,16 @@
 @tailwind components;
 @tailwind utilities;
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+}
+
 /* ----------------------------------------
    Base Reset & Globals
    (previously in index.css + App.css)
@@ -20,19 +30,13 @@ html,
 body,
 #root {
   height: 100%;
-  min-height: 100%;
-}
-
-html,
-body {
-  overflow-x: hidden;
-}
-
-body {
+  min-height: 0;
   margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
-  font-family: var(--font-sans);
+  overflow: hidden;
+}
+
+body {
+  font-family: "Roboto", sans-serif;
   background-color: var(--color-surface-app);
   color: var(--color-text-primary);
   -webkit-font-smoothing: antialiased;

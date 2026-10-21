@@ -1,44 +1,47 @@
-import { Badge } from "@/components/ui/Badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeaderCell,
-  TableRow,
-} from "@/components/ui/Table";
+import styles from "./DataTable.module.css";
 
 const COLUMNS = [
-  ["employeeId", "Emp ID", "whitespace-nowrap"],
-  ["employeeName", "Emp Name", "whitespace-nowrap font-semibold"],
-  ["designation", "Designation", "whitespace-nowrap"],
-  ["projectCode", "Project Code", "whitespace-nowrap font-mono"],
+  ["employeeId", "Emp ID", styles.timesheetEmpIdColumn],
+  ["employeeName", "Emp Name", styles.timesheetEmpNameColumn],
+  ["designation", "Designation", styles.timesheetDesignationColumn],
+  ["projectCode", "Project Code", styles.timesheetProjectCodeColumn],
+  ["projectName", "Project Name", styles.timesheetProjectNameColumn],
+  ["categoryCode", "Cat. Code", styles.timesheetCategoryCodeColumn],
+  ["category", "Category", styles.timesheetCategoryColumn],
+  ["taskDescription", "Task Description", styles.timesheetTaskColumn],
+  ["hoursSpent", "Hours Spent", styles.timesheetHoursColumn],
+  ["fromDate", "From Date", styles.timesheetDateColumn],
+  ["toDate", "To Date", styles.timesheetDateColumn],
+  ["approvalStatus", "Approval Status", styles.timesheetStatusColumn],
   [
-    "projectName",
-    "Project Name",
-    "whitespace-nowrap font-semibold text-action-primary",
+    "approvedBy",
+    "Approved By",
+    `${styles.timesheetApproverColumn} ${styles.timesheetOptionalColumn}`,
   ],
-  ["categoryCode", "Cat. Code", "whitespace-nowrap font-mono text-ink-muted"],
-  ["category", "Category", "whitespace-nowrap"],
-  ["taskDescription", "Task Description", "min-w-[220px]"],
-  ["hoursSpent", "Hours Spent", "whitespace-nowrap text-right font-semibold"],
-  ["fromDate", "From Date", "whitespace-nowrap"],
-  ["toDate", "To Date", "whitespace-nowrap"],
-  ["approvalStatus", "Approval Status", "whitespace-nowrap"],
-  ["approvedBy", "Approved By", "whitespace-nowrap"],
-  ["submittedOn", "Submitted On", "whitespace-nowrap"],
-  ["approvedOn", "Approved On", "whitespace-nowrap"],
+  [
+    "submittedOn",
+    "Submitted On",
+    `${styles.timesheetSubmittedColumn} ${styles.timesheetOptionalColumn}`,
+  ],
+  ["approvedOn", "Approved On", styles.timesheetApprovedColumn],
 ];
 
-const STATUS_VARIANTS = {
-  Approved: "success",
-  Rejected: "danger",
-  Pending: "brand",
-  Mixed: "warning",
+const FIELD_ALIASES = {
+  employeeId: "empId",
+  employeeName: "empName",
+  categoryCode: "catCode",
+  taskDescription: "task",
+  hoursSpent: "hours",
+  approvalStatus: "status",
 };
+
+function valueFor(record, key) {
+  return record[key] ?? record[FIELD_ALIASES[key]] ?? "";
+}
 
 function formatDate(value) {
   if (!value) return "—";
+  if (!/^\d{4}-\d{2}-\d{2}/.test(String(value))) return value;
   const [year, month, day] = String(value).slice(0, 10).split("-").map(Number);
   return new Date(year, month - 1, day).toLocaleDateString("en-GB", {
     day: "2-digit",
@@ -47,71 +50,110 @@ function formatDate(value) {
   });
 }
 
-export function TimesheetTable({ records, loading = false }) {
+function StatusPill({ status }) {
+  const statusClass =
+    status === "Approved"
+      ? styles.statusApproved
+      : status === "Submitted"
+        ? styles.statusSubmitted
+        : styles.statusOther;
+
   return (
-    <Table
-      className="w-full min-w-[var(--size-timesheet-table-min-width)]"
-      wrapperClassName="w-full"
-    >
-      <TableHead>
-        <TableRow className="hover:bg-transparent">
-          {COLUMNS.map(([, label]) => (
-            <TableHeaderCell key={label} className="h-9 px-2 text-xs">
-              {label}
-            </TableHeaderCell>
+    <span className={`${styles.statusPill} ${statusClass}`}>
+      <span className={styles.statusDot} />
+      <span className={styles.statusLabel}>{status || "—"}</span>
+    </span>
+  );
+}
+
+export function TimesheetTable({ records = [], loading = false }) {
+  return (
+    <div className={styles.timesheetFrame}>
+      <table className={styles.table}>
+        <colgroup>
+          {COLUMNS.map(([key, , columnClass]) => (
+            <col key={key} className={columnClass} />
           ))}
-        </TableRow>
-      </TableHead>
-      <TableBody>
-        {records.length === 0 ? (
-          <TableRow className="hover:bg-transparent">
-            <TableCell
-              colSpan={COLUMNS.length}
-              className="py-8 text-center text-ink-muted"
-            >
-              {loading
-                ? "Loading timesheet records..."
-                : "No timesheet records match these filters."}
-            </TableCell>
-          </TableRow>
-        ) : (
-          records.map((record, index) => (
-            <TableRow
-              key={`${record.employeeId}-${record.projectCode}-${record.categoryCode}-${record.fromDate}-${index}`}
-            >
-              {COLUMNS.map(([key, , className]) => (
-                <TableCell
-                  key={key}
-                  className={`px-2 py-1.5 text-xs text-ink-secondary ${className}`}
-                >
-                  {key === "approvalStatus" ? (
-                    <Badge
-                      variant={
-                        STATUS_VARIANTS[record.approvalStatus] ?? "neutral"
-                      }
-                      size="sm"
-                      dot
+        </colgroup>
+        <thead>
+          <tr>
+            {COLUMNS.map(([, label]) => (
+              <th key={label} scope="col">
+                {label}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {records.length === 0 ? (
+            <tr>
+              <td className={styles.emptyCell} colSpan={COLUMNS.length}>
+                {loading
+                  ? "Loading timesheet records..."
+                  : "No timesheet records match these filters."}
+              </td>
+            </tr>
+          ) : (
+            records.map((record, index) => (
+              <tr
+                key={`${valueFor(record, "employeeId")}-${record.projectCode}-${record.fromDate}-${index}`}
+              >
+                {COLUMNS.map(([key]) => {
+                  const value = valueFor(record, key);
+                  let className = "";
+                  let content = value || "—";
+
+                  if (key === "employeeId") className = styles.employeeId;
+                  if (key === "employeeName") className = styles.employeeName;
+                  if (key === "designation") className = styles.designation;
+                  if (key === "projectCode") className = styles.projectCode;
+                  if (key === "projectName") className = styles.projectName;
+                  if (key === "categoryCode") className = styles.categoryCode;
+                  if (key === "taskDescription") className = styles.taskDescription;
+                  if (key === "hoursSpent") {
+                    className = styles.hours;
+                    content = `${Number(value || 0).toFixed(1)} hrs`;
+                  }
+                  if (["fromDate", "toDate"].includes(key)) {
+                    className = `${styles.dateMuted} ${styles.nowrapCell}`;
+                    content = formatDate(value);
+                  }
+                  if (key === "submittedOn") {
+                    className = `${styles.submittedDate} ${styles.nowrapCell}`;
+                    content = formatDate(value);
+                  }
+                  if (key === "approvedOn") {
+                    className = `${styles.approvedDate} ${styles.nowrapCell}`;
+                    content = value ? formatDate(value) : "-";
+                  }
+                  if (key === "employeeId") {
+                    className = `${styles.employeeId} ${styles.nowrapCell}`;
+                  }
+                  if (key === "approvalStatus") {
+                    className = "";
+                  }
+                  const fullText =
+                    key === "approvalStatus" ? String(value || "—") : String(content);
+
+                  return (
+                    <td
+                      key={key}
+                      className={className}
+                      title={fullText}
                     >
-                      {record.approvalStatus || "—"}
-                    </Badge>
-                  ) : key === "hoursSpent" ? (
-                    `${Number(record.hoursSpent || 0).toFixed(1)} hrs`
-                  ) : key === "taskDescription" ? (
-                    record.taskDescription || "—"
-                  ) : key === "fromDate" ||
-                    key === "toDate" ||
-                    key === "submittedOn" ||
-                    key === "approvedOn" ? (
-                    formatDate(record[key])
-                  ) : (
-                    record[key] || "—"
-                  )}
-                </TableCell>
-              ))}
-            </TableRow>
-          ))
-        )}
-      </TableBody>
-    </Table>
+                      {key === "approvalStatus" ? (
+                        <StatusPill status={value} />
+                      ) : (
+                        content
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
   );
 }
