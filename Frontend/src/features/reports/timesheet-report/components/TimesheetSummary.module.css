@@ -1,33 +1,33 @@
 .statsGroup {
   display: flex;
-  flex: 0 1 auto;
+  flex: 0 0 auto;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   margin-left: auto;
   white-space: nowrap;
 }
 
 .statChip {
   display: inline-flex;
-  height: 40px;
-  flex: 0 1 auto;
+  height: 30px;
+  flex: 0 0 auto;
   box-sizing: border-box;
   align-items: center;
-  gap: 8px;
-  padding: 0 12px;
+  gap: 6px;
+  padding: 6px 4px;
   border: 1px solid;
   border-radius: 8px;
   font-family: "Roboto", sans-serif;
-  font-size: 14px;
+  font-size: 11px;
   font-weight: 400;
-  line-height: 20px;
+  line-height: 16px;
   white-space: nowrap;
 }
 
 .dot {
-  width: 10px;
-  height: 10px;
-  flex: 0 0 10px;
+  width: 8px;
+  height: 8px;
+  flex: 0 0 8px;
   border-radius: 50%;
 }
 
@@ -85,13 +85,4 @@
 
 .warning .value {
   color: #92400e;
-}
-
-@media (max-width: 1279px) {
-  .statsGroup {
-    flex: 0 1 auto;
-    justify-content: flex-start;
-    margin-left: 0;
-    flex-wrap: wrap;
-  }
 }

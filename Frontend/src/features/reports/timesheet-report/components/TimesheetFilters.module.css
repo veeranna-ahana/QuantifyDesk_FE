@@ -4,7 +4,7 @@
   width: 100%;
   box-sizing: border-box;
   padding: 16px;
-  border: 1px solid #e8e6f5;
+  border: 1px solid #e2e8f0;
   border-radius: 8px;
   background: #ffffff;
   box-shadow: none;
@@ -15,7 +15,7 @@
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 32px;
+  gap: 16px;
   flex-wrap: nowrap;
 }
 
@@ -24,49 +24,50 @@
   flex: 0 1 auto;
   min-width: 0;
   align-items: flex-end;
-  gap: 12px;
+  gap: 8px;
 }
 
 .label {
-  color: #475569;
+  color: #545f72;
   font-family: "Roboto", sans-serif;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
-  line-height: 16px;
+  line-height: 14px;
+  white-space: nowrap;
 }
 
 .selectField {
   display: flex;
-  min-width: 200px;
-  flex: 0 1 200px;
+  min-width: 146px;
+  flex: 0 0 146px;
   flex-direction: column;
-  gap: 6px;
+  gap: 2px;
   font-family: "Roboto", sans-serif;
 }
 
 .selectControl {
   position: relative;
   display: flex;
-  height: 44px;
-  min-width: 0;
+  height: 34px;
+  min-width: 146px;
   align-items: center;
 }
 
 .selectControl select {
   width: 100%;
-  height: 44px;
-  min-width: 0;
+  height: 34px;
+  min-width: 146px;
   box-sizing: border-box;
   appearance: none;
-  padding: 0 36px 0 12px;
+  padding: 8px 32px 8px 8px;
   border: 1px solid #e2e8f0;
   border-radius: 4px;
   background-color: #ffffff;
   color: #94a3b8;
   font-family: "Roboto", sans-serif;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 400;
-  line-height: 20px;
+  line-height: 14px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -78,7 +79,7 @@
 .chevron {
   position: absolute;
   top: 50%;
-  right: 12px;
+  right: 8px;
   display: inline-flex;
   width: 16px;
   height: 16px;
@@ -95,28 +96,27 @@
 .applyButton,
 .clearButton {
   display: inline-flex;
-  height: 44px;
-  min-height: 44px;
-  flex: 0 1 auto;
+  height: 34px;
+  flex: 0 0 auto;
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
   border-radius: 4px;
   cursor: pointer;
   font-family: "Roboto", sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   letter-spacing: 0.6px;
-  line-height: 20px;
+  line-height: 16px;
   white-space: nowrap;
 }
 
 .applyButton {
-  min-width: 68px;
-  padding: 0 12px;
+  width: 54px;
+  padding: 8px;
   border: 0;
   background: #856bff;
   color: #ffffff;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .applyButton:hover {
@@ -124,26 +124,51 @@
 }
 
 .clearButton {
-  min-width: 60px;
-  padding: 0 10px;
+  width: 45px;
+  padding: 8px 4px;
   border: 1px solid #856bff;
   background: transparent;
   color: #856bff;
-  font-weight: 500;
+  font-weight: 400;
 }
 
 .clearButton:hover {
   background: rgba(133, 107, 255, 0.06);
 }
 
-@container filter-card (max-width: 1341px) {
+@container filter-card (max-width: 1010px) {
   .filterRow {
     flex-wrap: wrap;
     row-gap: 16px;
+    justify-content: flex-start;
   }
 
   .filtersGroup {
     flex: 1 1 100%;
+    flex-wrap: wrap;
+  }
+
+  .statsGroup {
+    justify-content: flex-start;
+    margin-left: 0;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 1099px) {
+  .filterRow {
+    flex-wrap: wrap;
+    row-gap: 16px;
+    justify-content: flex-start;
+  }
+
+  .filtersGroup {
+    flex-wrap: wrap;
+  }
+
+  .statsGroup {
+    justify-content: flex-start;
+    margin-left: 0;
     flex-wrap: wrap;
   }
 }
@@ -154,15 +179,14 @@
   }
 
   .filtersGroup {
-    align-items: stretch;
+    width: 100%;
   }
 
   .selectField {
     flex: 1 1 calc(50% - 6px);
   }
 
-  .statsGroup {
-    justify-content: flex-start;
-    flex-wrap: wrap;
+  .dateFieldGroup {
+    flex: 1 1 100%;
   }
 }

@@ -40,14 +40,15 @@ function CalendarIcon() {
   );
 }
 
-function DateField({ label, value, onChange }) {
+function DateField({ label, value, onChange, inputRef }) {
   const [focused, setFocused] = useState(false);
 
   return (
     <input
+      ref={inputRef}
       aria-label={label}
       className={styles.dateField}
-      type={focused || value ? "date" : "text"}
+      type={focused ? "date" : "text"}
       value={value}
       placeholder={label}
       onFocus={() => setFocused(true)}
@@ -58,18 +59,16 @@ function DateField({ label, value, onChange }) {
 }
 
 export function DateRangeInput({ startDate, endDate, onChange }) {
-  const rangeRef = useRef(null);
+  const endDateRef = useRef(null);
 
   return (
     <div className={styles.dateFieldGroup}>
-      <label className={styles.label}>Date Range</label>
-      <div ref={rangeRef} className={styles.dateRange}>
+      <span className={styles.label}>Date Range</span>
+      <div className={styles.dateRange}>
         <DateField
           label="Select Date"
           value={startDate}
-          onChange={(value) =>
-            onChange((current) => ({ ...current, startDate: value }))
-          }
+          onChange={(value) => onChange({ startDate: value })}
         />
         <span className={styles.rangeIcon}>
           <ArrowRightIcon />
@@ -77,20 +76,17 @@ export function DateRangeInput({ startDate, endDate, onChange }) {
         <DateField
           label="End Date"
           value={endDate}
-          onChange={(value) =>
-            onChange((current) => ({ ...current, endDate: value }))
-          }
+          inputRef={endDateRef}
+          onChange={(value) => onChange({ endDate: value })}
         />
         <button
           type="button"
           className={styles.calendarButton}
           aria-label="Choose end date"
           onClick={() => {
-            const input = rangeRef.current?.querySelector(
-              '[aria-label="End Date"]',
-            );
+            const input = endDateRef.current;
             input?.focus();
-            input?.showPicker?.();
+            window.requestAnimationFrame(() => input?.showPicker?.());
           }}
         >
           <CalendarIcon />

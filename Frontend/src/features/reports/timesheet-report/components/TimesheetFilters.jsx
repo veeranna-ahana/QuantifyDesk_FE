@@ -20,7 +20,7 @@ function ChevronDownIcon() {
   );
 }
 
-function Select({
+export function Select({
   label,
   value,
   options,
@@ -71,33 +71,27 @@ export function FilterAndStatsCard({
           <Select
             label="Project"
             value={filters.project}
-            options={[
-              ...projects.map((project) => ({
-                value: project.value ?? project.code,
-                label: project.label ?? project.name,
-              })),
-            ]}
+            options={projects.map((project) => ({
+              value: project.value ?? project.code,
+              label: project.label ?? project.name,
+            }))}
             placeholder="All Projects"
             onChange={update("project")}
           />
           <Select
-            label="Select Employee"
+            label="Employee"
             value={filters.employee}
-            options={[
-              ...employees.map((employee) => ({
-                value: employee.value ?? employee.id,
-                label: employee.label ?? employee.name,
-              })),
-            ]}
+            options={employees.map((employee) => ({
+              value: employee.value ?? employee.id,
+              label: employee.label ?? employee.name,
+            }))}
             placeholder="Select Employee"
             onChange={update("employee")}
           />
           <DateRangeInput
             startDate={filters.startDate}
             endDate={filters.endDate}
-            onChange={(range) =>
-              onChange((current) => ({ ...current, ...range }))
-            }
+            onChange={(range) => onChange((current) => ({ ...current, ...range }))}
           />
           <button
             type="button"
