@@ -37,7 +37,7 @@ export function ProjectSummaryTable({ records, loading = false }) {
   const columns = 8;
 
   return (
-    <div className={styles.scroller}>
+    <div className={styles.tableBody}>
       <table className={`${styles.table} ${styles.projectSummaryTable}`}>
         <colgroup>
           <col className={styles.projectCodeColumn} />

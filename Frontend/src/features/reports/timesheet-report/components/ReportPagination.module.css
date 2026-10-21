@@ -1,12 +1,12 @@
 .footer {
   display: flex;
+  height: 40px;
   min-height: 40px;
-  flex: 0 0 40px;
+  flex: 0 0 auto;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   padding: 0 16px;
-  margin-top: auto;
   border-top: 1px solid #e2e8f0;
   background: #f8faff;
 }
@@ -22,7 +22,7 @@
 .pagination {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
 }
 
 .pageButton {
@@ -66,6 +66,7 @@
 
 @media (max-height: 900px) {
   .footer {
+    height: 36px;
     min-height: 36px;
     flex-basis: 36px;
   }
@@ -73,6 +74,7 @@
 
 @media (max-height: 760px) {
   .footer {
+    height: 34px;
     min-height: 34px;
     flex-basis: 34px;
   }
