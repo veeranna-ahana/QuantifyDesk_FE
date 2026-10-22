@@ -14,11 +14,20 @@ const has = (value, q) => String(value).toLowerCase().includes(q.toLowerCase());
 
 // Health Overview bar tones — same labels/tones the mock used, now driven by the real
 // `health_overview.buckets` from GET /api/import-project/dashboard/overview.
+//
+// "On Hold" added — the backend's healthBucketLabel (helpers/projectHealth.js) previously never
+// returned it (an On Hold project silently fell into "In Progress"/"On Track" instead, which is
+// the bug this fixes), so this chart never needed a tone for it before. ProgressBar only supports
+// brand/success/warning/danger (components/ui/ProgressBar/ProgressBar.jsx) — "info", used for
+// "On Hold" badges elsewhere (lib/status.js), isn't one of them and would silently render with no
+// fill color. "brand" is reused here (same as In Progress/Completed) as the closest valid,
+// neutral/informational tone this component actually supports.
 const HEALTH_TONE = {
   "On Track": "success",
   "In Progress": "brand",
   "At Risk": "danger",
   Delayed: "warning",
+  "On Hold": "brand",
   Completed: "brand",
 };
 

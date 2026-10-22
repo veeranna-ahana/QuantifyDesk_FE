@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/Input";
 
 import {
   EMPTY_CHECKLIST_FILTERS,
-  PROJECT_STATUSES,
   getActiveChecklistFilterCount,
 } from "../constants";
 
@@ -50,6 +49,11 @@ function ChecklistFilterPopover({
   onChange,
   activeCount,
   documentTypes,
+  // Real PMS status values actually present across the imported projects (e.g. "ON_HOLD",
+  // "APPROVED"), from the backend's own `statuses` list — NOT a hardcoded English label like "On
+  // Hold". A project really on PMS status "ON_HOLD" would never match a hardcoded "On Hold"
+  // option, which is the bug this replaced.
+  projectStatuses = [],
   onApply,
   onCancel,
   onReset,
@@ -58,7 +62,8 @@ function ChecklistFilterPopover({
 
   useEffect(() => {
     const handlePointerDown = (event) => {
-      if (!popoverRef.current?.parentElement?.contains(event.target)) onCancel();
+      if (!popoverRef.current?.parentElement?.contains(event.target))
+        onCancel();
     };
     const handleKeyDown = (event) => {
       if (event.key === "Escape") onCancel();
@@ -107,22 +112,28 @@ function ChecklistFilterPopover({
 
         <div className="flex max-h-[212px] flex-col gap-4 overflow-y-auto pr-1">
           <FilterSection label="Project Status">
-            <div className="grid grid-cols-3 gap-2">
-              {PROJECT_STATUSES.map((status) => (
-                <FilterCheckbox
-                  key={status}
-                  checked={filters.projectStatuses.includes(status)}
-                  onChange={() => toggleSelection("projectStatuses", status)}
-                  className={
-                    filters.projectStatuses.includes(status)
-                      ? "font-medium text-ink-primary"
-                      : ""
-                  }
-                >
-                  {status}
-                </FilterCheckbox>
-              ))}
-            </div>
+            {projectStatuses.length === 0 ? (
+              <p className="text-xs text-ink-muted">
+                No project statuses available yet.
+              </p>
+            ) : (
+              <div className="flex flex-wrap gap-x-3 gap-y-2">
+                {projectStatuses.map((status) => (
+                  <FilterCheckbox
+                    key={status}
+                    checked={filters.projectStatuses.includes(status)}
+                    onChange={() => toggleSelection("projectStatuses", status)}
+                    className={
+                      filters.projectStatuses.includes(status)
+                        ? "font-medium text-ink-primary"
+                        : ""
+                    }
+                  >
+                    {status}
+                  </FilterCheckbox>
+                ))}
+              </div>
+            )}
           </FilterSection>
 
           <FilterSection
@@ -212,6 +223,7 @@ export function ChecklistReportFilters({
   onFiltersChange,
   activeFilterCount,
   documentTypes,
+  projectStatuses,
   onExport,
 }) {
   const [popoverOpen, setPopoverOpen] = useState(false);
@@ -235,6 +247,19 @@ export function ChecklistReportFilters({
     setPopoverOpen(false);
   };
 
+  // Reset used to only clear the DRAFT state shown inside the still-open popover
+  // (setDraftFilters(EMPTY_CHECKLIST_FILTERS)) — it never called onFiltersChange, which is the
+  // only thing that actually updates the applied filters driving the project list. So the list
+  // kept showing the old filtered results until the user then clicked Apply Filters separately.
+  // This clears both the draft AND the applied filters in the same click, so the full project
+  // list comes back immediately, same as the Expected Result asks for. The popover is
+  // intentionally left open afterward (same as before this fix) so the user can pick new filters
+  // right away if they want.
+  const resetFilters = () => {
+    setDraftFilters({ ...EMPTY_CHECKLIST_FILTERS });
+    onFiltersChange({ ...EMPTY_CHECKLIST_FILTERS });
+  };
+
   return (
     <Card className="flex flex-wrap items-center gap-2 rounded-control border-0 p-2 shadow-none lg:h-[60px] lg:flex-nowrap lg:justify-between">
       <Input
@@ -247,7 +272,7 @@ export function ChecklistReportFilters({
         className="pl-12 text-sm leading-4"
         value={search}
         onChange={(event) => onSearchChange(event.target.value)}
-        onClear={() => onSearchChange('')}
+        onClear={() => onSearchChange("")}
         wrapperClassName="w-full min-w-0 sm:w-[var(--size-project-checklist-search-width)] sm:flex-none"
       />
       <div className="relative">
@@ -272,9 +297,10 @@ export function ChecklistReportFilters({
             onChange={setDraftFilters}
             activeCount={getActiveChecklistFilterCount(draftFilters)}
             documentTypes={documentTypes}
+            projectStatuses={projectStatuses}
             onApply={applyFilters}
             onCancel={() => setPopoverOpen(false)}
-            onReset={() => setDraftFilters({ ...EMPTY_CHECKLIST_FILTERS })}
+            onReset={resetFilters}
           />
         )}
       </div>

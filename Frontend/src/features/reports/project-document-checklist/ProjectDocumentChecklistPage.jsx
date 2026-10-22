@@ -25,6 +25,7 @@ export default function ProjectDocumentChecklistPage() {
         onFiltersChange={report.setFilters}
         activeFilterCount={report.activeFilterCount}
         documentTypes={report.documentTypes}
+        projectStatuses={report.projectStatuses}
         onExport={report.exportReport}
       />
 

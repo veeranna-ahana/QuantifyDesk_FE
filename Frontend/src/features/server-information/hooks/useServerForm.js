@@ -1,7 +1,15 @@
 // src/features/server-information/hooks/useServerForm.js
 import { useState } from "react";
 
-import { EMPTY_SERVER_FORM } from "../constants";
+import {
+  CPU_ERROR,
+  CPU_PATTERN,
+  EMPTY_SERVER_FORM,
+  RAM_ERROR,
+  RAM_PATTERN,
+  STORAGE_ERROR,
+  STORAGE_PATTERN,
+} from "../constants";
 
 /**
  * Manages form state for Add / Edit Server.
@@ -100,6 +108,13 @@ export function useServerForm(initialServer = null, projectOptions = []) {
     const next = {};
     if (!values.serverName.trim()) next.serverName = "Server name is required.";
     if (!values.ipAddress.trim()) next.ipAddress = "IP address is required.";
+    // Optional fields — only validated when something was actually typed in them.
+    if (values.ram.trim() && !RAM_PATTERN.test(values.ram.trim()))
+      next.ram = RAM_ERROR;
+    if (values.cpu.trim() && !CPU_PATTERN.test(values.cpu.trim()))
+      next.cpu = CPU_ERROR;
+    if (values.storage.trim() && !STORAGE_PATTERN.test(values.storage.trim()))
+      next.storage = STORAGE_ERROR;
     if (!values.os) next.os = "Operating System is required.";
     if (!values.environment) next.environment = "Environment is required.";
     if (!values.status) next.status = "Initial Status is required.";
