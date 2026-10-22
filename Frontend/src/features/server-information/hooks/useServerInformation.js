@@ -8,11 +8,6 @@ import { buildServersCsv, downloadCsv } from "../utils";
 const PAGE_SIZE = 10;
 const EXPORT_PAGE_SIZE = 100; // the API's maximum page size
 const EMPTY_FILTERS = { environments: [], status: "All", projects: [] };
-const PROJECT_MATCHERS = {
-  FMS: /^FMS\b/i,
-  WPT: /^(WPT|WQT)\b|work quantify tool/i,
-  PMS: /^PMS\b/i,
-};
 
 function hasFilters(filters) {
   return (
@@ -32,11 +27,17 @@ function matchesFilters(server, filters) {
     );
   const statusMatches =
     filters.status === "All" || server.status === filters.status;
+  // filters.projects now holds real project names/titles straight from the live catalog (see
+  // ServerFilterPanel.jsx) — the same strings stored in server.assignedProjects — so this is a
+  // plain case-insensitive exact match, not the 3 hardcoded FMS/WPT/PMS regexes this used to
+  // test against (which could never match any other real PMS project a server was assigned to).
   const projectMatches =
     filters.projects.length === 0 ||
     filters.projects.some((project) =>
-      server.assignedProjects?.some((assignedProject) =>
-        PROJECT_MATCHERS[project]?.test(assignedProject),
+      server.assignedProjects?.some(
+        (assignedProject) =>
+          String(assignedProject).trim().toLowerCase() ===
+          String(project).trim().toLowerCase(),
       ),
     );
 

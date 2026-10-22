@@ -35,6 +35,7 @@ export function useProjectDocumentChecklistReport() {
   });
   const [filteredProjects, setFilteredProjects] = useState([]);
   const [filteredDocumentTypes, setFilteredDocumentTypes] = useState([]);
+  const [filteredProjectStatuses, setFilteredProjectStatuses] = useState([]);
   const [page, setPage] = useState(1);
   const [expandedProject, setExpandedProject] = useState(null);
   const [data, setData] = useState({
@@ -84,6 +85,7 @@ export function useProjectDocumentChecklistReport() {
     if (!filtersApplied) {
       setFilteredProjects([]);
       setFilteredDocumentTypes([]);
+      setFilteredProjectStatuses([]);
       return undefined;
     }
 
@@ -126,6 +128,15 @@ export function useProjectDocumentChecklistReport() {
             ),
           ),
         ]);
+        // Same "options shouldn't shrink as filters are applied" reasoning as documentTypes above:
+        // the Project Status checkboxes stay drawn from every project matching the current search
+        // (not just the ones currently passing the status filter itself), sorted the same way the
+        // backend's own `statuses` list is sorted.
+        setFilteredProjectStatuses(
+          [...new Set(allProjects.map((project) => project.status))]
+            .filter(Boolean)
+            .sort((a, b) => a.localeCompare(b)),
+        );
       } catch (err) {
         if (!cancelled && requestId === latestRequest.current) {
           setFilteredProjects([]);
@@ -251,6 +262,11 @@ export function useProjectDocumentChecklistReport() {
             ),
           ),
         ],
+    // The real PMS status values actually in use (e.g. "ON_HOLD"), not a hardcoded English label
+    // — see constants.js. data.statuses comes from the backend computed across every imported
+    // project, independent of the current page/search, same scope filteredProjectStatuses covers
+    // once filters are applied.
+    projectStatuses: filtersApplied ? filteredProjectStatuses : data.statuses,
     filters,
     filtersApplied,
     activeFilterCount: getActiveChecklistFilterCount(filters),

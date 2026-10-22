@@ -1,32 +1,32 @@
-import { Layers2 } from "lucide-react";
+import { Layers2, X } from "lucide-react";
 
 import { decodeEntities, formatExperience } from "../utils";
 
 /**
- * Hover / keyboard-focus list of the members who have a skill.
+ * Click-triggered list of the members who have a skill (previously hover-triggered — see
+ * SkillCapacityCard.jsx's SkillRow for why that changed: hovering a bar made it impossible to
+ * interact with the chart underneath it).
  *
- * `open` is controlled by SkillCapacityCard's SkillRow (JS state with enter/leave
- * delay timers) — no longer driven by CSS group-hover, which caused adjacent rows
- * to flash immediately as the cursor moved between them.
- *
- * `onMouseEnter` / `onMouseLeave` are forwarded to the popover element itself so
- * that moving the cursor INTO the popover cancels the hide timer, letting the user
- * scroll through the member list without it disappearing.
+ * `open` is controlled entirely by SkillRow's click-toggle state. Since there's no more "move
+ * the mouse away" to dismiss it, SkillRow also closes it on an outside click / Escape, and this
+ * component adds an explicit close button for the same reason — a click target needs a visible
+ * way to go away again, not just an implicit one.
  */
-export function SkillMembersPopover({ id, skill, open, onMouseEnter, onMouseLeave }) {
+export function SkillMembersPopover({ id, skill, open, onClose }) {
   return (
     <div
       id={id}
-      role="tooltip"
+      role="dialog"
+      aria-label={`${skill.skill_name} members`}
       aria-hidden={!open}
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
       className={[
         "absolute left-1/2 top-10 z-20 w-[var(--size-skill-popover-width)] -translate-x-1/2",
         "rounded-chip border border-[color:var(--color-member-popover-border)]",
         "bg-surface-card p-4 shadow-[var(--shadow-member-popover)]",
         "transition-[opacity,visibility] duration-150",
-        open ? "visible opacity-100" : "invisible opacity-0 pointer-events-none",
+        open
+          ? "visible opacity-100"
+          : "invisible opacity-0 pointer-events-none",
       ].join(" ")}
     >
       <span className="absolute -top-2 left-1/2 h-4 w-4 -translate-x-1/2 rotate-45 border-l border-t border-[color:var(--color-member-popover-border)] bg-surface-card" />
@@ -35,7 +35,20 @@ export function SkillMembersPopover({ id, skill, open, onMouseEnter, onMouseLeav
           <h3 className="text-base font-bold leading-6 text-[color:var(--color-member-chart-heading)]">
             {skill.skill_name}
           </h3>
-          <Layers2 className="h-4 w-4 text-action-primary" aria-hidden="true" />
+          <div className="flex items-center gap-2">
+            <Layers2
+              className="h-4 w-4 text-action-primary"
+              aria-hidden="true"
+            />
+            <button
+              type="button"
+              aria-label={`Close ${skill.skill_name} members`}
+              className="flex h-5 w-5 items-center justify-center rounded-sm text-ink-muted hover:text-ink-primary"
+              onClick={onClose}
+            >
+              <X className="h-3.5 w-3.5" aria-hidden="true" />
+            </button>
+          </div>
         </div>
         <div className="flex max-h-[300px] flex-col gap-2 overflow-y-auto">
           {skill.employees.map((member) => (
@@ -73,4 +86,3 @@ export function SkillMembersPopover({ id, skill, open, onMouseEnter, onMouseLeav
     </div>
   );
 }
-
