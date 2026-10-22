@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { BarChart3 } from "lucide-react";
 
@@ -29,64 +29,84 @@ function SkillCountBar({ skill, maxCount }) {
 }
 
 /**
- * A single skill row. Manages its own hover state with enter (120 ms) and leave (220 ms)
- * delays so the popover doesn’t flash when the cursor passes quickly over rows and stays
- * visible long enough for the user to move their mouse into it.
+ * A single skill row. The member popover opens on CLICK (not hover) — hovering made it
+ * impossible to read or interact with the chart itself, since any pass over a bar popped a
+ * list open on top of it. Click toggles it; clicking elsewhere, pressing Escape, or clicking
+ * the row again closes it, since there's no more "move the mouse away" to dismiss it with.
  */
 function SkillRow({ skill, maxCount, index }) {
   const [open, setOpen] = useState(false);
-  const enterTimer = useRef(null);
-  const leaveTimer = useRef(null);
+  const rowRef = useRef(null);
   const popoverId = `skill-members-${index}`;
 
-  const handleMouseEnter = () => {
-    clearTimeout(leaveTimer.current);
-    // Small delay before showing — prevents triggering on quick cursor passes.
-    enterTimer.current = setTimeout(() => setOpen(true), 120);
+  const toggleOpen = () => setOpen((prev) => !prev);
+
+  const handleKeyDown = (event) => {
+    // Enter/Space activate it like a real button would — the row is given role="button" below
+    // precisely so this is expected keyboard behavior, not an extra.
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      toggleOpen();
+    }
   };
 
-  const handleMouseLeave = () => {
-    clearTimeout(enterTimer.current);
-    // Longer delay before hiding — gives the user time to move into the popover.
-    leaveTimer.current = setTimeout(() => setOpen(false), 220);
-  };
+  // Dismiss on an outside click or Escape — only wired up while open, so this isn't a global
+  // listener sitting active for every row all the time.
+  useEffect(() => {
+    if (!open) return undefined;
 
-  // Keep the popover open when the cursor moves into it.
-  const handlePopoverEnter = () => clearTimeout(leaveTimer.current);
-  const handlePopoverLeave = () => {
-    leaveTimer.current = setTimeout(() => setOpen(false), 220);
-  };
+    const handleOutsideClick = (event) => {
+      if (rowRef.current && !rowRef.current.contains(event.target)) {
+        setOpen(false);
+      }
+    };
+    const handleEscape = (event) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [open]);
 
   return (
     <div
       key={skill.skill_name}
+      ref={rowRef}
       className="relative flex flex-col gap-1"
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
     >
+      {/* Only the label + bar are the clickable target (not the popover itself below) — the
+          popover is a sibling, not a child of this, so interacting inside it (e.g. scrolling
+          the member list) can never bubble up into toggleOpen and immediately close it again. */}
       <div
-        className="flex h-[18px] flex-wrap items-center justify-between gap-1 text-[length:var(--font-size-skill-row)] leading-[18px]"
+        className="flex cursor-pointer flex-col gap-1"
+        role="button"
         tabIndex={0}
-        aria-describedby={popoverId}
-        onFocus={() => setOpen(true)}
-        onBlur={() => setOpen(false)}
+        aria-expanded={open}
+        aria-controls={popoverId}
+        onClick={toggleOpen}
+        onKeyDown={handleKeyDown}
       >
-        <span className="font-medium text-[color:var(--color-member-chart-heading)]">
-          <span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-action-primary" />
-          {skill.skill_name}
-        </span>
-        <span className="text-[length:var(--font-size-skill-count)] font-medium leading-[14px] tracking-[0.33px] text-[color:var(--color-member-chart-text)]">
-          {skill.employee_count}{" "}
-          {skill.employee_count === 1 ? "Member" : "Members"}
-        </span>
+        <div className="flex h-[18px] flex-wrap items-center justify-between gap-1 text-[length:var(--font-size-skill-row)] leading-[18px]">
+          <span className="font-medium text-[color:var(--color-member-chart-heading)]">
+            <span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-action-primary" />
+            {skill.skill_name}
+          </span>
+          <span className="text-[length:var(--font-size-skill-count)] font-medium leading-[14px] tracking-[0.33px] text-[color:var(--color-member-chart-text)]">
+            {skill.employee_count}{" "}
+            {skill.employee_count === 1 ? "Member" : "Members"}
+          </span>
+        </div>
+        <SkillCountBar skill={skill} maxCount={maxCount} />
       </div>
-      <SkillCountBar skill={skill} maxCount={maxCount} />
       <SkillMembersPopover
         id={popoverId}
         skill={skill}
         open={open}
-        onMouseEnter={handlePopoverEnter}
-        onMouseLeave={handlePopoverLeave}
+        onClose={() => setOpen(false)}
       />
     </div>
   );

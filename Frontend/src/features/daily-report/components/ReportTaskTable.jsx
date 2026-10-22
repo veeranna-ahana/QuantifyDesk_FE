@@ -132,16 +132,22 @@ export function ReportTaskTable({ tasks }) {
               {t.ownerName}
             </TableCell>
             <TableCell>
-              <Tag>{t.role || t.ownerRole || "Fullstack"}</Tag>
+              {/* Role / Task Type / Unit come from Quantify's own task_info row (role, task_type,
+                  unit — see dailyReport.controller.js), not PMS. When that task was never mapped
+                  in Quantify, these are genuinely null, not just a missing label — "Fullstack" /
+                  "Development" / "1 Unit" used to be shown as made-up fallbacks regardless, which
+                  made an unmapped task look fully configured. Showing "—" instead is the honest
+                  signal that this task still needs its Role/Task Type/Unit set. */}
+              <Tag>{t.role || t.ownerRole || "—"}</Tag>
             </TableCell>
             <TableCell>
-              <Tag>{t.taskType || "Development"}</Tag>
+              <Tag>{t.taskType || "—"}</Tag>
             </TableCell>
             <TableCell>
-              <Tag>{t.unit || "1 Unit"}</Tag>
+              <Tag>{t.unit || "—"}</Tag>
             </TableCell>
             <TableCell>
-              <Tag>{t.riskCategory || "NA"}</Tag>
+              <Tag>{t.riskCategory || "—"}</Tag>
             </TableCell>
             <TableCell className="whitespace-nowrap text-[11px]">
               <div className="font-medium">{t.plannedStart}</div>

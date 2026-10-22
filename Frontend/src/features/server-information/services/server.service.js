@@ -9,6 +9,10 @@ export const serverService = {
   /** Allocated Projects options: unique PMS project titles + custom ones added via "Other". */
   getProjects: () => axiosInstance.get("/api/servers/projects"),
 
+  /** Distinct projects actually assigned to a server — what the list's Filter popup offers. */
+  getAssignedProjects: () =>
+    axiosInstance.get("/api/servers/assigned-projects"),
+
   getServers: ({ page = 1, pageSize = 10, search = "" }) =>
     axiosInstance.get("/api/servers", {
       params: { page, pageSize, search: search.trim() || undefined },

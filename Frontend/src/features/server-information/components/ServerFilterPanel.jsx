@@ -1,15 +1,10 @@
-import { useEffect, useRef } from "react";
-import { ChevronDown } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Search } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
 
 const ENVIRONMENTS = ["Production", "UAT / Staging", "QA", "Development"];
 const STATUSES = ["All", "Active", "Maintenance", "Not Active"];
-const PROJECTS = [
-  { value: "FMS", label: "FMS" },
-  { value: "WPT", label: "Work Quantify Tool" },
-  { value: "PMS", label: "PMS" },
-];
 
 function SectionLabel({ children }) {
   return (
@@ -26,14 +21,18 @@ export function ServerFilterPanel({
   onReset,
   onCancel,
   onApply,
+  // The full PMS project catalog UNION any custom name typed through "Other (Add Project)" on
+  // Add/Edit Server (merged by ServerInformationPage.jsx from GET /api/servers/projects +
+  // GET /api/servers/assigned-projects) — a custom-only project is never in the PMS catalog by
+  // itself, so without the merge it would silently never show up as a filter option even though a
+  // server really is assigned to it. This used to be a hardcoded 3-item list (FMS/Work Quantify
+  // Tool/PMS) with no connection to what a server was actually assigned.
+  projectOptions = [],
+  projectsLoading = false,
+  projectsError = null,
 }) {
   const panelRef = useRef(null);
-  const selectedProject =
-    filters.projects.length === 0
-      ? ""
-      : filters.projects.length === 1
-        ? filters.projects[0]
-        : "__multiple";
+  const [projectSearch, setProjectSearch] = useState("");
 
   useEffect(() => {
     const handlePointerDown = (event) => {
@@ -71,7 +70,7 @@ export function ServerFilterPanel({
       aria-label="Filter servers"
       className="absolute right-0 top-[calc(100%+8px)] z-40 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-line-card bg-surface-card shadow-[var(--shadow-3)]"
     >
-      <div className="max-h-[min(80vh,460px)] overflow-y-auto px-3 pt-2">
+      <div className="max-h-[min(80vh,460px)] overflow-y-auto overflow-x-hidden px-3 pt-2">
         <div className="flex h-[37px] items-center justify-between border-b border-line-card">
           <div className="flex items-center gap-1.5">
             <h2 className="text-sm font-medium leading-4 text-ink-primary">
@@ -83,7 +82,10 @@ export function ServerFilterPanel({
           </div>
           <button
             type="button"
-            onClick={onReset}
+            onClick={() => {
+              setProjectSearch("");
+              onReset();
+            }}
             className="text-xs leading-4 text-action-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action-primary-ring"
           >
             Reset
@@ -121,9 +123,7 @@ export function ServerFilterPanel({
                 return (
                   <label
                     key={status}
-                    className={`inline-flex h-[26px] cursor-pointer items-center gap-1.5 rounded border px-2 text-xs leading-4 text-ink-secondary transition-colors ${
-                      "border-line-card bg-surface-card"
-                    }`}
+                    className={`inline-flex h-[26px] cursor-pointer items-center gap-1.5 rounded border px-2 text-xs leading-4 text-ink-secondary transition-colors ${"border-line-card bg-surface-card"}`}
                   >
                     <input
                       type="radio"
@@ -142,57 +142,71 @@ export function ServerFilterPanel({
 
           <fieldset className="flex flex-col gap-1.5">
             <legend className="sr-only">Assign Project</legend>
-            <SectionLabel>Assign Project</SectionLabel>
-            <div className="relative">
-              <select
-                aria-label="Choose a project filter"
-                value={selectedProject}
-                onChange={(event) =>
-                  onChange({
-                    ...filters,
-                    projects:
-                      event.target.value === ""
-                        ? []
-                        : event.target.value === "__multiple"
-                          ? filters.projects
-                          : [event.target.value],
-                  })
-                }
-                className="h-[30px] w-full appearance-none rounded-md border border-line-card bg-surface-card px-2.5 pr-8 text-xs text-ink-secondary outline-none focus-visible:ring-2 focus-visible:ring-action-primary-ring"
-              >
-                <option value="">All Projects</option>
-                {filters.projects.length > 1 && (
-                  <option value="__multiple">
-                    {filters.projects.length} Projects Selected
-                  </option>
-                )}
-                {PROJECTS.map(({ value, label }) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown
-                className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted"
+            <div className="flex items-center justify-between">
+              <SectionLabel>Assign Project</SectionLabel>
+              {filters.projects.length > 0 && (
+                <span className="rounded bg-badge-brand-bg px-1.5 py-0.5 text-[10px] leading-4 text-badge-brand-ink">
+                  {filters.projects.length} selected
+                </span>
+              )}
+            </div>
+            <div className="relative w-full min-w-0">
+              <Search
+                className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-muted"
                 aria-hidden="true"
               />
+              <input
+                type="text"
+                value={projectSearch}
+                onChange={(event) => setProjectSearch(event.target.value)}
+                placeholder="Search projects…"
+                aria-label="Search projects to filter by"
+                className="h-[30px] w-full min-w-0 rounded-md border border-line-card bg-surface-card pl-8 pr-2.5 text-xs text-ink-secondary outline-none placeholder:text-ink-muted focus-visible:ring-2 focus-visible:ring-action-primary-ring"
+              />
             </div>
-            <div className="flex flex-wrap gap-x-3 gap-y-1 pt-1">
-              {PROJECTS.map(({ value, label }) => (
-                <label
-                  key={value}
-                  className="inline-flex cursor-pointer items-center gap-2 py-1 text-xs leading-4 text-ink-secondary"
-                >
-                  <input
-                    type="checkbox"
-                    checked={filters.projects.includes(value)}
-                    onChange={() => toggleProject(value)}
-                    className="h-3.5 w-3.5 cursor-pointer rounded-[3px] accent-action-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action-primary-ring"
-                  />
-                  {label}
-                </label>
-              ))}
-            </div>
+            {projectsLoading && (
+              <p className="py-1 text-xs text-ink-muted">Loading projects…</p>
+            )}
+            {!projectsLoading && projectsError && (
+              <p className="py-1 text-xs text-badge-danger-ink">
+                {projectsError}
+              </p>
+            )}
+            {!projectsLoading && !projectsError && (
+              <div className="flex max-h-40 w-full min-w-0 flex-col gap-0.5 overflow-x-hidden overflow-y-auto pt-1">
+                {projectOptions
+                  .filter((name) =>
+                    name
+                      .toLowerCase()
+                      .includes(projectSearch.trim().toLowerCase()),
+                  )
+                  .map((name) => (
+                    <label
+                      key={name}
+                      title={name}
+                      className="flex w-full min-w-0 cursor-pointer items-center gap-2 rounded px-1 py-1 text-xs leading-4 text-ink-secondary hover:bg-action-primary-soft/50"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={filters.projects.includes(name)}
+                        onChange={() => toggleProject(name)}
+                        className="h-3.5 w-3.5 shrink-0 cursor-pointer rounded-[3px] accent-action-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action-primary-ring"
+                      />
+                      <span className="min-w-0 flex-1 truncate">{name}</span>
+                    </label>
+                  ))}
+                {projectOptions.length > 0 &&
+                  projectOptions.filter((name) =>
+                    name
+                      .toLowerCase()
+                      .includes(projectSearch.trim().toLowerCase()),
+                  ).length === 0 && (
+                    <p className="px-1 py-1 text-xs text-ink-muted">
+                      No projects match “{projectSearch}”.
+                    </p>
+                  )}
+              </div>
+            )}
           </fieldset>
         </div>
       </div>

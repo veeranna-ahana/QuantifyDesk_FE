@@ -1,7 +1,7 @@
 // src/features/server-information/ServerFormPage.jsx
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import {
   AlignLeft,
@@ -104,6 +104,7 @@ function ServerForm({
   projectsError,
 }) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
 
   const {
@@ -150,6 +151,11 @@ function ServerForm({
       setSaving(true);
       if (isEdit) await serverService.updateServer(server.id, values);
       else await serverService.createServer(values);
+      // A brand-new custom project typed via "Other" (or any newly-assigned existing project)
+      // only becomes visible to the Server Information list's "Assign Project" filter once this
+      // query is refetched — without this it stays stale for up to its 2-minute staleTime and the
+      // project you just assigned looks missing from the filter.
+      queryClient.invalidateQueries({ queryKey: ["server-assigned-projects"] });
       navigate("/server-information", {
         state: {
           successMessage: isEdit
