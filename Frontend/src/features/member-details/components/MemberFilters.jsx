@@ -1,10 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import {
-  BarChart3,
-  Download,
-  Search,
-  SlidersHorizontal,
-} from "lucide-react";
+import { BarChart3, Download, Search, SlidersHorizontal } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -96,7 +91,8 @@ function MemberFilterPopover({
 
   useEffect(() => {
     const handlePointerDown = (event) => {
-      if (!popoverRef.current?.parentElement?.contains(event.target)) onCancel();
+      if (!popoverRef.current?.parentElement?.contains(event.target))
+        onCancel();
     };
     const handleKeyDown = (event) => {
       if (event.key === "Escape") onCancel();
@@ -153,8 +149,9 @@ function MemberFilterPopover({
             <FilterSection label="Availability Status">
               <div className="flex flex-col">
                 {AVAILABILITY_OPTIONS.map((option) => {
-                  const checked =
-                    filters.availabilityStatuses.includes(option.id);
+                  const checked = filters.availabilityStatuses.includes(
+                    option.id,
+                  );
                   return (
                     <div
                       key={option.id}
@@ -287,6 +284,19 @@ export function MemberFilters({
     setPopoverOpen(true);
   };
 
+  // Reset used to only clear the DRAFT state shown inside the still-open popover
+  // (setDraftFilters(EMPTY_FILTERS)) — it never called onFiltersChange, which is the only thing
+  // that actually updates the applied filters driving the member list. So the list (and the
+  // resource count) kept showing the old filtered results until the user then clicked Apply
+  // Filters separately. This clears both the draft AND the applied filters in the same click, so
+  // the full member list comes back immediately, same as the Expected Result asks for. The
+  // popover is intentionally left open afterward (same as before this fix) so the user can pick
+  // new filters right away if they want.
+  const resetFilters = () => {
+    setDraftFilters({ ...EMPTY_FILTERS });
+    onFiltersChange({ ...EMPTY_FILTERS });
+  };
+
   return (
     <div className="flex flex-wrap items-center gap-2">
       <Input
@@ -298,7 +308,7 @@ export function MemberFilters({
         size="lg"
         value={search}
         onChange={(event) => onSearchChange(event.target.value)}
-        onClear={() => onSearchChange('')}
+        onClear={() => onSearchChange("")}
         wrapperClassName="min-w-48 flex-1 sm:flex-none sm:w-64 lg:w-[var(--size-member-search-width)]"
         className="placeholder:text-[color:var(--color-member-table-heading)]"
       />
@@ -330,7 +340,7 @@ export function MemberFilters({
               setPopoverOpen(false);
             }}
             onCancel={() => setPopoverOpen(false)}
-            onReset={() => setDraftFilters({ ...EMPTY_FILTERS })}
+            onReset={resetFilters}
           />
         )}
       </div>

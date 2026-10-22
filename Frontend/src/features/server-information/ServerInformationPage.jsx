@@ -1,6 +1,7 @@
 // src/features/server-information/ServerInformationPage.jsx
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { Download, Plus } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -12,10 +13,39 @@ import { Pagination } from "@/components/ui/Pagination";
 import { ServerFilterBar } from "./components/ServerFilterBar";
 import { ServerTable } from "./components/ServerTable";
 import { useServerInformation } from "./hooks/useServerInformation";
+import { serverService } from "./services/server.service";
 
 export default function ServerInformationPage() {
   const navigate = useNavigate();
   const { state } = useLocation();
+
+  // The "Assign Project" filter should show the full PMS catalog (same one Add/Edit Server's own
+  // picker uses) — PLUS any custom name someone typed through "Other (Add Project)" while adding
+  // a server, since those never existed in PMS and would otherwise be invisible as filter options
+  // even though a server really is assigned to them. So this merges both sources and de-dupes.
+  const catalogQuery = useQuery({
+    queryKey: ["server-projects"],
+    queryFn: () => serverService.getProjects(),
+    staleTime: 2 * 60 * 1000,
+  });
+  // staleTime: 0 (not 2 minutes like the PMS catalog above) — this is a cheap local DB read, not
+  // a PMS call, and it needs to reflect a project someone just assigned on Add/Edit Server a
+  // moment ago. Relying only on ServerFormPage's invalidateQueries() after save is one path to
+  // freshness; this is the other, so opening the filter is correct even if this page was already
+  // sitting open in another tab when the assignment happened.
+  const assignedQuery = useQuery({
+    queryKey: ["server-assigned-projects"],
+    queryFn: () => serverService.getAssignedProjects(),
+    staleTime: 0,
+  });
+
+  const projectOptions = useMemo(() => {
+    const names = new Set([
+      ...(catalogQuery.data?.projects || []),
+      ...(assignedQuery.data?.projects || []),
+    ]);
+    return [...names].sort((a, b) => a.localeCompare(b));
+  }, [catalogQuery.data, assignedQuery.data]);
 
   const {
     servers,
@@ -96,6 +126,15 @@ export default function ServerInformationPage() {
         filters={filters}
         onFiltersChange={setFilters}
         activeCount={activeCount}
+        projectOptions={projectOptions}
+        projectsLoading={catalogQuery.isLoading || assignedQuery.isLoading}
+        projectsError={
+          // The PMS catalog is the one that can realistically fail (it's a live PMS call); if the
+          // assigned-projects lookup fails, the filter just falls back to the catalog alone rather
+          // than showing an error for something that isn't the user's problem.
+          catalogQuery.data?.pmsError ||
+          (catalogQuery.isError ? "Could not load projects." : null)
+        }
       />
 
       {error && <p className="px-1 text-sm text-badge-danger-ink">{error}</p>}
