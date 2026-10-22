@@ -1,11 +1,13 @@
 .header {
   display: flex;
-  flex: 0 0 auto;
-  align-items: flex-start;
+  height: 44px;
+  min-height: 44px;
+  flex: 0 0 44px;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 0;
-  font-family: "Roboto", sans-serif;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 .titleBlock {
@@ -14,69 +16,44 @@
 
 .title {
   margin: 0;
-  color: #0f172a;
-  font-family: "Roboto", sans-serif;
+  color: #111827;
+  font-family: "Inter", sans-serif;
   font-size: 22px;
   font-weight: 700;
   line-height: 28px;
 }
 
-.subtitle {
-  margin: 2px 0 0;
-  color: #64748b;
-  font-family: "Roboto", sans-serif;
-  font-size: 12px;
-  font-weight: 400;
-  line-height: 16px;
-}
-
 .exportButton {
   display: inline-flex;
-  height: 36px;
+  height: 34px;
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
   gap: 6px;
   padding: 0 14px;
-  border: 1px solid #856bff;
-  border-radius: 4px;
+  border: 1px solid #7c5cfc;
+  border-radius: 8px;
   background: #ffffff;
-  color: #856bff;
+  color: #7c5cfc;
   cursor: pointer;
-  font-family: "Roboto", sans-serif;
-  font-size: 12px;
+  font-family: "Inter", sans-serif;
+  font-size: 13px;
   font-weight: 600;
-  letter-spacing: 0.3px;
-  line-height: 16px;
+  line-height: 20px;
   white-space: nowrap;
+  transition: all 0.15s ease;
 }
 
 .exportButton svg {
-  width: 14px;
-  height: 14px;
+  width: 15px;
+  height: 15px;
 }
 
 .exportButton:hover {
-  background: rgba(133, 107, 255, 0.06);
+  background: rgba(124, 92, 252, 0.08);
 }
 
 .exportButton:focus-visible {
-  outline: 2px solid #b7adf0;
+  outline: 2px solid #7c5cfc;
   outline-offset: 2px;
-}
-
-@media (max-width: 600px) {
-  .header {
-    align-items: flex-start;
-  }
-
-  .exportButton {
-    padding: 0 8px;
-  }
-}
-
-@media (max-height: 760px) {
-  .subtitle {
-    display: none;
-  }
 }

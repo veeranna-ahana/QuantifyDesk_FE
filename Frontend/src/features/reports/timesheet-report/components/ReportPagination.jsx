@@ -15,15 +15,34 @@ function PageButton({ children, active, disabled, label, onClick }) {
   );
 }
 
+function getPageItems(currentPage, totalPages) {
+  if (totalPages <= 5) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+  if (currentPage <= 2) {
+    return [1, 2, 3, "..."];
+  }
+  if (currentPage === 3) {
+    return [1, 2, 3, 4, "..."];
+  }
+  if (currentPage >= totalPages - 1) {
+    return [1, "...", totalPages - 2, totalPages - 1, totalPages];
+  }
+  return [1, "...", currentPage - 1, currentPage, currentPage + 1, "..."];
+}
+
 export function ReportPagination({
-  page,
+  page = 1,
   totalRecords = 145,
   pageSize = 10,
   onPageChange,
 }) {
   const totalPages = Math.max(1, Math.ceil(totalRecords / pageSize));
-  const start = totalRecords ? (page - 1) * pageSize + 1 : 0;
-  const end = Math.min(page * pageSize, totalRecords);
+  const safePage = Math.min(Math.max(1, page), totalPages);
+  const start = totalRecords ? (safePage - 1) * pageSize + 1 : 0;
+  const end = Math.min(safePage * pageSize, totalRecords);
+
+  const pageItems = getPageItems(safePage, totalPages);
 
   return (
     <footer className={styles.footer}>
@@ -33,29 +52,35 @@ export function ReportPagination({
       <nav className={styles.pagination} aria-label="Report pagination">
         <PageButton
           label="Previous page"
-          disabled={page <= 1}
-          onClick={() => onPageChange(page - 1)}
+          disabled={safePage <= 1}
+          onClick={() => onPageChange(safePage - 1)}
         >
           &lt;
         </PageButton>
-        {[1, 2, 3].map((pageNumber) => (
-          <PageButton
-            key={pageNumber}
-            label={`Page ${pageNumber}`}
-            active={pageNumber === page}
-            disabled={pageNumber > totalPages}
-            onClick={() => onPageChange(pageNumber)}
-          >
-            {pageNumber}
-          </PageButton>
-        ))}
-        <span className={styles.ellipsis} aria-hidden="true">
-          ...
-        </span>
+        {pageItems.map((item, index) =>
+          typeof item === "number" ? (
+            <PageButton
+              key={`page-${item}`}
+              label={`Page ${item}`}
+              active={item === safePage}
+              onClick={() => onPageChange(item)}
+            >
+              {item}
+            </PageButton>
+          ) : (
+            <span
+              key={`ellipsis-${index}`}
+              className={styles.ellipsis}
+              aria-hidden="true"
+            >
+              ...
+            </span>
+          ),
+        )}
         <PageButton
           label="Next page"
-          disabled={page >= totalPages}
-          onClick={() => onPageChange(page + 1)}
+          disabled={safePage >= totalPages}
+          onClick={() => onPageChange(safePage + 1)}
         >
           &gt;
         </PageButton>

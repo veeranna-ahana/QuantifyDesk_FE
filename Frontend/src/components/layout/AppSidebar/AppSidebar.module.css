@@ -1,20 +1,21 @@
 .sidebar {
   display: flex;
-  width: clamp(200px, 13vw, 240px);
+  width: clamp(195px, 15vw, 225px);
   height: 100%;
-  flex: 0 0 clamp(200px, 13vw, 240px);
+  flex: 0 0 clamp(195px, 15vw, 225px);
   flex-direction: column;
+  overflow-x: hidden;
   overflow-y: auto;
   border-right: 1px solid #e2e8f0;
   background: #ffffff;
   color: #1e293b;
-  font-family: "Roboto", sans-serif;
+  font-family: "Inter", sans-serif;
 }
 
 .logoArea {
   display: flex;
-  height: 80px;
-  flex: 0 0 80px;
+  height: 56px;
+  flex: 0 0 56px;
   align-items: center;
   justify-content: center;
   padding: 0 16px;
@@ -24,8 +25,9 @@
 .logo {
   display: block;
   width: auto;
-  max-width: 100%;
-  height: 48px;
+  max-width: 110px;
+  height: auto;
+  max-height: 36px;
   object-fit: contain;
 }
 
@@ -33,8 +35,8 @@
   display: flex;
   flex: 1 0 auto;
   flex-direction: column;
-  gap: 4px;
-  padding: 16px 12px;
+  gap: 2px;
+  padding: 12px 10px;
 }
 
 .itemLink,
@@ -45,19 +47,20 @@
   flex: 0 0 40px;
   align-items: center;
   gap: 12px;
-  padding: 0 16px;
+  padding: 0 12px;
   border: 0;
   border-radius: 8px;
   background: transparent;
   color: #1e293b;
   cursor: pointer;
-  font-family: "Roboto", sans-serif;
+  font-family: "Inter", sans-serif;
   font-size: 14px;
   font-weight: 500;
   line-height: 20px;
   text-align: left;
   text-decoration: none;
   white-space: nowrap;
+  transition: all 0.15s ease;
 }
 
 .itemLink:hover,
@@ -68,25 +71,25 @@
 
 .itemLinkActive {
   background: #ede9fe;
-  color: #856bff;
+  color: #7c5cfc;
 }
 
 .icon {
-  width: 20px;
-  height: 20px;
-  flex: 0 0 20px;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
   stroke-width: 1.8;
 }
 
 .itemButton span {
-  flex: 0 0 auto;
+  flex: 1 1 auto;
 }
 
 .chevron {
-  width: 12px;
-  height: 12px;
-  flex: 0 0 12px;
-  margin-left: 8px;
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
+  margin-left: auto;
   transition: transform 150ms ease;
 }
 
@@ -97,41 +100,44 @@
 .submenu {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  margin: 4px 0 4px 24px;
-  padding-left: 12px;
+  gap: 2px;
+  margin: 2px 0 2px 6px;
+  padding-left: 4px;
   border-left: 1px solid #e2e8f0;
 }
 
 .submenuLink {
   display: flex;
-  min-height: 40px;
+  min-height: 36px;
   align-items: center;
-  gap: 8px;
-  padding: 0 8px;
+  gap: 6px;
+  padding: 4px 6px;
   border-radius: 8px;
-  color: #1e293b;
-  font-size: 12px;
+  color: #475569;
+  font-size: 13px;
   font-weight: 500;
   line-height: 16px;
   text-decoration: none;
+  transition: all 0.15s ease;
 }
 
 .submenuLink span {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: nowrap;   /* never wrap */
+  overflow: visible;
+  text-overflow: clip;
+  font-size: 13px;
 }
 
 .submenuLinkActive {
   background: #ede9fe;
-  color: #856bff;
+  color: #7c5cfc;
+  font-weight: 600;
 }
 
 .submenuIcon {
-  width: 16px;
-  height: 16px;
-  flex: 0 0 16px;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
   stroke-width: 1.8;
 }

@@ -1,20 +1,25 @@
 .footer {
   display: flex;
-  height: 40px;
-  min-height: 40px;
-  flex: 0 0 auto;
+  height: 44px;
+  min-height: 44px;
+  flex: 0 0 44px;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 16px;
   padding: 0 16px;
-  border-top: 1px solid #e2e8f0;
-  background: #f8faff;
+  /* lavender background matching header */
+  border-top: 1px solid #e5e7eb;
+  background: #f3f4ff;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+  box-sizing: border-box;
 }
 
 .footerLabel {
-  color: #475569;
-  font-family: "Roboto", sans-serif;
-  font-size: 11px;
+  color: #6b7280;
+  font-family: "Inter", sans-serif;
+  font-size: 12px;
   font-weight: 400;
   line-height: 16px;
 }
@@ -22,70 +27,59 @@
 .pagination {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
 }
 
+/* Square page buttons: 30px × 30px */
 .pageButton {
   display: inline-flex;
-  width: 24px;
-  height: 24px;
-  flex: 0 0 24px;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
   align-items: center;
   justify-content: center;
   padding: 0;
-  border: 1px solid #e2e8f0;
-  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
   background: #ffffff;
-  color: #475569;
+  color: #374151;
   cursor: pointer;
-  font-family: "Roboto", sans-serif;
-  font-size: 11px;
-  line-height: 14px;
+  font-family: "Inter", sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  transition: all 0.15s ease;
+}
+
+.pageButton:hover:not(:disabled):not(.activePage) {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+  color: #111827;
 }
 
 .pageButton:disabled {
   cursor: not-allowed;
-  opacity: 0.45;
+  opacity: 0.4;
+  border-color: #f1f5f9;
+  color: #9ca3af;
 }
 
+/* Active page: solid purple square */
 .activePage {
-  border-color: #856bff;
-  background: #856bff;
+  border-color: #7c5cfc;
+  background: #7c5cfc;
   color: #ffffff;
+  font-weight: 600;
 }
 
 .ellipsis {
   display: inline-flex;
-  width: 16px;
-  height: 24px;
+  width: 18px;
+  height: 32px;
   align-items: center;
   justify-content: center;
-  color: #64748b;
-  font-size: 11px;
-}
-
-@media (max-height: 900px) {
-  .footer {
-    height: 36px;
-    min-height: 36px;
-    flex-basis: 36px;
-  }
-}
-
-@media (max-height: 760px) {
-  .footer {
-    height: 34px;
-    min-height: 34px;
-    flex-basis: 34px;
-  }
-}
-
-@media (max-width: 600px) {
-  .footer {
-    padding: 0 8px;
-  }
-
-  .pagination {
-    gap: 2px;
-  }
+  color: #6b7280;
+  font-family: "Inter", sans-serif;
+  font-size: 12px;
+  user-select: none;
 }
