@@ -8,11 +8,11 @@
   min-height: 0;
   flex: 1 1 auto;
   flex-direction: column;
-  gap: 12px;           /* 12px gap between header, filter card, and table card */
+  gap: 8px;            /* 8px gap between header, filter card, tabs, and table card */
   box-sizing: border-box;
   background: #f8f9fc;
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  overflow: visible;   /* NO overflow: hidden on the card or any parent */
+  overflow: hidden;    /* critical: lets nested flex scroll work correctly */
 }
 
 .pageWrapper,

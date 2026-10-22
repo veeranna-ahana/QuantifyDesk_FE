@@ -1,8 +1,8 @@
 .footer {
   display: flex;
-  height: 44px;
-  min-height: 44px;
-  flex: 0 0 44px;
+  height: 40px;
+  min-height: 40px;
+  flex: 0 0 40px;
   align-items: center;
   justify-content: space-between;
   gap: 16px;

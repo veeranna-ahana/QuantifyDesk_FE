@@ -25,15 +25,15 @@
   height: 100%;
   flex: 1 1 auto;
   flex-direction: column;
-  gap: clamp(8px, 1.2vh, 12px);
-  overflow: visible;
-  padding: clamp(10px, 1.4vh, 16px) clamp(14px, 1.5vw, 20px);
+  gap: 8px;
+  overflow: hidden;
+  padding: 12px 16px;
   box-sizing: border-box;
 }
 
 @media (max-width: 1024px) {
   .content {
     padding: 12px 16px;
-    gap: 10px;
+    gap: 8px;
   }
 }
