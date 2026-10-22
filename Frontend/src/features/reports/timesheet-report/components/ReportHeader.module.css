@@ -31,10 +31,10 @@
   justify-content: center;
   gap: 6px;
   padding: 0 14px;
-  border: 1px solid #7c5cfc;
-  border-radius: 8px;
+  border: 1px solid #856bff;
+  border-radius: 4px;
   background: #ffffff;
-  color: #7c5cfc;
+  color: #856bff;
   cursor: pointer;
   font-family: "Inter", sans-serif;
   font-size: 13px;
@@ -50,10 +50,10 @@
 }
 
 .exportButton:hover {
-  background: rgba(124, 92, 252, 0.08);
+  background: rgba(133, 107, 255, 0.08);
 }
 
 .exportButton:focus-visible {
-  outline: 2px solid #7c5cfc;
+  outline: 2px solid #856bff;
   outline-offset: 2px;
 }
