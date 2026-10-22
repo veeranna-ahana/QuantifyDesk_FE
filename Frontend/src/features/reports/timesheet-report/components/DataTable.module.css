@@ -1,0 +1,591 @@
+/* ── Base Table Container: the only scroll region ─────────── */
+.tableContainer {
+  width: 100%;
+  height: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  /* thin custom scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: #d1d5db transparent;
+}
+
+.tableContainer::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.tableContainer::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 6px;
+}
+
+.tableContainer::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tableContainer::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+/* ── Table ───────────────────────────────────────────────── */
+.table {
+  /*
+    Sum of all column min-widths:
+    80+120+140+100+150+100+130+280+90+100+100+120+120+110+110 = 1750px
+  */
+  min-width: 1750px;
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+/* ── Sticky Header ───────────────────────────────────────── */
+.table thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.table th {
+  height: 34px;
+  padding: 0 10px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #eef2ff;
+  color: #374151;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1px;
+  line-height: 16px;
+  text-align: left;
+  text-transform: none;
+  vertical-align: middle;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+/* ── Sticky Left Columns: Header ─────────────────────────── */
+.stickyIdHeader {
+  position: sticky;
+  left: 0;
+  top: 0;
+  z-index: 12;
+  min-width: 80px;
+  background: #eef2ff !important;
+}
+
+/* Emp Name starts after Emp ID (80px) */
+.stickyNameHeader {
+  position: sticky;
+  left: 80px;
+  top: 0;
+  z-index: 12;
+  min-width: 120px;
+  background: #eef2ff !important;
+  transition: box-shadow 0.15s ease;
+}
+
+.stickyNameHeader.hasShadow {
+  box-shadow: 3px 0 6px -2px rgba(0, 0, 0, 0.08);
+}
+
+/* ── Body Rows: compact 32px height ensures all 10 rows fit without scroll ── */
+.table tbody tr {
+  height: 32px;
+  transition: background-color 0.15s ease;
+}
+
+.table tbody tr:hover {
+  background: #f8faff;
+}
+
+.table td {
+  height: 32px;
+  padding: 0 10px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #4b5563;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  vertical-align: middle;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+/* ── Sticky Left Columns: Body ───────────────────────────── */
+.stickyIdCell {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  min-width: 80px;
+  background: #ffffff;
+}
+
+.stickyNameCell {
+  position: sticky;
+  left: 80px;
+  z-index: 2;
+  min-width: 120px;
+  background: #ffffff;
+  transition: box-shadow 0.15s ease;
+}
+
+.stickyNameCell.hasShadow {
+  box-shadow: 3px 0 6px -2px rgba(0, 0, 0, 0.08);
+}
+
+/* Hover background on sticky cells */
+.table tbody tr:hover .stickyIdCell,
+.table tbody tr:hover .stickyNameCell {
+  background: #f8faff;
+}
+
+/* ── Column-specific min-widths (for colgroup) ───────────── */
+.colEmpId    { min-width: 80px;  width: 80px;  }
+.colEmpName  { min-width: 120px; width: 120px; }
+.colDesig    { min-width: 140px; width: 140px; }
+.colProjCode { min-width: 100px; width: 100px; }
+.colProjName { min-width: 150px; width: 150px; }
+.colCatCode  { min-width: 100px; width: 100px; }
+.colCat      { min-width: 130px; width: 130px; }
+.colTask     { min-width: 280px; width: 280px; }
+.colHours    { min-width: 90px;  width: 90px;  }
+.colFrom     { min-width: 100px; width: 100px; }
+.colTo       { min-width: 100px; width: 100px; }
+.colStatus   { min-width: 120px; width: 120px; }
+.colApprBy   { min-width: 120px; width: 120px; }
+.colSubOn    { min-width: 110px; width: 110px; }
+.colApprOn   { min-width: 110px; width: 110px; }
+
+/* ── Cell Typography & Overrides ─────────────────────────── */
+.table td.employeeId,
+.empIdText {
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.table td.employeeName,
+.empNameText {
+  color: #111827;
+  font-weight: 600;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.table td.designation,
+.designationText {
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.table td.projectCode,
+.projectCodeText {
+  color: #6b7280;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 11px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.table td.projectName,
+.projectNameLink {
+  color: #4f46e5;
+  font-weight: 500;
+  font-size: 12px;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.15s ease;
+}
+
+.table td.projectName:hover,
+.projectNameLink:hover {
+  color: #3730a3;
+  text-decoration: underline;
+}
+
+.table td.categoryCode,
+.catCodeText {
+  color: #9ca3af;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 11px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.table td.category,
+.categoryText {
+  color: #374151;
+  font-size: 12px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+/* Task Description: ellipsis, title tooltip shows full text */
+.table td.taskDescription,
+.taskText {
+  color: #1f2937;
+  font-size: 12px;
+  font-weight: 400;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 280px;
+  display: inline-block;
+}
+
+.table td.hours,
+.hoursContent {
+  color: #111827;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.hoursValue {
+  color: #111827;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.hoursUnit {
+  color: #6b7280;
+  font-weight: 400;
+  font-size: 11px;
+  margin-left: 2px;
+}
+
+.table td.dateMuted,
+.dateText {
+  color: #374151;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.table td.approver,
+.approverText {
+  color: #374151;
+  font-weight: 500;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.table td.submittedDate,
+.submittedDateText {
+  color: #9ca3af;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.table td.approvedDateSuccess,
+.approvedDateTextSuccess {
+  color: #10b981;
+  font-weight: 500;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.table td.approvedDateMuted,
+.approvedDateTextMuted {
+  color: #9ca3af;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.statusCell {
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+/* ── Status Pills ────────────────────────────────────────── */
+.statusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-family: "Inter", sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 14px;
+  white-space: nowrap;
+  vertical-align: middle;
+  border: 1px solid transparent;
+}
+
+.statusDot {
+  width: 5px;
+  height: 5px;
+  flex: 0 0 5px;
+  border-radius: 50%;
+}
+
+.statusLabel {
+  white-space: nowrap;
+}
+
+.statusApproved {
+  color: #15803d;
+  background: #dcfce7;
+  border-color: #86efac;
+}
+
+.statusApproved .statusDot {
+  background: #16a34a;
+}
+
+.statusSubmitted {
+  color: #6d28d9;
+  background: #ede9fe;
+  border-color: #ddd6fe;
+}
+
+.statusSubmitted .statusDot {
+  background: #7c3aed;
+}
+
+.statusPending {
+  color: #b45309;
+  background: #fef3c7;
+  border-color: #fde68a;
+}
+
+.statusPending .statusDot {
+  background: #ea580c;
+}
+
+.statusRejected {
+  color: #dc2626;
+  background: #fee2e2;
+  border-color: #fca5a5;
+}
+
+.statusRejected .statusDot {
+  background: #ef4444;
+}
+
+.statusOther {
+  color: #4b5563;
+  background: #f3f4f6;
+  border-color: #e5e7eb;
+}
+
+.statusOther .statusDot {
+  background: #9ca3af;
+}
+
+.emptyCell {
+  padding: 32px 16px;
+  color: #6b7280;
+  font-size: 12px;
+  text-align: center;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Project-wise Summary Table
+   ───────────────────────────────────────────────────────────── */
+.projectSummaryTable {
+  min-width: 100% !important;
+  width: 100% !important;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.projectSummaryHeaderRow th {
+  height: 44px;
+  background: #eef4ff;
+  border-bottom: 1px solid #e2e8f0;
+  color: #374151;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1px;
+  vertical-align: middle;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.wrappedHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.totalHrsHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.2;
+}
+
+.totalHrsSub {
+  font-size: 10px;
+  font-weight: 400;
+  color: #9ca3af;
+  letter-spacing: 0;
+}
+
+.projectSummaryRow {
+  height: 40px;
+  transition: background-color 0.15s ease;
+}
+
+.projectSummaryRow:hover {
+  background: #f8faff;
+}
+
+.projectSummaryRow td {
+  height: 40px;
+  border-bottom: 1px solid #f1f5f9;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 12px;
+  vertical-align: middle;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.thLeft {
+  text-align: left;
+  padding: 0 12px;
+}
+
+.thCenter {
+  text-align: center;
+  padding: 0 12px;
+}
+
+.tdLeft {
+  text-align: left;
+  padding: 0 12px;
+}
+
+.tdCenter {
+  text-align: center;
+  padding: 0 12px;
+}
+
+/* 1. Project Code badge */
+.projectCodeBadge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: #ede9fe;
+  color: #4f46e5;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+/* 2. Project Name */
+.projectNameCell {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #111827;
+  font-size: 12px;
+  font-weight: 400;
+  max-width: 320px;
+}
+
+/* 3. Customer Name */
+.customerNameCell {
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+/* 4. Member Worked (24px circle) */
+.memberWorkedCircle {
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #ede9fe;
+  color: #6d28d9;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 24px;
+}
+
+/* 5. Total Hrs two-line cell */
+.totalHrsCell {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.15;
+}
+
+.totalHrsValue {
+  color: #111827;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.totalHrsUnit {
+  color: #9ca3af;
+  font-size: 10px;
+  font-weight: 400;
+}
+
+/* 6. First Month Seen pill */
+.firstMonthPill {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 9999px;
+  background: #f3f4f6;
+  color: #374151;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+/* 7. Parent Category pill */
+.parentCategoryProject {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  background: #dcfce7;
+  color: #16a34a;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+.parentCategorySupport {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  background: #e5e7eb;
+  color: #4b5563;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 16px;
+  white-space: nowrap;
+}

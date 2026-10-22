@@ -1,16 +1,64 @@
-import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
-import { FormField } from "@/components/ui/FormField";
-import { Select } from "@/components/ui/Select";
+import { DateRangeInput } from "./DateRangeInput";
+import { TimesheetSummary } from "./TimesheetSummary";
+import styles from "./TimesheetFilters.module.css";
 
-import { DateRangePicker } from "./DateRangePicker";
+function ChevronDownIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="m6 9 6 6 6-6" />
+    </svg>
+  );
+}
 
-export function TimesheetFilters({
+export function Select({
+  label,
+  value,
+  options,
+  placeholder,
+  onChange,
+  className,
+}) {
+  return (
+    <label className={`${styles.selectField} ${className || ""}`}>
+      <span className={styles.label}>{label}</span>
+      <span className={styles.selectControl}>
+        <select
+          aria-label={label}
+          className={value ? styles.selectedValue : ""}
+          value={value}
+          onChange={onChange}
+        >
+          <option value="">{placeholder}</option>
+          {options.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        <span className={styles.chevron}>
+          <ChevronDownIcon />
+        </span>
+      </span>
+    </label>
+  );
+}
+
+export function FilterAndStatsCard({
   filters,
   onChange,
   onApply,
   onClear,
-  summary,
+  stats,
   projects = [],
   employees = [],
 }) {
@@ -18,54 +66,71 @@ export function TimesheetFilters({
     onChange((current) => ({ ...current, [key]: event.target.value }));
 
   return (
-    <Card className="flex flex-wrap items-end gap-3 p-3">
-      <Select
-        label="Project"
-        aria-label="Project"
-        size="md"
-        value={filters.project}
-        onChange={update("project")}
-        options={[
-          { value: "", label: "All Projects" },
-          ...projects.map((project) => ({
-            value: project.code,
-            label: project.name,
-          })),
-        ]}
-        wrapperClassName="w-full sm:w-[139px]"
-      />
-      <Select
-        label="Select Employee"
-        aria-label="Select Employee"
-        size="md"
-        value={filters.employee}
-        onChange={update("employee")}
-        options={[
-          { value: "", label: "Select Employee" },
-          ...employees.map((employee) => ({
-            value: employee.id,
-            label: employee.name,
-          })),
-        ]}
-        wrapperClassName="w-full sm:w-[138px]"
-      />
-      <DateRangePicker
-        startDate={filters.startDate}
-        endDate={filters.endDate}
-        onChange={(range) => onChange((current) => ({ ...current, ...range }))}
-      />
-      <Button size="md" onClick={onApply} className="w-full sm:w-auto">
-        Apply
-      </Button>
-      <Button
-        size="md"
-        variant="secondary"
-        onClick={onClear}
-        className="w-full border-action-primary text-action-primary hover:bg-action-primary-soft sm:w-auto"
-      >
-        Clear
-      </Button>
-      {summary}
-    </Card>
+    <section className={styles.filterCard} aria-label="Timesheet filters">
+      <div className={styles.filtersGroup}>
+        <Select
+          label="Project"
+          className={styles.projectField}
+          value={filters.project}
+          options={projects.map((project) => ({
+            value: project.value ?? project.code,
+            label: project.label ?? project.name,
+          }))}
+          placeholder="All Projects"
+          onChange={update("project")}
+        />
+        <Select
+          label="Select Employee"
+          className={styles.employeeField}
+          value={filters.employee}
+          options={employees.map((employee) => ({
+            value: employee.value ?? employee.id,
+            label: employee.label ?? employee.name,
+          }))}
+          placeholder="Select Employee"
+          onChange={update("employee")}
+        />
+        <DateRangeInput
+          startDate={filters.startDate}
+          endDate={filters.endDate}
+          onChange={(range) => onChange((current) => ({ ...current, ...range }))}
+        />
+        <button
+          type="button"
+          className={styles.applyButton}
+          onClick={() =>
+            onApply({
+              project: filters.project,
+              employee: filters.employee,
+              startDate: filters.startDate,
+              endDate: filters.endDate,
+            })
+          }
+        >
+          Apply
+        </button>
+        <button
+          type="button"
+          className={styles.clearButton}
+          onClick={() => {
+            onChange({
+              project: "",
+              employee: "",
+              startDate: "",
+              endDate: "",
+            });
+            onClear();
+          }}
+        >
+          Clear
+        </button>
+      </div>
+
+      <div className={styles.summaryGroup}>
+        <TimesheetSummary stats={stats} />
+      </div>
+    </section>
   );
 }
+
+export const TimesheetFilters = FilterAndStatsCard;
