@@ -1,0 +1,173 @@
+/* ── Filter card: flex container ─────────────────────────── */
+.filterCard {
+  width: 100%;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  padding: 10px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #ffffff;
+  font-family: "Roboto", sans-serif;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: nowrap; /* stays on ONE row from 1280px upward */
+  overflow: visible; /* NO overflow: hidden on the card */
+}
+
+@media (max-width: 1279px) {
+  .filterCard {
+    flex-wrap: wrap; /* fallback only below 1280px */
+  }
+}
+
+/* ── Group 1 (left): Project, Select Employee, Date Range, Apply, Clear ── */
+.filtersGroup {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  flex-shrink: 0; /* never shrinks or gets covered */
+  min-width: 0;
+}
+
+/* ── Labels: Roboto 600, 12px, line-height 14px, #545F72 ─── */
+.label {
+  color: #545f72;
+  font-family: "Roboto", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 14px;
+  margin-bottom: 2px;
+  white-space: nowrap;
+}
+
+/* ── Select dropdowns: Project 146px, Employee 146px ─────── */
+.selectField {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-family: "Roboto", sans-serif;
+}
+
+.projectField {
+  width: 146px;
+  flex: 0 0 146px;
+}
+
+.employeeField {
+  width: 146px;
+  flex: 0 0 146px;
+}
+
+.selectControl {
+  position: relative;
+  display: flex;
+  height: 34px;
+  align-items: center;
+}
+
+.selectControl select {
+  width: 100%;
+  height: 34px;
+  box-sizing: border-box;
+  appearance: none;
+  padding: 0 26px 0 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  background-color: #ffffff;
+  color: #94a3b8;
+  font-family: "Roboto", sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 14px;
+  white-space: nowrap;
+  outline: none;
+  text-overflow: clip;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.selectControl select:focus {
+  border-color: #856bff;
+  box-shadow: 0 0 0 2px rgba(133, 107, 255, 0.15);
+}
+
+.selectControl select.selectedValue {
+  color: #0f172a;
+}
+
+.chevron {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  display: inline-flex;
+  width: 16px;
+  height: 16px;
+  align-items: center;
+  color: #c3c6d6;
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.chevron svg {
+  display: block;
+}
+
+/* ── Action buttons: Apply = 54px, Clear = 45px ──────────── */
+.applyButton,
+.clearButton {
+  display: inline-flex;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: "Roboto", sans-serif;
+  font-size: 14px;
+  line-height: 16px;
+  letter-spacing: 0.6px;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.applyButton {
+  min-width: 54px;
+  width: 54px;
+  flex: 0 0 auto;
+  padding: 8px;
+  border: 0;
+  background: #856bff;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.applyButton:hover {
+  background: #7559fa;
+}
+
+.clearButton {
+  min-width: 45px;
+  width: 45px;
+  flex: 0 0 auto;
+  padding: 8px 4px;
+  border: 1px solid #856bff;
+  background: #ffffff;
+  color: #856bff;
+  font-weight: 400;
+}
+
+.clearButton:hover {
+  background: rgba(133, 107, 255, 0.08);
+}
+
+/* ── Group 2 (right): Chips container ────────────────────── */
+.summaryGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  height: 34px;
+}

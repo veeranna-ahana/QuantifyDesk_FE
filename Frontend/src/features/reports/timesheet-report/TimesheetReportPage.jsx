@@ -1,72 +1,182 @@
-import { Download } from "lucide-react";
-
-import { PageHeader } from "@/components/layout/PageHeader";
-import { Button } from "@/components/ui/Button";
+import { useMemo, useState } from "react";
 import { Card } from "@/components/ui/Card";
-import { Pagination } from "@/components/ui/Pagination";
 
 import { TimesheetFilters } from "./components/TimesheetFilters";
-import { TimesheetSummary } from "./components/TimesheetSummary";
+import { ReportHeader } from "./components/ReportHeader";
+import { ResourceBreakdownTabs } from "./components/ResourceBreakdownTabs";
+import { ResourceBreakdownTable } from "./components/ResourceBreakdownTable";
+import { ReportPagination } from "./components/ReportPagination";
+import { ProjectSummaryTable } from "./components/TimesheetReportTables";
 import { TimesheetTable } from "./components/TimesheetTable";
 import { useTimesheetReport } from "./hooks/useTimesheetReport";
+import {
+  mockProjectSummaryRecords,
+  mockTimesheetRecords,
+} from "./mock/mockTimesheetReport";
+import { resourceLogs } from "./mock/mockResourceLogs";
+import pageStyles from "./TimesheetReportPage.module.css";
 
-export default function TimesheetReportPage() {
+const PAGE_SIZE = 10;
+const TOTAL_RECORDS = 145;
+const REPORT_STATS = { total: 2840, approved: 2420, pending: 420 };
+
+export function TimesheetReportPage() {
   const report = useTimesheetReport();
+  const [activeView, setActiveView] = useState("timesheet");
+  const [viewPage, setViewPage] = useState(1);
+
+  const hasAppliedFilters = Object.values(report.filters).some(Boolean);
+  const useMockViews =
+    (report.usingMockData || report.totalRecords === 0) && !hasAppliedFilters;
+
+  const derivedProjectRows = useMemo(() => {
+    const projects = new Map();
+    report.filteredRecords.forEach((record) => {
+      const key = record.projectCode || record.projectName;
+      if (!key) return;
+
+      const project = projects.get(key) ?? {
+        projectCode: record.projectCode,
+        projectName: record.projectName,
+        customerName: record.customerName,
+        parentCategory: record.parentCategory || record.category,
+        members: new Set(),
+        totalHours: 0,
+        latestDate: "",
+      };
+      if (record.employeeId) project.members.add(record.employeeId);
+      project.totalHours += record.hoursSpent;
+      if (record.toDate > project.latestDate) project.latestDate = record.toDate;
+      projects.set(key, project);
+    });
+
+    return [...projects.values()]
+      .map((project) => ({
+        ...project,
+        memberCount: project.members.size,
+      }))
+      .sort((a, b) => (a.projectName || "").localeCompare(b.projectName || ""));
+  }, [report.filteredRecords]);
+
+  const projectRows = useMockViews
+    ? mockProjectSummaryRecords
+    : derivedProjectRows;
+
+  const timesheetTotalRecords = useMockViews
+    ? mockTimesheetRecords.length
+    : report.totalRecords || TOTAL_RECORDS;
+
+  const currentTotalRecords =
+    activeView === "timesheet"
+      ? timesheetTotalRecords
+      : projectRows.length || TOTAL_RECORDS;
+
+  const currentTotalPages = Math.max(
+    1,
+    Math.ceil(currentTotalRecords / PAGE_SIZE),
+  );
+
+  const projectPageRows = projectRows.slice(
+    (viewPage - 1) * PAGE_SIZE,
+    viewPage * PAGE_SIZE,
+  );
+
+  const timesheetPageRows = useMockViews
+    ? mockTimesheetRecords.slice(
+        (viewPage - 1) * PAGE_SIZE,
+        viewPage * PAGE_SIZE,
+      )
+    : report.records;
+
+  const changePage = (page) => {
+    const validPage = Math.min(Math.max(page, 1), currentTotalPages);
+    setViewPage(validPage);
+    report.setPage(validPage);
+  };
 
   return (
-    <div className="flex flex-col gap-2">
-      <PageHeader
-        title="Timesheet Report"
-        subtitle="Centralized cross-project employee time tracking and verification log"
-        actions={
-          <Button
-            variant="secondary"
-            size="md"
-            leftIcon={<Download className="h-3 w-3" />}
-            onClick={report.exportReport}
-            className="w-[117px] gap-1 border-action-primary px-3 text-xs text-action-primary hover:bg-action-primary-soft"
-          >
-            Export Report
-          </Button>
-        }
-      />
+    <div className={pageStyles.pageWrapper}>
+      <ReportHeader onExport={report.exportReport} />
 
       <TimesheetFilters
         filters={report.draftFilters}
         onChange={report.setDraftFilters}
-        onApply={report.applyFilters}
-        onClear={report.clearFilters}
+        onApply={(filters) => {
+          report.applyFilters(filters);
+          setViewPage(1);
+        }}
+        onClear={() => {
+          report.clearFilters();
+          setViewPage(1);
+        }}
         projects={report.options.projects}
         employees={report.options.employees}
-        summary={
-          <TimesheetSummary
-            summary={report.summary}
-            className="w-full justify-start sm:ml-auto sm:w-auto sm:justify-end"
-          />
-        }
+        stats={REPORT_STATS}
       />
 
       {report.error && (
-        <p className="px-1 text-sm text-badge-danger-ink">{report.error}</p>
+        <p className={`${pageStyles.reportError} text-badge-danger-ink`}>
+          {report.error}
+        </p>
       )}
 
-      <Card className="overflow-hidden">
-        <TimesheetTable records={report.records} loading={report.loading} />
-        {report.totalRecords ? (
-          <Pagination
-            page={report.page}
-            totalPages={report.totalPages}
-            totalItems={report.totalRecords}
-            pageSize={report.pageSize}
-            onPageChange={report.setPage}
-            itemLabel="records"
-          />
-        ) : report.loading ? null : (
-          <div className="border-t border-line-table-head bg-surface-table-head px-4 py-2 text-xs text-ink-secondary">
-            Showing 0-0 of 0 records
-          </div>
-        )}
-      </Card>
+      <ResourceBreakdownTabs
+        activeTab={activeView}
+        onTabChange={(view) => {
+          setActiveView(view);
+          setViewPage(1);
+          report.setPage(1);
+        }}
+        projectCount={projectRows.length}
+        resourceCount={resourceLogs.length}
+      />
+      {activeView === "resources" ? (
+        <ResourceBreakdownTable
+          rows={resourceLogs}
+          totalRecords={TOTAL_RECORDS}
+          page={viewPage}
+          pageSize={PAGE_SIZE}
+          onPageChange={changePage}
+          selectedDate={report.appliedFilters?.startDate || report.draftFilters?.startDate}
+        />
+      ) : (
+        <Card className={pageStyles.reportTableCard}>
+          {activeView === "timesheet" ? (
+            <>
+              <div className={pageStyles.tableBody}>
+                <TimesheetTable
+                  records={timesheetPageRows}
+                  loading={report.loading}
+                />
+              </div>
+              <ReportPagination
+                page={viewPage}
+                totalRecords={timesheetTotalRecords}
+                pageSize={PAGE_SIZE}
+                onPageChange={changePage}
+              />
+            </>
+          ) : (
+            <>
+              <div className={pageStyles.tableBody}>
+                <ProjectSummaryTable
+                  records={projectPageRows}
+                  loading={report.loading}
+                  filters={report.filters}
+                />
+              </div>
+              <ReportPagination
+                page={viewPage}
+                totalRecords={projectRows.length}
+                pageSize={PAGE_SIZE}
+                onPageChange={changePage}
+              />
+            </>
+          )}
+        </Card>
+      )}
     </div>
   );
 }
+
+export default TimesheetReportPage;

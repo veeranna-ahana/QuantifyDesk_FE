@@ -38,7 +38,13 @@ function formatLabel(value) {
  * One calendar for a whole range: click the start date, then the end date.
  * Values are "YYYY-MM-DD" strings (empty when not set).
  */
-export function DateRangePicker({ startDate, endDate, onChange }) {
+export function DateRangePicker({
+  startDate,
+  endDate,
+  onChange,
+  className = "",
+  triggerClassName = "",
+}) {
   const [open, setOpen] = useState(false);
   const [hover, setHover] = useState("");
   const [view, setView] = useState(() => {
@@ -108,7 +114,7 @@ export function DateRangePicker({ startDate, endDate, onChange }) {
   return (
     <div
       ref={rootRef}
-      className="relative flex w-full flex-col gap-1 sm:w-[250px]"
+      className={`relative flex w-full flex-col gap-1 ${className}`}
     >
       <span className="text-xs font-medium text-ink-secondary">Date Range</span>
       <button
@@ -122,6 +128,7 @@ export function DateRangePicker({ startDate, endDate, onChange }) {
           open
             ? "border-action-primary ring-2 ring-action-primary-ring"
             : "border-line-field",
+          triggerClassName,
         )}
       >
         <span
@@ -130,7 +137,7 @@ export function DateRangePicker({ startDate, endDate, onChange }) {
             startDate ? "text-ink-primary" : "text-ink-muted",
           )}
         >
-          {startDate ? formatLabel(startDate) : "Start date"}
+          {startDate ? formatLabel(startDate) : "Select Date"}
         </span>
         <ArrowRight
           className="h-3.5 w-3.5 shrink-0 text-ink-muted"
@@ -142,7 +149,7 @@ export function DateRangePicker({ startDate, endDate, onChange }) {
             endDate ? "text-ink-primary" : "text-ink-muted",
           )}
         >
-          {endDate ? formatLabel(endDate) : "End date"}
+          {endDate ? formatLabel(endDate) : "End Date"}
         </span>
         <Calendar
           className="h-3.5 w-3.5 shrink-0 text-ink-muted"
