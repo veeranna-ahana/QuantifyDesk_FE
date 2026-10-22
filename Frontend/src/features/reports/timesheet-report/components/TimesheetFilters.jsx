@@ -26,9 +26,10 @@ export function Select({
   options,
   placeholder,
   onChange,
+  className,
 }) {
   return (
-    <label className={styles.selectField}>
+    <label className={`${styles.selectField} ${className || ""}`}>
       <span className={styles.label}>{label}</span>
       <span className={styles.selectControl}>
         <select
@@ -66,65 +67,66 @@ export function FilterAndStatsCard({
 
   return (
     <section className={styles.filterCard} aria-label="Timesheet filters">
-      <div className={styles.filterRow}>
-        <div className={styles.filtersGroup}>
-          <Select
-            label="Project"
-            value={filters.project}
-            options={projects.map((project) => ({
-              value: project.value ?? project.code,
-              label: project.label ?? project.name,
-            }))}
-            placeholder="All Projects"
-            onChange={update("project")}
-          />
-          <Select
-            label="Select Employee"
-            value={filters.employee}
-            options={employees.map((employee) => ({
-              value: employee.value ?? employee.id,
-              label: employee.label ?? employee.name,
-            }))}
-            placeholder="Select Employee"
-            onChange={update("employee")}
-          />
-          <DateRangeInput
-            startDate={filters.startDate}
-            endDate={filters.endDate}
-            onChange={(range) => onChange((current) => ({ ...current, ...range }))}
-          />
-          <div className={styles.buttonsGroup}>
-            <button
-              type="button"
-              className={styles.applyButton}
-              onClick={() =>
-                onApply({
-                  project: filters.project,
-                  employee: filters.employee,
-                  startDate: filters.startDate,
-                  endDate: filters.endDate,
-                })
-              }
-            >
-              Apply
-            </button>
-            <button
-              type="button"
-              className={styles.clearButton}
-              onClick={() => {
-                onChange({
-                  project: "",
-                  employee: "",
-                  startDate: "",
-                  endDate: "",
-                });
-                onClear();
-              }}
-            >
-              Clear
-            </button>
-          </div>
-        </div>
+      <div className={styles.filtersGroup}>
+        <Select
+          label="Project"
+          className={styles.projectField}
+          value={filters.project}
+          options={projects.map((project) => ({
+            value: project.value ?? project.code,
+            label: project.label ?? project.name,
+          }))}
+          placeholder="All Projects"
+          onChange={update("project")}
+        />
+        <Select
+          label="Select Employee"
+          className={styles.employeeField}
+          value={filters.employee}
+          options={employees.map((employee) => ({
+            value: employee.value ?? employee.id,
+            label: employee.label ?? employee.name,
+          }))}
+          placeholder="Select Employee"
+          onChange={update("employee")}
+        />
+        <DateRangeInput
+          startDate={filters.startDate}
+          endDate={filters.endDate}
+          onChange={(range) => onChange((current) => ({ ...current, ...range }))}
+        />
+        <button
+          type="button"
+          className={styles.applyButton}
+          onClick={() =>
+            onApply({
+              project: filters.project,
+              employee: filters.employee,
+              startDate: filters.startDate,
+              endDate: filters.endDate,
+            })
+          }
+        >
+          Apply
+        </button>
+        <button
+          type="button"
+          className={styles.clearButton}
+          onClick={() => {
+            onChange({
+              project: "",
+              employee: "",
+              startDate: "",
+              endDate: "",
+            });
+            onClear();
+          }}
+        >
+          Clear
+        </button>
+      </div>
+
+      <div className={styles.summaryGroup}>
         <TimesheetSummary stats={stats} />
       </div>
     </section>

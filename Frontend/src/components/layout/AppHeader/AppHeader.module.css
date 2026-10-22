@@ -1,13 +1,13 @@
 .header {
   display: flex;
-  height: 64px;
-  flex: 0 0 64px;
+  height: 56px;
+  flex: 0 0 56px;
   align-items: center;
   justify-content: flex-end;
   padding: 0 24px;
   border-bottom: 1px solid #e2e8f0;
   background: #ffffff;
-  font-family: "Roboto", sans-serif;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 .account {
@@ -19,7 +19,7 @@
 .avatar {
   width: 32px;
   height: 32px;
-  background: #856bff;
+  background: #7c5cfc;
   color: #ffffff;
 }
 

@@ -9,9 +9,11 @@ import { ReportPagination } from "./components/ReportPagination";
 import { ProjectSummaryTable } from "./components/TimesheetReportTables";
 import { TimesheetTable } from "./components/TimesheetTable";
 import { useTimesheetReport } from "./hooks/useTimesheetReport";
-import { mockProjectSummaryRecords } from "./mock/mockTimesheetReport";
+import {
+  mockProjectSummaryRecords,
+  mockTimesheetRecords,
+} from "./mock/mockTimesheetReport";
 import { resourceLogs } from "./mock/mockResourceLogs";
-import { timesheetRows } from "./mock/timesheetRows";
 import pageStyles from "./TimesheetReportPage.module.css";
 
 const PAGE_SIZE = 10;
@@ -20,7 +22,7 @@ const REPORT_STATS = { total: 2840, approved: 2420, pending: 420 };
 
 export function TimesheetReportPage() {
   const report = useTimesheetReport();
-  const [activeView, setActiveView] = useState("projects");
+  const [activeView, setActiveView] = useState("timesheet");
   const [viewPage, setViewPage] = useState(1);
 
   const hasAppliedFilters = Object.values(report.filters).some(Boolean);
@@ -55,20 +57,41 @@ export function TimesheetReportPage() {
       }))
       .sort((a, b) => (a.projectName || "").localeCompare(b.projectName || ""));
   }, [report.filteredRecords]);
+
   const projectRows = useMockViews
     ? mockProjectSummaryRecords
     : derivedProjectRows;
-  const viewTotalPages = Math.max(1, Math.ceil(TOTAL_RECORDS / PAGE_SIZE));
+
+  const timesheetTotalRecords = useMockViews
+    ? mockTimesheetRecords.length
+    : report.totalRecords || TOTAL_RECORDS;
+
+  const currentTotalRecords =
+    activeView === "timesheet"
+      ? timesheetTotalRecords
+      : projectRows.length || TOTAL_RECORDS;
+
+  const currentTotalPages = Math.max(
+    1,
+    Math.ceil(currentTotalRecords / PAGE_SIZE),
+  );
+
   const projectPageRows = projectRows.slice(
     (viewPage - 1) * PAGE_SIZE,
     viewPage * PAGE_SIZE,
   );
+
   const timesheetPageRows = useMockViews
-    ? timesheetRows.slice((viewPage - 1) * PAGE_SIZE, viewPage * PAGE_SIZE)
+    ? mockTimesheetRecords.slice(
+        (viewPage - 1) * PAGE_SIZE,
+        viewPage * PAGE_SIZE,
+      )
     : report.records;
+
   const changePage = (page) => {
-    setViewPage(Math.min(Math.max(page, 1), viewTotalPages));
-    report.setPage(Math.min(Math.max(page, 1), viewTotalPages));
+    const validPage = Math.min(Math.max(page, 1), currentTotalPages);
+    setViewPage(validPage);
+    report.setPage(validPage);
   };
 
   return (
@@ -127,7 +150,7 @@ export function TimesheetReportPage() {
               </div>
               <ReportPagination
                 page={viewPage}
-                totalRecords={TOTAL_RECORDS}
+                totalRecords={timesheetTotalRecords}
                 pageSize={PAGE_SIZE}
                 onPageChange={changePage}
               />
@@ -138,11 +161,12 @@ export function TimesheetReportPage() {
                 <ProjectSummaryTable
                   records={projectPageRows}
                   loading={report.loading}
+                  filters={report.filters}
                 />
               </div>
               <ReportPagination
                 page={viewPage}
-                totalRecords={TOTAL_RECORDS}
+                totalRecords={projectRows.length}
                 pageSize={PAGE_SIZE}
                 onPageChange={changePage}
               />

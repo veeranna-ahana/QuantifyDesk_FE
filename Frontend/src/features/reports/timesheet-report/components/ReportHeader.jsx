@@ -25,9 +25,6 @@ export function ReportHeader({ onExport }) {
     <header className={styles.header}>
       <div className={styles.titleBlock}>
         <h1 className={styles.title}>Timesheet Report</h1>
-        <p className={styles.subtitle}>
-          Centralized cross-project employee time tracking and verification log
-        </p>
       </div>
       <button
         type="button"

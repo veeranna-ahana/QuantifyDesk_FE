@@ -1,86 +1,97 @@
+/* ── Filter card: flex container ─────────────────────────── */
 .filterCard {
   width: 100%;
   flex: 0 0 auto;
   box-sizing: border-box;
-  padding: 16px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  padding: 10px 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
   background: #ffffff;
-  box-shadow: none;
-  font-family: "Roboto", sans-serif;
-}
-
-.filterRow {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   display: flex;
   align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: nowrap;
+  gap: 12px;
+  flex-wrap: nowrap; /* stays on ONE row at 1366px and above */
+  overflow: visible; /* NO overflow: hidden on the card */
 }
 
+@media (max-width: 1279px) {
+  .filterCard {
+    flex-wrap: wrap; /* fallback only below 1280px */
+  }
+}
+
+/* ── Group 1 (left): Project, Select Employee, Date Range, Apply, Clear ── */
 .filtersGroup {
   display: flex;
-  flex: 1 1 auto;
-  min-width: 0;
   align-items: flex-end;
-  gap: 8px;
+  gap: 12px;
+  flex-shrink: 0; /* never shrinks or gets covered */
 }
 
-.buttonsGroup {
-  display: flex;
-  flex: 0 0 auto;
-  align-items: center;
-  gap: 8px;
-}
-
+/* ── Labels ───────────────────────────────────────────────── */
 .label {
-  color: #545f72;
-  font-family: "Roboto", sans-serif;
+  color: #374151;
+  font-family: "Inter", sans-serif;
   font-size: 12px;
-  font-weight: 600;
-  line-height: 14px;
+  font-weight: 500;
+  line-height: 16px;
+  margin-bottom: 4px;
   white-space: nowrap;
 }
 
+/* ── Select dropdowns ─────────────────────────────────────── */
 .selectField {
   display: flex;
-  min-width: 110px;
-  max-width: 200px;
-  flex: 1 1 146px;
   flex-direction: column;
-  gap: 2px;
-  font-family: "Roboto", sans-serif;
+  font-family: "Inter", sans-serif;
+}
+
+.projectField {
+  width: 150px;
+  flex: 0 0 150px;
+}
+
+.employeeField {
+  width: 150px;
+  flex: 0 0 150px;
 }
 
 .selectControl {
   position: relative;
   display: flex;
   height: 34px;
-  min-width: 0;
   align-items: center;
 }
 
 .selectControl select {
   width: 100%;
   height: 34px;
-  min-width: 0;
   box-sizing: border-box;
   appearance: none;
-  padding: 8px 28px 8px 8px;
-  border: 1px solid #e2e8f0;
-  border-radius: 4px;
+  padding: 0 26px 0 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
   background-color: #ffffff;
-  color: #94a3b8;
-  font-family: "Roboto", sans-serif;
-  font-size: 12px;
+  color: #9ca3af;
+  font-family: "Inter", sans-serif;
+  font-size: 12.5px;
   font-weight: 400;
-  line-height: 14px;
-  text-overflow: ellipsis;
+  line-height: 34px;
   white-space: nowrap;
+  outline: none;
+  text-overflow: clip;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.selectControl select:focus {
+  border-color: #7c5cfc;
+  box-shadow: 0 0 0 3px rgba(124, 92, 252, 0.12);
 }
 
 .selectControl select.selectedValue {
-  color: #0f172a;
+  color: #111827;
 }
 
 .chevron {
@@ -91,7 +102,7 @@
   width: 16px;
   height: 16px;
   align-items: center;
-  color: #c3c6d6;
+  color: #9ca3af;
   pointer-events: none;
   transform: translateY(-50%);
 }
@@ -100,101 +111,60 @@
   display: block;
 }
 
+/* ── Action buttons: Apply = 70px, Clear = 64px ──────────── */
 .applyButton,
 .clearButton {
   display: inline-flex;
   height: 34px;
-  flex: 0 0 auto;
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
-  border-radius: 4px;
+  border-radius: 8px;
   cursor: pointer;
-  font-family: "Roboto", sans-serif;
-  font-size: 14px;
-  letter-spacing: 0.6px;
-  line-height: 16px;
+  font-family: "Inter", sans-serif;
+  font-size: 13px;
+  line-height: 34px;
   white-space: nowrap;
+  transition: all 0.15s ease;
 }
 
 .applyButton {
-  min-width: 54px;
-  padding: 0 8px;
+  width: 70px;
+  min-width: 70px;
+  flex: 0 0 70px;
+  padding: 0;
   border: 0;
-  background: #856bff;
+  background: #7c5cfc;
   color: #ffffff;
   font-weight: 600;
 }
 
 .applyButton:hover {
-  background: #7458f5;
+  background: #6a49f2;
 }
 
 .clearButton {
-  min-width: 45px;
-  padding: 0 4px;
-  border: 1px solid #856bff;
-  background: transparent;
-  color: #856bff;
-  font-weight: 400;
+  width: 64px;
+  min-width: 64px;
+  flex: 0 0 64px;
+  padding: 0;
+  border: 1px solid #7c5cfc;
+  background: #ffffff;
+  color: #7c5cfc;
+  font-weight: 500;
 }
 
 .clearButton:hover {
-  background: rgba(133, 107, 255, 0.06);
+  background: rgba(124, 92, 252, 0.08);
 }
 
-@media (max-width: 1279.98px) {
-  .filterRow {
-    flex-wrap: wrap;
-    row-gap: 16px;
-    justify-content: flex-start;
-  }
-
-  .filtersGroup {
-    flex: 1 1 100%;
-    flex-wrap: wrap;
-  }
-
-  .filterRow > :last-child {
-    justify-content: flex-start;
-    margin-left: 0;
-    flex-wrap: wrap;
-  }
-}
-
-@media (max-width: 899.98px) {
-  .filterCard {
-    padding: 12px;
-  }
-
-  .filtersGroup {
-    width: 100%;
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    align-items: flex-end;
-  }
-
-  .selectField {
-    width: 100%;
-    flex: initial;
-  }
-
-  .dateFieldGroup {
-    width: 100%;
-    grid-column: 1 / -1;
-    flex: initial;
-  }
-
-  .buttonsGroup {
-    grid-column: 1 / -1;
-  }
-
-  .applyButton,
-  .clearButton {
-    flex: 0 0 auto;
-  }
-
-  .buttonsGroup {
-    flex: 1 1 100%;
-  }
+/* ── Group 2 (right): Total Hours, Approved, Pending chips ── */
+.summaryGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  flex-shrink: 0;
+  white-space: nowrap;
+  height: 34px;
 }

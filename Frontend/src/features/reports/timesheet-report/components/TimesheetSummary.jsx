@@ -7,9 +7,7 @@ export function StatChip({ label, value, variant }) {
     <div className={`${styles.statChip} ${styles[variant]}`}>
       <span className={styles.dot} aria-hidden="true" />
       <span className={styles.label}>{label}:</span>
-      <span className={styles.value}>
-        {Number(hours)} hrs
-      </span>
+      <span className={styles.value}>{Number(hours)} hrs</span>
     </div>
   );
 }

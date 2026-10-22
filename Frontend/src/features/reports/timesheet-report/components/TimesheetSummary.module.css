@@ -2,47 +2,53 @@
   display: flex;
   flex: 0 0 auto;
   align-items: center;
-  gap: 10px;
-  margin-left: auto;
+  gap: 8px;
   white-space: nowrap;
 }
 
 .statChip {
   display: inline-flex;
-  height: 30px;
+  height: 28px;
   flex: 0 0 auto;
   box-sizing: border-box;
   align-items: center;
-  gap: 6px;
-  padding: 6px 4px;
+  gap: 5px;
+  padding: 4px 10px;
   border: 1px solid;
-  border-radius: 8px;
-  font-family: "Roboto", sans-serif;
-  font-size: 11px;
+  border-radius: 9999px; /* fully rounded */
+  font-family: "Inter", sans-serif;
+  font-size: 12px;
   font-weight: 400;
-  line-height: 16px;
+  line-height: 20px;
   white-space: nowrap;
 }
 
 .dot {
-  width: 8px;
-  height: 8px;
-  flex: 0 0 8px;
+  width: 6px;
+  height: 6px;
+  flex: 0 0 6px;
   border-radius: 50%;
 }
 
-.label,
-.value {
+.label {
+  font-weight: 400;
   white-space: nowrap;
 }
 
+.value {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ── Total: dot #6B7280, background #F3F4F6, border 1px #E5E7EB ── */
 .total {
-  border-color: #e2e8f0;
-  background: #f8fafc;
+  border-color: #e5e7eb;
+  background: #f3f4f6;
+  color: #374151;
 }
 
 .total .dot {
-  background: #64748b;
+  background: #6b7280;
 }
 
 .total .label {
@@ -50,29 +56,33 @@
 }
 
 .total .value {
-  color: #0f172a;
+  color: #111827;
 }
 
+/* ── Approved: dot #16A34A, background #DCFCE7, border 1px #86EFAC, text #166534 ── */
 .success {
-  border-color: #a7f3d0;
-  background: #ecfdf5;
+  border-color: #86efac;
+  background: #dcfce7;
+  color: #166534;
 }
 
 .success .dot {
-  background: #10b981;
+  background: #16a34a;
 }
 
 .success .label {
-  color: #047857;
+  color: #166534;
 }
 
 .success .value {
-  color: #065f46;
+  color: #166534;
 }
 
+/* ── Pending: dot #F59E0B, background #FEF3C7, border 1px #F59E0B, text #B45309 ── */
 .warning {
-  border-color: #fde68a;
-  background: #fffbeb;
+  border-color: #f59e0b;
+  background: #fef3c7;
+  color: #b45309;
 }
 
 .warning .dot {
@@ -84,5 +94,6 @@
 }
 
 .warning .value {
-  color: #92400e;
+  color: #b45309;
 }
+
