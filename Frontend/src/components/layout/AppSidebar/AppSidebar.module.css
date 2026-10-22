@@ -1,8 +1,8 @@
 .sidebar {
   display: flex;
-  width: clamp(210px, 15vw, 230px);
+  width: 220px;
   height: 100%;
-  flex: 0 0 clamp(210px, 15vw, 230px);
+  flex: 0 0 220px;
   flex-direction: column;
   overflow-x: hidden;
   overflow-y: auto;

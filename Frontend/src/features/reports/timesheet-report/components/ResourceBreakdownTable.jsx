@@ -77,12 +77,12 @@ export function ResourceBreakdownTable({
         <table className={styles.table} aria-label="Resource breakdown records">
           <colgroup>
             <col style={{ width: "100px" }} />
-            <col style={{ width: "240px" }} />
-            <col style={{ width: "130px" }} />
+            <col style={{ width: "280px" }} />
+            <col style={{ width: "120px" }} />
             <col style={{ width: "90px" }} />
             <col style={{ width: "150px" }} />
             <col style={{ width: "100px" }} />
-            <col style={{ width: "145px" }} />
+            <col style={{ width: "150px" }} />
           </colgroup>
           <thead>
             <tr>
