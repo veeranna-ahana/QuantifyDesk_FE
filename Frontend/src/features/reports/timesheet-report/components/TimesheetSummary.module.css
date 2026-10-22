@@ -2,53 +2,58 @@
   display: flex;
   flex: 0 0 auto;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   white-space: nowrap;
 }
 
 .statChip {
   display: inline-flex;
-  height: 28px;
+  height: 30px;
   flex: 0 0 auto;
   box-sizing: border-box;
   align-items: center;
-  gap: 5px;
-  padding: 4px 10px;
+  gap: 6px;
+  padding: 6px 4px;
   border: 1px solid;
-  border-radius: 9999px; /* fully rounded */
-  font-family: "Inter", sans-serif;
-  font-size: 12px;
+  border-radius: 8px;
+  font-family: "Roboto", sans-serif;
+  font-size: 11px;
   font-weight: 400;
-  line-height: 20px;
+  line-height: 16px;
   white-space: nowrap;
 }
 
 .dot {
-  width: 6px;
-  height: 6px;
-  flex: 0 0 6px;
-  border-radius: 50%;
+  width: 8px;
+  height: 8px;
+  flex: 0 0 8px;
+  border-radius: 9999px;
 }
 
 .label {
+  font-family: "Roboto", sans-serif;
+  font-size: 11px;
   font-weight: 400;
+  line-height: 16px;
   white-space: nowrap;
 }
 
 .value {
-  font-weight: 600;
+  font-family: "Roboto", sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 16px;
   white-space: nowrap;
 }
 
-/* ── Total: dot #6B7280, background #F3F4F6, border 1px #E5E7EB ── */
+/* ── Total: bg #F8FAFC, border #E2E8F0, dot #64748B, label #64748B, value #0F172A ── */
 .total {
-  border-color: #e5e7eb;
-  background: #f3f4f6;
-  color: #374151;
+  border-color: #e2e8f0;
+  background: #f8fafc;
 }
 
 .total .dot {
-  background: #6b7280;
+  background: #64748b;
 }
 
 .total .label {
@@ -56,33 +61,31 @@
 }
 
 .total .value {
-  color: #111827;
+  color: #0f172a;
 }
 
-/* ── Approved: dot #16A34A, background #DCFCE7, border 1px #86EFAC, text #166534 ── */
+/* ── Approved: bg #ECFDF5, border #A7F3D0, dot #10B981, label #047857, value #065F46 ── */
 .success {
-  border-color: #86efac;
-  background: #dcfce7;
-  color: #166534;
+  border-color: #a7f3d0;
+  background: #ecfdf5;
 }
 
 .success .dot {
-  background: #16a34a;
+  background: #10b981;
 }
 
 .success .label {
-  color: #166534;
+  color: #047857;
 }
 
 .success .value {
-  color: #166534;
+  color: #065f46;
 }
 
-/* ── Pending: dot #F59E0B, background #FEF3C7, border 1px #F59E0B, text #B45309 ── */
+/* ── Pending: bg #FFFBEB, border #FDE68A, dot #F59E0B, label #B45309, value #92400E ── */
 .warning {
-  border-color: #f59e0b;
-  background: #fef3c7;
-  color: #b45309;
+  border-color: #fde68a;
+  background: #fffbeb;
 }
 
 .warning .dot {
@@ -94,6 +97,6 @@
 }
 
 .warning .value {
-  color: #b45309;
+  color: #92400e;
 }
 

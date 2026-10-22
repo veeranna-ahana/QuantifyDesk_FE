@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import styles from "./DataTable.module.css";
 
 function getMonthLabel(filters) {
@@ -27,7 +28,7 @@ function getMonthLabel(filters) {
 
 function ParentCategoryPill({ value }) {
   if (!value) return "—";
-  const str = String(value).trim();
+  const str = String(value);
   const isProject = /proj/i.test(str);
   return (
     <span
@@ -48,33 +49,44 @@ export function ProjectSummaryTable({
   loading = false,
   filters,
 }) {
+  const containerRef = useRef(null);
   const monthLabel = getMonthLabel(filters);
 
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.scrollTop = 0;
+      containerRef.current.scrollLeft = 0;
+    }
+  }, [records]);
+
   return (
-    <div className={styles.tableContainer}>
+    <div className={styles.tableContainer} ref={containerRef}>
       <table className={`${styles.table} ${styles.projectSummaryTable}`}>
         <colgroup>
-          <col style={{ width: "13%" }} />
-          <col style={{ width: "29%" }} />
-          <col style={{ width: "15%" }} />
-          <col style={{ width: "10%" }} />
-          <col style={{ width: "10%" }} />
-          <col style={{ width: "10%" }} />
-          <col style={{ width: "13%" }} />
+          <col style={{ width: "110px" }} />
+          <col style={{ width: "290px" }} />
+          <col style={{ width: "140px" }} />
+          <col style={{ width: "90px" }} />
+          <col style={{ width: "90px" }} />
+          <col style={{ width: "100px" }} />
+          <col style={{ width: "160px" }} />
         </colgroup>
         <thead>
           <tr className={styles.projectSummaryHeaderRow}>
-            <th scope="col" className={styles.thLeft}>
+            <th scope="col" className={styles.thCenter}>
               Project Code
             </th>
             <th scope="col" className={styles.thLeft}>
               Project Name
             </th>
-            <th scope="col" className={styles.thLeft}>
+            <th scope="col" className={styles.thCenter}>
               Customer Name
             </th>
             <th scope="col" className={styles.thCenter}>
-              Member Worked
+              <div className={styles.wrappedHeader}>
+                <span>Member</span>
+                <span>Worked</span>
+              </div>
             </th>
             <th scope="col" className={styles.thCenter}>
               <div className={styles.totalHrsHeader}>
@@ -83,7 +95,10 @@ export function ProjectSummaryTable({
               </div>
             </th>
             <th scope="col" className={styles.thCenter}>
-              First Month Seen
+              <div className={styles.wrappedHeader}>
+                <span>First Month</span>
+                <span>Seen</span>
+              </div>
             </th>
             <th scope="col" className={styles.thCenter}>
               Parent Category
@@ -120,7 +135,7 @@ export function ProjectSummaryTable({
                   key={record.projectCode || index}
                   className={styles.projectSummaryRow}
                 >
-                  <td className={styles.tdLeft}>
+                  <td className={styles.tdCenter}>
                     <span className={styles.projectCodeBadge}>{code}</span>
                   </td>
                   <td className={styles.tdLeft}>
@@ -128,7 +143,7 @@ export function ProjectSummaryTable({
                       {name}
                     </span>
                   </td>
-                  <td className={styles.tdLeft}>
+                  <td className={styles.tdCenter}>
                     <span className={styles.customerNameCell}>
                       {customer}
                     </span>

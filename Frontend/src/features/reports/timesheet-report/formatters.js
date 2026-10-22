@@ -10,6 +10,6 @@ export function formatINR(value) {
 
 export function formatCategory(value) {
   return typeof value === "string"
-    ? value.replace(/\s*:\s*/g, " : ").trim()
+    ? value.replace(/\s*:\s*/g, ":").trim()
     : "";
 }

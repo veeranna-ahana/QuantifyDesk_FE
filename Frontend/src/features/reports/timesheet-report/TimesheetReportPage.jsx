@@ -137,6 +137,7 @@ export function TimesheetReportPage() {
           page={viewPage}
           pageSize={PAGE_SIZE}
           onPageChange={changePage}
+          selectedDate={report.appliedFilters?.startDate || report.draftFilters?.startDate}
         />
       ) : (
         <Card className={pageStyles.reportTableCard}>

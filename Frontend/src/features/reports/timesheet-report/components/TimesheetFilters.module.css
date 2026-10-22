@@ -4,15 +4,16 @@
   flex: 0 0 auto;
   box-sizing: border-box;
   padding: 10px 16px;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
   background: #ffffff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: "Roboto", sans-serif;
   display: flex;
+  flex-direction: row;
   align-items: flex-end;
-  gap: 12px;
-  flex-wrap: nowrap; /* stays on ONE row at 1366px and above */
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: nowrap; /* stays on ONE row from 1280px upward */
   overflow: visible; /* NO overflow: hidden on the card */
 }
 
@@ -26,36 +27,38 @@
 .filtersGroup {
   display: flex;
   align-items: flex-end;
-  gap: 12px;
+  gap: 8px;
   flex-shrink: 0; /* never shrinks or gets covered */
+  min-width: 0;
 }
 
-/* ── Labels ───────────────────────────────────────────────── */
+/* ── Labels: Roboto 600, 12px, line-height 14px, #545F72 ─── */
 .label {
-  color: #374151;
-  font-family: "Inter", sans-serif;
+  color: #545f72;
+  font-family: "Roboto", sans-serif;
   font-size: 12px;
-  font-weight: 500;
-  line-height: 16px;
-  margin-bottom: 4px;
+  font-weight: 600;
+  line-height: 14px;
+  margin-bottom: 2px;
   white-space: nowrap;
 }
 
-/* ── Select dropdowns ─────────────────────────────────────── */
+/* ── Select dropdowns: Project 146px, Employee 146px ─────── */
 .selectField {
   display: flex;
   flex-direction: column;
-  font-family: "Inter", sans-serif;
+  gap: 2px;
+  font-family: "Roboto", sans-serif;
 }
 
 .projectField {
-  width: 150px;
-  flex: 0 0 150px;
+  width: 146px;
+  flex: 0 0 146px;
 }
 
 .employeeField {
-  width: 150px;
-  flex: 0 0 150px;
+  width: 146px;
+  flex: 0 0 146px;
 }
 
 .selectControl {
@@ -70,15 +73,15 @@
   height: 34px;
   box-sizing: border-box;
   appearance: none;
-  padding: 0 26px 0 10px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  padding: 0 26px 0 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
   background-color: #ffffff;
-  color: #9ca3af;
-  font-family: "Inter", sans-serif;
-  font-size: 12.5px;
+  color: #94a3b8;
+  font-family: "Roboto", sans-serif;
+  font-size: 12px;
   font-weight: 400;
-  line-height: 34px;
+  line-height: 14px;
   white-space: nowrap;
   outline: none;
   text-overflow: clip;
@@ -86,12 +89,12 @@
 }
 
 .selectControl select:focus {
-  border-color: #7c5cfc;
-  box-shadow: 0 0 0 3px rgba(124, 92, 252, 0.12);
+  border-color: #856bff;
+  box-shadow: 0 0 0 2px rgba(133, 107, 255, 0.15);
 }
 
 .selectControl select.selectedValue {
-  color: #111827;
+  color: #0f172a;
 }
 
 .chevron {
@@ -102,7 +105,7 @@
   width: 16px;
   height: 16px;
   align-items: center;
-  color: #9ca3af;
+  color: #c3c6d6;
   pointer-events: none;
   transform: translateY(-50%);
 }
@@ -111,7 +114,7 @@
   display: block;
 }
 
-/* ── Action buttons: Apply = 70px, Clear = 64px ──────────── */
+/* ── Action buttons: Apply = 54px, Clear = 45px ──────────── */
 .applyButton,
 .clearButton {
   display: inline-flex;
@@ -119,51 +122,51 @@
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
-  border-radius: 8px;
+  border-radius: 4px;
   cursor: pointer;
-  font-family: "Inter", sans-serif;
-  font-size: 13px;
-  line-height: 34px;
+  font-family: "Roboto", sans-serif;
+  font-size: 14px;
+  line-height: 16px;
+  letter-spacing: 0.6px;
   white-space: nowrap;
   transition: all 0.15s ease;
 }
 
 .applyButton {
-  width: 70px;
-  min-width: 70px;
-  flex: 0 0 70px;
-  padding: 0;
+  min-width: 54px;
+  width: 54px;
+  flex: 0 0 auto;
+  padding: 8px;
   border: 0;
-  background: #7c5cfc;
+  background: #856bff;
   color: #ffffff;
   font-weight: 600;
 }
 
 .applyButton:hover {
-  background: #6a49f2;
+  background: #7559fa;
 }
 
 .clearButton {
-  width: 64px;
-  min-width: 64px;
-  flex: 0 0 64px;
-  padding: 0;
-  border: 1px solid #7c5cfc;
+  min-width: 45px;
+  width: 45px;
+  flex: 0 0 auto;
+  padding: 8px 4px;
+  border: 1px solid #856bff;
   background: #ffffff;
-  color: #7c5cfc;
-  font-weight: 500;
+  color: #856bff;
+  font-weight: 400;
 }
 
 .clearButton:hover {
-  background: rgba(124, 92, 252, 0.08);
+  background: rgba(133, 107, 255, 0.08);
 }
 
-/* ── Group 2 (right): Total Hours, Approved, Pending chips ── */
+/* ── Group 2 (right): Chips container ────────────────────── */
 .summaryGroup {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-left: auto;
+  gap: 10px;
   flex-shrink: 0;
   white-space: nowrap;
   height: 34px;
