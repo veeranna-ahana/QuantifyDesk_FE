@@ -1,56 +1,31 @@
 import { useEffect, useRef } from "react";
-import styles from "./DataTable.module.css";
 
-function getMonthLabel(filters) {
-  if (filters?.endDate || filters?.startDate) {
-    const dStr = filters.endDate || filters.startDate;
-    const d = new Date(dStr);
-    if (!isNaN(d.getTime())) {
-      const monthNames = [
-        "JAN",
-        "FEB",
-        "MAR",
-        "APR",
-        "MAY",
-        "JUN",
-        "JUL",
-        "AUG",
-        "SEPT",
-        "OCT",
-        "NOV",
-        "DEC",
-      ];
-      return `(${monthNames[d.getMonth()]}${d.getFullYear()})`;
-    }
-  }
-  return "(SEPT2026)";
-}
+import { Badge } from "@/components/ui/Badge";
+import { cn } from "@/lib/cn";
 
 function ParentCategoryPill({ value }) {
-  if (!value) return "—";
+  if (!value) return <span className="text-ink-muted">—</span>;
   const str = String(value);
   const isProject = /proj/i.test(str);
   return (
-    <span
-      className={
-        isProject
-          ? styles.parentCategoryProject
-          : styles.parentCategorySupport
-      }
+    <Badge
+      variant={isProject ? "brand" : "danger"}
+      shape="pill"
+      size="sm"
       title={str}
     >
       {str}
-    </span>
+    </Badge>
   );
 }
 
-export function ProjectSummaryTable({
-  records = [],
-  loading = false,
-  filters,
-}) {
+const thBase =
+  "sticky top-0 z-10 h-11 border-b border-line-table-head bg-surface-table-head px-3 text-[12px] font-semibold text-ink-secondary whitespace-nowrap";
+const tdBase =
+  "border-b border-[#F1F5F9] px-3 py-2 align-top text-[12px] whitespace-normal break-words";
+
+export function ProjectSummaryTable({ records = [], loading = false }) {
   const containerRef = useRef(null);
-  const monthLabel = getMonthLabel(filters);
 
   useEffect(() => {
     if (containerRef.current) {
@@ -60,8 +35,14 @@ export function ProjectSummaryTable({
   }, [records]);
 
   return (
-    <div className={styles.tableContainer} ref={containerRef}>
-      <table className={`${styles.table} ${styles.projectSummaryTable}`}>
+    <div
+      ref={containerRef}
+      className="h-full w-full flex-1 min-h-0 overflow-auto figma-table-scroll"
+    >
+      <table
+        className="w-full border-separate border-spacing-0 text-left"
+        style={{ tableLayout: "fixed" }}
+      >
         <colgroup>
           <col style={{ width: "110px" }} />
           <col style={{ width: "290px" }} />
@@ -72,35 +53,32 @@ export function ProjectSummaryTable({
           <col style={{ width: "160px" }} />
         </colgroup>
         <thead>
-          <tr className={styles.projectSummaryHeaderRow}>
-            <th scope="col" className={styles.thCenter}>
+          <tr>
+            <th scope="col" className={cn(thBase, "text-center")}>
               Project Code
             </th>
-            <th scope="col" className={styles.thLeft}>
+            <th scope="col" className={thBase}>
               Project Name
             </th>
-            <th scope="col" className={styles.thCenter}>
+            <th scope="col" className={cn(thBase, "text-center")}>
               Customer Name
             </th>
-            <th scope="col" className={styles.thCenter}>
-              <div className={styles.wrappedHeader}>
+            <th scope="col" className={cn(thBase, "text-center")}>
+              <div className="flex flex-col items-center justify-center leading-tight">
                 <span>Member</span>
                 <span>Worked</span>
               </div>
             </th>
-            <th scope="col" className={styles.thCenter}>
-              <div className={styles.totalHrsHeader}>
-                <span>Total Hrs</span>
-                <span className={styles.totalHrsSub}>{monthLabel}</span>
-              </div>
+            <th scope="col" className={cn(thBase, "text-center")}>
+              <span>Total Hrs</span>
             </th>
-            <th scope="col" className={styles.thCenter}>
-              <div className={styles.wrappedHeader}>
+            <th scope="col" className={cn(thBase, "text-center")}>
+              <div className="flex flex-col items-center justify-center leading-tight">
                 <span>First Month</span>
                 <span>Seen</span>
               </div>
             </th>
-            <th scope="col" className={styles.thCenter}>
+            <th scope="col" className={cn(thBase, "text-center")}>
               Parent Category
             </th>
           </tr>
@@ -108,10 +86,11 @@ export function ProjectSummaryTable({
         <tbody>
           {records.length === 0 ? (
             <tr>
-              <td className={styles.emptyCell} colSpan={7}>
-                {loading
-                  ? "Loading project summary..."
-                  : "No projects found."}
+              <td
+                className="py-8 px-4 text-center text-[12px] text-ink-muted"
+                colSpan={7}
+              >
+                {loading ? "Loading project summary..." : "No projects found."}
               </td>
             </tr>
           ) : (
@@ -124,47 +103,49 @@ export function ProjectSummaryTable({
               const hours =
                 record.totalHours != null
                   ? Number(record.totalHours).toFixed(1)
-                  : "—";
+                  : null;
               const firstMonth =
                 record.monthSeen || record.firstMonthSeen || "—";
-              const parentCat =
-                record.parentCategory || record.category || "—";
+              const parentCat = record.parentCategory || record.category || "";
 
               return (
                 <tr
                   key={record.projectCode || index}
-                  className={styles.projectSummaryRow}
+                  className="transition-colors hover:bg-surface-field-disabled"
                 >
-                  <td className={styles.tdCenter}>
-                    <span className={styles.projectCodeBadge}>{code}</span>
+                  <td className={cn(tdBase, "text-center")}>
+                    <span className="block w-full max-w-full whitespace-normal break-words rounded-md bg-badge-brand-bg px-2 py-0.5 text-[11px] font-semibold leading-4 text-badge-brand-ink">
+                      {code}
+                    </span>
                   </td>
-                  <td className={styles.tdLeft}>
-                    <span className={styles.projectNameCell} title={name}>
+                  <td className={tdBase}>
+                    <span className="block whitespace-normal break-words font-normal text-ink-primary">
                       {name}
                     </span>
                   </td>
-                  <td className={styles.tdCenter}>
-                    <span className={styles.customerNameCell}>
-                      {customer}
-                    </span>
+                  <td className={cn(tdBase, "text-center text-ink-muted")}>
+                    {customer}
                   </td>
-                  <td className={styles.tdCenter}>
-                    <span className={styles.memberWorkedCircle}>
-                      {members}
-                    </span>
+                  <td
+                    className={cn(
+                      tdBase,
+                      "text-center font-medium text-ink-primary",
+                    )}
+                  >
+                    {members}
                   </td>
-                  <td className={styles.tdCenter}>
-                    <div className={styles.totalHrsCell}>
-                      <span className={styles.totalHrsValue}>{hours}</span>
-                      <span className={styles.totalHrsUnit}>hrs</span>
-                    </div>
+                  <td
+                    className={cn(
+                      tdBase,
+                      "text-center font-bold text-ink-primary",
+                    )}
+                  >
+                    {hours != null ? `${hours} hrs` : "—"}
                   </td>
-                  <td className={styles.tdCenter}>
-                    <span className={styles.firstMonthPill}>
-                      {firstMonth}
-                    </span>
+                  <td className={cn(tdBase, "text-center text-ink-secondary")}>
+                    {firstMonth}
                   </td>
-                  <td className={styles.tdCenter}>
+                  <td className={cn(tdBase, "overflow-visible text-center")}>
                     <ParentCategoryPill value={parentCat} />
                   </td>
                 </tr>

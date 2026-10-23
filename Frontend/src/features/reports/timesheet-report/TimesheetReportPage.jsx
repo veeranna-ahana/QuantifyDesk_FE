@@ -1,7 +1,10 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Card } from "@/components/ui/Card";
 
 import { TimesheetFilters } from "./components/TimesheetFilters";
+import { ProjectSummaryFilters } from "./components/ProjectSummaryFilters";
+import { ResourceBreakdownFilters } from "./components/ResourceBreakdownFilters";
+import { StatsBar } from "./components/StatsBar";
 import { ReportHeader } from "./components/ReportHeader";
 import { ResourceBreakdownTabs } from "./components/ResourceBreakdownTabs";
 import { ResourceBreakdownTable } from "./components/ResourceBreakdownTable";
@@ -9,84 +12,49 @@ import { ReportPagination } from "./components/ReportPagination";
 import { ProjectSummaryTable } from "./components/TimesheetReportTables";
 import { TimesheetTable } from "./components/TimesheetTable";
 import { useTimesheetReport } from "./hooks/useTimesheetReport";
-import {
-  mockProjectSummaryRecords,
-  mockTimesheetRecords,
-} from "./mock/mockTimesheetReport";
-import { resourceLogs } from "./mock/mockResourceLogs";
-import pageStyles from "./TimesheetReportPage.module.css";
+import { useProjectWiseSummary } from "./hooks/useProjectWiseSummary";
+import { useResourceBreakdown } from "./hooks/useResourceBreakdown";
 
 const PAGE_SIZE = 10;
-const TOTAL_RECORDS = 145;
-const REPORT_STATS = { total: 2840, approved: 2420, pending: 420 };
 
 export function TimesheetReportPage() {
-  const report = useTimesheetReport();
   const [activeView, setActiveView] = useState("timesheet");
+  // Each tab's data only loads once that tab has actually been opened — the
+  // Timesheet Report tab loads immediately (it's the default view), while
+  // Project-wise Summary / Resource Breakdown lazy-load on first visit, each
+  // with their own independent loading state. This avoids firing all 3 HRMS
+  // calls at once on page load.
+  const report = useTimesheetReport();
+  const projectSummary = useProjectWiseSummary(activeView === "projects");
+  const resourceBreakdown = useResourceBreakdown(activeView === "resources");
   const [viewPage, setViewPage] = useState(1);
 
-  const hasAppliedFilters = Object.values(report.filters).some(Boolean);
-  const useMockViews =
-    (report.usingMockData || report.totalRecords === 0) && !hasAppliedFilters;
-
-  const derivedProjectRows = useMemo(() => {
-    const projects = new Map();
-    report.filteredRecords.forEach((record) => {
-      const key = record.projectCode || record.projectName;
-      if (!key) return;
-
-      const project = projects.get(key) ?? {
-        projectCode: record.projectCode,
-        projectName: record.projectName,
-        customerName: record.customerName,
-        parentCategory: record.parentCategory || record.category,
-        members: new Set(),
-        totalHours: 0,
-        latestDate: "",
-      };
-      if (record.employeeId) project.members.add(record.employeeId);
-      project.totalHours += record.hoursSpent;
-      if (record.toDate > project.latestDate) project.latestDate = record.toDate;
-      projects.set(key, project);
-    });
-
-    return [...projects.values()]
-      .map((project) => ({
-        ...project,
-        memberCount: project.members.size,
-      }))
-      .sort((a, b) => (a.projectName || "").localeCompare(b.projectName || ""));
-  }, [report.filteredRecords]);
-
-  const projectRows = useMockViews
-    ? mockProjectSummaryRecords
-    : derivedProjectRows;
-
-  const timesheetTotalRecords = useMockViews
-    ? mockTimesheetRecords.length
-    : report.totalRecords || TOTAL_RECORDS;
+  const reportStats = {
+    total: report.summary.totalHours,
+    approved: report.summary.approvedHours,
+    pending: report.summary.pendingHours,
+  };
 
   const currentTotalRecords =
     activeView === "timesheet"
-      ? timesheetTotalRecords
-      : projectRows.length || TOTAL_RECORDS;
+      ? report.totalRecords
+      : activeView === "projects"
+        ? projectSummary.totalRecords
+        : resourceBreakdown.totalRecords;
 
   const currentTotalPages = Math.max(
     1,
     Math.ceil(currentTotalRecords / PAGE_SIZE),
   );
 
-  const projectPageRows = projectRows.slice(
+  const projectPageRows = projectSummary.rows.slice(
     (viewPage - 1) * PAGE_SIZE,
     viewPage * PAGE_SIZE,
   );
-
-  const timesheetPageRows = useMockViews
-    ? mockTimesheetRecords.slice(
-        (viewPage - 1) * PAGE_SIZE,
-        viewPage * PAGE_SIZE,
-      )
-    : report.records;
+  const resourcePageRows = resourceBreakdown.rows.slice(
+    (viewPage - 1) * PAGE_SIZE,
+    viewPage * PAGE_SIZE,
+  );
 
   const changePage = (page) => {
     const validPage = Math.min(Math.max(page, 1), currentTotalPages);
@@ -94,29 +62,79 @@ export function TimesheetReportPage() {
     report.setPage(validPage);
   };
 
+  const tabError =
+    activeView === "projects"
+      ? projectSummary.error
+      : activeView === "resources"
+        ? resourceBreakdown.error
+        : report.error;
+
   return (
-    <div className={pageStyles.pageWrapper}>
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-3 bg-surface-page box-border [&_*]:box-border">
       <ReportHeader onExport={report.exportReport} />
 
-      <TimesheetFilters
-        filters={report.draftFilters}
-        onChange={report.setDraftFilters}
-        onApply={(filters) => {
-          report.applyFilters(filters);
-          setViewPage(1);
-        }}
-        onClear={() => {
-          report.clearFilters();
-          setViewPage(1);
-        }}
-        projects={report.options.projects}
-        employees={report.options.employees}
-        stats={REPORT_STATS}
-      />
+      {/* Each tab gets its own filter bar — Project-wise Summary and Resource
+          Breakdown both ignore query params server-side, so their filters are
+          applied client-side against the already-loaded dataset. The stats
+          badges below are always shown regardless of tab. */}
+      {activeView === "timesheet" && (
+        <TimesheetFilters
+          filters={report.draftFilters}
+          onChange={report.setDraftFilters}
+          onApply={(filters) => {
+            report.applyFilters(filters);
+            setViewPage(1);
+          }}
+          onClear={() => {
+            report.clearFilters();
+            setViewPage(1);
+          }}
+          projects={report.options.projects}
+          employees={report.options.employees}
+        />
+      )}
 
-      {report.error && (
-        <p className={`${pageStyles.reportError} text-badge-danger-ink`}>
-          {report.error}
+      {activeView === "projects" && (
+        <ProjectSummaryFilters
+          filters={projectSummary.draftFilters}
+          onChange={projectSummary.setDraftFilters}
+          onApply={(filters) => {
+            projectSummary.applyFilters(filters);
+            setViewPage(1);
+          }}
+          onClear={() => {
+            projectSummary.clearFilters();
+            setViewPage(1);
+          }}
+          projectCodes={projectSummary.options.projectCodes}
+          projectNames={projectSummary.options.projectNames}
+          parentCategories={projectSummary.options.parentCategories}
+        />
+      )}
+
+      {activeView === "resources" && (
+        <ResourceBreakdownFilters
+          filters={resourceBreakdown.draftFilters}
+          onChange={resourceBreakdown.setDraftFilters}
+          onApply={(filters) => {
+            resourceBreakdown.applyFilters(filters);
+            setViewPage(1);
+          }}
+          onClear={() => {
+            resourceBreakdown.clearFilters();
+            setViewPage(1);
+          }}
+          projectCodes={resourceBreakdown.options.projectCodes}
+          projectNames={resourceBreakdown.options.projectNames}
+          memberNames={resourceBreakdown.options.memberNames}
+        />
+      )}
+
+      <StatsBar stats={reportStats} />
+
+      {tabError && (
+        <p className="m-0 rounded-md border border-badge-danger-line bg-badge-danger-bg px-3 py-1.5 text-[12px] leading-4 text-badge-danger-ink">
+          {tabError}
         </p>
       )}
 
@@ -127,47 +145,50 @@ export function TimesheetReportPage() {
           setViewPage(1);
           report.setPage(1);
         }}
-        projectCount={projectRows.length}
-        resourceCount={resourceLogs.length}
+        timesheetCount={report.totalRecords}
+        timesheetCountLoading={report.loading}
+        projectCount={projectSummary.totalRecords}
+        projectCountLoading={projectSummary.loading}
+        resourceCount={resourceBreakdown.totalRecords}
+        resourceCountLoading={resourceBreakdown.loading}
       />
       {activeView === "resources" ? (
         <ResourceBreakdownTable
-          rows={resourceLogs}
-          totalRecords={TOTAL_RECORDS}
+          rows={resourcePageRows}
+          totalRecords={resourceBreakdown.totalRecords}
           page={viewPage}
           pageSize={PAGE_SIZE}
           onPageChange={changePage}
-          selectedDate={report.appliedFilters?.startDate || report.draftFilters?.startDate}
+          loading={resourceBreakdown.loading}
         />
       ) : (
-        <Card className={pageStyles.reportTableCard}>
+        <Card className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-line-card bg-surface-card shadow-1">
           {activeView === "timesheet" ? (
             <>
-              <div className={pageStyles.tableBody}>
+              <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden">
                 <TimesheetTable
-                  records={timesheetPageRows}
+                  records={report.records}
                   loading={report.loading}
                 />
               </div>
               <ReportPagination
                 page={viewPage}
-                totalRecords={timesheetTotalRecords}
+                totalRecords={report.totalRecords}
                 pageSize={PAGE_SIZE}
                 onPageChange={changePage}
               />
             </>
           ) : (
             <>
-              <div className={pageStyles.tableBody}>
+              <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden">
                 <ProjectSummaryTable
                   records={projectPageRows}
-                  loading={report.loading}
-                  filters={report.filters}
+                  loading={projectSummary.loading}
                 />
               </div>
               <ReportPagination
                 page={viewPage}
-                totalRecords={projectRows.length}
+                totalRecords={projectSummary.totalRecords}
                 pageSize={PAGE_SIZE}
                 onPageChange={changePage}
               />
