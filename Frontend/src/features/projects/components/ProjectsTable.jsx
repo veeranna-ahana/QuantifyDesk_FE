@@ -41,7 +41,10 @@ const COLS = [
 
 export function ProjectsTable({ projects, loading, error, pageSize, onView }) {
   return (
-    <Table className="min-w-[860px]">
+    <Table
+      className="min-w-[860px]"
+      wrapperClassName="min-h-0 flex-1 overflow-y-auto"
+    >
       <TableHead>
         <TableRow className="hover:bg-transparent">
           {COLS.map((c, i) => (
