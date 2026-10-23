@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { timesheetReportService } from "../services/timesheetReport.service";
+import { exportRowsAsCsv } from "../utils/exportCsv";
 
 const EMPTY_FILTERS = { projectCode: "", projectName: "", parentCategory: "" };
 
@@ -117,6 +118,33 @@ export function useProjectWiseSummary(enabled = true) {
     setFilters(EMPTY_FILTERS);
   };
 
+  // Exports every row matching the applied filters, not just the visible page
+  const exportReport = () => {
+    exportRowsAsCsv({
+      rows: filteredRows,
+      header: [
+        "Project Code",
+        "Project Name",
+        "Customer",
+        "Members Worked",
+        "Total Hours",
+        "First Month Seen",
+        "Project Category",
+      ],
+      toRow: (row) => [
+        row.projectCode,
+        row.projectName,
+        row.customerName,
+        row.memberCount,
+        row.totalHours,
+        row.firstMonthSeen,
+        row.parentCategory,
+      ],
+      filenamePrefix: "project-wise-summary",
+      emptyMessage: "No project-wise summary records to export",
+    });
+  };
+
   return {
     rows: filteredRows,
     totalRecords: filteredRows.length,
@@ -128,5 +156,6 @@ export function useProjectWiseSummary(enabled = true) {
     setDraftFilters,
     applyFilters,
     clearFilters,
+    exportReport,
   };
 }
