@@ -62,6 +62,14 @@ export function TimesheetReportPage() {
     report.setPage(validPage);
   };
 
+  // Export Report always exports whichever tab is currently active.
+  const exportCurrentTab =
+    activeView === "projects"
+      ? projectSummary.exportReport
+      : activeView === "resources"
+        ? resourceBreakdown.exportReport
+        : report.exportReport;
+
   const tabError =
     activeView === "projects"
       ? projectSummary.error
@@ -71,7 +79,7 @@ export function TimesheetReportPage() {
 
   return (
     <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-3 bg-surface-page box-border [&_*]:box-border">
-      <ReportHeader onExport={report.exportReport} />
+      <ReportHeader onExport={exportCurrentTab} />
 
       {/* Each tab gets its own filter bar — Project-wise Summary and Resource
           Breakdown both ignore query params server-side, so their filters are

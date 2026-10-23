@@ -4,7 +4,13 @@
   height: 100vh;
   overflow: hidden;
   background: #f8f9fc;
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family:
+    "Inter",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
 }
 
 .main {
@@ -26,7 +32,16 @@
   flex: 1 1 auto;
   flex-direction: column;
   gap: clamp(8px, 1.2vh, 12px);
-  overflow: visible;
+  /* Was `overflow: visible`, with `.main` above it set to `overflow: hidden`.
+     Content taller than the viewport had nowhere to scroll — `.content` let it
+     overflow, but `.main` just clipped that overflow instead of scrolling it,
+     so every page cut off at the bottom with no scrollbar anywhere. Making
+     `.content` itself the scroll container fixes this app-wide. Pages that
+     already manage their own internal scroll area (e.g. a table with
+     flex-1 + min-h-0 + overflow-auto) are unaffected since they fit exactly
+     within this container and never trigger this outer scrollbar. */
+  overflow-y: auto;
+  overflow-x: hidden;
   padding: clamp(10px, 1.4vh, 16px) clamp(14px, 1.5vw, 20px);
   box-sizing: border-box;
 }
