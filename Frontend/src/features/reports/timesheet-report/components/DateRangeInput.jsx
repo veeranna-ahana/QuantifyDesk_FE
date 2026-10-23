@@ -1,7 +1,5 @@
 import { useRef, useState } from "react";
 
-import styles from "./DateRangeInput.module.css";
-
 function ArrowRightIcon() {
   return (
     <svg
@@ -40,14 +38,14 @@ function CalendarIcon() {
   );
 }
 
-function DateField({ label, value, onChange, inputRef }) {
+function DateField({ label, value, onChange, inputRef, flexClass }) {
   const [focused, setFocused] = useState(false);
 
   return (
     <input
       ref={inputRef}
       aria-label={label}
-      className={styles.dateField}
+      className={`min-w-0 ${flexClass} border-0 bg-transparent p-0 text-[12px] font-normal leading-[14px] text-ink-primary outline-none placeholder:text-ink-muted [&::-webkit-calendar-picker-indicator]:hidden`}
       type={focused ? "date" : "text"}
       value={value}
       placeholder={label}
@@ -59,35 +57,51 @@ function DateField({ label, value, onChange, inputRef }) {
 }
 
 export function DateRangeInput({ startDate, endDate, onChange }) {
+  const startDateRef = useRef(null);
   const endDateRef = useRef(null);
 
+  const openPicker = (inputRef) => () => {
+    const input = inputRef.current;
+    input?.focus();
+    window.requestAnimationFrame(() => input?.showPicker?.());
+  };
+
   return (
-    <div className={styles.dateFieldGroup}>
-      <span className={styles.label}>Date Range</span>
-      <div className={styles.dateRange}>
+    <div className="flex w-[260px] flex-none flex-col gap-0.5">
+      <span className="mb-0.5 whitespace-nowrap text-[12px] font-semibold leading-[14px] text-ink-secondary">
+        Date Range
+      </span>
+      <div className="flex h-[36px] w-full min-w-0 items-center gap-1.5 rounded border border-line-field bg-surface-card px-2.5 transition-colors focus-within:border-action-primary focus-within:ring-2 focus-within:ring-action-primary-ring/40">
         <DateField
           label="Select Date"
           value={startDate}
+          inputRef={startDateRef}
+          flexClass="flex-[1.15_1_0]"
           onChange={(value) => onChange({ startDate: value })}
         />
-        <span className={styles.rangeIcon}>
+        <button
+          type="button"
+          aria-label="Choose start date"
+          className="flex h-4 w-4 flex-none items-center justify-center border-0 bg-transparent p-0 text-line-default hover:text-ink-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-action-primary"
+          onClick={openPicker(startDateRef)}
+        >
+          <CalendarIcon />
+        </button>
+        <span className="flex h-4 w-4 flex-none items-center justify-center text-line-default">
           <ArrowRightIcon />
         </span>
         <DateField
           label="End Date"
           value={endDate}
           inputRef={endDateRef}
+          flexClass="flex-[0.85_1_0]"
           onChange={(value) => onChange({ endDate: value })}
         />
         <button
           type="button"
-          className={styles.calendarButton}
           aria-label="Choose end date"
-          onClick={() => {
-            const input = endDateRef.current;
-            input?.focus();
-            window.requestAnimationFrame(() => input?.showPicker?.());
-          }}
+          className="flex h-4 w-4 flex-none items-center justify-center border-0 bg-transparent p-0 text-line-default hover:text-ink-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-action-primary"
+          onClick={openPicker(endDateRef)}
         >
           <CalendarIcon />
         </button>

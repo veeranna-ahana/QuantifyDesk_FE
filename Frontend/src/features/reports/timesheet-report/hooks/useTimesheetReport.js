@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
-import { mockTimesheetRecords } from "../mock/mockTimesheetReport";
 import { timesheetReportService } from "../services/timesheetReport.service";
 
 const PAGE_SIZE = 10;
@@ -31,9 +30,8 @@ function toRecord(row) {
     categoryCode: row.projectcategory_code ?? row.categoryCode,
     category: decodeEntities(row.projectcategory_name ?? row.category),
     parentCategory: decodeEntities(row.parent_category),
-    totalResourceCost: Number(
-      row.total_resource_cost ?? row.totalResourceCost,
-    ) || 0,
+    totalResourceCost:
+      Number(row.total_resource_cost ?? row.totalResourceCost) || 0,
     hoursSpent,
     approvedHours:
       row.approved_hours != null
@@ -79,7 +77,6 @@ export function useTimesheetReport() {
   const [allRecords, setAllRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [usingMockData, setUsingMockData] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -87,19 +84,18 @@ export function useTimesheetReport() {
       .getReport()
       .then((res) => {
         if (!active) return;
-        setUsingMockData(false);
         setError(null);
-        const rows = (res.categories ?? []).flatMap((category) =>
-          (category.data ?? []).map(toRecord),
-        );
-        setAllRecords(rows);
+        setAllRecords((res.data ?? []).map(toRecord));
       })
       .catch((err) => {
         if (!active) return;
-        setUsingMockData(true);
-        setAllRecords(mockTimesheetRecords.map(toRecord));
+        setAllRecords([]);
+        const timedOut = err.code === "ECONNABORTED" || !err.response;
         setError(
-          `${err.response?.data?.message || "Failed to load the timesheet report"}. Showing sample report data.`,
+          err.response?.data?.message ||
+            (timedOut
+              ? "Timed out loading the timesheet report (the HRMS sync is slow). Try again."
+              : "Failed to load the timesheet report."),
         );
       })
       .finally(() => {
@@ -259,7 +255,6 @@ export function useTimesheetReport() {
     summary,
     loading,
     error,
-    usingMockData,
     applyFilters,
     clearFilters,
     setPage,

@@ -1,4 +1,4 @@
-import styles from "./ReportPagination.module.css";
+import { cn } from "@/lib/cn";
 
 function PageButton({ children, active, disabled, label, onClick }) {
   return (
@@ -7,8 +7,13 @@ function PageButton({ children, active, disabled, label, onClick }) {
       aria-label={label}
       aria-current={active ? "page" : undefined}
       disabled={disabled}
-      className={`${styles.pageButton} ${active ? styles.activePage : ""}`}
       onClick={onClick}
+      className={cn(
+        "inline-flex h-[30px] w-[30px] flex-none items-center justify-center rounded-lg border text-[12px] font-medium transition-colors",
+        active
+          ? "border-action-primary bg-action-primary font-semibold text-ink-on-primary"
+          : "border-line-card bg-surface-card text-ink-secondary hover:border-line-default hover:bg-surface-field-disabled hover:text-ink-primary disabled:cursor-not-allowed disabled:border-[#f1f5f9] disabled:text-ink-muted/60 disabled:opacity-40",
+      )}
     >
       {children}
     </button>
@@ -33,7 +38,7 @@ function getPageItems(currentPage, totalPages) {
 
 export function ReportPagination({
   page = 1,
-  totalRecords = 145,
+  totalRecords = 0,
   pageSize = 10,
   onPageChange,
 }) {
@@ -45,11 +50,11 @@ export function ReportPagination({
   const pageItems = getPageItems(safePage, totalPages);
 
   return (
-    <footer className={styles.footer}>
-      <span className={styles.footerLabel}>
+    <footer className="flex h-11 min-h-[44px] flex-none items-center justify-between gap-4 rounded-b-xl border-t border-line-card bg-surface-table-head px-4">
+      <span className="text-[12px] text-ink-muted">
         Showing {start}-{end} of {totalRecords} records
       </span>
-      <nav className={styles.pagination} aria-label="Report pagination">
+      <nav className="flex items-center gap-1" aria-label="Report pagination">
         <PageButton
           label="Previous page"
           disabled={safePage <= 1}
@@ -70,7 +75,7 @@ export function ReportPagination({
           ) : (
             <span
               key={`ellipsis-${index}`}
-              className={styles.ellipsis}
+              className="inline-flex h-8 w-[18px] select-none items-center justify-center text-[12px] text-ink-muted"
               aria-hidden="true"
             >
               ...
