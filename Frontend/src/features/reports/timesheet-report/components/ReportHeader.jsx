@@ -1,11 +1,11 @@
-import styles from "./ReportHeader.module.css";
+import { Button } from "@/components/ui/Button";
 
 function DownloadIcon() {
   return (
     <svg
       aria-hidden="true"
-      width="16"
-      height="16"
+      width="15"
+      height="15"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -22,18 +22,20 @@ function DownloadIcon() {
 
 export function ReportHeader({ onExport }) {
   return (
-    <header className={styles.header}>
-      <div className={styles.titleBlock}>
-        <h1 className={styles.title}>Timesheet Report</h1>
+    <header className="flex h-11 min-h-[44px] flex-none items-center justify-between gap-4">
+      <div className="min-w-0">
+        <h1 className="m-0 text-[22px] font-bold leading-7 text-ink-primary">
+          Timesheet Report
+        </h1>
       </div>
-      <button
-        type="button"
-        className={styles.exportButton}
+      <Button
+        variant="outline"
+        size="sm"
+        leftIcon={<DownloadIcon />}
         onClick={onExport}
       >
-        <DownloadIcon />
-        <span>Export Report</span>
-      </button>
+        Export Report
+      </Button>
     </header>
   );
 }
