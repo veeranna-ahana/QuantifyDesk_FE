@@ -32,6 +32,9 @@ export function mapViewToMilestones(milestones = []) {
       id: `T-${t.task_id}`,
       taskId: `T-${t.task_id}`,
       pmsTaskId: t.task_id,
+      // PMS's stable per-task id across versions — carried through so a later save still finds
+      // this task's task_info row after a version bump has changed its task_id.
+      pmsTaskUuid: t.task_uuid || null,
       pmsEmpId: t.emp_id || null,
       milestoneShort: m.milestone_name || "",
       title: t.task_title || "",

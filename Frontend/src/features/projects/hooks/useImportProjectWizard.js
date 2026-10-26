@@ -270,6 +270,9 @@ export function useImportProjectWizard() {
         .filter((t) => t.pmsTaskId)
         .map((t) => ({
           pms_task_id: t.pmsTaskId,
+          // PMS's stable per-task id — lets the backend re-find this row's Role/Task Type/Unit
+          // after a future PMS version bump changes pms_task_id.
+          task_uuid: t.pmsTaskUuid || null,
           // Defaults to PMS's own assignee for this task — role/task_type/unit are ours to overlay.
           emp_id: t.pmsEmpId || null,
           role: t.role || null,
