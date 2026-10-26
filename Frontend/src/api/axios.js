@@ -1,5 +1,6 @@
 import axios from "axios";
 
+import { getSessionToken } from "@/auth/sessionStore";
 import { handleSessionExpired } from "@/shared/sessionExpiry";
 
 const api = axios.create({
@@ -7,7 +8,7 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
+  const token = getSessionToken();
   if (token) {
     config.headers = config.headers || {};
     config.headers.Authorization = `Bearer ${token}`;
@@ -15,13 +16,11 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Shows the app-level session-expired modal on any 401 — see
-// shared/sessionExpiry.js / components/SessionExpiredModal.jsx.
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      handleSessionExpired();
+      handleSessionExpired(error.config);
     }
     return Promise.reject(error);
   },

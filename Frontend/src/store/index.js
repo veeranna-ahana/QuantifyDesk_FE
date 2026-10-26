@@ -13,7 +13,7 @@ import projectsReducer from './slices/projectsSlice';
 const persistConfig = {
   key: 'root',
   storage,
-  whitelist: ['selectedFMS', 'tasks', 'auth', 'employees'], // ✅ Add 'employees'
+  whitelist: ['selectedFMS', 'tasks', 'employees'],
 };
 
 const rootReducer = combineReducers({

@@ -7,13 +7,14 @@ import {
   selectEmployeesLoading 
 } from '../store/slices/employeeSlice';
 import axios from 'axios';
+import { getSessionToken } from '@/auth/sessionStore';
 import toast from 'react-hot-toast';
 import SearchableSelect from '@/components/ui/SearchableSelect/SearchableSelect';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const CUSTOMER_API_URL = `${BASE_URL}/api/projects/customers`;
 const getHeaders = () => ({
-  Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
+  Authorization: `Bearer ${getSessionToken() || ''}`,
 });
 
 // ── Icon helpers ──────────────────────────────────────────────────────────────

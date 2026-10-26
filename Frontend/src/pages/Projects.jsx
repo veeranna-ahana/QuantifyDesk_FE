@@ -4,22 +4,13 @@ import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
 import axios from 'axios';
-import Cookies from 'js-cookie';
+import { getSessionToken } from '@/auth/sessionStore';
 import { Icon } from '@iconify/react';
 import SearchableSelect from '@/components/ui/SearchableSelect/SearchableSelect';
 
-// ── Role helper ───────────────────────────────────────────────────────────────
-const getUserRole = () => {
-  try {
-    const cookieUser = JSON.parse(Cookies.get('user') || 'null');
-    if (cookieUser?.role) return cookieUser.role.toUpperCase();
-  } catch { /* ignore */ }
-  return (localStorage.getItem('role') || 'EMPLOYEE').toUpperCase();
-};
-
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const getHeaders = () => ({
-  Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
+  Authorization: `Bearer ${getSessionToken() || ''}`,
 });
 
 // ── Effort estimate role config ───────────────────────────────────────────────
@@ -882,6 +873,7 @@ const STATUS_CFG = {
 // ── Main Projects Component ───────────────────────────────────────────────────
 const Projects = () => {
   const navigate = useNavigate();
+  const userRole = useSelector((state) => state.auth?.user?.role);
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [initialEffortProjectId, setInitialEffortProjectId] = useState('');
@@ -890,7 +882,7 @@ const Projects = () => {
   const [statusFilter, setStatusFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
 
-  const isAdmin = getUserRole() === 'ADMIN';
+  const isAdmin = (userRole || 'EMPLOYEE').toUpperCase() === 'ADMIN';
 
   const fetchProjects = async () => {
     try {

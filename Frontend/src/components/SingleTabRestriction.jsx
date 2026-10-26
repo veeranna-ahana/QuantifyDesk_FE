@@ -4,7 +4,8 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 
 const MYAHANA_PORTAL_URL =
-  import.meta.env.VITE_MYAHANA_PORTAL_URL || "https://myahana.ahanait.com/";
+  import.meta.env.VITE_PORTAL_URL ||
+  import.meta.env.VITE_MYAHANA_PORTAL_URL;
 
 export function SingleTabRestriction() {
   const openPortal = () => {

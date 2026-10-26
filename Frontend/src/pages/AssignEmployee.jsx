@@ -2,29 +2,19 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
 import axios from "axios";
+import { getSessionToken } from "@/auth/sessionStore";
 import { useSelector, useDispatch } from "react-redux";
 import {
   fetchHrmsEmployees,
   selectAllEmployees,
   selectEmployeesLoading,
 } from "../store/slices/employeeSlice";
-import Cookies from "js-cookie";
 import SearchableSelect from "@/components/ui/SearchableSelect/SearchableSelect";
 import { Icon } from "@iconify/react";
 
-const getUserRole = () => {
-  try {
-    const cookieUser = JSON.parse(Cookies.get("user") || "null");
-    if (cookieUser?.role) return cookieUser.role.toUpperCase();
-  } catch {
-    /* ignore */
-  }
-  return (localStorage.getItem("role") || "EMPLOYEE").toUpperCase();
-};
-
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const getHeaders = () => ({
-  Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+  Authorization: `Bearer ${getSessionToken() || ""}`,
 });
 
 const ROLE_COLORS = {
@@ -44,7 +34,8 @@ const roleStyle = (role) =>
 const AssignEmployee = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const isAdmin = getUserRole() === "ADMIN";
+  const userRole = useSelector((state) => state.auth?.user?.role);
+  const isAdmin = (userRole || "EMPLOYEE").toUpperCase() === "ADMIN";
   // const serviceDeliveryEmployees = useSelector((state) => state.auth.serviceDeliveryEmployees);
   const dispatch = useDispatch();
   const hrmsEmployees = useSelector(selectAllEmployees);

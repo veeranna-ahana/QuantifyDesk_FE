@@ -1,6 +1,7 @@
 // src/shared/axiosInstance.js
 import axios from "axios";
 
+import { getSessionToken } from "@/auth/sessionStore";
 import { handleSessionExpired } from "./sessionExpiry";
 
 const axiosInstance = axios.create({
@@ -11,32 +12,11 @@ const axiosInstance = axios.create({
   },
 });
 
-// Request interceptor — attach token
 axiosInstance.interceptors.request.use(
   (config) => {
-    // Never overwrite an Authorization header the caller set on purpose. The login call sends
-    // the MyAhana PORTAL token explicitly (api/AuthApi.js); replacing it here with the stored
-    // Quantify JWT made RBAC and PMS reject the login with 401.
-    if (!config.headers.Authorization) {
-      const token = localStorage.getItem("token");
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      } else {
-        console.warn("⚠️ No token found in localStorage");
-      }
-    }
-
-    // Read user role from cookie and attach as header
-    try {
-      const match = document.cookie.match(/(?:^|; )user=([^;]*)/);
-      if (match) {
-        const userObj = JSON.parse(decodeURIComponent(match[1]));
-        if (userObj && userObj.role) {
-          config.headers["x-user-role"] = userObj.role;
-        }
-      }
-    } catch (err) {
-      // Ignore cookie parsing/decoding errors
+    const token = getSessionToken();
+    if (token && !config.headers.Authorization) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
 
     return config;
@@ -44,22 +24,36 @@ axiosInstance.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
-// Response interceptor — handle errors globally
+// Response interceptor — handle errors globally for axiosInstance
 axiosInstance.interceptors.response.use(
   (response) => response.data,
   (error) => {
     const message = error.response?.data?.message || "Something went wrong";
     console.error("[API Error]", message);
 
-    // A 401 from the login call itself is a failed SSO handoff, not an
-    // expired session — don't show the session-expired modal for it.
     const isLoginCall = String(error.config?.url || "").includes(
       "/api/auth/login",
     );
     if (error.response?.status === 401 && !isLoginCall) {
-      handleSessionExpired();
+      handleSessionExpired(error.config);
     }
 
+    return Promise.reject(error);
+  },
+);
+
+// ── Global Axios Interceptor ──────────────────────────────────────────────────
+// Ensures ANY component importing raw `axios` that encounters a 401 triggers
+// the logged-out modal immediately instead of failing silently "without data".
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const isLoginCall = String(error.config?.url || "").includes(
+      "/api/auth/login",
+    );
+    if (error.response?.status === 401 && !isLoginCall) {
+      handleSessionExpired(error.config);
+    }
     return Promise.reject(error);
   },
 );

@@ -9,7 +9,7 @@ export const login = async (userData) => {
     //   hasAuthToken: !!userData.authToken
     // });
 
-    // Prepare headers - include authToken if available
+    // The portal JWT is sent only for the one-time backend validation.
     const headers = {};
     if (userData.authToken) {
       headers.Authorization = `Bearer ${userData.authToken}`;
@@ -28,7 +28,10 @@ export const login = async (userData) => {
     // console.log("✅ Login successful, response:", response);
     return response;
   } catch (error) {
-    console.error("❌ Login API error:", error.response?.data || error.message);
+    console.error(
+      "Login API error",
+      error.response?.status || "network error",
+    );
     throw error;
   }
 };

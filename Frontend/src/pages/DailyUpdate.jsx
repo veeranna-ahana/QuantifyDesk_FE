@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { getSessionToken } from "@/auth/sessionStore";
 import SearchableSelect from "@/components/ui/SearchableSelect/SearchableSelect";
 //const BASE_URL  = process.env.REACT_APP_API_BASE_URL;
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -84,7 +85,7 @@ const DailyUpdates = () => {
   };
 
   const getAuthHeaders = () => {
-    const token = localStorage.getItem("token");
+    const token = getSessionToken();
     return {
       Authorization: token ? `Bearer ${token}` : "",
     };

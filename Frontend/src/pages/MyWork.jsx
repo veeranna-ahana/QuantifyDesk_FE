@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { getSessionToken } from "@/auth/sessionStore";
 import { useSelector } from "react-redux";
 import { Icon } from '@iconify/react';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const getHeaders = () => ({
-  Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+  Authorization: `Bearer ${getSessionToken() || ""}`,
 });
 
 // Role-to-task mapping for manual tasks
@@ -79,7 +80,7 @@ const Ring = ({ pct, size = 54 }) => {
 const MyWork = () => {
   // ✅ Get user from Redux store
   const user = useSelector((state) => state.auth.user);
-  const userId = user?.emp_id || localStorage.getItem("emp_id");
+  const userId = user?.emp_id;
   const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
 

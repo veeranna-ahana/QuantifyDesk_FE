@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback,  useMemo  } from "react";
 import axios from "axios";
+import { getSessionToken } from "@/auth/sessionStore";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchHrmsEmployees, selectAllEmployees, selectEmployeesLoading } from "../store/slices/employeeSlice";
 import SearchableSelect from '@/components/ui/SearchableSelect/SearchableSelect';
@@ -12,7 +13,7 @@ import { Icon } from '@iconify/react';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const getHeaders = () => ({
-  Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+  Authorization: `Bearer ${getSessionToken() || ""}`,
 });
 
 const exportEmployeeProjectUnitExcel = async (projectId, empId) => {

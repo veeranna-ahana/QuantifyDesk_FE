@@ -49,10 +49,9 @@ export function AppSidebar() {
     }
   }
 
-  const rawRole = user?.role || localStorage.getItem("role") || "Employee";
-  const roleMap = { ADMIN: "Admin", MANAGER: "Manager", EMPLOYEE: "Employee" };
-  const links =
-    ROLE_NAVIGATION[roleMap[rawRole] ?? rawRole] ?? ROLE_NAVIGATION.Employee;
+  const rawRole = user?.role || 'Employee';
+  const roleMap = { ADMIN: 'Admin', MANAGER: 'Manager', EMPLOYEE: 'Employee' };
+  const links = ROLE_NAVIGATION[roleMap[rawRole] ?? rawRole] ?? ROLE_NAVIGATION.Employee;
 
   return (
     <aside className={styles.sidebar}>

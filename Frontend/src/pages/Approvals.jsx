@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useCallback } from "react";
 import axios from "axios";
+import { getSessionToken } from "@/auth/sessionStore";
 
 //const BASE_URL  = process.env.REACT_APP_API_BASE_URL;
 const BASE_URL  = import.meta.env.VITE_API_BASE_URL;
-const getHeaders = () => ({ Authorization: `Bearer ${localStorage.getItem("token") || ""}` });
+const getHeaders = () => ({ Authorization: `Bearer ${getSessionToken() || ""}` });
 
 const roleColors = {
   BA: "#8e44ad", UI: "#2980b9", TL: "#16a085",

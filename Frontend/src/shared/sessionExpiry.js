@@ -1,40 +1,111 @@
-// src/shared/sessionExpiry.js
-//
-// App-level 401 handler. A 401 from either axios instance clears the stale
-// session and raises a "session-expired" event — it does NOT redirect by
-// itself. SessionExpiredModal (mounted once at the app root in App.jsx)
-// listens for that event and shows a blocking modal; the user leaves via
-// its own Login/Logout buttons, both of which go to the UAT portal home.
-//
-// This file is imported by axios interceptors, which run outside the React
-// tree, so it can't call useNavigate/dispatch directly — a DOM CustomEvent
-// is the simplest way to reach into React from here.
-export const SESSION_EXPIRED_EVENT = "session-expired";
+import Cookies from "js-cookie";
 
-let handling = false; // guards against N parallel 401s firing N events
+import { getSessionToken, clearSessionToken } from "@/auth/sessionStore";
 
-export function handleSessionExpired() {
-  if (handling) return;
-  handling = true;
+let logoutPromise;
 
-  try {
-    localStorage.removeItem("token");
-    localStorage.removeItem("email");
-    localStorage.removeItem("emp_id");
-    localStorage.removeItem("role");
-    localStorage.removeItem("UserID");
-    localStorage.removeItem("serviceDeliveryEmployees");
-    document.cookie = "user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-  } catch {
-    // localStorage/cookies unavailable — nothing more we can clear client-side
+export function redirectToPortal(reason) {
+  // PCM behaviour: if opened from portal, focus opener tab and close this tab
+  const opener = window.opener;
+  if (opener && !opener.closed) {
+    try {
+      opener.focus();
+    } catch {
+      /* ignore */
+    }
+    window.close();
   }
 
-  window.dispatchEvent(new CustomEvent(SESSION_EXPIRED_EVENT));
+  const portalUrl =
+    import.meta.env.VITE_LOGIN_URL ||
+    import.meta.env.VITE_PORTAL_URL ||
+    import.meta.env.VITE_MYAHANA_PORTAL_URL ||
+    "http://20.204.44.218:8000";
+
+  if (!portalUrl) {
+    console.error("Portal URL is not configured; session was cleared.");
+    return false;
+  }
+
+  const redirectUrl = new URL(portalUrl);
+  if (reason) redirectUrl.searchParams.set("reason", reason);
+  window.location.assign(redirectUrl.toString());
+  return true;
 }
 
-// Lets the modal reset the guard once it's shown & acknowledged, so a
-// genuinely new expiry later in the (unlikely, since we navigate away)
-// lifetime of the page can show again.
-export function resetSessionExpiredGuard() {
-  handling = false;
+export async function logout({
+  reason,
+  token: sessionToken,
+  redirect = false,
+} = {}) {
+  if (logoutPromise) return logoutPromise;
+
+  logoutPromise = (async () => {
+    try {
+      const token = sessionToken || getSessionToken();
+      if (token) {
+        try {
+          const apiBase = (import.meta.env.VITE_API_BASE_URL || "").replace(
+            /\/$/,
+            "",
+          );
+          await fetch(`${apiBase}/api/auth/logout`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+          });
+        } catch {
+          // The local session must still be cleared if the API is unavailable.
+        }
+      }
+
+      clearSessionToken();
+      // Clear both the QD session cookie and the PCM-compatible access_token cookie
+      Cookies.remove("access_token", { path: "/" });
+      Cookies.remove("quantify_access_token", { path: "/" });
+      Cookies.remove("user", { path: "/" });
+      Cookies.remove("refreshToken", { path: "/" });
+      localStorage.removeItem("sso_token");
+      [
+        "email",
+        "emp_id",
+        "role",
+        "UserID",
+        "userName",
+        "serviceDeliveryEmployees",
+      ].forEach((key) => localStorage.removeItem(key));
+      sessionStorage.clear();
+      window.dispatchEvent(new Event("auth-logout"));
+
+      if (redirect) {
+        redirectToPortal(reason);
+      } else {
+        window.dispatchEvent(
+          new CustomEvent("auth-session-expired", { detail: { reason } }),
+        );
+      }
+    } finally {
+      logoutPromise = null;
+    }
+  })();
+
+  return logoutPromise;
+}
+
+export function handleSessionExpired(request) {
+  if (request) {
+    let path = request.url || "unknown";
+    try {
+      path = new URL(path, request.baseURL || window.location.origin).pathname;
+    } catch {
+      path = "unknown";
+    }
+    console.error("API returned 401", {
+      method: request.method?.toUpperCase() || "UNKNOWN",
+      path,
+      hadBearerToken: Boolean(
+        request.headers?.Authorization || request.headers?.authorization,
+      ),
+    });
+  }
+  void logout({ reason: "api_unauthorized" });
 }

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
+import { getSessionToken } from '@/auth/sessionStore';
 import toast from 'react-hot-toast';
 import SearchableSelect from '@/components/ui/SearchableSelect/SearchableSelect';
 import { Icon } from '@iconify/react';
@@ -9,7 +10,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const HOURS_PER_DAY = 8;
 
 const getHeaders = () => ({
-  Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
+  Authorization: `Bearer ${getSessionToken() || ''}`,
 });
 
 // ── Role definitions (kept in sync with Projects.jsx) ─────────────────────────

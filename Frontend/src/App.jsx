@@ -1,15 +1,20 @@
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
-import { useSelector } from "react-redux";
-import Login from "./pages/Login";
-import { SessionExpiredModal } from "@/components/SessionExpiredModal";
+import { useDispatch, useSelector } from "react-redux";
 import Dashboard from "@/features/dashboard/DashboardPage";
 import MemberDetailsPage from "@/features/member-details/MemberDetailsPage";
 import SkillAnalyticsPage from "@/features/member-details/SkillAnalyticsPage";
-// import ProtectedRoute from '@/components/ui/ProtectedRoute/ProtectedRoute';
+// PCM-equivalent: role-based route protection
+import ProtectedRoute from "@/auth/ProtectedRoute";
+import { AuthProvider } from "@/auth/AuthContext";
+import SSOHandler from "@/auth/SSOHandler";
 import MainLayout from "@/components/layout/AppLayout/AppLayout";
 import { usePostMessageLogin } from "@/hooks/usePostMessageLogin";
+import { useSessionWatcher } from "@/hooks/useSessionWatcher";
+import { logoutUser } from "@/store/slices/authSlice";
+import Unauthorized from "./pages/Unauthorized";
+import Login from "./pages/Login";
 
 import Users from "./pages/Users";
 import Projects from "./pages/Projects"; // legacy — kept for other routes
@@ -36,6 +41,7 @@ import ReconciliationUpload from "./pages/ReconciliationUpload";
 import { GuidelinePage, GuidelineFormPage } from "@/features/guideline";
 import { useSingleActiveTab } from "@/hooks/useSingleActiveTab";
 import { SingleTabRestriction } from "@/components/SingleTabRestriction";
+import { redirectToPortal } from "@/shared/sessionExpiry";
 
 /**
  * Runs the app-wide UAT postMessage listener and shows the role picker when
@@ -44,9 +50,32 @@ import { SingleTabRestriction } from "@/components/SingleTabRestriction";
  * on every screen, not just /quantification.
  */
 function AppShell() {
-  const userId = useSelector((state) => state.auth?.user?.emp_id);
-  const accountId = userId || localStorage.getItem("emp_id") || "anonymous";
+  const user = useSelector((state) => state.auth?.user);
+  const loading = useSelector((state) => state.auth?.loading);
+  const userId = user?.emp_id;
+  const accountId = userId || "anonymous";
   const { status, retry } = useSingleActiveTab(accountId);
+  const [sessionExpired, setSessionExpired] = React.useState(false);
+  const {
+    authStatus,
+    pendingRoleChoice,
+    selectRole,
+    dismissRoleChoice,
+  } =
+    usePostMessageLogin();
+  useSessionWatcher();
+
+  React.useEffect(() => {
+    const showExpiredSession = (event) =>
+      setSessionExpired(event.detail?.reason || "portal_token_expired");
+    window.addEventListener("auth-session-expired", showExpiredSession);
+    return () =>
+      window.removeEventListener("auth-session-expired", showExpiredSession);
+  }, []);
+
+  if (sessionExpired || authStatus === "logged_out") {
+    return <LoggedOutScreen reason={sessionExpired || "logged_out"} />;
+  }
 
   if (status !== "active") {
     return status === "checking" ? (
@@ -77,21 +106,95 @@ function AppShell() {
     );
   }
 
-  return <AuthenticatedApp />;
+  if (authStatus === "authenticating" || loading) {
+    return <Login />;
+  }
+
+  if (authStatus !== "authenticated" || !user) {
+    return <LoggedOutScreen reason="logged_out" />;
+  }
+
+  return (
+    <AuthenticatedApp
+      pendingRoleChoice={pendingRoleChoice}
+      selectRole={selectRole}
+      dismissRoleChoice={dismissRoleChoice}
+    />
+  );
 }
 
-function AuthenticatedApp() {
-  const { pendingRoleChoice, selectRole, dismissRoleChoice } =
-    usePostMessageLogin();
+export function LoggedOutScreen({ reason }) {
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#1e272e]/60 p-6 backdrop-blur-md"
+    >
+      <div className="w-full max-w-sm rounded-2xl border border-line-card bg-surface-card p-7 text-center shadow-[0_12px_40px_rgba(133,107,255,0.12),0_2px_8px_rgba(0,0,0,0.08)]">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full border-2 border-[#d9d0ff] bg-action-primary-soft text-action-primary shadow-sm">
+          <svg
+            width="26"
+            height="26"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
+        </div>
+        <h2 id="logged-out-title" className="text-xl font-bold tracking-[-0.2px] text-ink-primary">
+          Logged Out
+        </h2>
+        <p id="logged-out-description" className="mt-2 text-sm leading-relaxed text-ink-secondary">
+          You have been signed out from the MyAhana Portal.
+          <br />
+          Please log in again to continue.
+        </p>
+        <div className="my-5 h-px bg-line-card" />
+        <button
+          type="button"
+          onClick={() => redirectToPortal(reason)}
+          className="w-full rounded-control bg-action-primary px-4 py-2.5 text-sm font-semibold text-ink-on-primary shadow-[0_4px_16px_rgba(133,107,255,0.25)] transition-all hover:bg-action-primary-hover active:scale-[0.99]"
+        >
+          Go to Login
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function AuthenticatedApp({
+  pendingRoleChoice,
+  selectRole,
+  dismissRoleChoice,
+}) {
+  const dispatch = useDispatch();
+
+  React.useEffect(() => {
+    const clearAuthState = () => dispatch(logoutUser());
+    window.addEventListener("auth-logout", clearAuthState);
+    return () => window.removeEventListener("auth-logout", clearAuthState);
+  }, [dispatch]);
 
   return (
     <>
       <Routes>
-        {/* Login Route (manual fallback + still works if opened directly) */}
-        <Route path="/quantification" element={<Login />} />
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
+        {/* Unauthorized page — accessible without authentication */}
+        <Route path="/unauthorized" element={<Unauthorized />} />
 
         {/* Protected Routes with MainLayout */}
-        <Route path="/" element={<MainLayout />}>
+        {/* WHY ProtectedRoute: matches PCM's pattern — any unauthenticated user
+            is redirected to /unauthorized instead of silently looping */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/" element={<MainLayout />}>
           {/* Bare "/" → redirect to auth screen */}
           <Route index element={<Navigate to="/quantification" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
@@ -153,10 +256,10 @@ function AuthenticatedApp() {
             path="reconciliation"
             element={<Navigate to="/reconciliation/upload" replace />}
           />
+          </Route>
         </Route>
 
-        {/* Default redirect to login */}
-        <Route path="*" element={<Navigate to="/quantification" />} />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
 
       {pendingRoleChoice && (
@@ -368,35 +471,46 @@ const roleModalStyles = {
 
 function App() {
   return (
-    <BrowserRouter>
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          duration: 3500,
-          style: {
-            borderRadius: "var(--radius-md)",
-            fontWeight: 700,
-            fontSize: "var(--font-size-body)",
-            minWidth: "280px",
-            maxWidth: "420px",
-            boxShadow: "var(--shadow-toast)",
-          },
-          success: {
-            style: {
-              background: "var(--color-accent-success)",
-              color: "var(--color-neutral-0)",
-            },
-          },
-          error: {
-            style: {
-              background: "var(--color-accent-error-strong)",
-              color: "var(--color-neutral-0)",
-            },
-          },
-        }}
-      />
-      <AppShell />
-      <SessionExpiredModal />
+   <BrowserRouter basename="/quantification">
+      <AuthProvider>
+        {/*
+          SSOHandler mirrors PCM's SSOHandler.jsx:
+          On mount it checks for an existing quantify_access_token cookie.
+          If found it calls employee_details + validate-roles to hydrate the
+          Redux store with a fully-enriched user profile (including RBAC role).
+          This handles the page-refresh scenario where Redux was cleared but
+          the session cookie is still valid.
+        */}
+        <SSOHandler>
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              duration: 3500,
+              style: {
+                borderRadius: "var(--radius-md)",
+                fontWeight: 700,
+                fontSize: "var(--font-size-body)",
+                minWidth: "280px",
+                maxWidth: "420px",
+                boxShadow: "var(--shadow-toast)",
+              },
+              success: {
+                style: {
+                  background: "var(--color-accent-success)",
+                  color: "var(--color-neutral-0)",
+                },
+              },
+              error: {
+                style: {
+                  background: "var(--color-accent-error-strong)",
+                  color: "var(--color-neutral-0)",
+                },
+              },
+            }}
+          />
+          <AppShell />
+        </SSOHandler>
+      </AuthProvider>
     </BrowserRouter>
   );
 }
