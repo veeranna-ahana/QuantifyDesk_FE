@@ -105,6 +105,10 @@ export function mapPmsToMilestones(milestoneDetails = [], tasksDetails = []) {
         // Raw PMS task_id (not the "T-123" display id) — this is what task_info.task_id is
         // actually keyed on server-side, so Create Project's payload must send this, not `id`.
         pmsTaskId: t.task_id,
+        // PMS's stable per-task id across versions (unlike task_id, which PMS mints fresh for
+        // every task on a version bump) — carried through so a later save can re-find this
+        // task's task_info row even after its task_id has changed.
+        pmsTaskUuid: t.task_uuid || null,
         // PMS's own task assignee (confirmed present on every task in the real payload) —
         // task_info.emp_id defaults to this at Create Project time so it isn't just NULL for
         // every task. Kept separate from `owner` (the display name, which stays a live PMS
