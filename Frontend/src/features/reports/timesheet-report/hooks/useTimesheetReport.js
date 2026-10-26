@@ -5,7 +5,13 @@ import { timesheetReportService } from "../services/timesheetReport.service";
 
 const PAGE_SIZE = 10;
 
-const EMPTY_FILTERS = { project: "", employee: "", startDate: "", endDate: "" };
+const EMPTY_FILTERS = {
+  project: "",
+  employee: "",
+  category: "",
+  startDate: "",
+  endDate: "",
+};
 
 const dateOnly = (value) => (value ? String(value).slice(0, 10) : "");
 
@@ -109,6 +115,14 @@ export function useTimesheetReport() {
   const options = useMemo(() => {
     const projects = new Map();
     const employees = new Map();
+    // Project category, for the Category filter — keyed on `record.category` itself
+    // (projectcategory_name), not categoryCode: the HRMS grouped-row shape doesn't reliably
+    // carry a project category CODE on every row (confirmed against projectTimesheet.controller.js
+    // — the category breakdown is built per sub_category/projectcategory_code, but the flattened
+    // per-employee rows coming back here don't consistently include it), which is exactly why the
+    // dropdown came up empty keying off categoryCode. projectcategory_name is the field that's
+    // actually populated, so it's the filter's identity here.
+    const categories = new Map();
     allRecords.forEach((record) => {
       if (record.projectCode)
         projects.set(
@@ -120,6 +134,7 @@ export function useTimesheetReport() {
           record.employeeId,
           record.employeeName || record.employeeId,
         );
+      if (record.category) categories.set(record.category, record.category);
     });
     const sorted = (map, key) =>
       [...map.entries()]
@@ -128,6 +143,7 @@ export function useTimesheetReport() {
     return {
       projects: sorted(projects, "code"),
       employees: sorted(employees, "id"),
+      categories: sorted(categories, "code"),
     };
   }, [allRecords]);
 
@@ -137,6 +153,7 @@ export function useTimesheetReport() {
         (record) =>
           (!filters.project || record.projectCode === filters.project) &&
           (!filters.employee || record.employeeId === filters.employee) &&
+          (!filters.category || record.category === filters.category) &&
           (!filters.startDate || record.fromDate >= filters.startDate) &&
           (!filters.endDate || record.toDate <= filters.endDate),
       ),

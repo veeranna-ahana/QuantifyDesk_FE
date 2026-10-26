@@ -99,6 +99,7 @@ export function TimesheetReportPage() {
           }}
           projects={report.options.projects}
           employees={report.options.employees}
+          categories={report.options.categories}
         />
       )}
 

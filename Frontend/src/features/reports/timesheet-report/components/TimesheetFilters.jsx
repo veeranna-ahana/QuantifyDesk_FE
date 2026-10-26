@@ -1,6 +1,20 @@
 import { cn } from "@/lib/cn";
 import { DateRangeInput } from "./DateRangeInput";
 
+// Native <select> popups render each option on one unwrapped line and let the
+// browser scroll it horizontally if it's too wide — which is why very long
+// project/category names were showing cut off at the *start* (scrolled a few
+// px right) as well as the end. Truncating the label here keeps every option
+// on one line that actually fits, so there's nothing to scroll.
+const MAX_OPTION_LABEL_LENGTH = 60;
+
+function truncateLabel(label) {
+  if (typeof label !== "string" || label.length <= MAX_OPTION_LABEL_LENGTH) {
+    return label;
+  }
+  return `${label.slice(0, MAX_OPTION_LABEL_LENGTH - 1).trimEnd()}…`;
+}
+
 function ChevronDownIcon() {
   return (
     <svg
@@ -44,8 +58,12 @@ export function Select({
         >
           <option value="">{placeholder}</option>
           {options.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
+            <option
+              key={option.value}
+              value={option.value}
+              title={option.label}
+            >
+              {truncateLabel(option.label)}
             </option>
           ))}
         </select>
@@ -64,6 +82,7 @@ export function FilterAndStatsCard({
   onClear,
   projects = [],
   employees = [],
+  categories = [],
 }) {
   const update = (key) => (event) =>
     onChange((current) => ({ ...current, [key]: event.target.value }));
@@ -95,6 +114,17 @@ export function FilterAndStatsCard({
         placeholder="Select Employee"
         onChange={update("employee")}
       />
+      <Select
+        label="Category"
+        className="w-[220px] flex-none"
+        value={filters.category}
+        options={categories.map((category) => ({
+          value: category.value ?? category.code,
+          label: category.label ?? category.name,
+        }))}
+        placeholder="All Categories"
+        onChange={update("category")}
+      />
       <DateRangeInput
         startDate={filters.startDate}
         endDate={filters.endDate}
@@ -107,6 +137,7 @@ export function FilterAndStatsCard({
           onApply({
             project: filters.project,
             employee: filters.employee,
+            category: filters.category,
             startDate: filters.startDate,
             endDate: filters.endDate,
           })
@@ -118,7 +149,13 @@ export function FilterAndStatsCard({
         type="button"
         className="inline-flex h-[36px] w-[80px] flex-none items-center justify-center rounded border border-action-primary bg-surface-card px-3 text-[14px] font-normal tracking-[0.6px] text-action-primary transition-colors hover:bg-action-primary-soft"
         onClick={() => {
-          onChange({ project: "", employee: "", startDate: "", endDate: "" });
+          onChange({
+            project: "",
+            employee: "",
+            category: "",
+            startDate: "",
+            endDate: "",
+          });
           onClear();
         }}
       >

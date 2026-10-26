@@ -128,6 +128,9 @@ export function useProjectDetails() {
           .filter((t) => t.pmsTaskId)
           .map((t) => ({
             pms_task_id: t.pmsTaskId,
+            // PMS's stable per-task id — lets the backend re-find this row's Role/Task
+            // Type/Unit after a future PMS version bump changes pms_task_id.
+            task_uuid: t.pmsTaskUuid || null,
             emp_id: t.pmsEmpId || null,
             role: t.role || null,
             task_type: t.taskType || null,
