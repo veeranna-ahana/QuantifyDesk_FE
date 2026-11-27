@@ -27,4 +27,14 @@ export const timesheetReportService = {
   // totals (App Dev team only; requires auth). Response: { title, totalRecords, resources: [...] }
   getResourceBreakdown: () =>
     axiosInstance.get("/api/hrms/resource-breakdown", { timeout: 30000 }),
+  // GET /api/hrms/timesheets-app-dev-designation-employee-category/:empId/:categoryCode
+  // Full raw timesheet entries for one employee + one project category.
+  getEmployeeCategoryTimesheetDetails: (employeeId, projectCategoryCode) =>
+    axiosInstance.get(
+      `/api/hrms/timesheets-app-dev-designation-employee-category/${encodeURIComponent(
+        employeeId,
+      )}/${encodeURIComponent(projectCategoryCode)}`,
+      { timeout: 30000 },
+    ),
+
 };
